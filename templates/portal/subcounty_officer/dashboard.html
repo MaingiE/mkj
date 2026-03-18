@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sub-County Sports Officer — MKJ SUPA CUP Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-building"></i> Sub-County Sports Officer Portal</h1>
+    <p>{{ sub_county }} Constituency — Makueni County</p>
+</div>
+
+<!-- Sub-County Badge -->
+<div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%); color: #fff; border: none;">
+    <div class="card-body" style="padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-geo-alt-fill" style="font-size: 1.8rem;"></i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 1px;">{{ sub_county }}</h2>
+                <p style="margin: .25rem 0 0; opacity: .8; font-size: .85rem;">
+                    Governor Mutula Kilonzo Junior Super Cup — Makueni County
+                </p>
+            </div>
+            <div style="margin-left: auto;">
+                <span style="background: rgba(251,192,45,.2); color: #FDD835; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(251,192,45,.3);">
+                    <i class="bi bi-shield-check"></i> MKJ SUPA CUP
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-trophy"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.competitions }}</h3>
+            <p>Competitions</p>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-people"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.disciplines }}</h3>
+            <p>Disciplines</p>
+        </div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-person-vcard"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.players }}</h3>
+            <p>Players</p>
+        </div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="bi bi-clipboard-data"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.fixtures }}</h3>
+            <p>Fixtures</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-lightning"></i> Quick Actions</h3></div>
+    <div class="card-body">
+        <div class="quick-actions">
+            <a href="{% url 'subcounty_officer_disciplines' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-person-vcard"></i></div>
+                <h4>Manage Players</h4>
+                <p>Add & manage discipline players</p>
+            </a>
+            <a href="{% url 'competitions_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-trophy"></i></div>
+                <h4>View Competitions</h4>
+                <p>Browse all active competitions</p>
+            </a>
+            <a href="{% url 'teams_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-people"></i></div>
+                <h4>View Teams</h4>
+                <p>See registered teams</p>
+            </a>
+            <a href="{% url 'matches_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
+                <h4>Fixtures & Results</h4>
+                <p>Match schedule and results</p>
+            </a>
+            <a href="{% url 'referees_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-flag"></i></div>
+                <h4>Referees</h4>
+                <p>View match officials</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Fixtures -->
+{% if upcoming_fixtures %}
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-calendar-week"></i> Upcoming Fixtures</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Competition</th>
+                        <th>Home</th>
+                        <th></th>
+                        <th>Away</th>
+                        <th>Venue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in upcoming_fixtures %}
+                    <tr>
+                        <td>{{ match.match_date|date:"d M Y, H:i" }}</td>
+                        <td>{{ match.competition.name }}</td>
+                        <td><strong>{{ match.home_team.name }}</strong></td>
+                        <td style="text-align:center; font-weight:700; color:var(--primary);">vs</td>
+                        <td><strong>{{ match.away_team.name }}</strong></td>
+                        <td>{{ match.venue.name|default:"TBD" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Makueni County Sub-Counties -->
+<div class="card mt-1">
+    <div class="card-header"><h3><i class="bi bi-map"></i> Makueni County Sub-Counties</h3></div>
+    <div class="card-body">
+        <div class="quick-actions">
+            <div class="action-card" style="cursor: default;">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Makueni</h4>
+                <p>Makueni Constituency</p>
+            </div>
+            <div class="action-card" style="cursor: default;">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Kibwezi West</h4>
+                <p>Kibwezi West Constituency</p>
+            </div>
+            <div class="action-card" style="cursor: default;">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Kibwezi East</h4>
+                <p>Kibwezi East Constituency</p>
+            </div>
+            <div class="action-card" style="cursor: default;">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Kaiti</h4>
+                <p>Kaiti Constituency</p>
+            </div>
+            <div class="action-card" style="cursor: default;">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Kilome</h4>
+                <p>Kilome Constituency</p>
+            </div>
+            <div class="action-card" style="cursor: default;">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Mbooni</h4>
+                <p>Mbooni Constituency</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

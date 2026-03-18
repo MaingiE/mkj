@@ -5,7 +5,7 @@
 <style>
     .pay-tabs { display:flex;gap:0;border-radius:12px;overflow:hidden;border:2px solid #e0e0e0;margin-bottom:1.5rem }
     .pay-tab { flex:1;padding:.85rem;text-align:center;cursor:pointer;font-weight:700;font-size:.9rem;transition:all .2s;background:#fafafa;color:#666 }
-    .pay-tab.active { background:#1B5E20;color:#fff }
+    .pay-tab.active { background:#1565C0;color:#fff }
     .pay-tab:first-child { border-right:2px solid #e0e0e0 }
     .pay-panel { display:none }
     .pay-panel.active { display:block }
@@ -14,7 +14,7 @@
     .pay-field input, .pay-field select { width:100%;padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.92rem;background:#fafafa }
     .pay-field small { color:#888;font-size:.8rem }
     .pay-info { background:#fff3e0;border:1px solid #ffe0b2;border-radius:10px;padding:1rem;margin-bottom:1.25rem;font-size:.88rem }
-    .pay-acct { background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1.5rem }
+    .pay-acct { background:linear-gradient(135deg,#1565C0,#2E7D32);color:#fff;border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1.5rem }
     .pay-acct__title { font-weight:700;font-size:1rem;margin-bottom:.75rem }
     .pay-acct__row { display:flex;justify-content:space-between;padding:.3rem 0;font-size:.88rem }
     .pay-acct__label { opacity:.8 }
@@ -117,7 +117,7 @@
                        step="0.01" min="1" placeholder="{{ registration_fee|floatformat:0 }}">
             </div>
 
-            <button type="submit" style="width:100%;padding:.9rem;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:.5rem">
+            <button type="submit" style="width:100%;padding:.9rem;background:#1565C0;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:.5rem">
                 <i class="bi bi-send"></i> Submit Payment Proof
             </button>
         </form>

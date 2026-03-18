@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Registered Counties — Verification — KYISA CMS{% endblock %}
+{% block title %}Registered Counties — Verification — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -41,7 +41,7 @@
                         <td><strong>{{ item.registration.get_county_display }}</strong></td>
                         <td>{{ item.registration.director_name|default:"—" }}<br><small style="color:#888">{{ item.registration.director_phone|default:"" }}</small></td>
                         <td>
-                            <span style="background:#E8F5E9;color:#1B5E20;padding:.2rem .6rem;border-radius:12px;font-weight:600;font-size:.85rem">
+                            <span style="background:#E8F5E9;color:#1565C0;padding:.2rem .6rem;border-radius:12px;font-weight:600;font-size:.85rem">
                                 {{ item.discipline_count }}
                             </span>
                         </td>
@@ -56,10 +56,10 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span style="color:#1B5E20;font-weight:600">{{ item.verified_players }}</span>
+                            <span style="color:#1565C0;font-weight:600">{{ item.verified_players }}</span>
                         </td>
                         <td>
-                            <a href="{% url 'vo_county_disciplines' county_reg_pk=item.registration.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.35rem .9rem;font-size:.8rem">
+                            <a href="{% url 'vo_county_disciplines' county_reg_pk=item.registration.pk %}" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.35rem .9rem;font-size:.8rem">
                                 <i class="bi bi-arrow-right"></i> View Disciplines
                             </a>
                         </td>

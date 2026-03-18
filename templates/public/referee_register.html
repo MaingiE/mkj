@@ -8,7 +8,7 @@
 <div class="container" style="max-width:700px">
 
     <div style="text-align:center;margin-bottom:2rem">
-        <h1 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:800;color:#1B5E20">🏁 Referee Registration</h1>
+        <h1 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:800;color:#1565C0">🏁 Referee Registration</h1>
         <p style="color:#555;margin-top:.5rem">Register as an official. Only 4 fields are required — the rest is optional.</p>
     </div>
 
@@ -16,7 +16,7 @@
 
         {% if messages %}
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" style="margin-bottom:1.5rem;padding:1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% else %}#fff3e0{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1B5E20{% elif message.tags == 'error' %}#C62828{% else %}#f57c00{% endif %}">
+        <div class="alert alert-{{ message.tags }}" style="margin-bottom:1.5rem;padding:1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% else %}#fff3e0{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1565C0{% elif message.tags == 'error' %}#C62828{% else %}#f57c00{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
@@ -26,7 +26,7 @@
             {% csrf_token %}
 
             <!-- Required Fields -->
-            <h3 style="font-size:1rem;color:#1B5E20;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid #e8f5e9">
+            <h3 style="font-size:1rem;color:#1565C0;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid #e8f5e9">
                 Required Information
             </h3>
 
@@ -66,10 +66,10 @@
 
         <div style="text-align:center;margin-top:1.5rem">
             <p style="color:#888;font-size:.85rem">
-                Already registered? <a href="{% url 'web_login' %}" style="color:#1B5E20;font-weight:600">Staff Login</a>
+                Already registered? <a href="{% url 'web_login' %}" style="color:#1565C0;font-weight:600">Staff Login</a>
             </p>
             <p style="color:#888;font-size:.85rem;margin-top:.5rem">
-                Want to register your county? <a href="{% url 'county_admin_register' %}" style="color:#1B5E20;font-weight:600">County Registration</a>
+                Want to register your county? <a href="{% url 'county_admin_register' %}" style="color:#1565C0;font-weight:600">County Registration</a>
             </p>
         </div>
     </div>

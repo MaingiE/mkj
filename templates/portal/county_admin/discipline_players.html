@@ -13,7 +13,7 @@
 
 <!-- Progress bar -->
 <div style="background:#e0e0e0;border-radius:8px;height:10px;margin-bottom:1.5rem;max-width:600px">
-    <div style="background:{% if discipline.can_add_player %}#1B5E20{% else %}#C62828{% endif %};border-radius:8px;height:10px;width:{% widthratio discipline.player_count discipline.squad_limit 100 %}%;transition:width .3s"></div>
+    <div style="background:{% if discipline.can_add_player %}#1565C0{% else %}#C62828{% endif %};border-radius:8px;height:10px;width:{% widthratio discipline.player_count discipline.squad_limit 100 %}%;transition:width .3s"></div>
 </div>
 
 {% if discipline.can_add_player %}
@@ -87,6 +87,6 @@
 {% endif %}
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'county_admin_dashboard' %}" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <a href="{% url 'county_admin_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 </div>
 {% endblock %}

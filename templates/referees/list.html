@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Referees KYISA CMS{% endblock %}
+{% block title %}Referees MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -92,7 +92,7 @@
                         <td>
                             {% if appt.status == 'pending' and user.role == 'referee' %}
                             <a href="{% url 'appointment_action' appointment_pk=appt.pk %}"
-                               style="background:#1B5E20;color:#fff;padding:.3rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                               style="background:#1565C0;color:#fff;padding:.3rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
                                 Respond
                             </a>
                             {% elif appt.status == 'pending' %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Add Player — {{ team.name }} — KYISA CMS{% endblock %}
+{% block title %}Add Player — {{ team.name }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -29,7 +29,7 @@
         <div class="card-body">
             {% if messages %}
             {% for message in messages %}
-            <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e3f2fd{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1B5E20{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#1565c0{% endif %}">
+            <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e3f2fd{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1565C0{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#1565c0{% endif %}">
                 {{ message }}
             </div>
             {% endfor %}
@@ -39,7 +39,7 @@
                 {% csrf_token %}
 
                 <fieldset style="border:1px solid #e0e0e0;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem">
-                    <legend style="font-weight:700;color:#1B5E20;padding:0 .5rem;font-size:.95rem">Personal Information</legend>
+                    <legend style="font-weight:700;color:#1565C0;padding:0 .5rem;font-size:.95rem">Personal Information</legend>
                     {% for field in form %}
                         {% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'date_of_birth' or field.name == 'position' or field.name == 'shirt_number' or field.name == 'national_id_number' or field.name == 'birth_cert_number' %}
                         <div style="margin-bottom:1rem">
@@ -64,7 +64,7 @@
                 </fieldset>
 
                 <fieldset style="border:1px solid #e0e0e0;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem">
-                    <legend style="font-weight:700;color:#1B5E20;padding:0 .5rem;font-size:.95rem">📄 Verification Documents</legend>
+                    <legend style="font-weight:700;color:#1565C0;padding:0 .5rem;font-size:.95rem">📄 Verification Documents</legend>
                     <p style="color:#666;font-size:.85rem;margin-bottom:1rem">All three documents are required for player verification by the admin.</p>
 
                     <!-- IPRS Photo Preview (auto-populated from IPRS lookup) -->
@@ -104,7 +104,7 @@
                 {% endif %}
 
                 <div style="display:flex;gap:.75rem;margin-top:1rem">
-                    <button type="submit" name="action" value="add_more" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.6rem 1.5rem;flex:1">
+                    <button type="submit" name="action" value="add_more" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.6rem 1.5rem;flex:1">
                         Save &amp; Add Another
                     </button>
                     <button type="submit" name="action" value="finish" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem;flex:1">
@@ -139,7 +139,7 @@
                         <tr>
                             <td><strong>{{ p.shirt_number }}</strong></td>
                             <td>{{ p.first_name }} {{ p.last_name }}</td>
-                            <td><span class="badge" style="background:#e8f5e9;color:#1B5E20">{{ p.get_position_display }}</span></td>
+                            <td><span class="badge" style="background:#e8f5e9;color:#1565C0">{{ p.get_position_display }}</span></td>
                             <td>
                                 {% if p.is_age_eligible %}
                                 {{ p.age }}
@@ -149,7 +149,7 @@
                             </td>
                             <td>
                                 {% if p.documents_uploaded %}
-                                <span style="color:#1B5E20" title="All documents uploaded">✅</span>
+                                <span style="color:#1565C0" title="All documents uploaded">✅</span>
                                 {% else %}
                                 <span style="color:#f57c00" title="Missing documents">⚠️</span>
                                 {% endif %}
@@ -252,7 +252,7 @@ function lookupIPRS() {
             if (data.age !== null) msg += ' — Age: <strong>' + data.age + '</strong>';
             if (data.gender) msg += ' — ' + escapeHtml(data.gender);
             if (data.is_simulation) msg += ' <em style="opacity:.7">(Simulation)</em>';
-            showStatus(msg, '#1B5E20', '#e8f5e9');
+            showStatus(msg, '#1565C0', '#e8f5e9');
         } else if (data.success && !data.person_found) {
             showStatus('❌ No person found with this National ID.', '#C62828', '#fce4ec');
         } else {

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Review Match Report — KYISA CMS{% endblock %}
+{% block title %}Review Match Report — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -28,12 +28,12 @@
         <div style="display:flex;justify-content:center;align-items:center;gap:2rem;">
             <div>
                 <div style="font-weight:600;margin-bottom:.3rem;">{{ report.fixture.home_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1B5E20;">{{ report.home_score }}</div>
+                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.home_score }}</div>
             </div>
             <div style="font-size:2rem;color:#999;">—</div>
             <div>
                 <div style="font-weight:600;margin-bottom:.3rem;">{{ report.fixture.away_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1B5E20;">{{ report.away_score }}</div>
+                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.away_score }}</div>
             </div>
         </div>
         {% if sport_cfg.label == 'Volleyball' and report.home_sets is not None %}
@@ -187,7 +187,7 @@
                     🔄 Return for Revision
                 </button>
                 <button type="submit" name="action" value="approve"
-                        style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
+                        style="background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
                         onclick="return confirm('Approve this report? This will finalize the match result and update standings.')">
                     ✅ Approve Report
                 </button>

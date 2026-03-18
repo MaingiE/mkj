@@ -146,7 +146,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 # ── SPECTACULAR (API DOCS) ─────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     "TITLE": "MKJ SUPA CUP Competition Management System API",
-    "DESCRIPTION": "Enterprise-grade football competition management for Kenya Youth Intercounty Sports Association",
+    "DESCRIPTION": "Governor Mutula Kilonzo Junior Super Cup — Makueni County Sports Competition Management",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -202,7 +202,7 @@ EMAIL_PORT       = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS    = True
 EMAIL_HOST_USER  = env("EMAIL_HOST_USER",     default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = "MKJ SUPA CUP CMS <noreply@mkj_supacup.ke>"
+DEFAULT_FROM_EMAIL = "MKJ SUPA CUP <noreply@mkjsupacup.go.ke>"
 
 # ── LOCALISATION ───────────────────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"

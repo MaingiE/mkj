@@ -1,19 +1,19 @@
-# KYISA Competition Management System
+# MKJ SUPA CUP Competition Management System
 ## Complete Developer Setup & Architecture Guide
 
 ---
 
 ## WHAT YOU HAVE BUILT
 
-A full enterprise-grade Django REST API backend for the Kenya Youth Intercounty Sports Association competition management system. Here is what every file does:
+A full enterprise-grade Django REST API backend for the MKJ SUPA CUP competition management system. Here is what every file does:
 
 ```
-kyisa_cms/                      ← Project root
+mkj_cms/                      ← Project root
 ├── manage.py                   ← Django command runner
 ├── requirements.txt            ← All Python dependencies
 ├── .env.example                ← Copy to .env and fill in your values
 │
-├── kyisa_cms/                  ← Main Django project config
+├── mkj_cms/                  ← Main Django project config
 │   ├── settings.py             ← ALL configuration (DB, auth, CORS, JWT...)
 │   └── urls.py                 ← Master URL router
 │
@@ -76,9 +76,9 @@ brew install postgresql@16
 
 # Create the database:
 sudo -u postgres psql
-CREATE USER kyisa_user WITH PASSWORD 'your_password';
-CREATE DATABASE kyisa_db OWNER kyisa_user;
-GRANT ALL PRIVILEGES ON DATABASE kyisa_db TO kyisa_user;
+CREATE USER mkj_user WITH PASSWORD 'your_password';
+CREATE DATABASE mkj_db OWNER mkj_user;
+GRANT ALL PRIVILEGES ON DATABASE mkj_db TO mkj_user;
 \q
 ```
 
@@ -103,7 +103,7 @@ redis-cli ping    # Should return: PONG
 ### 1. Create and activate a virtual environment
 
 ```bash
-cd kyisa_cms
+cd mkj_cms
 python -m venv venv
 
 # Activate it:
@@ -183,7 +183,7 @@ from accounts.models import User
 
 # Create Competition Manager
 User.objects.create_user(
-    email="cm@kyisa.ke",
+    email="cm@mkjsupacup.go.ke",
     password="StrongPassword123",
     first_name="James",
     last_name="Kamau",
@@ -193,7 +193,7 @@ User.objects.create_user(
 
 # Create Referee Manager
 User.objects.create_user(
-    email="rm@kyisa.ke",
+    email="rm@mkjsupacup.go.ke",
     password="StrongPassword123",
     first_name="Grace",
     last_name="Ochieng",
@@ -205,7 +205,7 @@ User.objects.create_user(
 # Create a competition
 from competitions.models import Competition
 comp = Competition.objects.create(
-    name="KYISA U-17 Inter-County Championship 2025",
+    name="MKJ SUPA CUP U-17 Inter-County Championship 2025",
     season="2025",
     age_group="U17",
     status="active",
@@ -235,7 +235,7 @@ print("Competition created:", comp)
 ```json
 POST /api/v1/auth/login/
 {
-  "email": "cm@kyisa.ke",
+  "email": "cm@mkjsupacup.go.ke",
   "password": "your_password"
 }
 ```
@@ -247,7 +247,7 @@ POST /api/v1/auth/login/
   "refresh": "eyJ0eXAiOiJKV1Q...",
   "user": {
     "id": 1,
-    "email": "cm@kyisa.ke",
+    "email": "cm@mkjsupacup.go.ke",
     "full_name": "James Kamau",
     "role": "competition_manager",
     "role_display": "Competition Manager",

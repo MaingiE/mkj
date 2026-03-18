@@ -1,0 +1,563 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     HERO — DARK CINEMATIC WITH INTEGRATED COUNTDOWN
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hero hero--dark" id="hero">
+    <div class="hero-bg hero-bg--dark">
+        <canvas class="hero-canvas" id="heroCanvas"></canvas>
+    </div>
+
+    <div class="hero-split">
+        <!-- LEFT: Cycling hero phases -->
+        <div class="hero-left">
+            <!-- Phase A (text) -->
+            <div class="hero-phase hero-phase--active" id="heroPhaseA">
+                <div class="hero-logo-wrap anim-zoom">
+                    <div class="hero-logo-ring"></div>
+                    <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP" class="hero-logo-img">
+                </div>
+                <h1 class="hero-title hero-title--alternate">
+                    <span class="hero-line hero-line--alt hero-line--alt-1">Governor Mutula</span>
+                    <span class="hero-line hero-line--alt hero-line--alt-2">Kilonzo Junior</span>
+                    <span class="hero-line hero-line--alt hero-line--alt-3">Super Cup <span class="hero-line--accent">(MKJ SUPA CUP)</span></span>
+                </h1>
+                <p class="hero-tagline anim-up" style="--delay:.85s">MAKUENI COUNTY SPORTS EXCELLENCE</p>
+                <p class="hero-quote anim-up" style="--delay:1s">
+                    &ldquo;Andu Mbee &mdash; People First. Empowering our youth through sports.&rdquo;
+                </p>
+                <div class="hero-actions anim-up" style="--delay:1.15s">
+                    <a href="{% url 'public_competitions' %}" class="btn btn--gold btn--lg">
+                        View Competitions
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="{% url 'about' %}" class="btn btn--outline-light btn--lg">Learn More</a>
+                </div>
+            </div>
+
+            <!-- Phase B (logo showcase) -->
+            <div class="hero-phase" id="heroPhaseB">
+                <div class="hero-showcase">
+                    <div class="hero-showcase__orbit">
+                        <div class="hero-showcase__ring hero-showcase__ring--1"></div>
+                        <div class="hero-showcase__ring hero-showcase__ring--2"></div>
+                        <div class="hero-showcase__ring hero-showcase__ring--3"></div>
+                    </div>
+                    <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP" class="hero-showcase__logo">
+                </div>
+                <h2 class="hero-showcase__text">MKJ SUPA CUP</h2>
+                <p class="hero-showcase__sub">Makueni County Sports Excellence</p>
+                <div class="hero-actions">
+                    <a href="{% url 'public_competitions' %}" class="btn btn--gold btn--lg">View Competitions</a>
+                    <a href="{% url 'about' %}" class="btn btn--outline-light btn--lg">Learn More</a>
+                </div>
+            </div>
+
+            <!-- Phase C (Kenyan flag) -->
+            <div class="hero-phase" id="heroPhaseC">
+                <div class="kenya-flag-wrap">
+                    <div class="flag-pole"><div class="flag-pole-cap"></div></div>
+                    <div class="kenya-flag">
+                        <img src="{% static 'img/kenya_flag.png' %}" alt="Flag of Kenya" class="flag-img">
+                    </div>
+                </div>
+                <div class="flag-text-block">
+                    <p class="flag-quote">&ldquo;Andu Mbee &mdash; People First. Through sports, we unite and empower the youth of Makueni County.&rdquo;</p>
+                    <span class="flag-author">&mdash; Governor Mutula Kilonzo Jr., <em>Governor, Makueni County</em></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Countdown — modern glass card -->
+        <div class="hero-right">
+            <div class="cd-card">
+                <div class="cd-card__glow"></div>
+                <div class="cd-card__inner">
+                    <span class="cd-edition">1st Edition</span>
+                    <h2 class="cd-title">MKJ SUPA CUP 2026</h2>
+                    <p class="cd-host">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        Makueni County
+                    </p>
+
+                    <div class="cd-timer" id="countdownTimer">
+                        <div class="cd-unit">
+                            <div class="cd-ring">
+                                <svg viewBox="0 0 80 80"><circle class="cd-ring__track" cx="40" cy="40" r="36"/><circle class="cd-ring__fill cd-ring__fill--days" cx="40" cy="40" r="36"/></svg>
+                                <span class="cd-num" id="cdDays">00</span>
+                            </div>
+                            <span class="cd-label">Days</span>
+                        </div>
+                        <div class="cd-unit">
+                            <div class="cd-ring">
+                                <svg viewBox="0 0 80 80"><circle class="cd-ring__track" cx="40" cy="40" r="36"/><circle class="cd-ring__fill cd-ring__fill--hrs" cx="40" cy="40" r="36"/></svg>
+                                <span class="cd-num" id="cdHours">00</span>
+                            </div>
+                            <span class="cd-label">Hours</span>
+                        </div>
+                        <div class="cd-unit">
+                            <div class="cd-ring">
+                                <svg viewBox="0 0 80 80"><circle class="cd-ring__track" cx="40" cy="40" r="36"/><circle class="cd-ring__fill cd-ring__fill--min" cx="40" cy="40" r="36"/></svg>
+                                <span class="cd-num" id="cdMins">00</span>
+                            </div>
+                            <span class="cd-label">Min</span>
+                        </div>
+                        <div class="cd-unit">
+                            <div class="cd-ring">
+                                <svg viewBox="0 0 80 80"><circle class="cd-ring__track" cx="40" cy="40" r="36"/><circle class="cd-ring__fill cd-ring__fill--sec" cx="40" cy="40" r="36"/></svg>
+                                <span class="cd-num" id="cdSecs">00</span>
+                            </div>
+                            <span class="cd-label">Sec</span>
+                        </div>
+                    </div>
+
+                    <div class="cd-meta">
+                        <p class="cd-date">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            10th Apr — 19th Apr 2026
+                        </p>
+                    </div>
+
+                    <div class="cd-cta">
+                        <span class="cd-live"><span class="cd-live__dot"></span> Registration Open</span>
+                        <a href="{% url 'county_admin_register' %}" class="btn btn--gold btn--sm">Register Your Sub-County →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     STORIES — IMMERSIVE FULLSCREEN WITH LOGO WATERMARK
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="stories-hero" id="news">
+    <!-- Watermark logo -->
+    <div class="stories-hero__watermark">
+        <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="">
+    </div>
+
+    <!-- Story panels (fullscreen bg images) -->
+    <div class="stories-hero__slides" id="storySlides">
+        <div class="story-panel story-panel--active" data-idx="0">
+            <img src="{% static 'img/kyisa_women_football.jpg' %}" alt="Women's football" class="story-panel__bg">
+            <div class="story-panel__overlay"></div>
+            <div class="story-panel__content">
+                <span class="story-panel__tag">Women's Football</span>
+                <h3 class="story-panel__title">High-intensity action on the pitch</h3>
+            </div>
+        </div>
+        <div class="story-panel" data-idx="1">
+            <img src="{% static 'img/kyisa_men_football.jpg' %}" alt="Men's football" class="story-panel__bg">
+            <div class="story-panel__overlay"></div>
+            <div class="story-panel__content">
+                <span class="story-panel__tag">MKJ SUPA CUP 2026 · Makueni</span>
+                <h3 class="story-panel__title">Sub-Counties Battle for Makueni Supremacy</h3>
+                <p class="story-panel__desc">Six sub-counties compete in the inaugural Governor Mutula Kilonzo Junior Super Cup, showcasing Makueni's finest sporting talent.</p>
+            </div>
+        </div>
+        <div class="story-panel" data-idx="2">
+            <img src="{% static 'img/kyisa_basketball.jpg' %}" alt="Basketball" class="story-panel__bg">
+            <div class="story-panel__overlay"></div>
+            <div class="story-panel__content">
+                <span class="story-panel__tag">Basketball</span>
+                <h3 class="story-panel__title">Thrilling court action across counties</h3>
+            </div>
+        </div>
+        <div class="story-panel" data-idx="3">
+            <img src="{% static 'img/kyisa_champions.jpg' %}" alt="Champions" class="story-panel__bg">
+            <div class="story-panel__overlay"></div>
+            <div class="story-panel__content">
+                <span class="story-panel__tag">Champions · 1st Edition</span>
+                <h3 class="story-panel__title">The Road to MKJ SUPA CUP Glory</h3>
+                <p class="story-panel__desc">Makueni, Kibwezi West, Kibwezi East, Kaiti, Kilome, and Mbooni compete for the coveted Governor's Cup trophy.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="stories-hero__nav">
+        <div class="stories-hero__dots" id="storyDots">
+            <button class="sh-dot sh-dot--active" data-idx="0"></button>
+            <button class="sh-dot" data-idx="1"></button>
+            <button class="sh-dot" data-idx="2"></button>
+            <button class="sh-dot" data-idx="3"></button>
+        </div>
+        <div class="stories-hero__progress" id="storyProgress"></div>
+    </div>
+
+    <!-- Slide counter -->
+    <div class="stories-hero__counter">
+        <span id="storyCounter">01</span> / 04
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MATCH CENTER — FIXTURES + STATS + RESULTS
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="match-center" id="fixtures">
+    <!-- Stats strip -->
+    <div class="mc-stats">
+        <div class="container">
+            <div class="mc-stats__row">
+                <div class="mc-stat reveal">
+                    <span class="mc-stat__num" data-count="{{ stats.competitions|default:'0' }}">0</span>
+                    <span class="mc-stat__label">Competitions</span>
+                </div>
+                <div class="mc-stat reveal" style="--delay:.06s">
+                    <span class="mc-stat__num" data-count="{{ stats.teams|default:'0' }}">0</span>
+                    <span class="mc-stat__label">Teams</span>
+                </div>
+                <div class="mc-stat reveal" style="--delay:.12s">
+                    <span class="mc-stat__num" data-count="{{ stats.players|default:'0' }}">0</span>
+                    <span class="mc-stat__label">Players</span>
+                </div>
+                <div class="mc-stat reveal" style="--delay:.18s">
+                    <span class="mc-stat__num" data-count="6">0</span>
+                    <span class="mc-stat__label">Sub-Counties</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixtures + Results grid -->
+    <div class="mc-content">
+        <div class="container">
+            <div class="mc-grid">
+                <!-- Fixtures column -->
+                <div class="mc-col">
+                    <div class="mc-col__head reveal">
+                        <span class="mc-badge mc-badge--red">Live</span>
+                        <h3 class="mc-col__title">Upcoming Fixtures</h3>
+                    </div>
+                    {% if upcoming_fixtures %}
+                    <div class="mc-cards">
+                        {% for match in upcoming_fixtures %}
+                        <div class="mc-card reveal" style="--delay:{{ forloop.counter0 }}0ms">
+                            <div class="mc-card__comp">{{ match.competition.name }}</div>
+                            <div class="mc-card__body">
+                                <span class="mc-card__team">{{ match.home_team.name }}</span>
+                                <div class="mc-card__vs">
+                                    <strong>VS</strong>
+                                    <small>{{ match.match_date|date:"d M · H:i" }}</small>
+                                </div>
+                                <span class="mc-card__team">{{ match.away_team.name }}</span>
+                            </div>
+                            <div class="mc-card__foot">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {{ match.venue.name|default:"TBD" }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mc-empty reveal">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(249,168,37,.3)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <p>No upcoming fixtures</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Results column -->
+                <div class="mc-col">
+                    <div class="mc-col__head reveal">
+                        <span class="mc-badge">Results</span>
+                        <h3 class="mc-col__title">Recent Scores</h3>
+                    </div>
+                    {% if recent_results %}
+                    <div class="mc-cards">
+                        {% for match in recent_results %}
+                        <div class="mc-result reveal" style="--delay:{{ forloop.counter0 }}0ms">
+                            <div class="mc-result__head">
+                                <span>{{ match.competition.name }}</span>
+                                <span>{{ match.match_date|date:"d M" }}</span>
+                            </div>
+                            <div class="mc-result__body">
+                                <span>{{ match.home_team.name }}</span>
+                                <div class="mc-result__score">
+                                    <strong>{{ match.home_score|default:"0" }}</strong>
+                                    <em>–</em>
+                                    <strong>{{ match.away_score|default:"0" }}</strong>
+                                </div>
+                                <span>{{ match.away_team.name }}</span>
+                            </div>
+                            <div class="mc-result__ft">FT</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div style="text-align:center;margin-top:1rem" class="reveal">
+                        <a href="{% url 'public_results' %}" class="btn btn--outline btn--sm">All Results →</a>
+                    </div>
+                    {% else %}
+                    <div class="mc-empty reveal">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(249,168,37,.3)" stroke-width="1.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                        <p>No results yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* ── Preloader ──────────────────────────────────────────────────── */
+    var bar = document.getElementById('preloaderBar');
+    var preloader = document.getElementById('preloader');
+    var progress = 0;
+    var loadInt = setInterval(function(){
+        progress += Math.random() * 18 + 6;
+        if (progress >= 100) { progress = 100; clearInterval(loadInt); }
+        bar.style.width = progress + '%';
+        if (progress >= 100) {
+            setTimeout(function(){
+                preloader.classList.add('preloader--done');
+            }, 350);
+        }
+    }, 100);
+
+    /* ── Countdown timer + ring animation ─────────────────────────── */
+    var targetDate = new Date('2026-04-10T08:00:00+03:00').getTime();
+    var cdCard = document.querySelector('.cd-card');
+    var cdDays = document.getElementById('cdDays');
+    var cdHours = document.getElementById('cdHours');
+    var cdMins = document.getElementById('cdMins');
+    var cdSecs = document.getElementById('cdSecs');
+    var CIRC = 2 * Math.PI * 36; // ~226.2 matches stroke-dasharray
+    var ringFills = {
+        days: document.querySelector('.cd-ring__fill--days'),
+        hrs:  document.querySelector('.cd-ring__fill--hrs'),
+        min:  document.querySelector('.cd-ring__fill--min'),
+        sec:  document.querySelector('.cd-ring__fill--sec')
+    };
+
+    if (cdCard) {
+        var cdThemes = ['cd-theme--aurora', 'cd-theme--sunset', 'cd-theme--forest'];
+        var cdThemeIndex = 0;
+        var cdThemeInterval = null;
+
+        function applyCountdownTheme(idx) {
+            cdThemes.forEach(function(cls){ cdCard.classList.remove(cls); });
+            cdCard.classList.add(cdThemes[idx]);
+        }
+
+        function nextCountdownTheme() {
+            cdThemeIndex = (cdThemeIndex + 1) % cdThemes.length;
+            applyCountdownTheme(cdThemeIndex);
+        }
+
+        applyCountdownTheme(cdThemeIndex);
+        cdThemeInterval = setInterval(nextCountdownTheme, 10000);
+
+        var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReducedMotion) {
+            cdCard.addEventListener('mousemove', function(e){
+                var rect = cdCard.getBoundingClientRect();
+                var relX = ((e.clientX - rect.left) / rect.width) - 0.5;
+                var relY = ((e.clientY - rect.top) / rect.height) - 0.5;
+                var rotY = relX * 9;
+                var rotX = relY * -7;
+                cdCard.style.transform = 'translateY(-4px) rotateX(' + rotX.toFixed(2) + 'deg) rotateY(' + rotY.toFixed(2) + 'deg)';
+            });
+            cdCard.addEventListener('mouseleave', function(){
+                cdCard.style.transform = '';
+            });
+        }
+    }
+
+    function setRing(el, fraction) {
+        if (el) el.style.strokeDashoffset = CIRC * (1 - fraction);
+    }
+
+    function updateCountdown() {
+        var now = new Date().getTime();
+        var diff = targetDate - now;
+        if (diff <= 0) {
+            cdDays.textContent = '00'; cdHours.textContent = '00';
+            cdMins.textContent = '00'; cdSecs.textContent = '00';
+            setRing(ringFills.days, 0); setRing(ringFills.hrs, 0);
+            setRing(ringFills.min, 0); setRing(ringFills.sec, 0);
+            return;
+        }
+        var d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        var h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        var s = Math.floor((diff % (1000 * 60)) / 1000);
+        cdDays.textContent = d < 10 ? '0' + d : d;
+        cdHours.textContent = h < 10 ? '0' + h : h;
+        cdMins.textContent = m < 10 ? '0' + m : m;
+        cdSecs.textContent = s < 10 ? '0' + s : s;
+        setRing(ringFills.days, Math.min(d / 365, 1));
+        setRing(ringFills.hrs, h / 24);
+        setRing(ringFills.min, m / 60);
+        setRing(ringFills.sec, s / 60);
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    /* ── Scroll reveals ─────────────────────────────────────────────── */
+    var revealEls = document.querySelectorAll('.reveal, .anim-up, .anim-zoom');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){
+                e.target.classList.add('in-view');
+                revealObs.unobserve(e.target);
+            }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* ── Counter animation ──────────────────────────────────────────── */
+    var counterObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){
+                var el = e.target;
+                var target = parseInt(el.getAttribute('data-count')) || 0;
+                if(!target){ el.textContent='0'; counterObs.unobserve(el); return; }
+                var cur = 0;
+                var step = Math.max(1, Math.ceil(target / 50));
+                var t = setInterval(function(){
+                    cur += step;
+                    if(cur >= target){ cur = target; clearInterval(t); }
+                    el.textContent = cur.toLocaleString();
+                }, 35);
+                counterObs.unobserve(el);
+            }
+        });
+    }, {threshold: 0.5});
+    document.querySelectorAll('.mc-stat__num').forEach(function(el){ counterObs.observe(el); });
+
+    /* ── Navbar solid on scroll ─────────────────────────────────────── */
+    var nav = document.getElementById('fkfNav');
+    window.addEventListener('scroll', function(){
+        if(window.scrollY > 60) nav.classList.add('fkf-nav--solid');
+        else nav.classList.remove('fkf-nav--solid');
+    });
+
+    /* ── Mobile nav toggle ──────────────────────────────────────────── */
+    var toggle = document.getElementById('navToggle');
+    var links = document.getElementById('navLinks');
+    if(toggle){
+        toggle.addEventListener('click', function(){
+            toggle.classList.toggle('open');
+            links.classList.toggle('open');
+        });
+        links.querySelectorAll('a').forEach(function(a){
+            a.addEventListener('click', function(){
+                toggle.classList.remove('open');
+                links.classList.remove('open');
+            });
+        });
+    }
+
+    /* ── Hero phase switcher ──────────────────────────────────────────── */
+    var phaseA = document.getElementById('heroPhaseA');
+    var phaseB = document.getElementById('heroPhaseB');
+    var phaseC = document.getElementById('heroPhaseC');
+    if (phaseA && phaseB && phaseC) {
+        var heroPhases = [phaseA, phaseB, phaseC];
+        var phaseDurations = [8000, 8000, 9000];
+        var activePhase = 0;
+
+        function switchHeroPhase() {
+            heroPhases[activePhase].classList.remove('hero-phase--active');
+            activePhase = (activePhase + 1) % heroPhases.length;
+            heroPhases[activePhase].classList.add('hero-phase--active');
+            setTimeout(switchHeroPhase, phaseDurations[activePhase]);
+        }
+        setTimeout(function(){
+            setTimeout(switchHeroPhase, phaseDurations[activePhase]);
+        }, 4000);
+    }
+
+    /* ── Stories fullscreen carousel ──────────────────────────────────── */
+    var panels = document.querySelectorAll('.story-panel');
+    var shDots = document.querySelectorAll('.sh-dot');
+    var storyCounter = document.getElementById('storyCounter');
+    var storyProgress = document.getElementById('storyProgress');
+    var curPanel = 0;
+    var panelCount = panels.length;
+    var storyAutoInt;
+
+    function goToPanel(idx) {
+        panels[curPanel].classList.remove('story-panel--active');
+        shDots[curPanel].classList.remove('sh-dot--active');
+        curPanel = (idx + panelCount) % panelCount;
+        panels[curPanel].classList.add('story-panel--active');
+        shDots[curPanel].classList.add('sh-dot--active');
+        if (storyCounter) storyCounter.textContent = (curPanel + 1 < 10 ? '0' : '') + (curPanel + 1);
+        if (storyProgress) {
+            storyProgress.style.animation = 'none';
+            storyProgress.offsetHeight;
+            storyProgress.style.animation = '';
+        }
+    }
+
+    function startStoryAuto() {
+        storyAutoInt = setInterval(function(){ goToPanel(curPanel + 1); }, 5000);
+    }
+    function resetStoryAuto() {
+        clearInterval(storyAutoInt);
+        startStoryAuto();
+    }
+
+    if (panelCount > 0) {
+        shDots.forEach(function(dot) {
+            dot.addEventListener('click', function(){
+                goToPanel(parseInt(dot.getAttribute('data-idx')));
+                resetStoryAuto();
+            });
+        });
+        startStoryAuto();
+    }
+
+    /* ── Canvas particles ───────────────────────────────────────────── */
+    var canvas = document.getElementById('heroCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d');
+        var w, h, particles = [];
+        function resize(){
+            w = canvas.width = canvas.parentElement.offsetWidth;
+            h = canvas.height = canvas.parentElement.offsetHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+        for(var i=0; i<50; i++){
+            particles.push({
+                x: Math.random()*w, y: Math.random()*h,
+                r: Math.random()*1.8+0.5,
+                dx: (Math.random()-0.5)*0.3,
+                dy: (Math.random()-0.5)*0.3,
+                o: Math.random()*0.35+0.08
+            });
+        }
+        function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d = particles[i];
+                d.x += d.dx; d.y += d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1;
+                if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath();
+                ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(76,175,80,'+d.o+')';
+                ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+})();
+</script>
+{% endblock %}

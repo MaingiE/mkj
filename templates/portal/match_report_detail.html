@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Report — {{ report.fixture }} — KYISA CMS{% endblock %}
+{% block title %}Match Report — {{ report.fixture }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -31,12 +31,12 @@
         <div style="display:flex;justify-content:center;align-items:center;gap:2rem;">
             <div>
                 <div style="font-weight:600;margin-bottom:.5rem;">{{ report.fixture.home_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1B5E20;">{{ report.home_score }}</div>
+                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.home_score }}</div>
             </div>
             <div style="font-size:2rem;color:#999;">—</div>
             <div>
                 <div style="font-weight:600;margin-bottom:.5rem;">{{ report.fixture.away_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1B5E20;">{{ report.away_score }}</div>
+                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.away_score }}</div>
             </div>
         </div>
         {% if sport_cfg.label == 'Volleyball' and report.home_sets is not None %}
@@ -179,7 +179,7 @@
     </a>
     {% if report.status == 'draft' or report.status == 'returned' %}
     <a href="{% url 'match_report_form' fixture_pk=report.fixture.pk %}"
-       style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+       style="background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
         ✏️ Edit Report
     </a>
     {% endif %}

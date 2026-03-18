@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ team.name }} — KYISA CMS{% endblock %}
+{% block title %}{{ team.name }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -54,7 +54,7 @@
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
             <h3>Squad</h3>
             {% if can_manage and team.status == 'registered' %}
-            <a href="{% url 'add_player' team_pk=team.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.4rem 1rem;font-size:.85rem">+ Add Player</a>
+            <a href="{% url 'add_player' team_pk=team.pk %}" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.4rem 1rem;font-size:.85rem">+ Add Player</a>
             {% endif %}
         </div>
         <div class="card-body">
@@ -76,7 +76,7 @@
                         </td>
                         <td>
                             {% if p.documents_uploaded %}
-                            <span style="color:#1B5E20" title="All docs uploaded">✅</span>
+                            <span style="color:#1565C0" title="All docs uploaded">✅</span>
                             {% else %}
                             <span style="color:#f57c00" title="Missing documents">⚠️</span>
                             {% endif %}
@@ -103,7 +103,7 @@
                         </td>
                         {% if can_manage %}
                         <td style="white-space:nowrap">
-                            <a href="{% url 'edit_player' player_pk=p.pk %}" style="color:#1B5E20;margin-right:.5rem;font-size:.85rem" title="Edit">✏️</a>
+                            <a href="{% url 'edit_player' player_pk=p.pk %}" style="color:#1565C0;margin-right:.5rem;font-size:.85rem" title="Edit">✏️</a>
                             <a href="{% url 'delete_player' player_pk=p.pk %}" style="color:#C62828;font-size:.85rem" title="Remove">🗑️</a>
                         </td>
                         {% endif %}
@@ -116,7 +116,7 @@
                 <div class="icon" style="font-size:2rem">👥</div>
                 <h3>No players registered yet</h3>
                 {% if can_manage and team.status == 'registered' %}
-                <p><a href="{% url 'add_player' team_pk=team.pk %}" style="color:#1B5E20;font-weight:600">+ Add your first player</a></p>
+                <p><a href="{% url 'add_player' team_pk=team.pk %}" style="color:#1565C0;font-weight:600">+ Add your first player</a></p>
                 {% endif %}
             </div>
             {% endif %}

@@ -94,6 +94,15 @@ MKJ SUPA CUP Administration
         return False
 
 
+# Require discipline for scout/coordinator
+def require_discipline_for_scout_coordinator(user_obj, assigned_discipline):
+    """Check if discipline is provided for scout/coordinator."""
+    if user_obj.role in ('scout', 'coordinator') and not assigned_discipline:
+        messages.error(request, 'Discipline is required for scouts and coordinators.')
+        return False
+    return True
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #   ADMIN DASHBOARD
 # ══════════════════════════════════════════════════════════════════════════════
@@ -540,6 +549,12 @@ def create_league_admin(request):
             )
             user_obj.must_change_password = True
             user_obj.save(update_fields=['must_change_password'])
+
+            # Send credentials email
+            try:
+                send_credentials_email(user_obj, password, dict(UserRole.choices).get(role, role))
+            except Exception:
+                messages.warning(request, 'User created but credential email failed.')
 
             # Auto-create RefereeProfile when role is referee
             if role == 'referee':

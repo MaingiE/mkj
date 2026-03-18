@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Appoint Officials — {{ fixture }} — KYISA CMS{% endblock %}
+{% block title %}Appoint Officials — {{ fixture }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -31,13 +31,13 @@
         font-size: .75rem;
         font-weight: 600;
     }
-    .avail-available { background: #E8F5E9; color: #1B5E20; }
+    .avail-available { background: #E8F5E9; color: #1565C0; }
     .avail-unavailable { background: #FFEBEE; color: #c62828; }
     .avail-notset { background: #f5f5f5; color: #999; }
     .busy-badge { background: #FFF3E0; color: #E65100; }
     .appoint-form { display: inline; }
     .appoint-btn {
-        background: #1B5E20; color: #fff; border: none; padding: .35rem .8rem;
+        background: #1565C0; color: #fff; border: none; padding: .35rem .8rem;
         border-radius: 6px; cursor: pointer; font-size: .85rem;
     }
     .appoint-btn:hover { background: #2E7D32; }
@@ -155,8 +155,8 @@
                 <button type="button"
                         class="role-select-btn"
                         data-role="{{ role.role_key }}"
-                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid #1B5E20;cursor:pointer;font-size:.9rem;
-                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:#1B5E20;{% endif %}"
+                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid #1565C0;cursor:pointer;font-size:.9rem;
+                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:#1565C0;{% endif %}"
                         onclick="selectRole('{{ role.role_key }}', this)">
                     {{ role.role_label }}
                     {% if role.appointment %}<span style="font-size:.75rem;">(filled)</span>{% endif %}
@@ -194,7 +194,7 @@
                         <td style="padding:.5rem .8rem;">
                             <strong>{{ ref.full_name }}</strong>
                             {% if ref.is_appointed_here %}
-                            <span style="font-size:.7rem;background:#E8F5E9;color:#1B5E20;padding:.1rem .4rem;border-radius:4px;margin-left:.3rem;">
+                            <span style="font-size:.7rem;background:#E8F5E9;color:#1565C0;padding:.1rem .4rem;border-radius:4px;margin-left:.3rem;">
                                 On this match
                             </span>
                             {% endif %}
@@ -204,7 +204,7 @@
                         <td style="padding:.5rem .8rem;text-align:center;">{{ ref.total_matches }}</td>
                         <td style="padding:.5rem .8rem;text-align:center;">
                             {% if ref.avg_rating > 0 %}
-                            <span style="font-weight:600;{% if ref.avg_rating >= 7 %}color:#1B5E20;{% elif ref.avg_rating >= 5 %}color:#FF8F00;{% else %}color:#c62828;{% endif %}">
+                            <span style="font-weight:600;{% if ref.avg_rating >= 7 %}color:#1565C0;{% elif ref.avg_rating >= 5 %}color:#FF8F00;{% else %}color:#c62828;{% endif %}">
                                 {{ ref.avg_rating }}
                             </span>
                             {% else %}
@@ -222,7 +222,7 @@
                             {% elif ref.is_appointed_here %}
                             <span class="avail-badge avail-available">Assigned</span>
                             {% else %}
-                            <span style="color:#1B5E20;font-size:.85rem;">Free</span>
+                            <span style="color:#1565C0;font-size:.85rem;">Free</span>
                             {% endif %}
                         </td>
                         <td style="padding:.5rem .8rem;text-align:right;">
@@ -267,10 +267,10 @@ function selectRole(roleKey, btn) {
     // Toggle selection
     document.querySelectorAll('.role-select-btn').forEach(b => {
         b.style.background = '#fff';
-        b.style.color = '#1B5E20';
+        b.style.color = '#1565C0';
         b.style.fontWeight = 'normal';
     });
-    btn.style.background = '#1B5E20';
+    btn.style.background = '#1565C0';
     btn.style.color = '#fff';
     btn.style.fontWeight = '700';
     selectedRole = roleKey;

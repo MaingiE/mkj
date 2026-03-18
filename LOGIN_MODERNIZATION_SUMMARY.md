@@ -1,7 +1,7 @@
-# KYISA Login Portal Modernization Summary
+# MKJ SUPA CUP Login Portal Modernization Summary
 
 ## Overview
-Successfully modernized the KYISA login portal with contemporary design patterns, enhanced UX, and improved accessibility.
+Successfully modernized the MKJ SUPA CUP login portal with contemporary design patterns, enhanced UX, and improved accessibility.
 
 ## Files Modified
 1. `templates/accounts/login.html` - Main login page
@@ -124,4 +124,4 @@ Successfully modernized the KYISA login portal with contemporary design patterns
 - No database migrations required
 - No changes to backend logic
 - Pure frontend enhancement
-- Maintains KYISA brand identity with green color scheme
+- Maintains MKJ SUPA CUP brand identity with blue/gold/green color scheme

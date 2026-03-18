@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}KYISA{% endblock %} — Kenya Youth Intercounty Sports Association</title>
-    <link rel="icon" href="{% static 'img/kyisa_logo_official.jpg' %}">
+    <title>{% block title %}MKJ SUPA CUP{% endblock %} — Governor Mutula Kilonzo Junior Super Cup — Makueni County</title>
+    <link rel="icon" href="{% static 'img/mkj_supa_cup_logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -24,11 +24,11 @@
     .preloader{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s}
     .preloader--done{opacity:0;visibility:hidden;pointer-events:none}
     .preloader-inner{text-align:center}
-    .preloader-logo{width:90px;height:90px;border-radius:50%;background:#fff;border:3px solid rgba(27,94,32,.15);margin:0 auto 1.5rem;object-fit:cover;box-shadow:0 4px 20px rgba(27,94,32,.12)}
-    .preloader-name{display:block;font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#1B5E20;letter-spacing:5px}
+    .preloader-logo{width:90px;height:90px;border-radius:50%;background:#fff;border:3px solid rgba(21,101,192,.15);margin:0 auto 1.5rem;object-fit:cover;box-shadow:0 4px 20px rgba(21,101,192,.12)}
+    .preloader-name{display:block;font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#1565C0;letter-spacing:5px}
     .preloader-tagline{display:block;font-size:.75rem;color:#757575;letter-spacing:3px;text-transform:uppercase;margin-top:.25rem}
-    .preloader-bar{width:180px;height:2px;background:rgba(27,94,32,.1);border-radius:2px;margin:1.5rem auto 0;overflow:hidden}
-    .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#1B5E20,#4CAF50);border-radius:2px;transition:width .12s}
+    .preloader-bar{width:180px;height:2px;background:rgba(21,101,192,.1);border-radius:2px;margin:1.5rem auto 0;overflow:hidden}
+    .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#1565C0,#42A5F5);border-radius:2px;transition:width .12s}
     /* Navbar */
     .fkf-nav{position:fixed;top:0;left:0;right:0;z-index:10000;padding:0 2rem;height:70px;display:flex;align-items:center;background:transparent;transition:all .35s}
     .fkf-nav--solid{background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 12px rgba(0,0,0,.08)}
@@ -40,10 +40,10 @@
 <!-- ── PRELOADER ───────────────────────────────────────────────────────────── -->
 <div id="preloader" class="preloader">
     <div class="preloader-inner">
-        <img src="{% static 'img/kyisa_logo_official.jpg' %}" alt="KYISA" class="preloader-logo">
+        <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP" class="preloader-logo">
         <div class="preloader-text">
-            <span class="preloader-name">KYISA</span>
-            <span class="preloader-tagline">Kenya Youth Intercounty Sports Association</span>
+            <span class="preloader-name">MKJ SUPA CUP</span>
+            <span class="preloader-tagline">Governor Mutula Kilonzo Junior Super Cup — Makueni County</span>
         </div>
         <div class="preloader-bar">
             <div class="preloader-bar-fill" id="preloaderBar"></div>
@@ -55,9 +55,9 @@
 <nav class="fkf-nav" id="fkfNav">
     <div class="fkf-nav-inner">
         <a href="{% url 'home' %}" class="fkf-nav-brand">
-            <img src="{% static 'img/kyisa_logo_official.jpg' %}" alt="KYISA">
+            <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP">
             <div class="fkf-nav-brand-text">
-                <span class="brand-name">KYISA</span>
+                <span class="brand-name">MKJ SUPA CUP</span>
                 <span class="brand-sub">Official</span>
             </div>
         </a>
@@ -69,7 +69,6 @@
         <ul class="fkf-nav-links" id="navLinks">
             <li><a href="{% url 'home' %}" class="{% if active_page == 'home' %}active{% endif %}">Home</a></li>
             <li><a href="{% url 'about' %}" class="{% if active_page == 'about' %}active{% endif %}">About</a></li>
-            <li><a href="{% url 'leadership' %}" class="{% if active_page == 'leadership' %}active{% endif %}">Leadership</a></li>
             <li><a href="{% url 'public_competitions' %}" class="{% if active_page == 'competitions' %}active{% endif %}">Competitions</a></li>
             <li><a href="{% url 'public_results' %}" class="{% if active_page == 'results' %}active{% endif %}">Results</a></li>
             <li class="nav-dropdown">
@@ -119,10 +118,10 @@
             <div class="fkf-footer-grid">
                 <div class="fkf-footer-brand">
                     <div class="fkf-footer-brand-top">
-                        <img src="{% static 'img/kyisa_logo_official.jpg' %}" alt="KYISA">
-                        <h3>KYISA</h3>
+                        <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP">
+                        <h3>MKJ SUPA CUP</h3>
                     </div>
-                    <p>Kenya Youth Intercounty Sports Association — nurturing young athletic talent across all 47 counties of Kenya.</p>
+                    <p>Governor Mutula Kilonzo Junior Super Cup — Makueni County — nurturing young athletic talent across all sub-counties of Kenya.</p>
                     <div class="fkf-social">
                         <a href="#" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
                         <a href="#" aria-label="X"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
@@ -134,7 +133,7 @@
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="{% url 'home' %}">Home</a></li>
-                        <li><a href="{% url 'about' %}">About KYISA</a></li>
+                        <li><a href="{% url 'about' %}">About MKJ SUPA CUP</a></li>
                         <li><a href="{% url 'public_competitions' %}">Competitions</a></li>
                         <li><a href="{% url 'public_results' %}">Results</a></li>
                         <li><a href="{% url 'contact' %}">Contact Us</a></li>
@@ -153,28 +152,19 @@
                 <div>
                     <h4>Contact</h4>
                     <ul>
-                        <li>P.O BOX 20655-00200, Nairobi</li>
-                        <li>info@kyisa.org</li>
-                        <li>Info.kyisa@gmail.com</li>
+                        <li>P.O BOX 78-90300, Wote, Makueni County</li>
+                        <li>info@mkjsupacup.go.ke</li>
+                        <li>sports@makueni.go.ke</li>
                         <li>+254 700 000 000</li>
                     </ul>
                 </div>
             </div>
-            <!-- Affiliations strip -->
-            <div class="footer-affil-strip">
-                <span class="footer-affil-label">Affiliated to:</span>
-                <div class="footer-affil-logos">
-                    <img src="{% static 'img/fkf_logo.png' %}" alt="FKF" title="Football Kenya Federation">
-                    <img src="{% static 'img/kbf_logo.jpg' %}" alt="KBF" title="Kenya Basketball Federation">
-                    <img src="{% static 'img/kvf_logo.png' %}" alt="KVF" title="Kenya Volleyball Federation">
-                    <img src="{% static 'img/khf_logo.png' %}" alt="KHF" title="Kenya Handball Federation">
-                </div>
-            </div>
+
         </div>
     </div>
     <div class="fkf-footer-bottom">
         <div class="container">
-            &copy; {{ current_year|default:"2026" }} Kenya Youth Intercounty Sports Association. All rights reserved.
+            &copy; {{ current_year|default:"2026" }} Governor Mutula Kilonzo Junior Super Cup — Makueni County. All rights reserved.
         </div>
     </div>
 </footer>

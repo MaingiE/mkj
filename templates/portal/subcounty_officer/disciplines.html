@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Disciplines — MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'subcounty_officer_dashboard' %}">Dashboard</a>
+        <span>Disciplines</span>
+    </div>
+    <h1><i class="bi bi-grid"></i> Disciplines</h1>
+    <p>{{ reg.county }} County — Browse disciplines and manage players</p>
+</div>
+
+{% if disciplines %}
+<div class="quick-actions">
+    {% for d in disciplines %}
+    <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=d.pk %}" class="action-card">
+        <div class="action-icon">
+            {% if 'football' in d.sport_type %}<i class="bi bi-dribbble"></i>
+            {% elif 'basketball' in d.sport_type %}<i class="bi bi-circle"></i>
+            {% elif 'volleyball' in d.sport_type %}<i class="bi bi-globe"></i>
+            {% elif 'handball' in d.sport_type %}<i class="bi bi-hand-index"></i>
+            {% else %}<i class="bi bi-trophy"></i>{% endif %}
+        </div>
+        <h4>{{ d.get_sport_type_display }}</h4>
+        <p>{{ d.player_count }} / {{ d.squad_limit }} players</p>
+        <div style="background:#e0e0e0;border-radius:8px;height:6px;margin-top:.5rem;width:100%">
+            <div style="background:{% if d.can_add_player %}#1565C0{% else %}#C62828{% endif %};border-radius:8px;height:6px;width:{% widthratio d.player_count d.squad_limit 100 %}%;transition:width .3s"></div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="padding:3rem;text-align:center;color:#888">
+    <i class="bi bi-grid" style="font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.4"></i>
+    <h4 style="color:#666;margin-bottom:.25rem">No Disciplines Yet</h4>
+    <p style="font-size:.9rem">No disciplines have been set up for Makueni County yet.</p>
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'subcounty_officer_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

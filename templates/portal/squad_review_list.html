@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Squad Review — KYISA CMS{% endblock %}
+{% block title %}Squad Review — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -40,7 +40,7 @@
                         <td>{{ sq.squad_players.count }}</td>
                         <td>
                             <a href="{% url 'squad_review' squad_pk=sq.pk %}"
-                               style="background:#1B5E20;color:#fff;padding:.4rem 1rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                               style="background:#1565C0;color:#fff;padding:.4rem 1rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
                                 Review
                             </a>
                         </td>
@@ -94,7 +94,7 @@
                         <td>{{ sq.submitted_at|date:"d M Y H:i"|default:"—" }}</td>
                         <td>
                             <a href="{% url 'squad_review' squad_pk=sq.pk %}"
-                               style="color:#1B5E20;text-decoration:underline;">View</a>
+                               style="color:#1565C0;text-decoration:underline;">View</a>
                         </td>
                     </tr>
                     {% endfor %}

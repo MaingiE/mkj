@@ -26,7 +26,20 @@ class UserRole(models.TextChoices):
     MEDIA_MANAGER       = "media_manager",       "Media Manager"
     SECRETARY_GENERAL   = "secretary_general",   "Secretary General"
     SCOUT               = "scout",               "Scout"
+    SUBCOUNTY_SPORTS_OFFICER = "subcounty_sports_officer", "Sub-County Sports Officer"
+    CHIEF_SPORTS_OFFICER = "chief_sports_officer", "Chief Sports Officer"
+    DIRECTOR_SPORTS     = "director_sports",     "Director of Sports"
+    CHIEF_OFFICER_SPORTS = "chief_officer_sports", "Chief Officer - Sports"
     ADMIN               = "admin",               "System Admin"
+
+
+class MakueniSubCounty(models.TextChoices):
+    MAKUENI      = "Makueni",      "Makueni"
+    KIBWEZI_WEST = "Kibwezi West", "Kibwezi West"
+    KIBWEZI_EAST = "Kibwezi East", "Kibwezi East"
+    KAITI        = "Kaiti",        "Kaiti"
+    KILOME       = "Kilome",       "Kilome"
+    MBOONI       = "Mbooni",       "Mbooni"
 
 
 class UserManager(BaseUserManager):
@@ -56,6 +69,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone       = models.CharField(max_length=13, validators=[kenya_phone_validator])
     role        = models.CharField(max_length=30, choices=UserRole.choices, default=UserRole.TEAM_MANAGER)
     county      = models.CharField(max_length=100, blank=True, help_text="Kenyan county")
+    sub_county  = models.CharField(
+        max_length=50, blank=True, default="",
+        choices=MakueniSubCounty.choices,
+        help_text="Makueni County sub-county (constituency) for sports officers",
+    )
     profile_photo = models.ImageField(upload_to="profiles/", null=True, blank=True)
     is_active   = models.BooleanField(default=True)
     is_staff    = models.BooleanField(default=False)
@@ -114,6 +132,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_scout(self): return self.role == UserRole.SCOUT
     @property
     def is_secretary_general(self): return self.role == UserRole.SECRETARY_GENERAL
+    @property
+    def is_subcounty_sports_officer(self): return self.role == UserRole.SUBCOUNTY_SPORTS_OFFICER
+    @property
+    def is_chief_sports_officer(self): return self.role == UserRole.CHIEF_SPORTS_OFFICER
+    @property
+    def is_director_sports(self): return self.role == UserRole.DIRECTOR_SPORTS
+    @property
+    def is_chief_officer_sports(self): return self.role == UserRole.CHIEF_OFFICER_SPORTS
     @property
     def is_admin(self): return self.role == UserRole.ADMIN or self.is_superuser
 

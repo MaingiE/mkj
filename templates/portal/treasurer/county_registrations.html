@@ -40,7 +40,7 @@
         <form method="post" style="display:flex;gap:.5rem;flex-wrap:wrap">
             {% csrf_token %}
             <input type="hidden" name="registration_id" value="{{ r.pk }}">
-            <button type="submit" name="action" value="approve" style="padding:.4rem 1rem;background:#1B5E20;color:#fff;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer">
+            <button type="submit" name="action" value="approve" style="padding:.4rem 1rem;background:#1565C0;color:#fff;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer">
                 <i class="bi bi-check-circle"></i> Approve
             </button>
             <button type="submit" name="action" value="reject" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer"
@@ -78,7 +78,7 @@
                     <td style="padding:.6rem 1rem;font-size:.85rem">{{ r.user.email }}</td>
                     <td style="padding:.6rem 1rem">
                         <span style="padding:.2rem .6rem;border-radius:20px;font-size:.78rem;font-weight:600;
-                            {% if r.status == 'approved' %}background:#e8f5e9;color:#1B5E20
+                            {% if r.status == 'approved' %}background:#e8f5e9;color:#1565C0
                             {% elif r.status == 'payment_submitted' %}background:#e3f2fd;color:#1565c0
                             {% elif r.status == 'rejected' %}background:#fce4ec;color:#C62828
                             {% else %}background:#fff3e0;color:#e65100{% endif %}">

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Player Verification — KYISA CMS{% endblock %}
+{% block title %}Player Verification — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -89,7 +89,7 @@
     <a href="?tab=pending{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'pending' %}#E65100{% else %}transparent{% endif %};color:{% if tab == 'pending' %}#E65100{% else %}#888{% endif %};margin-bottom:-2px">
         ⏳ Pending ({{ stats.pending }})
     </a>
-    <a href="?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#1B5E20{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#1B5E20{% else %}#888{% endif %};margin-bottom:-2px">
+    <a href="?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#1565C0{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#1565C0{% else %}#888{% endif %};margin-bottom:-2px">
         ✅ Verified ({{ stats.verified }})
     </a>
     <a href="?tab=rejected{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px">
@@ -130,12 +130,12 @@
                         <td>{{ p.discipline.get_sport_type_display }}</td>
                         <td>{{ p.age }}</td>
                         <td>{{ p.national_id_number|default:"—" }}</td>
-                        <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1B5E20">📸</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
-                        <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1B5E20">🪪</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
-                        <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1B5E20">📜</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                        <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1565C0">📸</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                        <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1565C0">🪪</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                        <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1565C0">📜</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
                         <td><small>{{ p.registered_at|date:"d M Y" }}</small></td>
                         <td>
-                            <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                            <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.3rem .75rem;font-size:.8rem">Review</a>
                         </td>
                     </tr>
                     {% endfor %}

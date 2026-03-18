@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Player Clearance Dashboard — KYISA CMS{% endblock %}
+{% block title %}Player Clearance Dashboard — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -49,7 +49,7 @@
                 </div>
                 {% if stats.total > 0 %}
                 <div style="margin-top:.5rem;background:#e0e0e0;border-radius:4px;height:6px;overflow:hidden">
-                    <div style="width:{% widthratio stats.docs_verified stats.total 100 %}%;height:100%;background:#4CAF50;border-radius:4px"></div>
+                    <div style="width:{% widthratio stats.docs_verified stats.total 100 %}%;height:100%;background:#42A5F5;border-radius:4px"></div>
                 </div>
                 {% endif %}
             </div>
@@ -70,8 +70,8 @@
                 {% endif %}
             </div>
             <!-- Step 3: FIFA Connect -->
-            <div style="padding:1rem;background:#f5f7f5;border-radius:10px;border-left:4px solid #1B5E20">
-                <h4 style="margin:0 0 .5rem;color:#1B5E20">Step 3: FIFA Connect (League)</h4>
+            <div style="padding:1rem;background:#f5f7f5;border-radius:10px;border-left:4px solid #1565C0">
+                <h4 style="margin:0 0 .5rem;color:#1565C0">Step 3: FIFA Connect (League)</h4>
                 <div style="display:flex;justify-content:space-between;font-size:.9rem">
                     <span>✅ Clear: <strong>{{ stats.fifa_clear }}</strong></span>
                     <span>⏳ Not Checked: <strong>{{ stats.fifa_not_checked }}</strong></span>
@@ -81,7 +81,7 @@
                 </div>
                 {% if stats.total > 0 %}
                 <div style="margin-top:.5rem;background:#e0e0e0;border-radius:4px;height:6px;overflow:hidden">
-                    <div style="width:{% widthratio stats.fifa_clear stats.total 100 %}%;height:100%;background:#1B5E20;border-radius:4px"></div>
+                    <div style="width:{% widthratio stats.fifa_clear stats.total 100 %}%;height:100%;background:#1565C0;border-radius:4px"></div>
                 </div>
                 {% endif %}
             </div>
@@ -117,7 +117,7 @@
                             {% for t in teams %}<option value="{{ t.pk }}">{{ t.name }}</option>{% endfor %}
                         </select>
                     </div>
-                    <button type="submit" style="padding:.5rem 1.25rem;background:#1B5E20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap">Run Check</button>
+                    <button type="submit" style="padding:.5rem 1.25rem;background:#1565C0;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap">Run Check</button>
                 </div>
             </form>
         </div>
@@ -139,7 +139,7 @@
                 <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>⏳ Pending Steps</option>
                 <option value="flagged" {% if status_filter == 'flagged' %}selected{% endif %}>🚩 Flagged / Failed</option>
             </select>
-            <button type="submit" style="padding:.5rem 1rem;background:#1B5E20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Filter</button>
+            <button type="submit" style="padding:.5rem 1rem;background:#1565C0;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Filter</button>
             {% if search or team_filter or status_filter != 'all' %}
             <a href="{% url 'player_clearance_dashboard' %}" style="color:#888;font-size:.85rem">Clear Filters</a>
             {% endif %}
@@ -176,7 +176,7 @@
                         <td>{{ p.team.name }}<br><small style="color:#888">{{ p.team.county }}</small></td>
                         <td>
                             {% if p.is_age_eligible %}
-                            <span style="color:#1B5E20;font-weight:600">{{ p.age }}</span>
+                            <span style="color:#1565C0;font-weight:600">{{ p.age }}</span>
                             {% else %}
                             <span style="color:#C62828;font-weight:700">{{ p.age }} ⛔</span>
                             {% endif %}
@@ -184,7 +184,7 @@
                         <!-- Step 1: Document Verification -->
                         <td style="text-align:center">
                             {% if p.verification_status == 'verified' %}
-                            <span style="background:#e8f5e9;color:#1B5E20;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">✅ Verified</span>
+                            <span style="background:#e8f5e9;color:#1565C0;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">✅ Verified</span>
                             {% elif p.verification_status == 'rejected' %}
                             <span style="background:#fce4ec;color:#C62828;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">❌ Rejected</span>
                             {% else %}
@@ -194,7 +194,7 @@
                         <!-- Step 2: Huduma Kenya -->
                         <td style="text-align:center">
                             {% if p.huduma_status == 'verified' %}
-                            <span style="background:#e8f5e9;color:#1B5E20;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">✅ Verified</span>
+                            <span style="background:#e8f5e9;color:#1565C0;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">✅ Verified</span>
                             {% elif p.huduma_status == 'failed' %}
                             <span style="background:#fce4ec;color:#C62828;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">❌ Failed</span>
                             {% elif p.huduma_status == 'pending' %}
@@ -206,7 +206,7 @@
                         <!-- Step 3: FIFA Connect -->
                         <td style="text-align:center">
                             {% if p.fifa_connect_status == 'clear' %}
-                            <span style="background:#e8f5e9;color:#1B5E20;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">✅ Clear</span>
+                            <span style="background:#e8f5e9;color:#1565C0;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">✅ Clear</span>
                             {% elif p.fifa_connect_status == 'flagged' %}
                             <span style="background:#fce4ec;color:#C62828;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">🚩 Flagged</span>
                             {% elif p.fifa_connect_status == 'error' %}
@@ -218,7 +218,7 @@
                         <!-- Final Clearance -->
                         <td style="text-align:center">
                             {% if p.is_fully_cleared and p.status == 'eligible' %}
-                            <span style="background:#1B5E20;color:#fff;padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:700">🛡️ CLEARED</span>
+                            <span style="background:#1565C0;color:#fff;padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:700">🛡️ CLEARED</span>
                             {% elif p.is_fully_cleared %}
                             <span style="background:#FF9800;color:#fff;padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:600">Awaiting</span>
                             {% else %}
@@ -226,7 +226,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'player_clearance_detail' player_pk=p.pk %}" style="display:inline-block;padding:.3rem .75rem;background:#1B5E20;color:#fff;border-radius:6px;text-decoration:none;font-size:.8rem;font-weight:600">Review</a>
+                            <a href="{% url 'player_clearance_detail' player_pk=p.pk %}" style="display:inline-block;padding:.3rem .75rem;background:#1565C0;color:#fff;border-radius:6px;text-decoration:none;font-size:.8rem;font-weight:600">Review</a>
                         </td>
                     </tr>
                     {% endfor %}

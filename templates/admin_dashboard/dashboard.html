@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}System Admin Dashboard - KYISA CMS{% endblock %}
+{% block title %}System Admin Dashboard - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
     .dash-hero {
-        background: linear-gradient(135deg, #0D3B0F 0%, #1B5E20 50%, #2E7D32 100%);
+        background: linear-gradient(135deg, #0D3B0F 0%, #1565C0 50%, #2E7D32 100%);
         border-radius: 16px;
         padding: 2rem 2.5rem;
         color: #fff;
@@ -76,8 +76,8 @@
         font-size: 1.8rem;
         opacity: .15;
     }
-    .dash-stat.green  { border-left-color: #1B5E20; }
-    .dash-stat.green .stat-num { color: #1B5E20; }
+    .dash-stat.green  { border-left-color: #1565C0; }
+    .dash-stat.green .stat-num { color: #1565C0; }
     .dash-stat.blue   { border-left-color: #1565C0; }
     .dash-stat.blue .stat-num { color: #1565C0; }
     .dash-stat.amber  { border-left-color: #E65100; }
@@ -109,8 +109,8 @@
     .action-tile:hover {
         transform: translateY(-3px);
         box-shadow: 0 6px 20px rgba(0,0,0,.1);
-        border-color: #1B5E20;
-        color: #1B5E20;
+        border-color: #1565C0;
+        color: #1565C0;
     }
     .action-tile .tile-icon {
         width: 44px;
@@ -216,7 +216,7 @@
 
 <!-- Quick Actions -->
 <div class="card" style="margin-bottom:2rem;">
-    <div class="card-header" style="background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;">
+    <div class="card-header" style="background:linear-gradient(135deg,#1565C0,#2E7D32);color:#fff;">
         <h3 style="color:#fff;">Quick Actions</h3>
     </div>
     <div class="card-body">
@@ -230,7 +230,7 @@
             </a>
 
             <a href="{% url 'approve_registrations' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;"><i class="bi bi-check-circle"></i></div>
+                <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;"><i class="bi bi-check-circle"></i></div>
                 <div class="tile-text">
                     <h4>Approve Registrations{% if pending_teams > 0 %}<span class="tile-badge">{{ pending_teams }}</span>{% endif %}</h4>
                     <p>Review and approve pending teams</p>
@@ -279,7 +279,7 @@
             </a>
 
             <a href="{% url 'matches:manage_matches' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;"><i class="bi bi-clipboard-data"></i></div>
+                <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;"><i class="bi bi-clipboard-data"></i></div>
                 <div class="tile-text">
                     <h4>Manage Matches</h4>
                     <p>Edit results, update live scores</p>
@@ -321,7 +321,7 @@
                         <div class="ri-sub">{{ team.county|default:"No county" }} &middot; {{ team.registered_at|date:"d M Y" }}</div>
                     </div>
                     <span class="ri-badge" style="
-                        {% if team.status == 'registered' %}background:#E8F5E9;color:#1B5E20;
+                        {% if team.status == 'registered' %}background:#E8F5E9;color:#1565C0;
                         {% elif team.status == 'pending' %}background:#FFF8E1;color:#F57F17;
                         {% else %}background:#f5f5f5;color:#666;{% endif %}">
                         {{ team.status|title }}
@@ -352,7 +352,7 @@
                         </div>
                     </div>
                     <span class="ri-badge" style="
-                        {% if fixture.status == 'completed' %}background:#E8F5E9;color:#1B5E20;
+                        {% if fixture.status == 'completed' %}background:#E8F5E9;color:#1565C0;
                         {% elif fixture.status == 'live' %}background:#FFEBEE;color:#C62828;
                         {% elif fixture.status == 'scheduled' %}background:#E3F2FD;color:#1565C0;
                         {% else %}background:#f5f5f5;color:#666;{% endif %}">

@@ -14,9 +14,9 @@
         <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
     </div>
     <div class="container page-hero__inner">
-        <span class="page-hero__badge reveal">11th Edition</span>
+        <span class="page-hero__badge reveal">1st Edition</span>
         <h1 class="page-hero__title reveal">Our <span class="text-gold">Competitions</span></h1>
-        <p class="page-hero__sub reveal">Browse KYISA intercounty sporting competitions across Kenya's 47 counties</p>
+        <p class="page-hero__sub reveal">Browse MKJ SUPA CUP sporting competitions across Makueni County sub-counties</p>
         <div class="page-hero__breadcrumb reveal">
             <a href="{% url 'home' %}">Home</a>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
@@ -34,7 +34,7 @@
         <div class="sec-head">
             <span class="badge">Disciplines</span>
             <h2 class="sec-title">Our Sports</h2>
-            <p class="sec-sub">KYISA organises competitive intercounty tournaments across these disciplines</p>
+            <p class="sec-sub">MKJ SUPA CUP organises competitive inter sub-county tournaments across these disciplines</p>
             <div class="sec-line"></div>
         </div>
         <div class="disc-grid">
@@ -76,7 +76,7 @@
             {% elif sport.exhibition %}
             <p class="sec-sub">Exhibition matches — showcase events only</p>
             {% else %}
-            <p class="sec-sub">Intercounty {{ sport.label }} competitions across Kenya's 47 counties</p>
+            <p class="sec-sub">Intercounty {{ sport.label }} competitions across Kenya's sub-counties</p>
             {% endif %}
             <div class="sec-line"></div>
         </div>
@@ -99,7 +99,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="comp-card__desc">{{ comp.description|default:"An intercounty competition organised by KYISA." }}</p>
+                <p class="comp-card__desc">{{ comp.description|default:"A competition organised by MKJ SUPA CUP." }}</p>
                 <div class="comp-card__meta">
                     <span>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -142,7 +142,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="comp-card__desc">{{ comp.description|default:"An upcoming intercounty competition organised by KYISA." }}</p>
+                <p class="comp-card__desc">{{ comp.description|default:"An upcoming competition organised by MKJ SUPA CUP." }}</p>
                 <div class="comp-card__meta">
                     <span>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -193,7 +193,7 @@
         <div class="sport-empty-check" data-sport="{{ sport.key }}">
             <div class="comp-card comp-card--empty" style="text-align:center;justify-content:center;">
                 <div class="comp-card__inner" style="padding:2.5rem 1.5rem;text-align:center;">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(27,94,32,.18)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(21,101,192,.18)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     {% if sport.exhibition %}
                     <h3 style="margin:.75rem 0 .25rem;font-size:1rem;color:#888;">Exhibition Matches Coming Soon</h3>
                     <p style="font-size:.85rem;color:#aaa;margin:0;">Stay tuned for upcoming exhibition events</p>
@@ -202,7 +202,7 @@
                     <p style="font-size:.85rem;color:#aaa;margin:0;">Check back soon for new tournaments</p>
                     {% endif %}
                     {% if sport.key == "soccer" %}
-                    <a href="{% url 'county_admin_register' %}" class="btn btn--primary btn--sm" style="margin-top:1rem;">Register Your County</a>
+                    <a href="{% url 'county_admin_register' %}" class="btn btn--primary btn--sm" style="margin-top:1rem;">Register Your Sub-County</a>
                     {% endif %}
                 </div>
             </div>

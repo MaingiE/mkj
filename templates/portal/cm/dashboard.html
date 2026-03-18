@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Organising Secretary Dashboard &mdash; KYISA CMS{% endblock %}
+{% block title %}Organising Secretary Dashboard &mdash; MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -56,8 +56,8 @@
     .cm-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; }
     .cm-stat.purple  { border-left-color: #7B1FA2; }
     .cm-stat.purple .num { color: #7B1FA2; }
-    .cm-stat.green   { border-left-color: #1B5E20; }
-    .cm-stat.green .num { color: #1B5E20; }
+    .cm-stat.green   { border-left-color: #1565C0; }
+    .cm-stat.green .num { color: #1565C0; }
     .cm-stat.blue    { border-left-color: #1565C0; }
     .cm-stat.blue .num { color: #1565C0; }
     .cm-stat.amber   { border-left-color: #E65100; }
@@ -210,7 +210,7 @@
                 </div>
             </a>
             <a href="{% url 'pending_teams' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;"><i class="bi bi-check-circle"></i></div>
+                <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;"><i class="bi bi-check-circle"></i></div>
                 <div class="tile-text">
                     <h4>County Registrations</h4>
                     <p>Review pending county registrations</p>
@@ -257,7 +257,7 @@
                         </div>
                         <div class="ri-sub">{{ comp.get_sport_type_display }} &middot; {{ comp.get_age_group_display }}</div>
                     </div>
-                    <span class="ri-badge" style="background:#E8F5E9;color:#1B5E20;">{{ comp.get_status_display }}</span>
+                    <span class="ri-badge" style="background:#E8F5E9;color:#1565C0;">{{ comp.get_status_display }}</span>
                 </div>
                 {% endfor %}
             {% else %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Reports &mdash; {{ discipline_label }} &mdash; KYISA CMS{% endblock %}
+{% block title %}Match Reports &mdash; {{ discipline_label }} &mdash; MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -34,7 +34,7 @@
         </div>
     </div>
     <div style="display:flex;gap:.5rem;align-items:center;">
-        <span class="status-badge" style="background:{% if report.status == 'submitted' %}#FFF3E0;color:#E65100{% elif report.status == 'approved' %}#E8F5E9;color:#1B5E20{% else %}#FFEBEE;color:#C62828{% endif %};">{{ report.get_status_display }}</span>
+        <span class="status-badge" style="background:{% if report.status == 'submitted' %}#FFF3E0;color:#E65100{% elif report.status == 'approved' %}#E8F5E9;color:#1565C0{% else %}#FFEBEE;color:#C62828{% endif %};">{{ report.get_status_display }}</span>
         {% if report.status == 'submitted' %}
         <a href="{% url 'match_report_review' report_pk=report.pk %}" class="btn btn-sm btn-primary">Review</a>
         {% else %}

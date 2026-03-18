@@ -347,6 +347,66 @@
             <a href="{% url 'scout_shortlist' %}" class="sidebar-link {% if request.resolver_match.url_name == 'scout_shortlist' %}active{% endif %}"><span class="icon"><i class="bi bi-star"></i></span> My Shortlist</a>
         </div>
     </div>
+
+    {% elif user.role == 'subcounty_sports_officer' %}
+    <!-- SUB-COUNTY SPORTS OFFICER SIDEBAR -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>Sub-County Officer</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'subcounty_officer_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
+            <a href="{% url 'subcounty_officer_disciplines' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_disciplines' or request.resolver_match.url_name == 'subcounty_officer_discipline_players' or request.resolver_match.url_name == 'subcounty_officer_add_player' %}active{% endif %}"><span class="icon"><i class="bi bi-person-vcard"></i></span> Disciplines &amp; Players</a>
+            <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
+            <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
+            <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
+            <a href="{% url 'referees_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'referees_list' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
+        </div>
+    </div>
+
+    {% elif user.role == 'chief_sports_officer' %}
+    <!-- CHIEF SPORTS OFFICER SIDEBAR (same as Organising Secretary) -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>Chief Sports Officer</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'cm_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cm_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
+            <a href="{% url 'cm_create_competition' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cm_create_competition' %}active{% endif %}"><span class="icon"><i class="bi bi-plus-circle"></i></span> Create Competition</a>
+            <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> All Competitions</a>
+            <a href="{% url 'cm_venues' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cm_venues' %}active{% endif %}"><span class="icon"><i class="bi bi-geo-alt"></i></span> Venues</a>
+            <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
+            <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
+            <a href="{% url 'pending_teams' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pending_teams' %}active{% endif %}"><span class="icon"><i class="bi bi-pencil-square"></i></span> County Registrations</a>
+            <a href="{% url 'county_player_verification_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'county_player_verification_list' %}active{% endif %}"><span class="icon"><i class="bi bi-person-vcard"></i></span> Player Verification</a>
+        </div>
+    </div>
+
+    {% elif user.role == 'director_sports' %}
+    <!-- DIRECTOR OF SPORTS SIDEBAR -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>Director of Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'director_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-shaded"></i></span> Dashboard</a>
+            <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
+            <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
+            <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
+            <a href="{% url 'referees_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'referees_list' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
+            <a href="{% url 'cec_sports_portal' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cec_sports_portal' %}active{% endif %}"><span class="icon"><i class="bi bi-people-fill"></i></span> CEC Sports</a>
+            <a href="{% url 'appeals_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'appeals_list' %}active{% endif %}"><span class="icon"><i class="bi bi-briefcase"></i></span> Appeals</a>
+        </div>
+    </div>
+
+    {% elif user.role == 'chief_officer_sports' %}
+    <!-- CHIEF OFFICER SPORTS SIDEBAR -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>Chief Officer — Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'chief_officer_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chief_officer_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-award"></i></span> Dashboard</a>
+            <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
+            <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
+            <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
+            <a href="{% url 'referees_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'referees_list' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
+            <a href="{% url 'cec_sports_portal' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cec_sports_portal' %}active{% endif %}"><span class="icon"><i class="bi bi-people-fill"></i></span> CEC Sports</a>
+            <a href="{% url 'appeals_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'appeals_list' %}active{% endif %}"><span class="icon"><i class="bi bi-briefcase"></i></span> Appeals</a>
+        </div>
+    </div>
     {% endif %}
 
     <div class="sidebar-section" style="margin-top: auto;">

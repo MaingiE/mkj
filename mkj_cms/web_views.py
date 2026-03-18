@@ -59,7 +59,7 @@ def role_required(*roles):
 
 
 def send_credentials_email(user, temporary_password, role_label):
-    """Send login credentials to the registrant's email address."""
+    """Send login credentials to the registrant's email address and print to terminal."""
     subject = f'MKJ SUPA CUP Portal Access - {role_label}'
     text_content = (
         f'Dear {user.first_name} {user.last_name},\n\n'
@@ -71,11 +71,11 @@ def send_credentials_email(user, temporary_password, role_label):
         f'Please change your password immediately after first login.\n\n'
         f'MKJ SUPA CUP Administration'
     )
-
+    print("\n=== NEW USER ACCOUNT EMAIL ===\n" + text_content + "\n============================\n")
     email = EmailMultiAlternatives(
         subject,
         text_content,
-        getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkj_supacup.org'),
+        getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.go.ke'),
         [user.email],
     )
     email.send(fail_silently=False)
@@ -124,120 +124,6 @@ def about_view(request):
         'active_page': 'about',
         'stats': stats,
         'counties': KenyaCounty.choices,
-    })
-
-
-def leadership_view(request):
-    """Public leadership page — MKJ SUPA CUP officials and their messages."""
-    leaders = [
-        {
-            'name': 'Chairperson',
-            'title': 'Chairperson',
-            'image': None,
-            'message': (
-                'As Chairperson of MKJ SUPA CUP, I am proud to champion a leadership agenda '
-                'that keeps youth development, fairness, and county inclusion at the center '
-                'of our sports mission. We remain committed to building strong structures '
-                'that give every county equal opportunity to compete and grow talent.'
-            ),
-        },
-        {
-            'name': 'First Vice-Chairperson',
-            'title': 'First Vice-Chairperson',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Second Vice-Chairperson',
-            'title': 'Second Vice-Chairperson',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Ambrose Kisoi',
-            'title': 'Secretary General',
-            'image': 'img/leadership/ambrose_kisoi.png',
-            'message': (
-                'Welcome to the Kenya Youth Intercounty Sports Association. '
-                'As Secretary General, it is my privilege to lead an organisation '
-                'that is dedicated to nurturing the next generation of Kenyan '
-                'sporting talent. MKJ SUPA CUP exists to provide a platform where young '
-                'athletes from all 47 counties can showcase their abilities, '
-                'build lifelong friendships, and develop the discipline that '
-                'sport instils.\n\n'
-                'Our annual championship has grown into one of Kenya\'s most '
-                'anticipated youth sporting events, bringing together thousands '
-                'of talented young men and women aged 18 to 23. We believe that '
-                'every county has untapped potential, and through fair, '
-                'competitive, and well-organised tournaments, we aim to uncover '
-                'and develop that talent.\n\n'
-                'I invite you to explore our programmes, follow our competitions, '
-                'and join us in building a stronger, more united Kenya through sport.'
-            ),
-        },
-        {
-            'name': 'Deputy Secretary General',
-            'title': 'Deputy Secretary General',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Treasurer',
-            'title': 'Treasurer',
-            'image': None,
-            'message': (
-                'The MKJ SUPA CUP treasury remains committed to transparent financial management '
-                'and accountable support for all competition operations. We continue to '
-                'prioritise timely approvals, proper documentation, and prudent stewardship '
-                'of resources entrusted to the association.'
-            ),
-        },
-        {
-            'name': 'Deputy Treasurer',
-            'title': 'Deputy Treasurer',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Organizing Secretary',
-            'title': 'Organizing Secretary',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Deputy Organizing Secretary',
-            'title': 'Deputy Organizing Secretary',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'CEC Sports Nominee 1',
-            'title': 'CEC Members Caucus Nominee',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'CEC Sports Nominee 2',
-            'title': 'CEC Members Caucus Nominee',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Chief Officers Nominee 1',
-            'title': 'Chief Officers Caucus Nominee',
-            'image': None,
-            'message': '',
-        },
-        {
-            'name': 'Chief Officers Nominee 2',
-            'title': 'Chief Officers Caucus Nominee',
-            'image': None,
-            'message': '',
-        },
-    ]
-    return render(request, 'public/leadership.html', {
-        'active_page': 'leadership',
-        'leaders': leaders,
     })
 
 
@@ -669,6 +555,18 @@ def dashboard_view(request):
 
     if user.role == 'scout':
         return redirect('scout_dashboard')
+
+    if user.role == 'subcounty_sports_officer':
+        return redirect('subcounty_officer_dashboard')
+
+    if user.role == 'chief_sports_officer':
+        return redirect('cm_dashboard')  # Same portal as Organising Secretary
+
+    if user.role == 'director_sports':
+        return redirect('director_sports_dashboard')
+
+    if user.role == 'chief_officer_sports':
+        return redirect('chief_officer_sports_dashboard')
 
     recent_fixtures = Fixture.objects.select_related(
         'competition', 'home_team', 'away_team'
@@ -1110,7 +1008,7 @@ def referee_register_success_view(request):
 #   ADMIN / MANAGER — TEAM APPROVAL VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('admin', 'competition_manager')
+@role_required('admin', 'competition_manager', 'chief_sports_officer')
 def pending_teams_view(request):
     """Legacy endpoint kept for compatibility; county registration is now the only channel."""
     messages.info(request, 'Legacy team registration flow has been retired. Use county registrations.')
@@ -1184,7 +1082,7 @@ def pending_referees_view(request):
 #   ADMIN — PLAYER VERIFICATION VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('admin', 'competition_manager', 'secretary_general', 'verification_officer')
+@role_required('admin', 'competition_manager', 'chief_sports_officer', 'secretary_general', 'verification_officer')
 def player_verification_list_view(request):
     """Canonical player verification entry — uses county player verification queue."""
     if request.user.role == 'secretary_general':
@@ -1194,7 +1092,7 @@ def player_verification_list_view(request):
     return redirect('county_player_verification_list')
 
 
-@role_required('admin', 'competition_manager', 'verification_officer')
+@role_required('admin', 'competition_manager', 'chief_sports_officer', 'verification_officer')
 def verify_player_view(request, player_pk):
     """Admin view to inspect a single player's documents and verify/reject."""
     player = get_object_or_404(Player, pk=player_pk)
@@ -1430,7 +1328,7 @@ def squad_select_view(request, fixture_pk):
 #   SQUAD APPROVAL (Referee / CR)
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('referee', 'admin', 'competition_manager')
+@role_required('referee', 'admin', 'competition_manager', 'chief_sports_officer')
 def squad_review_list_view(request):
     """List squads awaiting referee approval."""
     user = request.user
@@ -1462,7 +1360,7 @@ def squad_review_list_view(request):
     })
 
 
-@role_required('referee', 'admin', 'competition_manager')
+@role_required('referee', 'admin', 'competition_manager', 'chief_sports_officer')
 def squad_review_view(request, squad_pk):
     """Referee reviews a submitted squad — approve or reject."""
     squad = get_object_or_404(SquadSubmission, pk=squad_pk)
@@ -3098,7 +2996,7 @@ def treasurer_county_payments_view(request):
 #   COMPETITION MANAGER — STATISTICS & LEADERBOARDS
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def competition_standings_view(request, pk):
     """
     Competition Manager view: full standings, knockout bracket, and statistics.
@@ -3162,7 +3060,7 @@ def competition_standings_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def competition_reports_view(request, pk):
     """
     Competition Manager reviews and approves match reports for a competition.
@@ -3193,7 +3091,7 @@ def competition_reports_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def competition_report_approve_view(request, pk, report_pk):
     """
     Competition Manager approves or returns a specific match report.
@@ -3518,7 +3416,7 @@ def referee_appoint_view(request, fixture_pk):
 #   COMPETITION MANAGER — FULL PORTAL VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_dashboard_view(request):
     """Competition Manager dashboard — overview of all competitions and key stats."""
     from competitions.models import (
@@ -3578,7 +3476,7 @@ def cm_dashboard_view(request):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_create_competition_view(request):
     """Create a new competition."""
     from competitions.models import (
@@ -3643,7 +3541,7 @@ def cm_create_competition_view(request):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_edit_competition_view(request, pk):
     """Edit an existing competition."""
     from competitions.models import (
@@ -3682,7 +3580,7 @@ def cm_edit_competition_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_competition_manage_view(request, pk):
     """
     Central management hub for a competition.
@@ -3762,7 +3660,7 @@ def cm_competition_manage_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_manage_pools_view(request, pk):
     """Create/delete pools and assign/remove teams."""
     from competitions.models import Competition, Pool, PoolTeam, CountyPayment
@@ -3848,7 +3746,7 @@ def cm_manage_pools_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_generate_fixtures_view(request, pk):
     """Generate fixtures for a competition."""
     from competitions.models import Competition, Fixture, Venue, Pool
@@ -3941,7 +3839,7 @@ def cm_generate_fixtures_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_manage_venues_view(request):
     """Manage venues — list, create, edit."""
     from competitions.models import Venue
@@ -4009,7 +3907,7 @@ def cm_manage_venues_view(request):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_allocate_venue_view(request, pk):
     """Allocate venues to fixtures for a competition."""
     from competitions.models import Competition, Fixture, Venue
@@ -4054,7 +3952,7 @@ def cm_allocate_venue_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_edit_standings_view(request, pk):
     """Admin override — manually edit pool team standings."""
     from competitions.models import Competition, Pool, PoolTeam
@@ -4131,7 +4029,7 @@ def cm_edit_standings_view(request, pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_edit_fixture_view(request, pk, fixture_pk):
     """Edit a specific fixture (date, time, venue, teams for knockout)."""
     from competitions.models import Competition, Fixture, Venue
@@ -4195,7 +4093,7 @@ def cm_edit_fixture_view(request, pk, fixture_pk):
     })
 
 
-@role_required('competition_manager', 'admin')
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_competition_rules_view(request, pk):
     """Edit and publish competition rules."""
     competition = get_object_or_404(Competition, pk=pk)
@@ -4215,7 +4113,7 @@ def cm_competition_rules_view(request, pk):
 #   VERIFICATION OFFICER — COUNTY-BASED VERIFICATION FLOW
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('competition_manager', 'admin', 'verification_officer')
+@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
 def vo_registered_counties_view(request):
     """List all registered (approved) counties with stats."""
     counties = CountyRegistration.objects.filter(
@@ -4246,7 +4144,7 @@ def vo_registered_counties_view(request):
     })
 
 
-@role_required('competition_manager', 'admin', 'verification_officer')
+@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
 def vo_county_disciplines_view(request, county_reg_pk):
     """Show disciplines registered under a specific county."""
     reg = get_object_or_404(CountyRegistration, pk=county_reg_pk, status='approved')
@@ -4272,7 +4170,7 @@ def vo_county_disciplines_view(request, county_reg_pk):
     })
 
 
-@role_required('competition_manager', 'admin', 'verification_officer')
+@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
 def vo_discipline_players_view(request, discipline_pk):
     """Show players in a discipline with gender filter, linking to verification."""
     discipline = get_object_or_404(
@@ -4315,7 +4213,7 @@ def vo_discipline_players_view(request, discipline_pk):
     })
 
 
-@role_required('competition_manager', 'admin', 'verification_officer')
+@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
 def vo_discipline_delegation_view(request, discipline_pk):
     """View technical bench / delegation for a discipline (separate from players)."""
     discipline = get_object_or_404(
@@ -4335,7 +4233,7 @@ def vo_discipline_delegation_view(request, discipline_pk):
 #   COUNTY PLAYER VERIFICATION (Competition Manager / Organising Secretary)
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('competition_manager', 'admin', 'verification_officer')
+@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
 def county_player_verification_list_view(request):
     """CM view: All county players by verification status with filters."""
     tab = request.GET.get('tab', 'pending')
@@ -4405,7 +4303,7 @@ def county_player_verification_list_view(request):
     })
 
 
-@role_required('competition_manager', 'admin', 'verification_officer')
+@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
 def verify_county_player_view(request, player_pk):
     """CM view: Inspect a county player's documents and verify/reject/resubmit."""
     player = get_object_or_404(
@@ -4731,7 +4629,7 @@ def county_admin_register_success_view(request):
     })
 
 
-@role_required('admin', 'competition_manager', 'secretary_general', 'coordinator', 'verification_officer', 'cec_sports')
+@role_required('admin', 'competition_manager', 'chief_sports_officer', 'secretary_general', 'coordinator', 'verification_officer', 'cec_sports')
 def cec_sports_portal_view(request):
     """CEC sports caucus portal (view-only): high-level competition and verification visibility."""
     competitions = Competition.objects.order_by('-created_at')[:12]
@@ -4922,7 +4820,7 @@ def county_admin_delete_player_view(request, player_pk):
 #   TREASURER — COUNTY REGISTRATION APPROVALS
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('treasurer', 'admin', 'competition_manager')
+@role_required('treasurer', 'admin', 'competition_manager', 'chief_sports_officer')
 def treasurer_county_registrations_view(request):
     """Treasurer reviews county admin registrations and approves/rejects."""
     if request.method == 'POST':
@@ -4946,7 +4844,7 @@ def treasurer_county_registrations_view(request):
                         f'You can now log in to the MKJ SUPA CUP portal and begin adding disciplines and players.\n\n'
                         f'MKJ SUPA CUP Administration'
                     ),
-                    from_email=getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkj_supacup.org'),
+                    from_email=getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.go.ke'),
                     recipient_list=[reg.user.email],
                     fail_silently=True,
                 )
@@ -6479,3 +6377,199 @@ def scout_remove_from_shortlist_view(request, pk):
         entry.delete()
         messages.success(request, f'{name} removed from your shortlist.')
     return redirect('scout_shortlist')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SUB-COUNTY SPORTS OFFICER PORTAL
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'admin')
+def subcounty_officer_dashboard_view(request):
+    """Dashboard for Sub-County Sports Officers from Makueni County constituencies."""
+    user = request.user
+    sub_county = user.sub_county or 'Unassigned'
+
+    # Show teams from this officer's sub-county
+    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    disciplines = []
+    players_count = 0
+    if county_reg:
+        disciplines = CountyDiscipline.objects.filter(registration=county_reg)
+        players_count = CountyPlayer.objects.filter(discipline__in=disciplines).count()
+
+    stats = {
+        'sub_county': sub_county,
+        'disciplines': disciplines.count() if disciplines else 0,
+        'players': players_count,
+        'fixtures': Fixture.objects.count(),
+        'competitions': Competition.objects.count(),
+    }
+
+    upcoming_fixtures = Fixture.objects.filter(
+        match_date__gte=timezone.now()
+    ).select_related('competition', 'home_team', 'away_team', 'venue').order_by('match_date')[:6]
+
+    return render(request, 'portal/subcounty_officer/dashboard.html', {
+        'stats': stats,
+        'upcoming_fixtures': upcoming_fixtures,
+        'sub_county': sub_county,
+        'disciplines': disciplines,
+        'county_reg': county_reg,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def subcounty_officer_disciplines_view(request):
+    """List all disciplines for the Makueni county registration."""
+    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    if not county_reg:
+        messages.warning(request, 'No county registration found for Makueni.')
+        return redirect('subcounty_officer_dashboard')
+
+    disciplines = CountyDiscipline.objects.filter(registration=county_reg)
+    return render(request, 'portal/subcounty_officer/disciplines.html', {
+        'disciplines': disciplines,
+        'reg': county_reg,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def subcounty_officer_discipline_players_view(request, discipline_pk):
+    """View players in a discipline."""
+    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    if not county_reg:
+        messages.warning(request, 'No county registration found for Makueni.')
+        return redirect('subcounty_officer_dashboard')
+
+    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=county_reg)
+    players = discipline.players.all()
+
+    return render(request, 'portal/subcounty_officer/discipline_players.html', {
+        'reg': county_reg,
+        'discipline': discipline,
+        'players': players,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def subcounty_officer_add_player_view(request, discipline_pk):
+    """Sub-county sports officer adds a player to a discipline."""
+    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    if not county_reg:
+        messages.warning(request, 'No county registration found for Makueni.')
+        return redirect('subcounty_officer_dashboard')
+
+    if not county_reg.is_approved:
+        messages.warning(request, 'County registration must be approved before adding players.')
+        return redirect('subcounty_officer_dashboard')
+
+    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=county_reg)
+
+    if not discipline.can_add_player:
+        messages.error(
+            request,
+            f'Squad limit reached ({discipline.squad_limit}) for '
+            f'{discipline.get_sport_type_display()}.'
+        )
+        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
+
+    if request.method == 'POST':
+        form = CountyPlayerForm(request.POST, request.FILES)
+        if form.is_valid():
+            player = form.save(commit=False)
+            player.discipline = discipline
+            player.save()
+            messages.success(
+                request,
+                f'{player.first_name} {player.last_name} registered '
+                f'({discipline.player_count}/{discipline.squad_limit}).'
+            )
+            return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
+    else:
+        form = CountyPlayerForm()
+
+    return render(request, 'portal/subcounty_officer/add_player.html', {
+        'form': form,
+        'discipline': discipline,
+        'reg': county_reg,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def subcounty_officer_delete_player_view(request, player_pk):
+    """Sub-county sports officer removes a player from a discipline."""
+    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    if not county_reg:
+        messages.warning(request, 'No county registration found for Makueni.')
+        return redirect('subcounty_officer_dashboard')
+
+    player = get_object_or_404(CountyPlayer, pk=player_pk, discipline__registration=county_reg)
+    discipline_pk = player.discipline.pk
+
+    if request.method == 'POST':
+        name = f'{player.first_name} {player.last_name}'
+        player.delete()
+        messages.success(request, f'{name} removed.')
+    return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   DIRECTOR OF SPORTS PORTAL
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('director_sports', 'admin')
+def director_sports_dashboard_view(request):
+    """Dashboard for Director of Sports — high-level oversight of all competitions."""
+    stats = {
+        'competitions': Competition.objects.count(),
+        'teams': Team.objects.count(),
+        'players': Player.objects.count(),
+        'referees': RefereeProfile.objects.filter(is_approved=True).count(),
+        'fixtures': Fixture.objects.count(),
+        'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+    }
+
+    active_comps = Competition.objects.filter(
+        status__in=['active', 'group_stage', 'knockout']
+    ).order_by('-start_date')[:5]
+
+    recent_results = Fixture.objects.filter(
+        status='completed'
+    ).select_related('competition', 'home_team', 'away_team').order_by('-match_date')[:8]
+
+    return render(request, 'portal/director_sports/dashboard.html', {
+        'stats': stats,
+        'active_competitions': active_comps,
+        'recent_results': recent_results,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   CHIEF OFFICER SPORTS PORTAL
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('chief_officer_sports', 'admin')
+def chief_officer_sports_dashboard_view(request):
+    """Dashboard for Chief Officer - Sports — executive oversight."""
+    stats = {
+        'competitions': Competition.objects.count(),
+        'teams': Team.objects.count(),
+        'players': Player.objects.count(),
+        'referees': RefereeProfile.objects.filter(is_approved=True).count(),
+        'fixtures': Fixture.objects.count(),
+        'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+    }
+
+    active_comps = Competition.objects.filter(
+        status__in=['active', 'group_stage', 'knockout']
+    ).order_by('-start_date')[:5]
+
+    recent_results = Fixture.objects.filter(
+        status='completed'
+    ).select_related('competition', 'home_team', 'away_team').order_by('-match_date')[:8]
+
+    return render(request, 'portal/chief_officer_sports/dashboard.html', {
+        'stats': stats,
+        'active_competitions': active_comps,
+        'recent_results': recent_results,
+    })

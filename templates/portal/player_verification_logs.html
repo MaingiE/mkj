@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verification Logs — {{ player.get_full_name }} — KYISA CMS{% endblock %}
+{% block title %}Verification Logs — {{ player.get_full_name }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -40,7 +40,7 @@
                         <td style="font-weight:600">{{ log.action }}</td>
                         <td>
                             {% if log.result == 'verified' or log.result == 'clear' or log.result == 'eligible' %}
-                            <span style="background:#e8f5e9;color:#1B5E20;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">{{ log.result }}</span>
+                            <span style="background:#e8f5e9;color:#1565C0;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">{{ log.result }}</span>
                             {% elif log.result == 'flagged' or log.result == 'failed' or log.result == 'rejected' or log.result == 'ineligible' %}
                             <span style="background:#fce4ec;color:#C62828;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">{{ log.result }}</span>
                             {% else %}

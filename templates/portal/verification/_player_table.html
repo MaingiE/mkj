@@ -23,14 +23,14 @@
                 </td>
                 <td>{{ p.age }}</td>
                 <td>{{ p.national_id_number|default:"—" }}</td>
-                <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1B5E20">📸</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
-                <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1B5E20">🪪</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
-                <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1B5E20">📜</a>{% else %}<span style="color:#888">—</span>{% endif %}</td>
+                <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1565C0">📸</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1565C0">🪪</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1565C0">📜</a>{% else %}<span style="color:#888">—</span>{% endif %}</td>
                 <td>
                     {% if p.verification_status == 'pending' %}
                     <span style="background:#FFF3E0;color:#E65100;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Pending</span>
                     {% elif p.verification_status == 'verified' %}
-                    <span style="background:#E8F5E9;color:#1B5E20;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Verified</span>
+                    <span style="background:#E8F5E9;color:#1565C0;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Verified</span>
                     {% elif p.verification_status == 'rejected' %}
                     <span style="background:#FFEBEE;color:#C62828;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Rejected</span>
                     {% elif p.verification_status == 'resubmit' %}
@@ -39,7 +39,7 @@
                 </td>
                 <td><small>{{ p.registered_at|date:"d M Y" }}</small></td>
                 <td>
-                    <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                    <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.3rem .75rem;font-size:.8rem">Review</a>
                 </td>
             </tr>
             {% endfor %}

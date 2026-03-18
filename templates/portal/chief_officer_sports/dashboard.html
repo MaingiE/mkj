@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chief Officer Sports — MKJ SUPA CUP Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-award"></i> Chief Officer — Sports Portal</h1>
+    <p>Governor Mutula Kilonzo Junior Super Cup — Makueni County Government</p>
+</div>
+
+<!-- Executive Banner -->
+<div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%); color: #fff; border: none;">
+    <div class="card-body" style="padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-award" style="font-size: 1.8rem;"></i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800;">Chief Officer — Sports</h2>
+                <p style="margin: .25rem 0 0; opacity: .8; font-size: .85rem;">
+                    Makueni County Government — Department of Sports, Culture & Social Services
+                </p>
+            </div>
+            <div style="margin-left: auto;">
+                <span style="background: rgba(251,192,45,.2); color: #FDD835; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(251,192,45,.3);">
+                    <i class="bi bi-star-fill"></i> CHIEF OFFICER
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-trophy"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.competitions }}</h3>
+            <p>Competitions</p>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-people"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.teams }}</h3>
+            <p>Teams</p>
+        </div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-person-vcard"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.players }}</h3>
+            <p>Players</p>
+        </div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="bi bi-flag"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.referees }}</h3>
+            <p>Referees</p>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-clipboard-data"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.fixtures }}</h3>
+            <p>Fixtures</p>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-building"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.counties_registered }}</h3>
+            <p>Sub-Counties Registered</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-lightning"></i> Quick Actions</h3></div>
+    <div class="card-body">
+        <div class="quick-actions">
+            <a href="{% url 'competitions_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-trophy"></i></div>
+                <h4>All Competitions</h4>
+                <p>View and track competitions</p>
+            </a>
+            <a href="{% url 'teams_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-people"></i></div>
+                <h4>All Teams</h4>
+                <p>View registered teams</p>
+            </a>
+            <a href="{% url 'matches_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
+                <h4>Fixtures & Results</h4>
+                <p>Match schedule & outcomes</p>
+            </a>
+            <a href="{% url 'referees_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-flag"></i></div>
+                <h4>Referees</h4>
+                <p>Match officials roster</p>
+            </a>
+            <a href="{% url 'cec_sports_portal' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-people-fill"></i></div>
+                <h4>CEC Sports View</h4>
+                <p>County executive overview</p>
+            </a>
+            <a href="{% url 'appeals_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-briefcase"></i></div>
+                <h4>Appeals</h4>
+                <p>View filed appeals</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Active Competitions -->
+{% if active_competitions %}
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-trophy-fill"></i> Active Competitions</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Competition</th>
+                        <th>Sport</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in active_competitions %}
+                    <tr>
+                        <td><strong>{{ comp.name }}</strong></td>
+                        <td>{{ comp.get_sport_type_display }}</td>
+                        <td><span class="badge badge-success">{{ comp.get_status_display }}</span></td>
+                        <td>{{ comp.start_date|date:"d M Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Results -->
+{% if recent_results %}
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-clipboard-check"></i> Recent Results</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Competition</th>
+                        <th>Home</th>
+                        <th>Score</th>
+                        <th>Away</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in recent_results %}
+                    <tr>
+                        <td>{{ match.match_date|date:"d M" }}</td>
+                        <td>{{ match.competition.name }}</td>
+                        <td><strong>{{ match.home_team.name }}</strong></td>
+                        <td style="text-align:center; font-weight:800; color:var(--primary);">
+                            {{ match.home_score|default:"-" }} — {{ match.away_score|default:"-" }}
+                        </td>
+                        <td><strong>{{ match.away_team.name }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

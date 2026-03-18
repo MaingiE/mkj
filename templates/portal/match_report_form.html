@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Report — {{ fixture }} — KYISA CMS{% endblock %}
+{% block title %}Match Report — {{ fixture }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -276,7 +276,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
             <!-- Home Team -->
             <div>
-                <h4 style="color:#1B5E20;margin-bottom:.5rem;">{{ fixture.home_team.name }}</h4>
+                <h4 style="color:#1565C0;margin-bottom:.5rem;">{{ fixture.home_team.name }}</h4>
                 {% if home_squad %}
                 {% if home_starters %}
                 <div style="margin-bottom:.8rem;">
@@ -354,7 +354,7 @@
     <div class="card-header">
         <h3>📋 Match Events</h3>
         <button type="button" id="addEventBtn"
-                style="background:#1B5E20;color:#fff;padding:.4rem 1rem;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;">
+                style="background:#1565C0;color:#fff;padding:.4rem 1rem;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;">
             + Add Event
         </button>
     </div>
@@ -407,7 +407,7 @@
         💾 Save Draft
     </button>
     <button type="submit" name="submit_action" value="submit"
-            style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
+            style="background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
             onclick="return confirm('Submit this report for review? You can still edit it until it is approved.')">
         📤 Submit for Review
     </button>

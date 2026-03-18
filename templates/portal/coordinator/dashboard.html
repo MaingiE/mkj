@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Discipline Coordinator Dashboard &mdash; KYISA CMS{% endblock %}
+{% block title %}Discipline Coordinator Dashboard &mdash; MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -56,8 +56,8 @@
     .dc-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; }
     .dc-stat.teal   { border-left-color: #00695C; }
     .dc-stat.teal .num { color: #00695C; }
-    .dc-stat.green  { border-left-color: #1B5E20; }
-    .dc-stat.green .num { color: #1B5E20; }
+    .dc-stat.green  { border-left-color: #1565C0; }
+    .dc-stat.green .num { color: #1565C0; }
     .dc-stat.blue   { border-left-color: #1565C0; }
     .dc-stat.blue .num { color: #1565C0; }
     .dc-stat.amber  { border-left-color: #E65100; }
@@ -219,7 +219,7 @@
                 </div>
             </a>
             <a href="{% url 'coordinator_squads' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;"><i class="bi bi-people"></i></div>
+                <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;"><i class="bi bi-people"></i></div>
                 <div class="tile-text">
                     <h4>Match Day Squads</h4>
                     <p>View submitted squad lists</p>
@@ -321,7 +321,7 @@
                 <div class="ri-main">{{ fx.home_team.name }} {{ fx.home_score }} - {{ fx.away_score }} {{ fx.away_team.name }}</div>
                 <div class="ri-sub">{{ fx.competition.name }} &middot; {{ fx.match_date|date:"d M Y" }}</div>
             </div>
-            <span class="ri-badge" style="background:#E8F5E9;color:#1B5E20;">Completed</span>
+            <span class="ri-badge" style="background:#E8F5E9;color:#1565C0;">Completed</span>
         </div>
         {% endfor %}
     </div>

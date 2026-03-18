@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Change Role: {{ edit_user.get_full_name }} - KYISA CMS{% endblock %}
+{% block title %}Change Role: {{ edit_user.get_full_name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -25,15 +25,15 @@
         transition: all .2s ease;
         margin-bottom: .5rem;
     }
-    .role-option:hover { border-color: #4CAF50; background: #FAFAFA; }
+    .role-option:hover { border-color: #42A5F5; background: #FAFAFA; }
     .role-option.selected {
-        border-color: #1B5E20;
+        border-color: #1565C0;
         background: #E8F5E9;
     }
     .role-option input[type="radio"] {
         width: 18px;
         height: 18px;
-        accent-color: #1B5E20;
+        accent-color: #1565C0;
         flex-shrink: 0;
     }
     .role-option .role-name {
@@ -87,7 +87,7 @@
                             {% if edit_user.role == 'admin' %}background:#E3F2FD;color:#1565C0;
                             {% elif edit_user.role == 'competition_manager' %}background:#F3E5F5;color:#6A1B9A;
                             {% elif edit_user.role == 'coordinator' %}background:#FFF3E0;color:#E65100;
-                            {% elif edit_user.role == 'referee' %}background:#E8F5E9;color:#1B5E20;
+                            {% elif edit_user.role == 'referee' %}background:#E8F5E9;color:#1565C0;
                             {% elif edit_user.role == 'team_manager' %}background:#FCE4EC;color:#AD1457;
                             {% elif edit_user.role == 'treasurer' %}background:#FFF8E1;color:#F57F17;
                             {% else %}background:#ECEFF1;color:#455A64;{% endif %}">

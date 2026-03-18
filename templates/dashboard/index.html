@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard — KYISA CMS{% endblock %}
+{% block title %}Dashboard — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
 
 <!-- Stats -->
 <div class="stats-grid">
-    {% if user.role == 'admin' or user.role == 'competition_manager' %}
+    {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'chief_sports_officer' or user.role == 'director_sports' or user.role == 'chief_officer_sports' %}
     <div class="stat-card green">
         <div class="stat-icon green"><i class="bi bi-trophy"></i></div>
         <div class="stat-info">
@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    {% if user.role == 'admin' or user.role == 'competition_manager' %}
+    {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'chief_sports_officer' or user.role == 'director_sports' or user.role == 'chief_officer_sports' %}
     <div class="stat-card blue">
         <div class="stat-icon blue"><i class="bi bi-person-vcard"></i></div>
         <div class="stat-info">
@@ -118,6 +118,48 @@
                 <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
                 <h4>Upcoming Fixtures</h4>
                 <p>View scheduled matches</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'subcounty_sports_officer' %}
+            <a href="{% url 'subcounty_officer_dashboard' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                <h4>Sub-County Portal</h4>
+                <p>Manage your sub-county</p>
+            </a>
+            <a href="{% url 'competitions_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-trophy"></i></div>
+                <h4>Competitions</h4>
+                <p>View competitions</p>
+            </a>
+            <a href="{% url 'teams_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-people"></i></div>
+                <h4>Teams</h4>
+                <p>View registered teams</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'chief_sports_officer' %}
+            <a href="{% url 'cm_dashboard' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-star"></i></div>
+                <h4>Chief Sports Officer</h4>
+                <p>Full competition management</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'director_sports' %}
+            <a href="{% url 'director_sports_dashboard' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-shield-check"></i></div>
+                <h4>Director Sports Portal</h4>
+                <p>Executive sports oversight</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'chief_officer_sports' %}
+            <a href="{% url 'chief_officer_sports_dashboard' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-building"></i></div>
+                <h4>Chief Officer Portal</h4>
+                <p>County sports governance</p>
             </a>
             {% endif %}
 

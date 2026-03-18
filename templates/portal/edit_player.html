@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Edit {{ player.get_full_name }} — KYISA CMS{% endblock %}
+{% block title %}Edit {{ player.get_full_name }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -17,7 +17,7 @@
     <div class="card-body">
         {% if messages %}
         {% for message in messages %}
-        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'error' %}#fce4ec{% else %}#e8f5e9{% endif %};border-left:4px solid {% if message.tags == 'error' %}#C62828{% else %}#1B5E20{% endif %}">
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'error' %}#fce4ec{% else %}#e8f5e9{% endif %};border-left:4px solid {% if message.tags == 'error' %}#C62828{% else %}#1565C0{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
@@ -35,7 +35,7 @@
             {% endfor %}
 
             <div style="display:flex;gap:.75rem;margin-top:1rem">
-                <button type="submit" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.6rem 1.5rem">
+                <button type="submit" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.6rem 1.5rem">
                     Save Changes
                 </button>
                 <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem">Cancel</a>

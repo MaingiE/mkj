@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ reg.get_county_display }} — Disciplines — KYISA CMS{% endblock %}
+{% block title %}{{ reg.get_county_display }} — Disciplines — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -16,7 +16,7 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;">
     {% for item in disc_data %}
     <div class="card" style="padding:0;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);padding:1rem 1.25rem;color:#fff;">
+        <div style="background:linear-gradient(135deg,#1565C0,#2E7D32);padding:1rem 1.25rem;color:#fff;">
             <h3 style="margin:0;font-size:1.1rem;font-weight:700">{{ item.discipline.get_sport_type_display }}</h3>
         </div>
         <div style="padding:1.25rem;">
@@ -27,8 +27,8 @@
                     <div style="font-size:.75rem;color:#E65100">Pending</div>
                 </div>
                 <div style="text-align:center;padding:.5rem;background:#E8F5E9;border-radius:8px;">
-                    <div style="font-size:1.3rem;font-weight:700;color:#1B5E20">{{ item.verified }}</div>
-                    <div style="font-size:.75rem;color:#1B5E20">Verified</div>
+                    <div style="font-size:1.3rem;font-weight:700;color:#1565C0">{{ item.verified }}</div>
+                    <div style="font-size:.75rem;color:#1565C0">Verified</div>
                 </div>
                 <div style="text-align:center;padding:.5rem;background:#FFEBEE;border-radius:8px;">
                     <div style="font-size:1.3rem;font-weight:700;color:#C62828">{{ item.rejected }}</div>
@@ -46,7 +46,7 @@
             </div>
 
             <div style="display:flex;gap:.5rem;">
-                <a href="{% url 'vo_discipline_players' discipline_pk=item.discipline.pk %}" class="btn btn-outline btn-sm" style="flex:1;background:#1B5E20;color:#fff;border-color:#1B5E20;text-align:center;padding:.4rem .5rem;font-size:.8rem">
+                <a href="{% url 'vo_discipline_players' discipline_pk=item.discipline.pk %}" class="btn btn-outline btn-sm" style="flex:1;background:#1565C0;color:#fff;border-color:#1565C0;text-align:center;padding:.4rem .5rem;font-size:.8rem">
                     <i class="bi bi-people-fill"></i> Players
                 </a>
                 <a href="{% url 'vo_discipline_delegation' discipline_pk=item.discipline.pk %}" class="btn btn-outline btn-sm" style="flex:1;text-align:center;padding:.4rem .5rem;font-size:.8rem">

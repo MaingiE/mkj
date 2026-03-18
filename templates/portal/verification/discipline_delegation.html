@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ discipline.get_sport_type_display }} — {{ reg.get_county_display }} — Delegation — KYISA CMS{% endblock %}
+{% block title %}{{ discipline.get_sport_type_display }} — {{ reg.get_county_display }} — Delegation — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -17,7 +17,7 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;">
     {% for member in bench_members %}
     <div class="card" style="padding:0;overflow:hidden;">
-        <div style="background:{% if member.role == 'team_manager' %}linear-gradient(135deg,#1B5E20,#2E7D32){% elif member.role == 'head_coach' %}linear-gradient(135deg,#0D47A1,#1565C0){% else %}linear-gradient(135deg,#4E342E,#6D4C41){% endif %};padding:.75rem 1.25rem;color:#fff;">
+        <div style="background:{% if member.role == 'team_manager' %}linear-gradient(135deg,#1565C0,#2E7D32){% elif member.role == 'head_coach' %}linear-gradient(135deg,#0D47A1,#1565C0){% else %}linear-gradient(135deg,#4E342E,#6D4C41){% endif %};padding:.75rem 1.25rem;color:#fff;">
             <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;opacity:.9;">{{ member.get_role_display }}</div>
         </div>
         <div style="padding:1.25rem;display:flex;gap:1rem;align-items:flex-start;">
@@ -43,7 +43,7 @@
         </div>
         {% if member.id_document %}
         <div style="padding:0 1.25rem 1rem;border-top:1px solid #f0f0f0;padding-top:.75rem;">
-            <a href="{{ member.id_document.url }}" target="_blank" style="font-size:.85rem;color:#1B5E20;text-decoration:none;font-weight:600;">
+            <a href="{{ member.id_document.url }}" target="_blank" style="font-size:.85rem;color:#1565C0;text-decoration:none;font-weight:600;">
                 <i class="bi bi-file-earmark-image"></i> View ID Document
             </a>
         </div>
@@ -63,11 +63,11 @@
 
 <!-- Back links -->
 <div style="margin-top:1.25rem">
-    <a href="{% url 'vo_county_disciplines' county_reg_pk=reg.pk %}" style="color:#1B5E20;text-decoration:none;font-weight:600;">
+    <a href="{% url 'vo_county_disciplines' county_reg_pk=reg.pk %}" style="color:#1565C0;text-decoration:none;font-weight:600;">
         <i class="bi bi-arrow-left"></i> Back to {{ reg.get_county_display }} Disciplines
     </a>
     &nbsp;&nbsp;|&nbsp;&nbsp;
-    <a href="{% url 'vo_discipline_players' discipline_pk=discipline.pk %}" style="color:#1B5E20;text-decoration:none;font-weight:600;">
+    <a href="{% url 'vo_discipline_players' discipline_pk=discipline.pk %}" style="color:#1565C0;text-decoration:none;font-weight:600;">
         <i class="bi bi-people-fill"></i> View Players
     </a>
 </div>

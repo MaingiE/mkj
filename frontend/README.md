@@ -1,4 +1,4 @@
-# KYISA Frontend — React SPA
+# MKJ SUPA CUP Frontend — React SPA
 
 Modern React frontend for the Kenya Youth Interschool Sports Association Competition Management System.
 
@@ -43,7 +43,7 @@ npm run dev
 npm run build
 ```
 
-This outputs to `dist/`. Django serves the SPA at `/app/` via the catch-all view in `kyisa_cms/spa_views.py`.
+This outputs to `dist/`. Django serves the SPA at `/app/` via the catch-all view in `mkj_cms/spa_views.py`.
 
 ## Project Structure
 

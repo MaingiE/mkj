@@ -41,7 +41,7 @@ from news_media.portal_views import (
 
 from .web_views import (
     # Public website
-    home_view, about_view, leadership_view, public_competitions_view,
+    home_view, about_view, public_competitions_view,
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
     contact_view,
@@ -158,13 +158,20 @@ from .web_views import (
     scout_remove_from_shortlist_view,
     # M-Pesa STK push endpoint
     mpesa_stk_push_view,
+    # New MKJ SUPA CUP portals
+    subcounty_officer_dashboard_view,
+    subcounty_officer_disciplines_view,
+    subcounty_officer_discipline_players_view,
+    subcounty_officer_add_player_view,
+    subcounty_officer_delete_player_view,
+    director_sports_dashboard_view,
+    chief_officer_sports_dashboard_view,
 )
 
 urlpatterns = [
     # ── PUBLIC WEBSITE ────────────────────────────────────────────────────────
     path("",                              home_view,                      name="home"),
     path("about/",                        about_view,                     name="about"),
-    path("leadership/",                   leadership_view,                name="leadership"),
     path("competitions/public/",          public_competitions_view,       name="public_competitions"),
     path("competitions/public/<int:pk>/", public_competition_detail_view, name="public_competition_detail"),
     path("results/",                      public_results_view,            name="public_results"),
@@ -357,6 +364,19 @@ urlpatterns = [
     path("portal/scout/shortlist/<int:pk>/edit/",      scout_edit_shortlist_view,         name="scout_edit_shortlist"),
     path("portal/scout/shortlist/<int:pk>/remove/",    scout_remove_from_shortlist_view,  name="scout_remove_from_shortlist"),
 
+    # ── SUB-COUNTY SPORTS OFFICER PORTAL ──────────────────────────────────
+    path("portal/subcounty-officer/", subcounty_officer_dashboard_view, name="subcounty_officer_dashboard"),
+    path("portal/subcounty-officer/disciplines/", subcounty_officer_disciplines_view, name="subcounty_officer_disciplines"),
+    path("portal/subcounty-officer/discipline/<int:discipline_pk>/", subcounty_officer_discipline_players_view, name="subcounty_officer_discipline_players"),
+    path("portal/subcounty-officer/discipline/<int:discipline_pk>/add-player/", subcounty_officer_add_player_view, name="subcounty_officer_add_player"),
+    path("portal/subcounty-officer/player/<int:player_pk>/delete/", subcounty_officer_delete_player_view, name="subcounty_officer_delete_player"),
+
+    # ── DIRECTOR OF SPORTS PORTAL ─────────────────────────────────────────
+    path("portal/director-sports/", director_sports_dashboard_view, name="director_sports_dashboard"),
+
+    # ── CHIEF OFFICER SPORTS PORTAL ───────────────────────────────────────
+    path("portal/chief-officer-sports/", chief_officer_sports_dashboard_view, name="chief_officer_sports_dashboard"),
+
     # ── ADMIN DASHBOARD ───────────────────────────────────────────────────────
     path("portal/admin-dashboard/", include("admin_dashboard.urls")),
 
@@ -385,6 +405,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # ── ADMIN CUSTOMISATION ───────────────────────────────────────────────────────
-admin.site.site_header = "MKJ SUPA CUP Competition Management System"
+admin.site.site_header = "MKJ SUPA CUP — Governor Mutula Kilonzo Junior Super Cup"
 admin.site.site_title  = "MKJ SUPA CUP Admin"
-admin.site.index_title = "Administration Dashboard"
+admin.site.index_title = "Makueni County Sports Administration"

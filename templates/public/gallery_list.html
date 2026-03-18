@@ -10,7 +10,7 @@
 ═══════════════════════════════════════ */
 .gallery-hero {
     padding: 10rem 0 4rem;
-    background: linear-gradient(135deg, #0a1a0d 0%, #1B5E20 50%, #0d2810 100%);
+    background: linear-gradient(135deg, #0a1a0d 0%, #1565C0 50%, #0d2810 100%);
     position: relative; overflow: hidden;
     text-align: center; color: #fff;
 }
@@ -92,8 +92,8 @@
     font-size: .85rem; font-weight: 600; transition: all .2s;
 }
 .gallery-pagination a { background: #fff; color: #555; border: 1px solid #e0e0e0; }
-.gallery-pagination a:hover { background: #e8f5e9; color: #1B5E20; border-color: #1B5E20; }
-.gallery-pagination .current { background: #1B5E20; color: #fff; border: 1px solid #1B5E20; }
+.gallery-pagination a:hover { background: #e8f5e9; color: #1565C0; border-color: #1565C0; }
+.gallery-pagination .current { background: #1565C0; color: #fff; border: 1px solid #1565C0; }
 
 /* ── Empty ── */
 .gallery-empty {
@@ -111,7 +111,7 @@
     <div class="container">
         <div class="gallery-hero-badge"><i class="bi bi-images"></i> GALLERY</div>
         <h1>Photo Gallery</h1>
-        <p>Relive the best moments from KYISA events, matches, and ceremonies across Kenya's 47 counties.</p>
+        <p>Relive the best moments from KYISA events, matches, and ceremonies across Kenya's sub-counties.</p>
     </div>
 </section>
 
@@ -125,7 +125,7 @@
                 {% if album.display_cover %}
                     <img src="{{ album.display_cover }}" alt="{{ album.title }}">
                 {% else %}
-                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1B5E20;">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1565C0;">
                         <i class="bi bi-images" style="font-size:3rem;opacity:.3;"></i>
                     </div>
                 {% endif %}
