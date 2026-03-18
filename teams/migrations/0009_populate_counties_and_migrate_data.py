@@ -78,6 +78,16 @@ def migrate_team_counties(apps, schema_editor):
     """Map existing Team.county string values to County foreign keys"""
     Team = apps.get_model('teams', 'Team')
     County = apps.get_model('teams', 'County')
+    connection = schema_editor.connection
+
+    # Fresh databases already have FK-based county storage (county_id) and no
+    # legacy text column named `county`. In that case, there is nothing to migrate.
+    table_name = Team._meta.db_table
+    with connection.cursor() as cursor:
+        columns = [c.name for c in connection.introspection.get_table_description(cursor, table_name)]
+    if 'county' not in columns:
+        print('ℹ️ No legacy teams_team.county column found; skipping county text migration.')
+        return
     
     # County name mappings for common variations
     county_mappings = {
@@ -188,7 +198,6 @@ def migrate_team_counties(apps, schema_editor):
     failed_mappings = []
     
     # First, let's use raw SQL to check what county values we have
-    from django.db import connection
     with connection.cursor() as cursor:
         cursor.execute("SELECT DISTINCT county FROM teams_team WHERE county IS NOT NULL")
         existing_counties = [row[0] for row in cursor.fetchall()]
@@ -238,10 +247,16 @@ def reverse_migrate_team_counties(apps, schema_editor):
     """Reverse migration - convert County FKs back to string county names"""
     Team = apps.get_model('teams', 'Team')
     County = apps.get_model('teams', 'County')
+    connection = schema_editor.connection
+
+    table_name = Team._meta.db_table
+    with connection.cursor() as cursor:
+        columns = [c.name for c in connection.introspection.get_table_description(cursor, table_name)]
+    if 'county' not in columns:
+        return
     
     # This is complex to reverse since we'd lose the original string format
     # For now, we'll just use the county names
-    from django.db import connection
     with connection.cursor() as cursor:
         cursor.execute("""
             UPDATE teams_team 

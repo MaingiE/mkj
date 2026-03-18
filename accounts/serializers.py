@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class MKJ SUPA CUPTokenObtainSerializer(TokenObtainPairSerializer):
+class MKJTokenObtainSerializer(TokenObtainPairSerializer):
     """
     Custom JWT serializer — embeds user role and name in the token payload
     and returns user profile with the tokens.

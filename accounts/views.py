@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from .serializers import (
-    MKJ SUPA CUPTokenObtainSerializer, UserProfileSerializer,
+    MKJTokenObtainSerializer, UserProfileSerializer,
     UserRegisterSerializer, ChangePasswordSerializer,
 )
 from .permissions import (
@@ -25,7 +25,7 @@ User = get_user_model()
 
 class LoginView(TokenObtainPairView):
     """POST /api/v1/auth/login/ — returns access+refresh tokens + user profile"""
-    serializer_class = MKJ SUPA CUPTokenObtainSerializer
+    serializer_class = MKJTokenObtainSerializer
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(tags=["auth"], summary="Login — returns JWT tokens + user profile")
