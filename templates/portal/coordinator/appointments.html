@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Appointments &mdash; {{ discipline_label }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .appt-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: .75rem; }
+    .appt-card h4 { font-size: .95rem; font-weight: 600; margin: 0 0 .25rem; }
+    .appt-card .meta { font-size: .8rem; color: #757575; margin-bottom: .5rem; }
+    .appt-roles { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .role-chip { font-size: .75rem; padding: .2rem .6rem; border-radius: 6px; background: #f5f5f5; }
+    .role-chip.filled { background: #E8F5E9; color: #1B5E20; }
+    .role-chip.empty { background: #FFF3E0; color: #E65100; }
+    .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .filter-bar .btn { font-size: .8rem; padding: .35rem .6rem; border-radius: 8px; }
+    .summary-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .summary-card { background: #fff; border-radius: 10px; padding: .75rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.05); min-width: 140px; }
+    .summary-card .num { font-size: 1.3rem; font-weight: 800; }
+    .summary-card .lbl { font-size: .75rem; color: #757575; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-calendar-event"></i> Referee Appointments — {{ discipline_label }}</h2>
+
+<div class="summary-row">
+    <div class="summary-card"><div class="num" style="color:#1565C0;">{{ total_fixtures }}</div><div class="lbl">Fixtures</div></div>
+    <div class="summary-card"><div class="num" style="color:#E65100;">{{ total_needing }}</div><div class="lbl">Need Officials</div></div>
+    <div class="summary-card"><div class="num" style="color:#1B5E20;">{{ total_fully }}</div><div class="lbl">Fully Appointed</div></div>
+    <div class="summary-card"><div class="num" style="color:#00695C;">{{ approved_referees_count }}</div><div class="lbl">Available Referees</div></div>
+</div>
+
+<div class="filter-bar">
+    <a href="{% url 'coordinator_appointments' %}?status=upcoming" class="btn {% if filter_status == 'upcoming' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Upcoming</a>
+    <a href="{% url 'coordinator_appointments' %}?status=past" class="btn {% if filter_status == 'past' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Past</a>
+    <a href="{% url 'coordinator_appointments' %}?status=all" class="btn {% if filter_status == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+</div>
+
+{% for fd in fixture_data %}
+<div class="appt-card">
+    <h4>{{ fd.fixture.home_team.name }} vs {{ fd.fixture.away_team.name }}</h4>
+    <div class="meta">
+        {{ fd.fixture.competition.name }} &middot;
+        {{ fd.fixture.match_date|date:"d M Y" }}{% if fd.fixture.kickoff_time %} {{ fd.fixture.kickoff_time|time:"H:i" }}{% endif %} &middot;
+        {{ fd.fixture.venue.name|default:"TBA" }} &middot;
+        {{ fd.filled }}/{{ fd.total_roles }} appointed
+    </div>
+    <div class="appt-roles">
+        {% for r in fd.roles %}
+        <span class="role-chip {% if r.appointment %}filled{% else %}empty{% endif %}">
+            {{ r.role_label }}: {{ r.referee_name|default:"—" }}
+        </span>
+        {% endfor %}
+    </div>
+    {% if fd.needs_officials %}
+    <a href="{% url 'referee_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-primary mt-2">Appoint Officials</a>
+    {% endif %}
+</div>
+{% empty %}
+<div style="text-align:center;padding:3rem;color:#999;">
+    <i class="bi bi-calendar" style="font-size:3rem;opacity:.3;"></i>
+    <p>No fixtures found.</p>
+</div>
+{% endfor %}
+{% endblock %}

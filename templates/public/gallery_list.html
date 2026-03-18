@@ -1,0 +1,175 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Gallery{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════
+   GALLERY LIST PAGE
+═══════════════════════════════════════ */
+.gallery-hero {
+    padding: 10rem 0 4rem;
+    background: linear-gradient(135deg, #0a1a0d 0%, #1B5E20 50%, #0d2810 100%);
+    position: relative; overflow: hidden;
+    text-align: center; color: #fff;
+}
+.gallery-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+}
+.gallery-hero .container { position: relative; z-index: 2; }
+.gallery-hero-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 50px; padding: .4rem 1.2rem;
+    font-size: .75rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 1.5rem; color: rgba(255,255,255,.9);
+}
+.gallery-hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem; font-weight: 800; margin-bottom: .75rem;
+    letter-spacing: -1px;
+}
+.gallery-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto; }
+
+/* ── Albums grid ── */
+.gallery-section {
+    max-width: 1200px; margin: -2rem auto 4rem; padding: 0 1.5rem;
+    position: relative; z-index: 5;
+}
+.ga-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+}
+.ga-card {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+    transition: transform .3s, box-shadow .3s;
+    text-decoration: none; display: block;
+    position: relative;
+}
+.ga-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
+.ga-card-img {
+    height: 220px; overflow: hidden; position: relative;
+    background: #e8f5e9;
+}
+.ga-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+.ga-card:hover .ga-card-img img { transform: scale(1.05); }
+.ga-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.6) 100%);
+    display: flex; align-items: flex-end; padding: 1.25rem;
+    opacity: 0; transition: opacity .3s;
+}
+.ga-card:hover .ga-overlay { opacity: 1; }
+.ga-overlay span {
+    color: #fff; font-size: .82rem; font-weight: 600;
+    display: flex; align-items: center; gap: .4rem;
+}
+.ga-card-body { padding: 1.25rem; }
+.ga-card-body h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem; font-weight: 600; color: #1a1a1a;
+    margin-bottom: .4rem;
+}
+.ga-card-meta {
+    display: flex; align-items: center; gap: 1rem;
+    font-size: .78rem; color: #999;
+}
+.ga-card-meta i { margin-right: .2rem; }
+@media (max-width: 900px) { .ga-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .ga-grid { grid-template-columns: 1fr; } }
+
+/* ── Pagination ── */
+.gallery-pagination {
+    display: flex; justify-content: center; gap: .5rem; padding: 2rem 0;
+}
+.gallery-pagination a, .gallery-pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 8px;
+    font-size: .85rem; font-weight: 600; transition: all .2s;
+}
+.gallery-pagination a { background: #fff; color: #555; border: 1px solid #e0e0e0; }
+.gallery-pagination a:hover { background: #e8f5e9; color: #1B5E20; border-color: #1B5E20; }
+.gallery-pagination .current { background: #1B5E20; color: #fff; border: 1px solid #1B5E20; }
+
+/* ── Empty ── */
+.gallery-empty {
+    text-align: center; padding: 5rem 1.5rem;
+}
+.gallery-empty i { font-size: 3rem; color: #ccc; margin-bottom: 1rem; display: block; }
+.gallery-empty h3 { font-size: 1.2rem; color: #555; margin-bottom: .5rem; }
+.gallery-empty p { color: #999; font-size: .9rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── HERO ── -->
+<section class="gallery-hero">
+    <div class="container">
+        <div class="gallery-hero-badge"><i class="bi bi-images"></i> GALLERY</div>
+        <h1>Photo Gallery</h1>
+        <p>Relive the best moments from KYISA events, matches, and ceremonies across Kenya's 47 counties.</p>
+    </div>
+</section>
+
+<!-- ── ALBUMS GRID ── -->
+<div class="gallery-section">
+    {% if page_obj %}
+    <div class="ga-grid">
+        {% for album in page_obj %}
+        <a href="{% url 'news_media:gallery_detail' album.slug %}" class="ga-card">
+            <div class="ga-card-img">
+                {% if album.display_cover %}
+                    <img src="{{ album.display_cover }}" alt="{{ album.title }}">
+                {% else %}
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1B5E20;">
+                        <i class="bi bi-images" style="font-size:3rem;opacity:.3;"></i>
+                    </div>
+                {% endif %}
+                <div class="ga-overlay">
+                    <span><i class="bi bi-images"></i> {{ album.photo_count }} photos</span>
+                </div>
+            </div>
+            <div class="ga-card-body">
+                <h3>{{ album.title }}</h3>
+                <div class="ga-card-meta">
+                    {% if album.event_date %}
+                        <span><i class="bi bi-calendar3"></i> {{ album.event_date|date:"M d, Y" }}</span>
+                    {% endif %}
+                    <span><i class="bi bi-images"></i> {{ album.photo_count }} photos</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="gallery-pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">‹</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="current">{{ num }}</span>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                <a href="?page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">›</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="gallery-empty">
+        <i class="bi bi-images"></i>
+        <h3>No albums yet</h3>
+        <p>Photo galleries will appear here as events are covered.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

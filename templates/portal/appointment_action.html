@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Appointment — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'referees_list' %}">Referees</a>
+        <span>Appointment</span>
+    </div>
+    <h1>📅 Match Appointment</h1>
+    <p>Confirm or decline your match appointment</p>
+</div>
+
+<!-- Fixture Details -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>⚽ Fixture Details</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;">
+            <div>
+                <div style="font-size:.85rem;color:#666;">Competition</div>
+                <div style="font-weight:600;">{{ appointment.fixture.competition.name }}</div>
+            </div>
+            <div>
+                <div style="font-size:.85rem;color:#666;">Match</div>
+                <div style="font-weight:600;">{{ appointment.fixture.home_team }} vs {{ appointment.fixture.away_team }}</div>
+            </div>
+            <div>
+                <div style="font-size:.85rem;color:#666;">Date</div>
+                <div style="font-weight:600;">{{ appointment.fixture.match_date|date:"d M Y" }}</div>
+            </div>
+            <div>
+                <div style="font-size:.85rem;color:#666;">Kick-off</div>
+                <div style="font-weight:600;">{{ appointment.fixture.kickoff_time|time:"H:i" }}</div>
+            </div>
+            <div>
+                <div style="font-size:.85rem;color:#666;">Venue</div>
+                <div style="font-weight:600;">{{ appointment.fixture.venue|default:"TBD" }}</div>
+            </div>
+            <div>
+                <div style="font-size:.85rem;color:#666;">Your Role</div>
+                <div style="font-weight:600;font-size:1.1rem;color:#1B5E20;">{{ appointment.get_role_display }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Status -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📋 Appointment Status</h3></div>
+    <div class="card-body" style="text-align:center;">
+        <div style="font-size:1.3rem;margin-bottom:.5rem;">
+            {% if appointment.status == 'pending' %}
+            <span style="color:#FF8F00;">🔶 Pending Confirmation</span>
+            {% elif appointment.status == 'confirmed' %}
+            <span style="color:#2E7D32;">✅ Confirmed</span>
+            {% elif appointment.status == 'declined' %}
+            <span style="color:#c62828;">❌ Declined</span>
+            {% elif appointment.status == 'replaced' %}
+            <span style="color:#757575;">🔄 Replaced</span>
+            {% endif %}
+        </div>
+        {% if appointment.confirmed_at %}
+        <p style="color:#666;font-size:.9rem;">Confirmed on {{ appointment.confirmed_at|date:"d M Y H:i" }}</p>
+        {% endif %}
+        <p style="color:#666;font-size:.9rem;">Appointed on {{ appointment.appointed_at|date:"d M Y H:i" }}</p>
+    </div>
+</div>
+
+<!-- Actions -->
+{% if appointment.status == 'pending' %}
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-header"><h3>⚖️ Your Decision</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div style="margin-bottom:1rem;">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Notes (if declining, please give a reason):</label>
+                <textarea name="notes" rows="3"
+                          style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;font-size:.95rem;"
+                          placeholder="e.g., I have a prior engagement, unavailable on that date..."></textarea>
+            </div>
+            <div style="display:flex;gap:1rem;justify-content:flex-end;">
+                <a href="{% url 'referees_list' %}"
+                   style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">Back</a>
+                <button type="submit" name="action" value="decline"
+                        style="background:#c62828;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
+                        onclick="return confirm('Decline this appointment?')">
+                    ❌ Decline
+                </button>
+                <button type="submit" name="action" value="confirm"
+                        style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;">
+                    ✅ Confirm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% else %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:2rem;">
+    <a href="{% url 'referees_list' %}"
+       style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">← Back to Referees</a>
+</div>
+{% endif %}
+{% endblock %}

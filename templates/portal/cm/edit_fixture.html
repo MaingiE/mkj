@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Fixture &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; color: #212121; }
+    .page-header .subtitle { font-size: .85rem; color: #757575; }
+
+    .form-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        max-width: 700px;
+    }
+    .fixture-info {
+        background: #F3E5F5;
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: .88rem;
+    }
+    .fixture-info strong { color: #4A148C; }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: .85rem;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: .5rem .7rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: .88rem;
+    }
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: #7B1FA2;
+        box-shadow: 0 0 0 3px rgba(123,31,162,.1);
+    }
+    .form-group .help { font-size: .75rem; color: #999; margin-top: .2rem; }
+    .btn-row { display: flex; gap: .75rem; align-items: center; margin-top: 1.5rem; }
+    .knockout-section {
+        background: #FFF3E0;
+        border: 1px solid #FFE0B2;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .knockout-section h4 {
+        font-size: .85rem;
+        font-weight: 700;
+        color: #E65100;
+        margin-bottom: .75rem;
+    }
+    @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-pencil-square"></i> Edit Fixture</h2>
+        <div class="subtitle">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="form-card">
+    <div class="fixture-info">
+        <strong>{{ fixture.home_team.name|default:"TBD" }}</strong> vs <strong>{{ fixture.away_team.name|default:"TBD" }}</strong>
+        {% if fixture.is_knockout %}
+        &middot; <span style="color:#E65100;">{{ fixture.get_knockout_round_display }}</span>
+        {% elif fixture.pool %}
+        &middot; {{ fixture.pool.name }}
+        {% endif %}
+        &middot; {{ fixture.match_date|date:"d M Y" }}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="match_date">Match Date</label>
+                <input type="date" name="match_date" id="match_date" value="{{ fixture.match_date|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label for="kickoff_time">Kickoff Time</label>
+                <input type="time" name="kickoff_time" id="kickoff_time" value="{{ fixture.kickoff_time|time:'H:i' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="venue_id">Venue</label>
+            <select name="venue_id" id="venue_id">
+                <option value="">-- No venue --</option>
+                {% for v in venues %}
+                <option value="{{ v.pk }}" {% if fixture.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select name="status" id="status">
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if fixture.status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if fixture.is_knockout %}
+        <div class="knockout-section">
+            <h4><i class="bi bi-diagram-3"></i> Knockout Team Assignment</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="home_team_id">Home Team</label>
+                    <select name="home_team_id" id="home_team_id">
+                        <option value="">TBD</option>
+                        {% for team in teams %}
+                        <option value="{{ team.pk }}" {% if fixture.home_team_id == team.pk %}selected{% endif %}>{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="away_team_id">Away Team</label>
+                    <select name="away_team_id" id="away_team_id">
+                        <option value="">TBD</option>
+                        {% for team in teams %}
+                        <option value="{{ team.pk }}" {% if fixture.away_team_id == team.pk %}selected{% endif %}>{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="help">Assign teams advancing from group stage or previous knockout rounds</div>
+        </div>
+        {% endif %}
+
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Changes</button>
+            <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

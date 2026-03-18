@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Team Officials - {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-tie"></i> Team Officials Management</h4>
+                    <p class="mb-0 small">{{ team.team_name }}</p>
+                </div>
+                <div class="card-body">
+                    <!-- Messages Display -->
+                    {% if messages %}
+                    <div class="mb-3">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message|safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Required:</strong> Head Coach, Assistant Coach, Goalkeeper Coach, Team Doctor, and Team Patron.
+                        <br><strong>Note:</strong> All coaches must have a valid CAF License.
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="mb-4">
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ filled_count|add:'0' }}0%"
+                                 aria-valuenow="{{ filled_count }}" aria-valuemin="0" aria-valuemax="{{ total_required }}">
+                                {{ filled_count }} of {{ total_required }} Complete
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Official Form -->
+                    <form method="POST" enctype="multipart/form-data" class="mb-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_official">
+                        
+                        <h5 class="text-primary mb-3"><i class="fas fa-user-plus"></i> Add Official</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Position/Role *</label>
+                                {{ form.position }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name *</label>
+                                {{ form.full_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">ID Number *</label>
+                                {{ form.id_number }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text fw-bold bg-primary text-white">+254</span>
+                                    {{ form.phone_digits }}
+                                </div>
+                                <small class="form-text text-muted">Enter 9 digits only (e.g., 712345678)</small>
+                                {% if form.phone_digits.errors %}
+                                    <div class="text-danger small mt-2">{{ form.phone_digits.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CAF License Number (Coaches only)</label>
+                                {{ form.caf_license_number }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">License Expiry Date</label>
+                                {{ form.license_expiry_date }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Photo (Optional)</label>
+                            {{ form.photo }}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Add Official
+                        </button>
+                    </form>
+
+                    <hr>
+
+                    <!-- Officials List -->
+                    <h5 class="text-primary mb-3"><i class="fas fa-list"></i> Registered Officials</h5>
+                    
+                    {% if officials %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Position</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>CAF License</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for official in officials %}
+                                <tr>
+                                    <td><strong>{{ official.get_position_display }}</strong></td>
+                                    <td>{{ official.full_name }}</td>
+                                    <td>{{ official.phone_number }}</td>
+                                    <td>{{ official.caf_license_number|default:"N/A" }}</td>
+                                    <td>
+                                        <a href="{% url 'teams:delete_official' official.id %}" 
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Remove this official?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No officials added yet. Please add all required positions above.
+                    </div>
+                    {% endif %}
+
+                    <!-- Navigation Buttons -->
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'teams:team_manager_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            {% if missing_positions %}
+                            <button type="button" class="btn btn-warning" disabled>
+                                <i class="fas fa-exclamation-triangle"></i> Complete All Positions First
+                            </button>
+                            {% else %}
+                            <a href="{% url 'teams:add_players_approved' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-users"></i> Go to Add Players
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

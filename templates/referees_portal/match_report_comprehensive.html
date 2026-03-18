@@ -1,0 +1,1039 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags crispy_forms_filters %}
+
+{% block title %}Submit Match Report - FKF Meru League{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Header -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-clipboard-list"></i> FKF MATCH REPORT FORM</h3>
+                    <p class="mb-0">FOOTBALL KENYA FEDERATION - MERU COUNTY LEAGUE</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>FOOTBALL KENYA FEDERATION</h5>
+                            <p class="mb-1">PO Box 568 - 60200 Meru</p>
+                            <p class="mb-1">Email: competitions@fkfmerucounty.com</p>
+                            <p class="mb-0">Phone: +254 724 280 134</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5>FKF MERU COUNTY LEAGUE</h5>
+                            <div class="row">
+                                <div class="col-6">
+                                    {{ report_form.match_number|as_crispy_field }}
+                                </div>
+                                <div class="col-6">
+                                    {{ report_form.round_number|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="matchReportForm">
+                {% csrf_token %}
+                {% include 'referees/_result_section.html' %}
+                {% include 'referees/_goals_section.html' %}
+                {% include 'referees/_cautions_section.html' %}
+
+                <!-- Team Officials Section -->
+                {% if team_officials_formset %}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow h-100">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-users"></i> HOST TEAM CLUB OFFICIALS</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="host-officials">
+                                    {% for form in team_officials_formset %}
+                                    {% if form.team.value == match.home_team.id %}
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-5">{{ form.name|as_crispy_field }}</div>
+                                        <div class="col-md-4">{{ form.position|as_crispy_field }}</div>
+                                        <div class="col-md-3">{{ form.mobile|as_crispy_field }}</div>
+                                        {{ form.team }}
+                                        {{ form.id }}
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="add-host-official">
+                                    <i class="fas fa-plus"></i> Add Official
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow h-100">
+                            <div class="card-header bg-warning text-white">
+                                <h5 class="mb-0"><i class="fas fa-users"></i> VISITING TEAM CLUB OFFICIALS</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="away-officials">
+                                    {% for form in team_officials_formset %}
+                                    {% if form.team.value == match.away_team.id %}
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-5">{{ form.name|as_crispy_field }}</div>
+                                        <div class="col-md-4">{{ form.position|as_crispy_field }}</div>
+                                        <div class="col-md-3">{{ form.mobile|as_crispy_field }}</div>
+                                        {{ form.team }}
+                                        {{ form.id }}
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="add-away-official">
+                                    <i class="fas fa-plus"></i> Add Official
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Template for adding new team official rows dynamically #}
+                <div id="empty-team_officials" class="d-none">
+                    {% with form=team_officials_formset.empty_form %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">{{ form.name|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.position|as_crispy_field }}</div>
+                        <div class="col-md-3">{{ form.mobile|as_crispy_field }}</div>
+                        {{ form.team }}
+                        {{ form.id }}
+                    </div>
+                    {% endwith %}
+                </div>
+                {% endif %}
+
+                <!-- Playing Kit Section -->
+                {% if kit_formset %}
+                {% if starting_formset %}
+                {% if reserve_formset %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-tshirt"></i> PLAYING KIT</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Home Team ({{ match.home_team }})</th>
+                                        <th>Away Team ({{ match.away_team }})</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in kit_items %}
+                                    <tr>
+                                        <td>{{ item.1 }}</td>
+                                        <td>
+                                            {% for form in kit_formset %}
+                                            {% if form.item.value == item.0 and form.team.value == match.home_team.id %}
+                                            <div class="form-check form-check-inline">
+                                                {{ form.condition|as_crispy_field }}
+                                            </div>
+                                            {{ form.item }}
+                                            {{ form.team }}
+                                            {{ form.id }}
+                                            {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for form in kit_formset %}
+                                            {% if form.item.value == item.0 and form.team.value == match.away_team.id %}
+                                            <div class="form-check form-check-inline">
+                                                {{ form.condition|as_crispy_field }}
+                                            </div>
+                                            {{ form.item }}
+                                            {{ form.team }}
+                                            {{ form.id }}
+                                            {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {{ kit_formset.management_form }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
+                {% endif %}
+
+                <!-- Venue Details Section -->
+                {% if venue_form %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> VENUE DETAILS & FACILITIES</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Facilities Checklist</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ venue_form.home_changing_room|as_crispy_field }}
+                                        {{ venue_form.away_changing_room|as_crispy_field }}
+                                        {{ venue_form.seating_arrangement|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ venue_form.ball_boys|as_crispy_field }}
+                                        {{ venue_form.security_personnel|as_crispy_field }}
+                                        {{ venue_form.field_markings|as_crispy_field }}
+                                        {{ venue_form.ambulance|as_crispy_field }}
+                                        {{ venue_form.stretcher|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ venue_form.pitch_condition|as_crispy_field }}
+                                        {{ venue_form.weather_before|as_crispy_field }}
+                                        {{ venue_form.weather_during|as_crispy_field }}
+                                        {{ venue_form.attendance|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Match Timing</h6>
+                                        {{ venue_form.first_half_start|as_crispy_field }}
+                                        {{ venue_form.first_half_end|as_crispy_field }}
+                                        {{ venue_form.second_half_start|as_crispy_field }}
+                                        {{ venue_form.second_half_end|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Team Lineups Section -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-list-ol"></i> TEAM SHEETS & LINEUPS</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if starting_formset %}
+                        {{ starting_formset.management_form }}
+                        {% endif %}
+                        {% if reserve_formset %}
+                        {{ reserve_formset.management_form }}
+                        {% endif %}
+                        
+                        <!-- Auto-population alert -->
+                        {% if starting_formset.queryset.exists or reserve_formset.queryset.exists %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Team sheets auto-populated!</strong> 
+                            Starting lineups and reserve players have been automatically loaded from the approved matchday squads. 
+                            You can edit player details, positions, or add/remove players as needed.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>No approved squads found.</strong> 
+                            Please manually add starting lineups and reserve players for both teams. 
+                            Make sure to include jersey numbers and FKF license numbers.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <!-- HOME TEAM STARTING LINEUP -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3"><i class="fas fa-user-check"></i> STARTING LINEUP - {{ match.home_team }}</h5>
+                                
+                                <!-- List of added players -->
+                                <div class="mb-3 p-3 bg-light rounded">
+                                    <small class="text-muted d-block mb-2">Added Players:</small>
+                                    {% if starting_formset %}
+                                        {% with home_forms=starting_formset|dictsort:"team" %}
+                                        {% for form in home_forms %}
+                                            {% if form.team.value == match.home_team.id and form.instance.pk or not form.team.value %}
+                                            <div class="badge badge-primary me-2 mb-2">
+                                                #{{ form.jersey_number.value|default:"?" }} - {{ form.player.value|default:"Player" }}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% endwith %}
+                                    {% endif %}
+                                    {% if not starting_formset %}
+                                        <small class="text-muted">No players added yet</small>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Editable starting lineup rows -->
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="60">No.</th>
+                                                <th>Player Name</th>
+                                                <th width="100">FKF License</th>
+                                                <th width="100">Position</th>
+                                                <th width="100">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="home-starting-lineup">
+                                            {% for form in starting_formset %}
+                                            {% if form.team.value == match.home_team.id or not form.team.value %}
+                                            <tr class="formset-form {% if form.instance.pk %}existing-form{% else %}new-form{% endif %}" id="starting-form-{{ forloop.counter0 }}">
+                                                <td>{{ form.jersey_number }}</td>
+                                                <td>
+                                                    {{ form.player }}
+                                                    {% if form.instance.player %}
+                                                    <div class="small text-success">
+                                                        <i class="fas fa-check-circle"></i> From approved squad
+                                                    </div>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if form.instance.player %}
+                                                    <span class="badge bg-info">{{ form.instance.player.fkf_license_number|default:"N/A" }}</span>
+                                                    {% else %}
+                                                    <small class="text-muted">-</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ form.position }}</td>
+                                                <td>
+                                                    {{ form.DELETE }}
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-starting-form">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                                <td style="display:none;">{{ form.team }}{{ form.id }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Form to add new player -->
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                        <span>Add New Player</span>
+                                        {% if can_edit %}
+                                        <button type="button" class="btn btn-sm btn-light" id="add-home-starting">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="home-starting-form-container">
+                                            {% if starting_formset %}
+                                            {% with form=starting_formset.empty_form %}
+                                            <form class="row g-3" id="home-starting-add-form">
+                                                <div class="col-md-3">
+                                                    {{ form.jersey_number }}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {{ form.player }}
+                                                </div>
+                                                <div class="col-md-3">
+                                                    {{ form.position }}
+                                                </div>
+                                                <div style="display:none;">{{ form.team }}{{ form.id }}</div>
+                                            </form>
+                                            {% endwith %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- AWAY TEAM STARTING LINEUP -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3"><i class="fas fa-user-check"></i> STARTING LINEUP - {{ match.away_team }}</h5>
+                                
+                                <!-- List of added players -->
+                                <div class="mb-3 p-3 bg-light rounded">
+                                    <small class="text-muted d-block mb-2">Added Players:</small>
+                                    {% if starting_formset %}
+                                        {% with away_forms=starting_formset %}
+                                        {% for form in away_forms %}
+                                            {% if form.team.value == match.away_team.id and form.instance.pk or not form.team.value %}
+                                            <div class="badge badge-primary me-2 mb-2">
+                                                #{{ form.jersey_number.value|default:"?" }} - {{ form.player.value|default:"Player" }}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% endwith %}
+                                    {% endif %}
+                                    {% if not starting_formset %}
+                                        <small class="text-muted">No players added yet</small>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Editable starting lineup rows -->
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="60">No.</th>
+                                                <th>Player Name</th>
+                                                <th width="100">FKF License</th>
+                                                <th width="100">Position</th>
+                                                <th width="100">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="away-starting-lineup">
+                                            {% for form in starting_formset %}
+                                            {% if form.team.value == match.away_team.id or not form.team.value %}
+                                            <tr class="formset-form {% if form.instance.pk %}existing-form{% else %}new-form{% endif %}" id="starting-form-{{ forloop.counter0 }}">
+                                                <td>{{ form.jersey_number }}</td>
+                                                <td>
+                                                    {{ form.player }}
+                                                    {% if form.instance.player %}
+                                                    <div class="small text-success">
+                                                        <i class="fas fa-check-circle"></i> From approved squad
+                                                    </div>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if form.instance.player %}
+                                                    <span class="badge bg-info">{{ form.instance.player.fkf_license_number|default:"N/A" }}</span>
+                                                    {% else %}
+                                                    <small class="text-muted">-</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ form.position }}</td>
+                                                <td>
+                                                    {{ form.DELETE }}
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-starting-form">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                                <td style="display:none;">{{ form.team }}{{ form.id }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Add button for away starting lineup -->
+                                <div class="d-flex justify-content-end mb-2">
+                                    {% if can_edit %}
+                                    <button type="button" class="btn btn-sm btn-primary" id="add-away-starting">
+                                        <i class="fas fa-plus"></i> Add Player
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- RESERVE PLAYERS SECTION -->
+                        <div class="row mt-4">
+                            <!-- HOME TEAM RESERVES -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3"><i class="fas fa-people-group"></i> RESERVE PLAYERS - {{ match.home_team }}</h5>
+                                
+                                <!-- List of added reserves -->
+                                <div class="mb-3 p-3 bg-light rounded">
+                                    <small class="text-muted d-block mb-2">Added Reserve Players:</small>
+                                    {% if reserve_formset %}
+                                        {% for form in reserve_formset %}
+                                            {% if form.team.value == match.home_team.id and form.instance.pk or not form.team.value %}
+                                            <div class="badge badge-info me-2 mb-2">
+                                                #{{ form.jersey_number.value|default:"?" }} - {{ form.player.value|default:"Player" }}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if not reserve_formset %}
+                                        <small class="text-muted">No reserve players added yet</small>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Editable reserve list -->
+                                <div id="home-reserves" class="mb-3">
+                                    {% for form in reserve_formset %}
+                                        {% if form.team.value == match.home_team.id or not form.team.value %}
+                                        <div class="row g-2 mb-2 p-2 border rounded formset-form {% if form.instance.pk %}existing-form bg-light{% else %}new-form{% endif %}" id="reserve-form-{{ forloop.counter0 }}">
+                                            <div class="col-md-2">
+                                                <label class="small text-muted">No.</label>
+                                                {{ form.jersey_number }}
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label class="small text-muted">Player</label>
+                                                {{ form.player }}
+                                                {% if form.instance.player %}
+                                                <div class="small text-success">
+                                                    <i class="fas fa-check-circle"></i> From squad
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="small text-muted">FKF License</label>
+                                                {% if form.instance.player %}
+                                                <div><span class="badge bg-info">{{ form.instance.player.fkf_license_number|default:"N/A" }}</span></div>
+                                                {% else %}
+                                                <div><small class="text-muted">-</small></div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-2 d-flex justify-content-end align-items-start">
+                                                {{ form.DELETE }}
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-reserve-form">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            <div style="display:none;">{{ form.team }}{{ form.id }}</div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    {% if can_edit %}
+                                    <button type="button" class="btn btn-sm btn-primary" id="add-home-reserves">
+                                        <i class="fas fa-plus"></i> Add Reserve Player
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- AWAY TEAM RESERVES -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3"><i class="fas fa-people-group"></i> RESERVE PLAYERS - {{ match.away_team }}</h5>
+                                
+                                <!-- List of added reserves -->
+                                <div class="mb-3 p-3 bg-light rounded">
+                                    <small class="text-muted d-block mb-2">Added Reserve Players:</small>
+                                    {% if reserve_formset %}
+                                        {% for form in reserve_formset %}
+                                            {% if form.team.value == match.away_team.id and form.instance.pk or not form.team.value %}
+                                            <div class="badge badge-info me-2 mb-2">
+                                                #{{ form.jersey_number.value|default:"?" }} - {{ form.player.value|default:"Player" }}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if not reserve_formset %}
+                                        <small class="text-muted">No reserve players added yet</small>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Editable reserve list -->
+                                <div id="away-reserves" class="mb-3">
+                                    {% for form in reserve_formset %}
+                                        {% if form.team.value == match.away_team.id or not form.team.value %}
+                                        <div class="row g-2 mb-2 p-2 border rounded formset-form {% if form.instance.pk %}existing-form bg-light{% else %}new-form{% endif %}" id="reserve-form-{{ forloop.counter0 }}">
+                                            <div class="col-md-2">
+                                                <label class="small text-muted">No.</label>
+                                                {{ form.jersey_number }}
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label class="small text-muted">Player</label>
+                                                {{ form.player }}
+                                                {% if form.instance.player %}
+                                                <div class="small text-success">
+                                                    <i class="fas fa-check-circle"></i> From squad
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="small text-muted">FKF License</label>
+                                                {% if form.instance.player %}
+                                                <div><span class="badge bg-info">{{ form.instance.player.fkf_license_number|default:"N/A" }}</span></div>
+                                                {% else %}
+                                                <div><small class="text-muted">-</small></div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-2 d-flex justify-content-end align-items-start">
+                                                {{ form.DELETE }}
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-reserve-form">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            <div style="display:none;">{{ form.team }}{{ form.id }}</div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    {% if can_edit %}
+                                    <button type="button" class="btn btn-sm btn-primary" id="add-away-reserves">
+                                        <i class="fas fa-plus"></i> Add Reserve Player
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Match Events Section -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="fas fa-futbol"></i> MATCH EVENTS</h5>
+                    </div>
+                    <div class="card-body">
+                        {% include 'referees/_substitutions_section.html' %}
+                        
+                        <!-- Goals -->
+                        <h5>GOALS</h5>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Player</th>
+                                        <th>Minute</th>
+                                        <th>Type</th>
+                                        <th>Assisted By</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="goals-table">
+                                    {% for form in goals_formset %}
+                                    <tr>
+                                        <td>{{ form.team|as_crispy_field }}</td>
+                                        <td>{{ form.player|as_crispy_field }}</td>
+                                        <td>{{ form.minute|as_crispy_field }}</td>
+                                        <td>{{ form.goal_type|as_crispy_field }}</td>
+                                        <td>{{ form.assist_by|as_crispy_field }}</td>
+                                        <td>{{ form.notes|as_crispy_field }}</td>
+                                        {{ form.id }}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {{ goals_formset.management_form }}
+                        </div>
+
+                        <!-- Substitutions -->
+                        <h5>SUBSTITUTIONS</h5>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Minute</th>
+                                        <th>Player Out (No.)</th>
+                                        <th>Player In (No.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="substitutions-table">
+                                    {% for form in substitutions_formset %}
+                                    <tr>
+                                        <td>{{ form.team|as_crispy_field }}</td>
+                                        <td>{{ form.minute|as_crispy_field }}</td>
+                                        <td>
+                                            <div class="row">
+                                                <div class="col-8">{{ form.player_out|as_crispy_field }}</div>
+                                                <div class="col-4">{{ form.jersey_out|as_crispy_field }}</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="row">
+                                                <div class="col-8">{{ form.player_in|as_crispy_field }}</div>
+                                                <div class="col-4">{{ form.jersey_in|as_crispy_field }}</div>
+                                            </div>
+                                        </td>
+                                        {{ form.id }}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {{ substitutions_formset.management_form }}
+                        </div>
+
+                        <!-- Cards -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>CAUTIONS (Yellow Cards)</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Player</th>
+                                                <th>Minute</th>
+                                                <th>Reason</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cautions-table">
+                                            {% for form in cautions_formset %}
+                                            <tr>
+                                                <td>{{ form.player|as_crispy_field }}</td>
+                                                <td>{{ form.minute|as_crispy_field }}</td>
+                                                <td>{{ form.reason|as_crispy_field }}</td>
+                                                {{ form.team }}
+                                                {{ form.id }}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    {{ cautions_formset.management_form }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>EXPULSIONS (Red Cards)</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Player</th>
+                                                <th>Minute</th>
+                                                <th>Reason</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="expulsions-table">
+                                            {% for form in expulsions_formset %}
+                                            <tr>
+                                                <td>{{ form.player|as_crispy_field }}</td>
+                                                <td>{{ form.minute|as_crispy_field }}</td>
+                                                <td>{{ form.reason|as_crispy_field }}</td>
+                                                {{ form.team }}
+                                                {{ form.id }}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    {{ expulsions_formset.management_form }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Incidents & Comments -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> INCIDENTS & COMMENTS</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ report_form.penalties_not_converted|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ report_form.serious_incidents|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                {{ report_form.referee_comments|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Administrative Section intentionally removed: form has no corresponding fields -->
+
+                <!-- Submit Buttons -->
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            {% if can_edit %}
+                            <div>
+                                <button type="submit" name="save_draft" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> Save as Draft
+                                </button>
+                                <button type="submit" name="submit_report" class="btn btn-success">
+                                    <i class="fas fa-paper-plane"></i> Submit Report
+                                </button>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning mb-0" role="alert">
+                                Viewing only. You are not the appointed center referee.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Team IDs for assigning on dynamic add
+    var homeTeamId = "{{ match.home_team.id|default:0 }}";
+    var awayTeamId = "{{ match.away_team.id|default:0 }}";
+    
+    // Debug form submission
+    $('#matchReportForm').on('submit', function(e) {
+        console.log('Form submitted!');
+        console.log('Submit button:', $('button[type="submit"]:focus').attr('name'));
+        // Don't prevent submission, just log
+    });
+    // Add dynamic forms with proper debugging
+    function addForm(prefix, containerId) {
+        var totalFormsSelector = '#id_' + prefix + '-TOTAL_FORMS';
+        var emptyFormSelector = '#empty-' + prefix;
+        var containerSelector = '#' + containerId;
+        
+        console.log('Adding form:', {prefix, totalFormsSelector, emptyFormSelector, containerSelector});
+        
+        // Check if total forms input exists
+        if (!$(totalFormsSelector).length) {
+            console.error('Management form TOTAL_FORMS not found:', totalFormsSelector);
+            return false;
+        }
+        
+        var formIdx = parseInt($(totalFormsSelector).val());
+        console.log('Current form index:', formIdx);
+        
+        // Check if empty form template exists
+        if (!$(emptyFormSelector).length) {
+            console.error('Empty form template not found:', emptyFormSelector);
+            return false;
+        }
+        
+        // Get the empty form HTML
+        var emptyFormHtml = $(emptyFormSelector).html();
+        if (!emptyFormHtml) {
+            console.error('Empty form HTML is empty for:', emptyFormSelector);
+            return false;
+        }
+        
+        // Replace __prefix__ with the form index
+        var newForm = emptyFormHtml.replace(/__prefix__/g, formIdx);
+        
+        // Append to container
+        $(containerSelector).append(newForm);
+        
+        // Update the total forms count
+        $(totalFormsSelector).val(formIdx + 1);
+        console.log('Added form successfully. New total:', formIdx + 1);
+        return true;
+    }
+
+    // Add from a specific empty template (team-specific)
+    function addFormFromTemplate(prefix, containerId, emptyFormSelector) {
+        var totalFormsSelector = '#id_' + prefix + '-TOTAL_FORMS';
+        var containerSelector = '#' + containerId;
+        if (!$(totalFormsSelector).length) return false;
+        var formIdx = parseInt($(totalFormsSelector).val());
+        if (!$(emptyFormSelector).length) return false;
+        var emptyFormHtml = $(emptyFormSelector).html();
+        if (!emptyFormHtml) return false;
+        var newForm = emptyFormHtml.replace(/__prefix__/g, formIdx);
+        $(containerSelector).append(newForm);
+        $(totalFormsSelector).val(formIdx + 1);
+        return true;
+    }
+
+    // Initialize add buttons with better error handling
+    $('#add-goal-form').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add goal button clicked');
+        var success = addForm('goal', 'goal-formset');
+        if (!success) {
+            alert('Error adding goal form. Check browser console for details.');
+        }
+        return false;
+    });
+
+    $('#add-card-form').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add card button clicked');
+        var success = addForm('card', 'card-formset');
+        if (!success) {
+            alert('Error adding card form. Check browser console for details.');
+        }
+        return false;
+    });
+
+    // Add starting lineup buttons - append new row and set team
+    $('#add-home-starting').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add home starting clicked');
+        var success = addFormFromTemplate('starting', 'home-starting-lineup', '#empty-starting-home');
+        if (success) {
+            var idx = parseInt($('#id_starting-TOTAL_FORMS').val()) - 1;
+            $('#id_starting-' + idx + '-team').val(homeTeamId);
+            $('#id_starting-' + idx + '-jersey_number').focus().select();
+        }
+        return false;
+    });
+
+    $('#add-away-starting').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add away starting clicked');
+        var success = addFormFromTemplate('starting', 'away-starting-lineup', '#empty-starting-away');
+        if (success) {
+            var idx = parseInt($('#id_starting-TOTAL_FORMS').val()) - 1;
+            $('#id_starting-' + idx + '-team').val(awayTeamId);
+            $('#id_starting-' + idx + '-jersey_number').focus().select();
+        }
+        return false;
+    });
+
+    // Add reserve buttons - append new row and set team
+    $('#add-home-reserves').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add home reserves clicked');
+        var success = addFormFromTemplate('reserve', 'home-reserves', '#empty-reserve-home');
+        if (success) {
+            var idx = parseInt($('#id_reserve-TOTAL_FORMS').val()) - 1;
+            $('#id_reserve-' + idx + '-team').val(homeTeamId);
+            $('#id_reserve-' + idx + '-jersey_number').focus().select();
+        }
+        return false;
+    });
+
+    $('#add-away-reserves').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add away reserves clicked');
+        var success = addFormFromTemplate('reserve', 'away-reserves', '#empty-reserve-away');
+        if (success) {
+            var idx = parseInt($('#id_reserve-TOTAL_FORMS').val()) - 1;
+            $('#id_reserve-' + idx + '-team').val(awayTeamId);
+            $('#id_reserve-' + idx + '-jersey_number').focus().select();
+        }
+        return false;
+    });
+
+    // Remove goal form
+    $(document).on('click', '.remove-goal-form', function(e) {
+        e.preventDefault();
+        var container = $(this).closest('.formset-form');
+        // Clear all inputs instead of hiding
+        container.find('input:not([type="hidden"]), select, textarea').val('').prop('selectedIndex', 0);
+        // Decrement TOTAL_FORMS and hide the form
+        var totalForms = parseInt($('#id_goal-TOTAL_FORMS').val());
+        $('#id_goal-TOTAL_FORMS').val(totalForms - 1);
+        container.remove();
+        return false;
+    });
+
+    // Remove card form
+    $(document).on('click', '.remove-card-form', function(e) {
+        e.preventDefault();
+        var container = $(this).closest('.formset-form');
+        // Clear all inputs instead of hiding
+        container.find('input:not([type="hidden"]), select, textarea').val('').prop('selectedIndex', 0);
+        // Decrement TOTAL_FORMS and hide the form
+        var totalForms = parseInt($('#id_card-TOTAL_FORMS').val());
+        $('#id_card-TOTAL_FORMS').val(totalForms - 1);
+        container.remove();
+        return false;
+    });
+
+    // Remove starting row
+    $(document).on('click', '.remove-starting-form', function(e) {
+        e.preventDefault();
+        var row = $(this).closest('tr');
+        var idInput = row.find("input[name$='-id']");
+        var deleteInput = row.find("input[name$='-DELETE']");
+        if (idInput.length && idInput.val()) {
+            // existing form: mark delete and hide
+            if (deleteInput.length) {
+                deleteInput.prop('checked', true);
+            }
+            row.hide();
+        } else {
+            // new form: remove and decrement TOTAL_FORMS
+            var totalForms = $('#id_starting-TOTAL_FORMS');
+            totalForms.val(parseInt(totalForms.val()) - 1);
+            row.remove();
+        }
+        return false;
+    });
+
+    // Remove reserve row
+    $(document).on('click', '.remove-reserve-form', function(e) {
+        e.preventDefault();
+        var row = $(this).closest('.formset-form');
+        var idInput = row.find("input[name$='-id']");
+        var deleteInput = row.find("input[name$='-DELETE']");
+        if (idInput.length && idInput.val()) {
+            if (deleteInput.length) {
+                deleteInput.prop('checked', true);
+            }
+            row.hide();
+        } else {
+            var totalForms = $('#id_reserve-TOTAL_FORMS');
+            totalForms.val(parseInt(totalForms.val()) - 1);
+            row.remove();
+        }
+        return false;
+    });
+
+    // Add official buttons
+    $('#add-host-official').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add host official clicked');
+        addForm('team_officials', 'host-officials');
+        return false;
+    });
+
+    $('#add-away-official').on('click', function(e) {
+        e.preventDefault();
+        console.log('Add away official clicked');
+        addForm('team_officials', 'away-officials');
+        return false;
+    });
+});
+</script>
+
+<!-- Empty form templates (team-specific) for starting lineup -->
+<div id="empty-starting-home" class="d-none">
+    <tr class="formset-form new-form" id="starting-form-__prefix__">
+        <td>{{ starting_empty_home.jersey_number }}</td>
+        <td>{{ starting_empty_home.player }}</td>
+        <td>{{ starting_empty_home.position }}</td>
+        <td>
+            {{ starting_empty_home.DELETE }}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-starting-form">Remove</button>
+        </td>
+        <td style="display:none;">{{ starting_empty_home.team }}{{ starting_empty_home.id }}</td>
+    </tr>
+    <script>/* will set team via JS after append */</script>
+    
+</div>
+<div id="empty-starting-away" class="d-none">
+    <tr class="formset-form new-form" id="starting-form-__prefix__">
+        <td>{{ starting_empty_away.jersey_number }}</td>
+        <td>{{ starting_empty_away.player }}</td>
+        <td>{{ starting_empty_away.position }}</td>
+        <td>
+            {{ starting_empty_away.DELETE }}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-starting-form">Remove</button>
+        </td>
+        <td style="display:none;">{{ starting_empty_away.team }}{{ starting_empty_away.id }}</td>
+    </tr>
+    <script>/* will set team via JS after append */</script>
+</div>
+
+<!-- Empty form templates (team-specific) for reserves -->
+<div id="empty-reserve-home" class="d-none">
+    <div class="row g-3 mb-2 formset-form new-form" id="reserve-form-__prefix__">
+        <div class="col-md-3">{{ reserve_empty_home.jersey_number }}</div>
+        <div class="col-md-7">{{ reserve_empty_home.player }}</div>
+        <div class="col-md-2 d-flex justify-content-end align-items-start">
+            {{ reserve_empty_home.DELETE }}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-reserve-form">Remove</button>
+        </div>
+        <div style="display:none;">{{ reserve_empty_home.team }}{{ reserve_empty_home.id }}</div>
+    </div>
+</div>
+<div id="empty-reserve-away" class="d-none">
+    <div class="row g-3 mb-2 formset-form new-form" id="reserve-form-__prefix__">
+        <div class="col-md-3">{{ reserve_empty_away.jersey_number }}</div>
+        <div class="col-md-7">{{ reserve_empty_away.player }}</div>
+        <div class="col-md-2 d-flex justify-content-end align-items-start">
+            {{ reserve_empty_away.DELETE }}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-reserve-form">Remove</button>
+        </div>
+        <div style="display:none;">{{ reserve_empty_away.team }}{{ reserve_empty_away.id }}</div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Match Reports &mdash; {{ discipline_label }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .report-card h4 { font-size: .95rem; font-weight: 600; margin: 0; }
+    .report-card .meta { font-size: .8rem; color: #757575; }
+    .status-badge { font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px; }
+    .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .filter-bar .btn { font-size: .8rem; padding: .35rem .6rem; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-clipboard-data"></i> Match Reports — {{ discipline_label }}</h2>
+
+<div class="filter-bar">
+    <a href="{% url 'coordinator_match_reports' %}?status=submitted" class="btn {% if status_filter == 'submitted' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Pending</a>
+    <a href="{% url 'coordinator_match_reports' %}?status=approved" class="btn {% if status_filter == 'approved' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Approved</a>
+    <a href="{% url 'coordinator_match_reports' %}?status=returned" class="btn {% if status_filter == 'returned' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Returned</a>
+    <a href="{% url 'coordinator_match_reports' %}?status=" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+</div>
+
+{% for report in reports %}
+<div class="report-card">
+    <div>
+        <h4>{{ report.fixture.home_team.name }} {{ report.home_score }} - {{ report.away_score }} {{ report.fixture.away_team.name }}</h4>
+        <div class="meta">
+            {{ report.fixture.competition.name }} &middot;
+            {{ report.fixture.match_date|date:"d M Y" }} &middot;
+            Referee: {{ report.referee.user.get_full_name }} &middot;
+            Submitted: {{ report.submitted_at|date:"d M Y H:i" }}
+        </div>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:center;">
+        <span class="status-badge" style="background:{% if report.status == 'submitted' %}#FFF3E0;color:#E65100{% elif report.status == 'approved' %}#E8F5E9;color:#1B5E20{% else %}#FFEBEE;color:#C62828{% endif %};">{{ report.get_status_display }}</span>
+        {% if report.status == 'submitted' %}
+        <a href="{% url 'match_report_review' report_pk=report.pk %}" class="btn btn-sm btn-primary">Review</a>
+        {% else %}
+        <a href="{% url 'match_report_detail' report_pk=report.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div style="text-align:center;padding:3rem;color:#999;">
+    <i class="bi bi-clipboard-check" style="font-size:3rem;opacity:.3;"></i>
+    <p>No match reports found.</p>
+</div>
+{% endfor %}
+{% endblock %}

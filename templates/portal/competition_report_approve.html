@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}Review Match Report &#8212; {{ competition.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'competitions_list' %}">Competitions</a>
+        <a href="{% url 'competition_detail' competition.pk %}">{{ competition.name }}</a>
+        <a href="{% url 'competition_reports' competition.pk %}">Reports</a>
+        <span>Review</span>
+    </div>
+    <h1><i class="bi bi-clipboard-check"></i> Match Report Review</h1>
+</div>
+
+<!-- Match Summary -->
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:.85rem;color:#888;margin-bottom:.5rem">
+            {{ report.fixture.match_date|date:"d M Y" }} &#8226; {{ report.fixture.kickoff_time|time:"H:i" }}
+            {% if report.fixture.venue %} &#8226; {{ report.fixture.venue.name }}{% endif %}
+        </div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:2rem">
+            <div style="text-align:right;flex:1">
+                <div style="font-size:1.3rem;font-weight:800">{{ report.fixture.home_team.name }}</div>
+                <div style="font-size:.8rem;color:#888">{{ report.fixture.home_team.county }}</div>
+            </div>
+            <div style="font-size:2.5rem;font-weight:900;font-family:monospace;color:#1b5e20;padding:0 1rem">
+                {{ report.home_score }} &#8212; {{ report.away_score }}
+            </div>
+            <div style="text-align:left;flex:1">
+                <div style="font-size:1.3rem;font-weight:800">{{ report.fixture.away_team.name }}</div>
+                <div style="font-size:.8rem;color:#888">{{ report.fixture.away_team.county }}</div>
+            </div>
+        </div>
+        <div style="margin-top:.8rem">
+            {% if report.status == 'submitted' %}
+            <span class="badge badge--warning" style="font-size:.85rem;padding:.3rem .8rem">Pending Approval</span>
+            {% elif report.status == 'approved' %}
+            <span class="badge badge--success" style="font-size:.85rem;padding:.3rem .8rem">Approved</span>
+            {% elif report.status == 'returned' %}
+            <span class="badge badge--danger" style="font-size:.85rem;padding:.3rem .8rem">Returned for Revision</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Match Details -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin-bottom:1.5rem">
+    <div class="card" style="padding:1.2rem">
+        <h4 style="margin-bottom:.8rem;color:#1b5e20">Match Details</h4>
+        <div style="font-size:.88rem;line-height:1.8">
+            <div><strong>Referee:</strong> {{ report.referee.user.get_full_name|default:"&#8212;" }}</div>
+            <div><strong>Duration:</strong> {{ report.match_duration }} mins</div>
+            <div><strong>Added Time:</strong> +{{ report.added_time_ht }}' (HT), +{{ report.added_time_ft }}' (FT)</div>
+            <div><strong>Pitch:</strong> {{ report.get_pitch_condition_display }}</div>
+            <div><strong>Weather:</strong> {{ report.weather|default:"&#8212;" }}</div>
+            <div><strong>Attendance:</strong> {{ report.attendance|default:"&#8212;" }}</div>
+        </div>
+    </div>
+    <div class="card" style="padding:1.2rem">
+        <h4 style="margin-bottom:.8rem;color:#c62828">Disciplinary Summary</h4>
+        <table style="font-size:.88rem">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th style="text-align:center">{{ report.fixture.home_team.name }}</th>
+                    <th style="text-align:center">{{ report.fixture.away_team.name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Yellow Cards</td>
+                    <td style="text-align:center;font-weight:700;color:#f9a825">{{ report.home_yellow_cards }}</td>
+                    <td style="text-align:center;font-weight:700;color:#f9a825">{{ report.away_yellow_cards }}</td>
+                </tr>
+                <tr>
+                    <td>Red Cards</td>
+                    <td style="text-align:center;font-weight:700;color:#c62828">{{ report.home_red_cards }}</td>
+                    <td style="text-align:center;font-weight:700;color:#c62828">{{ report.away_red_cards }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Match Events Timeline -->
+{% if events %}
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><h3>Match Events</h3></div>
+    <div class="card-body" style="padding:0">
+        <table style="margin:0">
+            <thead>
+                <tr>
+                    <th style="width:60px;text-align:center">Min</th>
+                    <th>Event</th>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td style="text-align:center;font-weight:700;font-family:monospace">{{ event.minute }}'</td>
+                    <td>
+                        {% if event.event_type == 'goal' %}
+                        <span style="color:#2e7d32"><i class="bi bi-bullseye"></i> Goal</span>
+                        {% elif event.event_type == 'assist' %}
+                        <span style="color:#1565c0"><i class="bi bi-hand-thumbs-up"></i> Assist</span>
+                        {% elif event.event_type == 'yellow' %}
+                        <span style="color:#f9a825"><i class="bi bi-square-fill"></i> Yellow Card</span>
+                        {% elif event.event_type == 'red' or event.event_type == 'second_yellow' %}
+                        <span style="color:#c62828"><i class="bi bi-square-fill"></i> Red Card</span>
+                        {% elif event.event_type == 'penalty' %}
+                        <span style="color:#2e7d32"><i class="bi bi-bullseye"></i> Penalty Goal</span>
+                        {% elif event.event_type == 'penalty_miss' %}
+                        <span style="color:#888"><i class="bi bi-x-circle"></i> Penalty Missed</span>
+                        {% elif event.event_type == 'og' %}
+                        <span style="color:#c62828"><i class="bi bi-exclamation-circle"></i> Own Goal</span>
+                        {% elif event.event_type == 'sub_on' %}
+                        <span style="color:#1b5e20"><i class="bi bi-arrow-up-circle"></i> Sub On</span>
+                        {% elif event.event_type == 'sub_off' %}
+                        <span style="color:#c62828"><i class="bi bi-arrow-down-circle"></i> Sub Off</span>
+                        {% elif event.event_type == 'injury' %}
+                        <span style="color:#f57c00"><i class="bi bi-bandaid"></i> Injury</span>
+                        {% else %}
+                        {{ event.get_event_type_display }}
+                        {% endif %}
+                    </td>
+                    <td>{{ event.player.get_full_name|default:"&#8212;" }}</td>
+                    <td style="font-size:.85rem">{{ event.team.name }}</td>
+                    <td style="font-size:.82rem;color:#888">{{ event.notes|default:"" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Referee Notes -->
+{% if report.referee_notes %}
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><h3>Referee Notes</h3></div>
+    <div class="card-body">
+        <p style="white-space:pre-wrap;font-size:.9rem">{{ report.referee_notes }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if report.is_abandoned %}
+<div style="background:#ffebee;border:1px solid #ef9a9a;border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.5rem">
+    <strong style="color:#c62828"><i class="bi bi-exclamation-triangle"></i> Match Abandoned</strong>
+    <p style="margin:.5rem 0 0;font-size:.9rem">{{ report.abandonment_reason }}</p>
+</div>
+{% endif %}
+
+<!-- Approval Form -->
+{% if report.status == 'submitted' %}
+<div class="card" style="border:2px solid #1b5e20">
+    <div class="card-header" style="background:#e8f5e9">
+        <h3><i class="bi bi-check-circle"></i> Approve or Return This Report</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div style="margin-bottom:1rem">
+                <label class="form-label">Reviewer Notes (optional)</label>
+                <textarea name="reviewer_notes" class="form-control" rows="3" placeholder="Any notes about this report..."></textarea>
+            </div>
+            <div style="display:flex;gap:1rem">
+                <button type="submit" name="action" value="approve" class="btn btn--primary" style="padding:.6rem 2rem">
+                    <i class="bi bi-check-lg"></i> Approve Report
+                </button>
+                <button type="submit" name="action" value="return" class="btn btn--light" style="padding:.6rem 2rem;color:#c62828">
+                    <i class="bi bi-arrow-return-left"></i> Return for Revision
+                </button>
+            </div>
+            <p style="font-size:.82rem;color:#888;margin-top:.8rem">
+                Approving will update the fixture score, pool standings, and player statistics automatically.
+            </p>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if report.reviewer_notes %}
+<div class="card" style="margin-top:1rem">
+    <div class="card-header"><h3>Reviewer Notes</h3></div>
+    <div class="card-body">
+        <p style="font-size:.9rem">{{ report.reviewer_notes }}</p>
+        {% if report.reviewed_by %}
+        <p style="font-size:.8rem;color:#888;margin-top:.5rem">
+            Reviewed by {{ report.reviewed_by.get_full_name }} on {{ report.reviewed_at|date:"d M Y H:i" }}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

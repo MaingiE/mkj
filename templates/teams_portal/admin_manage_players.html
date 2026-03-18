@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Players - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-users"></i> Manage All Players</h2>
+            <p class="text-muted">Add, delete, suspend, or manage player information</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-user-friends"></i> Total Players</h5>
+                    <h2>{{ total_players }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-ban"></i> Suspended Players</h5>
+                    <h2>{{ suspended_players }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-check-circle"></i> Active Players</h5>
+                    <h2>{{ total_players|add:"-"|add:suspended_players }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Actions -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" placeholder="Search player name, ID..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="team" class="form-control">
+                        <option value="">All Teams</option>
+                        {% for team in teams %}
+                        <option value="{{ team.id }}" {% if team_filter == team.id|stringformat:"s" %}selected{% endif %}>
+                            {{ team.team_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="position" class="form-control">
+                        <option value="">All Positions</option>
+                        {% for code, name in position_choices %}
+                        <option value="{{ code }}" {% if position_filter == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2"><i class="fas fa-search"></i> Search</button>
+                    <a href="{% url 'teams:admin_manage_players' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Players Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-list"></i> Players ({{ players.count }})</h5>
+        </div>
+        <div class="card-body">
+            {% if players %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>Position</th>
+                            <th>Jersey #</th>
+                            <th>ID Number</th>
+                            <th>Status</th>
+                            <th>Stats</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr {% if player.is_suspended %}class="table-danger"{% endif %}>
+                            <td>{{ player.id }}</td>
+                            <td>
+                                {% if player.photo %}
+                                    <img src="{{ player.photo.url }}" alt="{{ player.full_name }}" width="40" height="40" class="rounded-circle">
+                                {% else %}
+                                    <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ player.full_name }}</strong></td>
+                            <td>
+                                <a href="{% url 'teams:add_players_approved' %}?team_id={{ player.team.id }}">
+                                    {{ player.team.team_name }}
+                                </a>
+                            </td>
+                            <td><span class="badge badge-info">{{ player.get_position_display }}</span></td>
+                            <td class="text-center"><strong>#{{ player.jersey_number }}</strong></td>
+                            <td>{{ player.id_number }}</td>
+                            <td>
+                                {% if player.is_suspended %}
+                                    <span class="badge badge-danger">
+                                        <i class="fas fa-ban"></i> Suspended ({{ player.suspension_matches }} matches)
+                                    </span>
+                                    <br><small class="text-danger">{{ player.suspension_reason }}</small>
+                                {% else %}
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>
+                                    ⚽ {{ player.goals_scored }} | 
+                                    🟨 {{ player.yellow_cards }} | 
+                                    🟥 {{ player.red_cards }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'teams:admin_edit_player' player.id %}" class="btn btn-sm btn-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if player.is_suspended %}
+                                        <a href="{% url 'teams:admin_unsuspend_player' player.id %}" class="btn btn-sm btn-success" title="Unsuspend">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'teams:admin_suspend_player' player.id %}" class="btn btn-sm btn-warning" title="Suspend">
+                                            <i class="fas fa-ban"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'teams:admin_delete_player' player.id %}" class="btn btn-sm btn-danger" title="Delete" 
+                                       onclick="return confirm('Delete {{ player.full_name }}?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No players found.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .btn-group .btn {
+        margin: 0 2px;
+    }
+</style>
+{% endblock %}

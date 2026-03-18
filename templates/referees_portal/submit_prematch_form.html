@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pre-Match Meeting Form{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3 mb-3">📋 PRE-MATCH MEETING FORM</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Pre-Match Form</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Match Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> {{ match.match_date|date:"l, F j, Y - H:i" }}</p>
+                            <p><strong>Teams:</strong> {{ match.home_team }} vs {{ match.away_team }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Match No:</strong> {{ match.id }}</p>
+                            <p><strong>Venue:</strong> {{ match.venue|default:"TBD" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if is_locked %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-lock"></i> This form is locked and cannot be edited after the match.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        
+        <!-- Match Officials Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Match Officials</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6>Schedule Time</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label>Scheduled Time</label>
+                                {{ form.scheduled_time }}
+                            </div>
+                            <div class="col-md-4">
+                                <label>Actual Time</label>
+                                {{ form.actual_time }}
+                            </div>
+                            <div class="col-md-4">
+                                <label>Meeting End Time</label>
+                                {{ form.meeting_end_time }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Match Commissioner</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.match_commissioner_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.match_commissioner_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.match_commissioner_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Centre Referee</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.centre_referee_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.centre_referee_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.centre_referee_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>1st Assistant Referee</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.asst1_referee_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.asst1_referee_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.asst1_referee_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>2nd Assistant Referee</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.asst2_referee_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.asst2_referee_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.asst2_referee_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>4th Official</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.fourth_official_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.fourth_official_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.fourth_official_mobile }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Team Officials -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Home Team Officials - {{ match.home_team }}</h5>
+            </div>
+            <div class="card-body">
+                <h6>Head Coach</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.home_head_coach }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.home_head_coach_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.home_head_coach_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Team Manager</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.home_team_manager }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.home_team_manager_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.home_team_manager_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Team Doctor</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.home_team_doctor }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.home_team_doctor_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.home_team_doctor_mobile }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Away Team Officials -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">Away Team Officials - {{ match.away_team }}</h5>
+            </div>
+            <div class="card-body">
+                <h6>Head Coach</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.away_head_coach }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.away_head_coach_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.away_head_coach_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Team Manager</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.away_team_manager }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.away_team_manager_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.away_team_manager_mobile }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Team Doctor</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.away_team_doctor }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>License Number</label>
+                        {{ form.away_team_doctor_license }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Mobile</label>
+                        {{ form.away_team_doctor_mobile }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uniforms Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Team Uniforms</h5>
+            </div>
+            <div class="card-body">
+                <h6>Home Team - {{ match.home_team }}</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>GK Shirt Color</label>
+                        {{ form.home_gk_shirt_color }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>GK Shirt No.</label>
+                        {{ form.home_gk_shirt_number }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>GK Short/Track</label>
+                        {{ form.home_gk_short_track }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>GK Stocking</label>
+                        {{ form.home_gk_stocking }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label>Reserve GK Shirt</label>
+                        {{ form.home_reserve_gk_shirt }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Reserve GK Short/Track</label>
+                        {{ form.home_reserve_gk_short_track }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Reserve GK Stocking</label>
+                        {{ form.home_reserve_gk_stocking }}
+                    </div>
+                </div>
+
+                    <h6 class="mt-4">Home Team Playing Unit Colours</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Shirt</label>
+                            {{ form.home_playing_unit_shirt }}
+                        </div>
+                        <div class="col-md-4">
+                            <label>Short</label>
+                            {{ form.home_playing_unit_short }}
+                        </div>
+                        <div class="col-md-4">
+                            <label>Stocking</label>
+                            {{ form.home_playing_unit_stocking }}
+                        </div>
+                    </div>
+                
+                <h6 class="mt-4">Field Captain</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.home_field_captain_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Number</label>
+                        {{ form.home_field_captain_number }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Arm Band</label>
+                        {{ form.home_field_captain_arm_band }}
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Away Team - {{ match.away_team }}</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>GK Shirt Color</label>
+                        {{ form.away_gk_shirt_color }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>GK Shirt No.</label>
+                        {{ form.away_gk_shirt_number }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>GK Short/Track</label>
+                        {{ form.away_gk_short_track }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>GK Stocking</label>
+                        {{ form.away_gk_stocking }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label>Reserve GK Shirt</label>
+                        {{ form.away_reserve_gk_shirt }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Reserve GK Short/Track</label>
+                        {{ form.away_reserve_gk_short_track }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Reserve GK Stocking</label>
+                        {{ form.away_reserve_gk_stocking }}
+                    </div>
+                </div>
+
+                    <h6 class="mt-4">Away Team Playing Unit Colours</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Shirt</label>
+                            {{ form.away_playing_unit_shirt }}
+                        </div>
+                        <div class="col-md-4">
+                            <label>Short</label>
+                            {{ form.away_playing_unit_short }}
+                        </div>
+                        <div class="col-md-4">
+                            <label>Stocking</label>
+                            {{ form.away_playing_unit_stocking }}
+                        </div>
+                    </div>
+                
+                <h6 class="mt-4">Field Captain</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Name</label>
+                        {{ form.away_field_captain_name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Number</label>
+                        {{ form.away_field_captain_number }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Arm Band</label>
+                        {{ form.away_field_captain_arm_band }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management of the Match -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Management of the Match</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Reporting Time</label>
+                        {{ form.reporting_time }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Checking Time</label>
+                        {{ form.checking_time }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Kick Off Time</label>
+                        {{ form.kick_off_time }}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <label>Number of Ball Boys</label>
+                        {{ form.number_ball_boys }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Shirt Color</label>
+                        {{ form.shirt_color }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Or Bib Color</label>
+                        {{ form.or_bib_color }}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <label>Home Balls Available</label>
+                        {{ form.home_balls_available }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Away Balls Available</label>
+                        {{ form.away_balls_available }}
+                    </div>
+                    <div class="col-md-3">
+                        <label>Expected Spectators</label>
+                        {{ form.expected_spectators }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Ground -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Medical Ground</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <label>Quality of Personnel</label>
+                        {{ form.quality_personnel }}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.doctor_available }}
+                            <label class="form-check-label">Doctor</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.physiotherapist_available }}
+                            <label class="form-check-label">Physiotherapist</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.clinical_officer_first_aid }}
+                            <label class="form-check-label">Clinical Officer/First Aid</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.stretcher_available }}
+                            <label class="form-check-label">Stretcher Available</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.stretcher_not_available }}
+                            <label class="form-check-label">Stretcher Not Available</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label>How Many</label>
+                        {{ form.stretcher_how_many }}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.first_aid_bag }}
+                            <label class="form-check-label">First Aid Bag</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.ambulance_available }}
+                            <label class="form-check-label">Ambulance</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Booked Hospital</label>
+                        {{ form.booked_hospital }}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <label>Sitting Arrangement</label>
+                        {{ form.sitting_arrangement }}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            {{ form.dressing_room_home }}
+                            <label class="form-check-label">Dressing Room - Home</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            {{ form.dressing_room_away }}
+                            <label class="form-check-label">Dressing Room - Away</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            {{ form.dressing_room_officials }}
+                            <label class="form-check-label">Dressing Room - Officials</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            {{ form.dressing_room_not_available }}
+                            <label class="form-check-label">Not Available</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Security</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.security_entrance }}
+                            <label class="form-check-label">Entrance</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.security_main_gate }}
+                            <label class="form-check-label">Main Gate</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.security_other_gate }}
+                            <label class="form-check-label">Any Other Gate</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.police_in_uniform }}
+                            <label class="form-check-label">Police in Uniform</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.police_plain_clothes }}
+                            <label class="form-check-label">Police in Plain Clothes</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ form.or_guards }}
+                            <label class="form-check-label">Or Guards</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label>And Company Name</label>
+                        {{ form.and_company_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label>Nearest Police Post</label>
+                        {{ form.nearest_police_post }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Additional Notes</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label>In Attendance Notes</label>
+                        {{ form.attendance_notes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        {% if not is_locked %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                <button type="submit" name="save_draft" class="btn btn-secondary btn-lg me-2">
+                    <i class="fas fa-save"></i> Save as Draft
+                </button>
+                <button type="submit" name="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-paper-plane"></i> Submit Form
+                </button>
+                <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<style>
+    .form-control, .form-check-input {
+        border: 1px solid #ced4da;
+    }
+    
+    .card {
+        margin-bottom: 1.5rem;
+    }
+    
+    label {
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-check {
+        padding-top: 0.5rem;
+    }
+    
+    .form-check-label {
+        font-weight: normal;
+        margin-left: 0.5rem;
+    }
+    
+    h6 {
+        color: #495057;
+        font-weight: 600;
+        margin-top: 1rem;
+        margin-bottom: 0.75rem;
+    }
+</style>
+{% endblock %}

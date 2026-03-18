@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags crispy_forms_filters %}
+
+{% block title %}Approve Report - FKF Meru League{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-file-check"></i> Approve Match Report</h2>
+            <a href="{% url 'referees:pending_reports' %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to Reports
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Match Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-futbol"></i> Match Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Home Team:</strong><br>
+                            {{ match.home_team }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Away Team:</strong><br>
+                            {{ match.away_team }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Date:</strong><br>
+                            {{ match.match_date|date:"M d, Y H:i" }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Referee:</strong><br>
+                            {{ report.referee.full_name }}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Score:</strong><br>
+                            {{ match.home_score }} - {{ match.away_score }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Goals:</strong><br>
+                            {{ match.matchgoal_set.count }} total
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Cautions:</strong><br>
+                            {{ match.caution_set.count }} total
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Summary -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard"></i> Report Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.referee_comments %}
+                    <div class="mb-3">
+                        <strong>Referee Comments:</strong>
+                        <p class="text-muted">{{ report.referee_comments|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if report.serious_incidents %}
+                    <div class="mb-3">
+                        <strong>Serious Incidents:</strong>
+                        <p class="text-danger">{{ report.serious_incidents|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if report.penalties_not_converted %}
+                    <div class="mb-3">
+                        <strong>Penalties Not Converted:</strong>
+                        <p class="text-warning">{{ report.penalties_not_converted|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Goals -->
+            {% if match.matchgoal_set.all %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Goals ({{ match.matchgoal_set.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Player</th>
+                                    <th>Minute</th>
+                                    <th>Type</th>
+                                    <th>Assist</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in match.matchgoal_set.all %}
+                                <tr>
+                                    <td>{{ goal.team }}</td>
+                                    <td>{{ goal.player }}</td>
+                                    <td>{{ goal.minute }}'</td>
+                                    <td><span class="badge bg-info">{{ goal.goal_type }}</span></td>
+                                    <td>{{ goal.assist_by|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Cautions -->
+            {% if match.caution_set.all %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-flag"></i> Cautions ({{ match.caution_set.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Player</th>
+                                    <th>Minute</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for caution in match.caution_set.all %}
+                                <tr>
+                                    <td>{{ caution.team }}</td>
+                                    <td>{{ caution.player }}</td>
+                                    <td>{{ caution.minute }}'</td>
+                                    <td>{{ caution.reason }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Approval Form -->
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Approve This Report</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Click the button below to approve this match report.
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check"></i> Approve Report
+                            </button>
+                            <a href="{% url 'referees:pending_reports' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

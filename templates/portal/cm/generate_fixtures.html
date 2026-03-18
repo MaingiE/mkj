@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generate Fixtures &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; color: #212121; }
+    .page-header .subtitle { font-size: .85rem; color: #757575; }
+
+    .gen-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        max-width: 700px;
+        margin-bottom: 1.5rem;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: .85rem;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: .5rem .7rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: .88rem;
+    }
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: #7B1FA2;
+        box-shadow: 0 0 0 3px rgba(123,31,162,.1);
+    }
+    .form-group .help { font-size: .75rem; color: #999; margin-top: .2rem; }
+
+    .info-bar {
+        display: flex;
+        gap: 1.5rem;
+        background: #F3E5F5;
+        border-radius: 10px;
+        padding: .75rem 1.25rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+    }
+    .info-bar .ib-item { font-size: .85rem; }
+    .info-bar .ib-item strong { color: #4A148C; }
+
+    .warning-box {
+        background: #FFF3E0;
+        border: 1px solid #FFE0B2;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        font-size: .85rem;
+        color: #E65100;
+    }
+    .warning-box i { margin-right: .3rem; }
+
+    .danger-box {
+        background: #FFEBEE;
+        border: 1px solid #FFCDD2;
+        border-radius: 10px;
+        padding: 1rem;
+        font-size: .85rem;
+        color: #C62828;
+    }
+    .btn-row { display: flex; gap: .75rem; align-items: center; margin-top: 1.5rem; }
+    @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-calendar-plus"></i> Generate Fixtures</h2>
+        <div class="subtitle">{{ competition.name }} &middot; {{ competition.get_format_type_display }}</div>
+    </div>
+    <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<!-- Info Bar -->
+<div class="info-bar">
+    <div class="ib-item"><strong>{{ pools.count }}</strong> Pools</div>
+    <div class="ib-item"><strong>{{ total_pool_teams }}</strong> Teams assigned</div>
+    <div class="ib-item"><strong>{{ existing_count }}</strong> Existing fixtures</div>
+    <div class="ib-item">Format: <strong>{{ competition.get_format_type_display }}</strong></div>
+</div>
+
+{% if existing_count > 0 %}
+<div class="warning-box">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>{{ existing_count }} fixtures already exist.</strong>
+    You must clear existing fixtures before generating new ones, or they will be added alongside the current ones.
+</div>
+{% endif %}
+
+{% if total_pool_teams == 0 and competition.format_type != 'knockout' %}
+<div class="warning-box">
+    <i class="bi bi-info-circle"></i>
+    No teams are assigned to pools yet. <a href="{% url 'cm_manage_pools' pk=competition.pk %}">Manage pools first</a>.
+</div>
+{% endif %}
+
+<!-- Generate Form -->
+<div class="gen-card">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;"><i class="bi bi-lightning-charge"></i> Generation Settings</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="generate">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start_date">Start Date *</label>
+                <input type="date" name="start_date" id="start_date" value="{{ competition.start_date|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="kickoff_time">Default Kickoff Time</label>
+                <input type="time" name="kickoff_time" id="kickoff_time" value="14:00">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="group_interval">Days Between Group Matchdays</label>
+                <input type="number" name="group_interval" id="group_interval" value="7" min="1" max="30">
+                <div class="help">Interval between rounds in group stage</div>
+            </div>
+            <div class="form-group">
+                <label for="knockout_interval">Days Between KO Rounds</label>
+                <input type="number" name="knockout_interval" id="knockout_interval" value="3" min="1" max="14">
+                <div class="help">Interval between knockout rounds</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="venue_id">Default Venue (optional)</label>
+                <select name="venue_id" id="venue_id">
+                    <option value="">-- No default venue --</option>
+                    {% for venue in venues %}
+                    <option value="{{ venue.pk }}">{{ venue.name }} ({{ venue.county }})</option>
+                    {% endfor %}
+                </select>
+                <div class="help">Applied to all generated fixtures. Can be overridden per-fixture.</div>
+            </div>
+            <div class="form-group">
+                <label for="knockout_teams">Knockout Teams (if applicable)</label>
+                <input type="number" name="knockout_teams" id="knockout_teams" min="2" max="32" placeholder="Auto">
+                <div class="help">Leave blank to auto-calculate from groups</div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-lightning"></i> Generate Fixtures</button>
+            <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<!-- Clear Fixtures -->
+{% if existing_count > 0 %}
+<div class="gen-card">
+    <div class="danger-box" style="margin-bottom:1rem;">
+        <i class="bi bi-exclamation-octagon"></i>
+        <strong>Danger Zone</strong> &mdash; Clearing fixtures will permanently delete all {{ existing_count }} fixtures and cannot be undone.
+    </div>
+    <form method="post" onsubmit="return confirm('Are you sure you want to delete ALL {{ existing_count }} fixtures? This cannot be undone.');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear">
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Clear All Fixtures ({{ existing_count }})</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

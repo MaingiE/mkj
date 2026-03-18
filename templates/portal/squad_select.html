@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}Select Squad — {{ fixture }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'matches_list' %}">Matches</a>
+        <span>Select Squad</span>
+    </div>
+    <h1>📋 Select Squad</h1>
+    <p>{{ team.name }} — {{ fixture.home_team }} vs {{ fixture.away_team }}</p>
+</div>
+
+<!-- Fixture Info -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div class="card" style="text-align:center;padding:1rem;">
+        <div style="font-size:.85rem;color:#666;">Match Date</div>
+        <div style="font-weight:700;">{{ fixture.match_date|date:"d M Y" }}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+        <div style="font-size:.85rem;color:#666;">Kick-off</div>
+        <div style="font-weight:700;">{{ fixture.kickoff_time|time:"H:i" }}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+        <div style="font-size:.85rem;color:#666;">Squad Deadline</div>
+        <div style="font-weight:700;{% if deadline_passed %}color:#c62828{% else %}color:#2E7D32{% endif %}">
+            {{ deadline|date:"d M Y H:i" }}
+        </div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+        <div style="font-size:.85rem;color:#666;">Venue</div>
+        <div style="font-weight:700;">{{ fixture.venue|default:"TBD" }}</div>
+    </div>
+</div>
+
+{% if existing %}
+<div class="alert alert-{% if existing.status == 'approved' %}success{% elif existing.status == 'rejected' %}danger{% elif existing.status == 'submitted' %}info{% else %}gray{% endif %}" style="margin-bottom:1.5rem;">
+    <strong>Current Status:</strong> {{ existing.get_status_display }}
+    {% if existing.rejection_reason %}
+    <br><strong>Rejection Reason:</strong> {{ existing.rejection_reason }}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if deadline_passed %}
+<div class="alert alert-danger" style="margin-bottom:1.5rem;">
+    <strong>⏰ Deadline Passed</strong> — Squad submission closed at {{ deadline|date:"d M Y H:i" }}. Contact the Organising Secretary if you need an extension.
+</div>
+{% endif %}
+
+<form method="post" id="squadForm">
+{% csrf_token %}
+
+<!-- Rules -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📏 Squad Rules</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;">
+            <div><strong>Min Starters:</strong> {{ settings.min_starters }}</div>
+            <div><strong>Max Starters:</strong> {{ settings.max_starters }}</div>
+            <div><strong>Max Subs:</strong> {{ settings.max_subs }}</div>
+            <div><strong>GK Required:</strong> At least 1 starter GK + 1 sub GK</div>
+        </div>
+    </div>
+</div>
+
+<!-- Formation & Kit Selection -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E8F5E9;"><h3>⚙️ Playing Units &amp; Kit Colours</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Playing Formation / Units *</label>
+                <input type="text" name="formation" id="formationInput"
+                       value="{{ saved_formation }}"
+                       placeholder="e.g. 4-3-3, 4-4-2, 3-5-2"
+                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;font-size:1rem;"
+                       {% if deadline_passed %}disabled{% endif %} required>
+                <small style="color:#666;">Enter your team's tactical formation</small>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Kit Selection *</label>
+                <select name="kit_choice" id="kitChoice"
+                        style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;font-size:1rem;"
+                        {% if deadline_passed %}disabled{% endif %} required>
+                    {% for val, label, colour in kit_options %}
+                    <option value="{{ val }}" {% if saved_kit == val %}selected{% endif %}>
+                        {{ label }} — {{ colour }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small style="color:#666;">Select the kit your team will wear</small>
+            </div>
+        </div>
+
+        <!-- Kit Colour Preview -->
+        <div style="margin-top:1rem;padding:.8rem;background:#f9f9f9;border-radius:8px;">
+            <strong>Team Kit Colours:</strong>
+            <div style="display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:.5rem;">
+                {% if team.home_outfield_colour %}
+                <div style="font-size:.85rem;">
+                    <span style="font-weight:600;">🏠 Home:</span>
+                    {{ team.home_outfield_colour }}/{{ team.home_shorts_colour }}/{{ team.home_socks_colour }}
+                    (GK: {{ team.home_gk_colour }})
+                </div>
+                {% endif %}
+                {% if team.away_outfield_colour %}
+                <div style="font-size:.85rem;">
+                    <span style="font-weight:600;">✈️ Away:</span>
+                    {{ team.away_outfield_colour }}/{{ team.away_shorts_colour }}/{{ team.away_socks_colour }}
+                    (GK: {{ team.away_gk_colour }})
+                </div>
+                {% endif %}
+                {% if team.third_outfield_colour %}
+                <div style="font-size:.85rem;">
+                    <span style="font-weight:600;">3️⃣ Third:</span>
+                    {{ team.third_outfield_colour }}/{{ team.third_shorts_colour }}/{{ team.third_socks_colour }}
+                    (GK: {{ team.third_gk_colour }})
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if players %}
+<!-- Validation Summary -->
+<div id="validationSummary" class="card" style="margin-bottom:1rem;display:none;">
+    <div class="card-body" style="padding:.8rem 1rem;">
+        <div id="validationErrors" style="color:#c62828;"></div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>⚽ Available Players ({{ players|length }})</h3>
+        <div style="display:flex;gap:1rem;font-size:.9rem;">
+            <span id="starterCount" style="color:#1B5E20;font-weight:600">Starters: 0</span>
+            <span id="subCount" style="color:#1565C0;font-weight:600">Subs: 0</span>
+            <span id="gkStatus" style="color:#6A1B9A;font-weight:600">GK: ✗</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:70px;">Starter</th>
+                        <th style="width:70px;">Sub</th>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Position</th>
+                        <th>Age</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in players %}
+                    <tr {% if player.position == 'GK' %}style="background:#f0f7f0;"{% endif %}>
+                        <td style="text-align:center;">
+                            <input type="checkbox" name="starters" value="{{ player.pk }}"
+                                   class="starter-cb" data-player="{{ player.pk }}" data-position="{{ player.position }}"
+                                   {% if player.pk in starter_ids %}checked{% endif %}
+                                   {% if deadline_passed %}disabled{% endif %}>
+                        </td>
+                        <td style="text-align:center;">
+                            <input type="checkbox" name="subs" value="{{ player.pk }}"
+                                   class="sub-cb" data-player="{{ player.pk }}" data-position="{{ player.position }}"
+                                   {% if player.pk in sub_ids %}checked{% endif %}
+                                   {% if deadline_passed %}disabled{% endif %}>
+                        </td>
+                        <td><strong>{{ player.shirt_number }}</strong></td>
+                        <td>
+                            {{ player.get_full_name }}
+                            {% if player.position == 'GK' %}
+                            <span style="display:inline-block;background:#1B5E20;color:#fff;font-size:.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;">GK</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ player.get_position_display }}</td>
+                        <td>{{ player.age }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if not deadline_passed %}
+<div style="display:flex;gap:1rem;justify-content:flex-end;">
+    <a href="{% url 'matches_list' %}" class="btn" style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">Cancel</a>
+    <button type="submit" class="btn" id="submitBtn"
+            style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;opacity:.5;" disabled>
+        📤 Submit Squad
+    </button>
+</div>
+{% endif %}
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="icon">😞</div>
+            <h3>No Eligible Players</h3>
+            <p>No verified and eligible players found. Ensure players are registered and have passed verification.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const minStarters = {{ settings.min_starters }};
+    const maxStarters = {{ settings.max_starters }};
+    const maxSubs = {{ settings.max_subs }};
+
+    function updateCounts() {
+        const starterCbs = document.querySelectorAll('.starter-cb:checked');
+        const subCbs = document.querySelectorAll('.sub-cb:checked');
+        const starters = starterCbs.length;
+        const subs = subCbs.length;
+
+        // Count GKs
+        let starterGKs = 0, subGKs = 0;
+        starterCbs.forEach(cb => { if (cb.dataset.position === 'GK') starterGKs++; });
+        subCbs.forEach(cb => { if (cb.dataset.position === 'GK') subGKs++; });
+
+        document.getElementById('starterCount').textContent = 'Starters: ' + starters + ' (min ' + minStarters + ', max ' + maxStarters + ')';
+        document.getElementById('subCount').textContent = 'Subs: ' + subs + '/' + maxSubs;
+
+        const starterEl = document.getElementById('starterCount');
+        const subEl = document.getElementById('subCount');
+        starterEl.style.color = (starters >= minStarters && starters <= maxStarters) ? '#2E7D32' : '#c62828';
+        subEl.style.color = subs <= maxSubs ? '#1565C0' : '#c62828';
+
+        // GK status
+        const gkEl = document.getElementById('gkStatus');
+        const gkOk = starterGKs >= 1 && (subs === 0 || subGKs >= 1);
+        gkEl.textContent = 'GK: Starters ' + starterGKs + ', Subs ' + subGKs;
+        gkEl.style.color = gkOk ? '#2E7D32' : '#c62828';
+
+        // Validation
+        const errors = [];
+        if (starters < minStarters) errors.push('Need at least ' + minStarters + ' starters (have ' + starters + ')');
+        if (starters > maxStarters) errors.push('Maximum ' + maxStarters + ' starters (have ' + starters + ')');
+        if (subs > maxSubs) errors.push('Maximum ' + maxSubs + ' subs (have ' + subs + ')');
+        if (starterGKs < 1) errors.push('At least 1 goalkeeper must be in starters');
+        if (subs > 0 && subGKs < 1) errors.push('Substitutes must include at least 1 goalkeeper');
+
+        const formation = document.getElementById('formationInput');
+        if (formation && !formation.value.trim()) errors.push('Formation is required');
+
+        const summary = document.getElementById('validationSummary');
+        const errDiv = document.getElementById('validationErrors');
+        if (errors.length > 0) {
+            summary.style.display = 'block';
+            errDiv.innerHTML = errors.map(function(e) { return '\u26A0\uFE0F ' + e; }).join('<br>');
+        } else {
+            summary.style.display = 'none';
+        }
+
+        const btn = document.getElementById('submitBtn');
+        if (btn) {
+            const valid = starters >= minStarters && starters <= maxStarters &&
+                          subs <= maxSubs && starterGKs >= 1 &&
+                          (subs === 0 || subGKs >= 1) &&
+                          (formation ? formation.value.trim() !== '' : true);
+            btn.disabled = !valid;
+            btn.style.opacity = valid ? '1' : '.5';
+        }
+    }
+
+    // Mutual exclusivity: starter <-> sub
+    document.querySelectorAll('.starter-cb').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                const pid = this.dataset.player;
+                const subCb = document.querySelector('.sub-cb[data-player="' + pid + '"]');
+                if (subCb) subCb.checked = false;
+            }
+            updateCounts();
+        });
+    });
+    document.querySelectorAll('.sub-cb').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                const pid = this.dataset.player;
+                const starterCb = document.querySelector('.starter-cb[data-player="' + pid + '"]');
+                if (starterCb) starterCb.checked = false;
+            }
+            updateCounts();
+        });
+    });
+
+    var formationInput = document.getElementById('formationInput');
+    if (formationInput) formationInput.addEventListener('input', updateCounts);
+
+    updateCounts();
+});
+</script>
+{% endblock %}

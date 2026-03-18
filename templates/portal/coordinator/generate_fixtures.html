@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Generate Fixtures &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-calendar-plus"></i> Generate Fixtures</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }} &middot; {{ total_pool_teams }} teams in {{ pools|length }} pool{{ pools|length|pluralize }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+{% if existing_count %}
+<div class="alert alert-info">
+    <strong>{{ existing_count }}</strong> fixture{{ existing_count|pluralize }} already exist for this competition.
+    <form method="post" style="display:inline;" onsubmit="return confirm('Delete all existing fixtures?');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear">
+        <button class="btn btn-sm btn-warning ms-2">Clear All Fixtures</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 style="margin:0;font-size:1rem;"><i class="bi bi-gear"></i> Fixture Generation Settings</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Kickoff Time</label>
+                    <input type="time" name="kickoff_time" class="form-control" value="14:00">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Default Venue</label>
+                    <select name="venue_id" class="form-select">
+                        <option value="">— No default —</option>
+                        {% for v in venues %}<option value="{{ v.pk }}">{{ v.name }} ({{ v.county }})</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Days Between Group Matches</label>
+                    <input type="number" name="group_interval" class="form-control" value="7" min="1">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Days Between Knockout Matches</label>
+                    <input type="number" name="knockout_interval" class="form-control" value="3" min="1">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Knockout Teams (optional)</label>
+                    <input type="number" name="knockout_teams" class="form-control" placeholder="Auto">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-lightning-charge"></i> Generate Fixtures</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

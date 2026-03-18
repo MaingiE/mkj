@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Registration - FKF Meru County League{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Progress Steps -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body py-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="step-indicator active">
+                                <div class="step-circle">1</div>
+                                <div class="step-label">Team Details</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="step-indicator">
+                                <div class="step-circle">2</div>
+                                <div class="step-label">Payment</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="step-indicator">
+                                <div class="step-circle">3</div>
+                                <div class="step-label">Complete</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Fee Notice -->
+            <div class="alert alert-success mb-4 shadow-sm">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="alert-heading mb-2"><i class="fas fa-clipboard-check me-2"></i>Quick Registration Process</h5>
+                        <p class="mb-1"><strong>Step 1:</strong> Fill in your team details (2 minutes)</p>
+                        <p class="mb-0"><strong>Step 2:</strong> Pay KSh {{ registration_fee|default:"1,000" }} via M-PESA (instant)</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="display-6 fw-bold text-success">KSh {{ registration_fee|default:"1,000" }}</div>
+                        <small class="text-muted">Registration Fee</small>
+                    </div>
+                </div>
+            </div>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message|safe }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="mb-0"><i class="fas fa-futbol me-2"></i>Team Registration</h4>
+                    <small>Step 1 of 2: Provide your team details</small>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" id="teamForm">
+                        {% csrf_token %}
+                        
+                        <!-- Team Information Section -->
+                        <div class="registration-section mb-4">
+                            <h5 class="section-title"><i class="fas fa-info-circle me-2"></i>Team Information</h5>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="id_team_name" class="form-label fw-bold">Team Name *</label>
+                                    {{ form.team_name }}
+                                    {% if form.team_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.team_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_location" class="form-label fw-bold">Location/Town *</label>
+                                    {{ form.location }}
+                                    {% if form.location.errors %}
+                                    <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_home_ground" class="form-label fw-bold">Home Ground *</label>
+                                    {{ form.home_ground }}
+                                    {% if form.home_ground.errors %}
+                                    <div class="text-danger small mt-1">{{ form.home_ground.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Team Officials Section -->
+                        <div class="registration-section mb-4">
+                            <h5 class="section-title"><i class="fas fa-user-tie me-2"></i>Team Officials & Contact</h5>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="id_contact_person" class="form-label fw-bold">Team Manager/Contact Person *</label>
+                                    {{ form.contact_person }}
+                                    {% if form.contact_person.errors %}
+                                    <div class="text-danger small mt-1">{{ form.contact_person.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_phone_digits" class="form-label fw-bold">Phone Number *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text fw-bold bg-primary text-white">+254</span>
+                                        {{ form.phone_digits }}
+                                    </div>
+                                    <div class="form-text">{{ form.phone_digits.help_text }}</div>
+                                    {% if form.phone_digits.errors %}
+                                    <div class="text-danger small mt-1">{{ form.phone_digits.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_email" class="form-label fw-bold">Email Address</label>
+                                    {{ form.email }}
+                                    <div class="form-text">Optional but recommended</div>
+                                    {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_captain_name" class="form-label fw-bold">Team Captain Name</label>
+                                    {{ form.captain_name }}
+                                    <div class="form-text">Optional - can be added later</div>
+                                    {% if form.captain_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.captain_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kit Information Section -->
+                        <div class="registration-section mb-4">
+                            <h5 class="section-title"><i class="fas fa-tshirt me-2"></i>Team Kit Information</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_primary_kit_color" class="form-label fw-bold">Primary Kit Color *</label>
+                                    {{ form.primary_kit_color }}
+                                    {% if form.primary_kit_color.errors %}
+                                    <div class="text-danger small mt-1">{{ form.primary_kit_color.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_secondary_kit_color" class="form-label fw-bold">Secondary Kit Color</label>
+                                    {{ form.secondary_kit_color }}
+                                    <div class="form-text">For away matches</div>
+                                    {% if form.secondary_kit_color.errors %}
+                                    <div class="text-danger small mt-1">{{ form.secondary_kit_color.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_goalkeeper_kit_color" class="form-label fw-bold">Goalkeeper Kit Color</label>
+                                    {{ form.goalkeeper_kit_color }}
+                                    {% if form.goalkeeper_kit_color.errors %}
+                                    <div class="text-danger small mt-1">{{ form.goalkeeper_kit_color.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-danger btn-lg" id="submitBtn">
+                                <i class="fas fa-arrow-right me-2"></i>Continue to Payment (Step 2)
+                            </button>
+                            <a href="{% url 'frontend:home' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel Registration
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .step-indicator {
+        position: relative;
+    }
+    
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: bold;
+        font-size: 18px;
+        border: 3px solid #dee2e6;
+    }
+    
+    .step-indicator.active .step-circle {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+    
+    .step-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .step-indicator.active .step-label {
+        color: #212529;
+        font-weight: 600;
+    }
+    
+    .registration-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .section-title {
+        color: #dc3545;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .form-control:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+</style>
+
+<script>
+    document.getElementById('teamForm').addEventListener('submit', function(e) {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving & Proceeding to Payment...';
+        btn.disabled = true;
+    });
+</script>
+{% endblock %}

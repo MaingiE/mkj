@@ -1,0 +1,105 @@
+<!-- templates/referees/admin/reject_referee.html -->
+{% extends 'base.html' %}
+
+{% block title %}Reject Referee Application{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Reject Referee Application
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone. The referee will be notified of the rejection.
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Referee Details:</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>Name:</strong> {{ referee.full_name }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>ID Number:</strong> {{ referee.id_number }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Email:</strong> {{ referee.email }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Phone:</strong> {{ referee.phone_number }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Grade:</strong> {{ referee.get_grade_display }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>License:</strong> {{ referee.license_number }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>County:</strong> {{ referee.county|default:"Not specified" }}
+                            </li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="rejection_reason" class="form-label">
+                                <strong>Reason for Rejection</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="rejection_reason" name="rejection_reason" 
+                                      rows="4" placeholder="Provide a clear reason for rejection..." 
+                                      required></textarea>
+                            <div class="form-text">
+                                This reason will be shown to the referee when they try to login.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirm_rejection" required>
+                                <label class="form-check-label" for="confirm_rejection">
+                                    I confirm that I want to reject this referee application.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'referees:pending_referees' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger" onclick="return confirmReject()">
+                                <i class="fas fa-times me-2"></i>Confirm Rejection
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmReject() {
+        var reason = document.getElementById('rejection_reason').value;
+        if (!reason.trim()) {
+            alert('Please provide a reason for rejection.');
+            return false;
+        }
+        if (!document.getElementById('confirm_rejection').checked) {
+            alert('Please confirm the rejection.');
+            return false;
+        }
+        return confirm('Are you sure you want to reject this referee application? This cannot be undone.');
+    }
+</script>
+{% endblock %}

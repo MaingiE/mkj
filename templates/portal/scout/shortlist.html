@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}My Shortlist — Scout — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'scout_dashboard' %}">Scout</a>
+        <span>My Shortlist</span>
+    </div>
+    <h1><i class="bi bi-bookmark-star-fill"></i> My Shortlist</h1>
+    <p>{{ total }} players in your shortlist.</p>
+</div>
+
+<!-- Rating Filter -->
+<div class="card" style="margin-bottom:1rem;padding:.75rem 1.25rem;">
+    <form method="get" style="display:flex;gap:1rem;align-items:center;">
+        <label style="font-size:.85rem;font-weight:600;">Filter by Rating:</label>
+        <select name="rating" class="form-control" style="width:auto;min-width:140px;" onchange="this.form.submit()">
+            <option value="">All Ratings</option>
+            {% for i in "54321" %}
+            <option value="{{ i }}" {% if rating_filter == i %}selected{% endif %}>{{ i }}★ &amp; above</option>
+            {% endfor %}
+        </select>
+        {% if rating_filter %}
+        <a href="{% url 'scout_shortlist' %}" style="font-size:.85rem;color:#C62828;text-decoration:none;font-weight:600;">✕ Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if shortlist %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Discipline</th>
+                        <th>Age</th>
+                        <th>Position</th>
+                        <th>Rating</th>
+                        <th>Notes</th>
+                        <th>Added</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in shortlist %}
+                    <tr>
+                        <td>
+                            {% if entry.player.photo %}
+                            <img src="{{ entry.player.photo.url }}" alt="" style="width:28px;height:34px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:.4rem;">
+                            {% endif %}
+                            <strong>{{ entry.player.first_name }} {{ entry.player.last_name }}</strong>
+                        </td>
+                        <td>{{ entry.player.discipline.registration.get_county_display }}</td>
+                        <td>{{ entry.player.discipline.get_sport_type_display }}</td>
+                        <td>{{ entry.player.age }}</td>
+                        <td>{{ entry.player.position|default:"—" }}</td>
+                        <td>
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= entry.rating %}
+                                <span style="color:#E65100">★</span>
+                                {% else %}
+                                <span style="color:#ddd">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if entry.notes %}
+                            <span title="{{ entry.notes }}" style="cursor:help;font-size:.85rem;color:#666;">{{ entry.notes|truncatechars:40 }}</span>
+                            {% else %}
+                            <span style="color:#ccc">—</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ entry.created_at|date:"d M Y" }}</small></td>
+                        <td style="white-space:nowrap;">
+                            <a href="{% url 'scout_edit_shortlist' pk=entry.pk %}" class="btn btn-outline btn-sm" style="padding:.25rem .5rem;font-size:.78rem;margin-right:.25rem;" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="post" action="{% url 'scout_remove_from_shortlist' pk=entry.pk %}" style="display:inline;" onsubmit="return confirm('Remove this player from your shortlist?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline btn-sm" style="padding:.25rem .5rem;font-size:.78rem;color:#C62828;border-color:#C62828;" title="Remove">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="padding:3rem;text-align:center;">
+        <div style="font-size:3rem">🔭</div>
+        <h3>Your shortlist is empty</h3>
+        <p style="color:#888">Browse verified players and add them to your shortlist.</p>
+        <a href="{% url 'scout_players' %}" style="color:#1B5E20;font-weight:600;text-decoration:none;">Browse Players →</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

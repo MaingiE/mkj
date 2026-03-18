@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Flash Match Report - {{ match }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary">Flash Match Report</h2>
+            <p class="lead">{{ match }} - {{ match.match_date|date:"F j, Y, g:i a" }}</p>
+            <p class="text-muted">Venue: {{ match.venue }}</p>
+        </div>
+    </div>
+    <form method="POST" id="flashReportForm">
+        {% csrf_token %}
+        {% include 'referees/_result_section.html' %}
+        {% include 'referees/_goals_section.html' %}
+        {% include 'referees/_cautions_section.html' %}
+        <!-- Goalkeeper Data & Top Scorers -->
+        <div class="card mb-4">
+            <div class="card-header card-header-custom">
+                <h4 class="mb-0">Goalkeeper Data & Top Scorers</h4>
+            </div>
+            <div class="card-body">
+                {{ goalkeeper_form|crispy }}
+                {{ topscorer_form|crispy }}
+            </div>
+        </div>
+        <!-- Submit Button -->
+        <div class="card">
+            <div class="card-body text-end">
+                <button type="submit" name="submit_flash_report" class="btn btn-lg btn-primary-custom">
+                    <i class="fas fa-paper-plane"></i> Submit Flash Report
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Store all players data for filtering
+    const allPlayers = {
+        {% for player in home_players %}
+        {{ player.id }}: {
+            name: "{{ player.full_name|escapejs }}",
+            team: {{ match.home_team.id }},
+            jersey: {{ player.jersey_number }},
+            teamName: "{{ match.home_team.team_name|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+        {% if home_players and away_players %},{% endif %}
+        {% for player in away_players %}
+        {{ player.id }}: {
+            name: "{{ player.full_name|escapejs }}",
+            team: {{ match.away_team.id }},
+            jersey: {{ player.jersey_number }},
+            teamName: "{{ match.away_team.team_name|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    // Function to update player dropdown based on selected team
+    function updatePlayerDropdown(teamSelect) {
+        const selectedTeamId = parseInt($(teamSelect).val());
+        const $form = $(teamSelect).closest('.formset-form');
+        const $playerSelect = $form.find('select[id*="player"]').not('[id*="assist"]');
+        const $assistSelect = $form.find('select[id*="assist"]');
+        
+        if (!selectedTeamId) return;
+        
+        // Update main player dropdown
+        const currentPlayerId = $playerSelect.val();
+        $playerSelect.empty().append('<option value="">---------</option>');
+        
+        $.each(allPlayers, function(playerId, player) {
+            if (player.team === selectedTeamId) {
+                const option = $('<option></option>')
+                    .val(playerId)
+                    .text(player.name + ' (#' + player.jersey + ')');
+                if (playerId == currentPlayerId) {
+                    option.prop('selected', true);
+                }
+                $playerSelect.append(option);
+            }
+        });
+        
+        // Update assist dropdown if exists
+        if ($assistSelect.length > 0) {
+            const currentAssistId = $assistSelect.val();
+            $assistSelect.empty().append('<option value="">---------</option>');
+            
+            $.each(allPlayers, function(playerId, player) {
+                if (player.team === selectedTeamId) {
+                    const option = $('<option></option>')
+                        .val(playerId)
+                        .text(player.name + ' (#' + player.jersey + ')');
+                    if (playerId == currentAssistId) {
+                        option.prop('selected', true);
+                    }
+                    $assistSelect.append(option);
+                }
+            });
+        }
+    }
+    
+    // Bind change event to existing and future team dropdowns
+    $(document).on('change', 'select[id*="team"]', function() {
+        updatePlayerDropdown(this);
+    });
+    
+    // Initialize player dropdowns on page load for existing forms
+    $('select[id*="team"]').each(function() {
+        if ($(this).val()) {
+            updatePlayerDropdown(this);
+        }
+    });
+    
+    // Add goal form
+    $('#add-goal-form').click(function(e) {
+        e.preventDefault();
+        console.log('Add goal button clicked');
+        
+        let formIdx = parseInt($('#id_matchgoal_set-TOTAL_FORMS').val());
+        console.log('Current form index:', formIdx);
+        
+        // Clone the empty form template
+        let $emptyFormHtml = $('#empty-goal .formset-form').clone();
+        
+        // Replace __prefix__ with the actual form index
+        let newFormHtml = $emptyFormHtml.prop('outerHTML').replace(/__prefix__/g, formIdx);
+        
+        // Append to the formset container with fade-in animation
+        let $newForm = $(newFormHtml).hide();
+        $('#goal-formset').append($newForm);
+        $newForm.slideDown(300);
+        
+        // Increment the form count
+        $('#id_matchgoal_set-TOTAL_FORMS').val(formIdx + 1);
+        
+        // Scroll to the new form
+        $('html, body').animate({
+            scrollTop: $newForm.offset().top - 100
+        }, 300);
+        
+        console.log('Goal form added, new total:', formIdx + 1);
+    });
+    
+    // Add card form
+    $('#add-card-form').click(function(e) {
+        e.preventDefault();
+        console.log('Add card button clicked');
+        
+        let formIdx = parseInt($('#id_caution_set-TOTAL_FORMS').val());
+        console.log('Current form index:', formIdx);
+        
+        // Clone the empty form template
+        let $emptyFormHtml = $('#empty-card .formset-form').clone();
+        
+        // Replace __prefix__ with the actual form index
+        let newFormHtml = $emptyFormHtml.prop('outerHTML').replace(/__prefix__/g, formIdx);
+        
+        // Append to the formset container with fade-in animation
+        let $newForm = $(newFormHtml).hide();
+        $('#card-formset').append($newForm);
+        $newForm.slideDown(300);
+        
+        // Increment the form count
+        $('#id_caution_set-TOTAL_FORMS').val(formIdx + 1);
+        
+        // Scroll to the new form
+        $('html, body').animate({
+            scrollTop: $newForm.offset().top - 100
+        }, 300);
+        
+        console.log('Card form added, new total:', formIdx + 1);
+    });
+    
+    // Remove goal form
+    $(document).on('click', '.remove-goal-form', function(e) {
+        e.preventDefault();
+        let $form = $(this).closest('.formset-form');
+        if (confirm('Remove this goal entry?')) {
+            $form.slideUp(300, function() {
+                $(this).remove();
+            });
+        }
+    });
+    
+    // Remove card form
+    $(document).on('click', '.remove-card-form', function(e) {
+        e.preventDefault();
+        let $form = $(this).closest('.formset-form');
+        if (confirm('Remove this card entry?')) {
+            $form.slideUp(300, function() {
+                $(this).remove();
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

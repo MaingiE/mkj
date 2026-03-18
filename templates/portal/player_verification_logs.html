@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Verification Logs — {{ player.get_full_name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'player_clearance_dashboard' %}">Player Clearance</a>
+        <a href="{% url 'player_clearance_detail' player_pk=player.pk %}">{{ player.get_full_name }}</a>
+        <span>Verification Logs</span>
+    </div>
+    <h1>📋 Verification Logs: {{ player.get_full_name }}</h1>
+    <p>Complete audit trail of all verification actions for this player.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if logs %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>Step</th>
+                        <th>Action</th>
+                        <th>Result</th>
+                        <th>Performed By</th>
+                        <th>Notes</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="font-size:.85rem;white-space:nowrap">{{ log.performed_at|date:"d M Y H:i:s" }}</td>
+                        <td>
+                            {% if log.step == 'document' %}📄{% elif log.step == 'huduma' %}🏛️{% elif log.step == 'fifa_connect' %}⚽{% else %}🛡️{% endif %}
+                            {{ log.get_step_display }}
+                        </td>
+                        <td style="font-weight:600">{{ log.action }}</td>
+                        <td>
+                            {% if log.result == 'verified' or log.result == 'clear' or log.result == 'eligible' %}
+                            <span style="background:#e8f5e9;color:#1B5E20;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">{{ log.result }}</span>
+                            {% elif log.result == 'flagged' or log.result == 'failed' or log.result == 'rejected' or log.result == 'ineligible' %}
+                            <span style="background:#fce4ec;color:#C62828;padding:.2rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600">{{ log.result }}</span>
+                            {% else %}
+                            <span style="background:#f5f5f5;color:#555;padding:.2rem .5rem;border-radius:4px;font-size:.8rem">{{ log.result }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:.85rem">{% if log.performed_by %}{{ log.performed_by.get_full_name }}{% else %}System{% endif %}</td>
+                        <td style="font-size:.85rem;max-width:250px">{{ log.notes|default:"—" }}</td>
+                        <td style="font-size:.8rem;max-width:200px;word-break:break-all;color:#888">
+                            {% if log.details %}
+                            <details>
+                                <summary style="cursor:pointer;color:#1565C0">View</summary>
+                                <pre style="font-size:.75rem;margin-top:.25rem;white-space:pre-wrap">{{ log.details }}</pre>
+                            </details>
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">📋</div>
+            <h3>No verification logs</h3>
+            <p style="color:#888">No verification actions have been recorded for this player yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

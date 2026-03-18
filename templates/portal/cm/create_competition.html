@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Competition &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        max-width: 800px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: .85rem;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: .55rem .75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: .9rem;
+        transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        outline: none;
+        border-color: #7B1FA2;
+        box-shadow: 0 0 0 3px rgba(123,31,162,.1);
+    }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .form-group .help { font-size: .75rem; color: #999; margin-top: .2rem; }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; color: #212121; }
+    .btn-row { display: flex; gap: .75rem; align-items: center; margin-top: 1.5rem; }
+    @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-plus-circle"></i> Create New Competition</h2>
+    <a href="{% url 'cm_dashboard' %}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="name">Competition Name *</label>
+            <input type="text" name="name" id="name" required placeholder="e.g. 2025 KYISA U17 Boys Football Championship">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="sport_type">Sport</label>
+                <select name="sport_type" id="sport_type">
+                    {% for val, label in sport_types %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select name="gender" id="gender">
+                    {% for val, label in gender_choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="format_type">Format</label>
+                <select name="format_type" id="format_type">
+                    {% for val, label in format_choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="help">Group + Knockout = group stage followed by knockout bracket</div>
+            </div>
+            <div class="form-group">
+                <label for="age_group">Age Group</label>
+                <select name="age_group" id="age_group">
+                    {% for val, label in age_groups %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="season">Season</label>
+                <input type="text" name="season" id="season" value="2025" placeholder="2025">
+            </div>
+            <div class="form-group">
+                <label for="max_teams">Max Teams</label>
+                <input type="number" name="max_teams" id="max_teams" value="16" min="2" max="64">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start_date">Start Date *</label>
+                <input type="date" name="start_date" id="start_date" required>
+            </div>
+            <div class="form-group">
+                <label for="end_date">End Date *</label>
+                <input type="date" name="end_date" id="end_date" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="teams_per_group">Teams Per Group</label>
+                <input type="number" name="teams_per_group" id="teams_per_group" value="4" min="2" max="8">
+                <div class="help">Only used for group stage formats</div>
+            </div>
+            <div class="form-group">
+                <label for="qualify_from_group">Qualifiers Per Group</label>
+                <input type="number" name="qualify_from_group" id="qualify_from_group" value="2" min="1" max="4">
+                <div class="help">Number of teams advancing from each group to knockout</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" id="description" rows="3" placeholder="Brief description of the competition..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="rules">Rules</label>
+            <textarea name="rules" id="rules" rows="5" placeholder="Competition rules, regulations, and format details..."></textarea>
+            <div class="help">Can be updated later from the competition management page</div>
+        </div>
+
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Competition</button>
+            <a href="{% url 'cm_dashboard' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

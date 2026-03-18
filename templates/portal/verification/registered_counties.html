@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Registered Counties — Verification — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Registered Counties</span>
+    </div>
+    <h1><i class="bi bi-geo-alt-fill"></i> Registered Counties</h1>
+    <p>Select a county to view its disciplines and verify players.</p>
+</div>
+
+<!-- Summary -->
+<div class="stats-grid" style="margin-bottom:1.25rem">
+    <div class="stat-card green">
+        <div class="stat-icon green">🏛️</div>
+        <div class="stat-info"><h3>{{ total_counties }}</h3><p>Approved Counties</p></div>
+    </div>
+</div>
+
+{% if county_data %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>County</th>
+                        <th>Director of Sports</th>
+                        <th>Disciplines</th>
+                        <th>Total Players</th>
+                        <th>Pending</th>
+                        <th>Verified</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in county_data %}
+                    <tr>
+                        <td><strong>{{ item.registration.get_county_display }}</strong></td>
+                        <td>{{ item.registration.director_name|default:"—" }}<br><small style="color:#888">{{ item.registration.director_phone|default:"" }}</small></td>
+                        <td>
+                            <span style="background:#E8F5E9;color:#1B5E20;padding:.2rem .6rem;border-radius:12px;font-weight:600;font-size:.85rem">
+                                {{ item.discipline_count }}
+                            </span>
+                        </td>
+                        <td>{{ item.total_players }}</td>
+                        <td>
+                            {% if item.pending_players > 0 %}
+                            <span style="background:#FFF3E0;color:#E65100;padding:.2rem .6rem;border-radius:12px;font-weight:600;font-size:.85rem">
+                                {{ item.pending_players }}
+                            </span>
+                            {% else %}
+                            <span style="color:#999">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span style="color:#1B5E20;font-weight:600">{{ item.verified_players }}</span>
+                        </td>
+                        <td>
+                            <a href="{% url 'vo_county_disciplines' county_reg_pk=item.registration.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.35rem .9rem;font-size:.8rem">
+                                <i class="bi bi-arrow-right"></i> View Disciplines
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="padding:3rem;text-align:center">
+        <div style="font-size:3rem">🏛️</div>
+        <h3>No approved counties yet</h3>
+        <p style="color:#888">Counties will appear here once their registration is approved.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% block title %}Add Player — {{ team.name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'teams_list' %}">Teams</a>
+        <a href="{% url 'team_detail' pk=team.pk %}">{{ team.name }}</a>
+        <span>Add Player</span>
+    </div>
+    <h1>Add Player to {{ team.name }}</h1>
+    <p>Fill in the player details and upload required verification documents.</p>
+</div>
+
+<!-- Age bracket notice -->
+<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;border-radius:10px;background:#fff3e0;border-left:4px solid #f57c00;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.5rem">⚠️</span>
+    <div>
+        <strong style="color:#e65100">Age Requirement</strong>
+        <p style="margin:0;color:#555;font-size:.9rem">Players must be between <strong>18 and 23 years old</strong>. Players outside this age bracket will be automatically rejected.</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+    <!-- Form Column -->
+    <div class="card">
+        <div class="card-header"><h3>Player Details & Documents</h3></div>
+        <div class="card-body">
+            {% if messages %}
+            {% for message in messages %}
+            <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e3f2fd{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1B5E20{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#1565c0{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <fieldset style="border:1px solid #e0e0e0;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem">
+                    <legend style="font-weight:700;color:#1B5E20;padding:0 .5rem;font-size:.95rem">Personal Information</legend>
+                    {% for field in form %}
+                        {% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'date_of_birth' or field.name == 'position' or field.name == 'shirt_number' or field.name == 'national_id_number' or field.name == 'birth_cert_number' %}
+                        <div style="margin-bottom:1rem">
+                            <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.3rem;font-size:.9rem">{{ field.label }}</label>
+                            {% if field.name == 'national_id_number' %}
+                            <div style="display:flex;gap:.5rem;align-items:flex-start">
+                                <div style="flex:1">{{ field }}</div>
+                                <button type="button" id="iprs-lookup-btn" onclick="lookupIPRS()" style="padding:.45rem 1rem;background:#1565c0;color:#fff;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;white-space:nowrap;margin-top:1px;display:flex;align-items:center;gap:.35rem" title="Look up name & DOB from IPRS">
+                                    <span id="iprs-btn-icon">🔍</span>
+                                    <span id="iprs-btn-text">IPRS Lookup</span>
+                                </button>
+                            </div>
+                            <div id="iprs-status" style="margin-top:.35rem;font-size:.83rem;display:none"></div>
+                            {% else %}
+                            {{ field }}
+                            {% endif %}
+                            {% if field.help_text %}<small style="color:#888;font-size:.8rem">{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<div style="color:#C62828;font-size:.85rem;margin-top:.2rem">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </fieldset>
+
+                <fieldset style="border:1px solid #e0e0e0;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem">
+                    <legend style="font-weight:700;color:#1B5E20;padding:0 .5rem;font-size:.95rem">📄 Verification Documents</legend>
+                    <p style="color:#666;font-size:.85rem;margin-bottom:1rem">All three documents are required for player verification by the admin.</p>
+
+                    <!-- IPRS Photo Preview (auto-populated from IPRS lookup) -->
+                    <div id="iprs-photo-section" style="display:none;margin-bottom:1rem;padding:.75rem;background:#e3f2fd;border-radius:8px;border-left:4px solid #1565c0">
+                        <label style="display:block;font-weight:600;color:#1565c0;margin-bottom:.5rem;font-size:.9rem">📷 IPRS Passport Photo</label>
+                        <div style="display:flex;align-items:flex-start;gap:1rem">
+                            <img id="iprs-photo-img" src="" alt="IPRS Photo" style="width:120px;height:150px;object-fit:cover;border-radius:8px;border:2px solid #1565c0;background:#f5f7f5">
+                            <div style="font-size:.83rem;color:#555">
+                                <p style="margin:0 0 .25rem">This photo was returned from IPRS and will be saved with the player record for verification comparison.</p>
+                                <em style="color:#888">You can still upload a separate player photo below.</em>
+                            </div>
+                        </div>
+                        <input type="hidden" name="iprs_photo_base64" id="iprs-photo-base64" value="">
+                    </div>
+
+                    {% for field in form %}
+                        {% if field.name == 'photo' or field.name == 'id_document' or field.name == 'birth_certificate' %}
+                        <div style="margin-bottom:1rem;padding:.75rem;background:#f5f7f5;border-radius:8px">
+                            <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.3rem;font-size:.9rem">
+                                {% if field.name == 'photo' %}📸{% elif field.name == 'id_document' %}🪪{% else %}📜{% endif %}
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}<small style="color:#888;font-size:.8rem">{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<div style="color:#C62828;font-size:.85rem;margin-top:.2rem">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </fieldset>
+
+                {% if form.non_field_errors %}
+                <div style="color:#C62828;margin-bottom:1rem;padding:.75rem;background:#fce4ec;border-radius:8px">
+                    {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div style="display:flex;gap:.75rem;margin-top:1rem">
+                    <button type="submit" name="action" value="add_more" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.6rem 1.5rem;flex:1">
+                        Save &amp; Add Another
+                    </button>
+                    <button type="submit" name="action" value="finish" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem;flex:1">
+                        Save &amp; Finish
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Current Squad Column -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Current Squad ({{ player_count }})</h3>
+        </div>
+        <div class="card-body">
+            {% if players %}
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Pos</th>
+                            <th>Age</th>
+                            <th>Docs</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in players %}
+                        <tr>
+                            <td><strong>{{ p.shirt_number }}</strong></td>
+                            <td>{{ p.first_name }} {{ p.last_name }}</td>
+                            <td><span class="badge" style="background:#e8f5e9;color:#1B5E20">{{ p.get_position_display }}</span></td>
+                            <td>
+                                {% if p.is_age_eligible %}
+                                {{ p.age }}
+                                {% else %}
+                                <span style="color:#C62828;font-weight:600" title="Outside 18-23 bracket">{{ p.age }} ⛔</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.documents_uploaded %}
+                                <span style="color:#1B5E20" title="All documents uploaded">✅</span>
+                                {% else %}
+                                <span style="color:#f57c00" title="Missing documents">⚠️</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.verification_status == 'verified' %}
+                                <span class="badge badge-success">Verified</span>
+                                {% elif p.verification_status == 'rejected' %}
+                                <span class="badge badge-danger">Rejected</span>
+                                {% else %}
+                                <span class="badge badge-warning" style="background:#fff3e0;color:#e65100">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon" style="font-size:2rem">👥</div>
+                <h3>No players yet</h3>
+                <p>Add your first player using the form.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function lookupIPRS() {
+    const idField = document.getElementById('id_national_id_number');
+    const btn = document.getElementById('iprs-lookup-btn');
+    const btnIcon = document.getElementById('iprs-btn-icon');
+    const btnText = document.getElementById('iprs-btn-text');
+    const statusDiv = document.getElementById('iprs-status');
+
+    if (!idField) return;
+    const idNumber = idField.value.trim();
+    if (!idNumber) {
+        showStatus('⚠️ Enter a National ID number first.', '#e65100', '#fff3e0');
+        idField.focus();
+        return;
+    }
+
+    // Validate format
+    if (!/^\d{7,8}$/.test(idNumber)) {
+        showStatus('⚠️ National ID must be 7-8 digits.', '#e65100', '#fff3e0');
+        idField.focus();
+        return;
+    }
+
+    // Show loading state
+    btn.disabled = true;
+    btnIcon.textContent = '⏳';
+    btnText.textContent = 'Looking up...';
+    showStatus('⏳ Querying IPRS...', '#1565c0', '#e3f2fd');
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const formData = new FormData();
+    formData.append('national_id', idNumber);
+
+    fetch("{% url 'api_iprs_lookup' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData,
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.success && data.person_found) {
+            // Auto-fill form fields
+            const firstName = document.getElementById('id_first_name');
+            const lastName = document.getElementById('id_last_name');
+            const dob = document.getElementById('id_date_of_birth');
+
+            if (firstName && data.first_name) firstName.value = data.first_name;
+            if (lastName && data.last_name) lastName.value = data.last_name;
+            if (dob && data.date_of_birth) dob.value = data.date_of_birth;
+
+            // Show IPRS photo if returned
+            if (data.photo) {
+                const photoSection = document.getElementById('iprs-photo-section');
+                const photoImg = document.getElementById('iprs-photo-img');
+                const photoInput = document.getElementById('iprs-photo-base64');
+                photoImg.src = 'data:image/jpeg;base64,' + data.photo;
+                photoInput.value = data.photo;
+                photoSection.style.display = 'block';
+            }
+
+            // Highlight filled fields briefly
+            [firstName, lastName, dob].forEach(el => {
+                if (el) {
+                    el.style.transition = 'background .3s';
+                    el.style.background = '#e8f5e9';
+                    setTimeout(() => el.style.background = '', 2000);
+                }
+            });
+
+            let msg = '✅ <strong>' + escapeHtml(data.full_name) + '</strong>';
+            if (data.age !== null) msg += ' — Age: <strong>' + data.age + '</strong>';
+            if (data.gender) msg += ' — ' + escapeHtml(data.gender);
+            if (data.is_simulation) msg += ' <em style="opacity:.7">(Simulation)</em>';
+            showStatus(msg, '#1B5E20', '#e8f5e9');
+        } else if (data.success && !data.person_found) {
+            showStatus('❌ No person found with this National ID.', '#C62828', '#fce4ec');
+        } else {
+            showStatus('❌ ' + escapeHtml(data.error_message || 'Lookup failed.'), '#C62828', '#fce4ec');
+        }
+    })
+    .catch(err => {
+        showStatus('❌ Network error — please try again.', '#C62828', '#fce4ec');
+        console.error('IPRS lookup error:', err);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btnIcon.textContent = '🔍';
+        btnText.textContent = 'IPRS Lookup';
+    });
+}
+
+function showStatus(html, color, bg) {
+    const el = document.getElementById('iprs-status');
+    el.innerHTML = html;
+    el.style.display = 'block';
+    el.style.color = color;
+    el.style.background = bg;
+    el.style.padding = '.5rem .75rem';
+    el.style.borderRadius = '6px';
+    el.style.borderLeft = '3px solid ' + color;
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+</script>
+{% endblock %}

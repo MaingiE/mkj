@@ -1,0 +1,168 @@
+"""
+MKJ SUPA CUP Accounts — Custom User Model with Role-Based Access
+"""
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.validators import RegexValidator
+from django.db import models
+from django.utils import timezone
+
+# Shared phone validator: +254 followed by exactly 9 digits
+kenya_phone_validator = RegexValidator(
+    regex=r'^\+254\d{9}$',
+    message='Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).',
+)
+
+
+class UserRole(models.TextChoices):
+    COMPETITION_MANAGER = "competition_manager", "Organising Secretary"
+    COORDINATOR         = "coordinator",         "Discipline Coordinator"
+    VERIFICATION_OFFICER = "verification_officer", "Verification Officer"
+    REFEREE             = "referee",             "Referee"
+    TEAM_MANAGER        = "team_manager",        "Team Manager"
+    COUNTY_SPORTS_DIRECTOR = "county_sports_admin", "County Sports Director"
+    CEC_SPORTS_MEMBER = "cec_sports", "County CEC Member - Sports"
+    TREASURER           = "treasurer",           "Treasurer"
+    JURY_CHAIR          = "jury_chair",          "Chair of the Jury"
+    MEDIA_MANAGER       = "media_manager",       "Media Manager"
+    SECRETARY_GENERAL   = "secretary_general",   "Secretary General"
+    SCOUT               = "scout",               "Scout"
+    ADMIN               = "admin",               "System Admin"
+
+
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user  = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff",     True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role",         UserRole.ADMIN)
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    """
+    Central MKJ SUPA CUP user — single table, role differentiates access.
+    """
+    email       = models.EmailField(unique=True)
+    first_name  = models.CharField(max_length=100)
+    last_name   = models.CharField(max_length=100)
+    phone       = models.CharField(max_length=13, validators=[kenya_phone_validator])
+    role        = models.CharField(max_length=30, choices=UserRole.choices, default=UserRole.TEAM_MANAGER)
+    county      = models.CharField(max_length=100, blank=True, help_text="Kenyan county")
+    profile_photo = models.ImageField(upload_to="profiles/", null=True, blank=True)
+    is_active   = models.BooleanField(default=True)
+    is_staff    = models.BooleanField(default=False)
+    is_suspended = models.BooleanField(default=False, help_text="Admin-suspended account")
+    assigned_discipline = models.CharField(
+        max_length=30, blank=True, default="",
+        help_text="Sport discipline this user manages (for Coordinator / Scout roles)",
+    )
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="When True the user must set a new password on next login.",
+    )
+    date_joined = models.DateTimeField(default=timezone.now)
+    last_login  = models.DateTimeField(null=True, blank=True)
+
+    objects = UserManager()
+
+    USERNAME_FIELD  = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
+
+    class Meta:
+        verbose_name      = "User"
+        verbose_name_plural = "Users"
+        ordering = ["last_name", "first_name"]
+
+    def __str__(self):
+        return f"{self.get_full_name()} ({self.get_role_display()})"
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    # ── Role helpers ──────────────────────────────────────────────────────────
+    @property
+    def is_competition_manager(self): return self.role == UserRole.COMPETITION_MANAGER
+    @property
+    def is_coordinator(self): return self.role == UserRole.COORDINATOR
+    @property
+    def is_verification_officer(self): return self.role == UserRole.VERIFICATION_OFFICER
+    @property
+    def is_referee_manager(self): return self.is_coordinator  # backwards compat
+    @property
+    def is_referee(self): return self.role == UserRole.REFEREE
+    @property
+    def is_team_manager(self): return self.role == UserRole.TEAM_MANAGER
+    @property
+    def is_county_sports_director(self): return self.role == UserRole.COUNTY_SPORTS_DIRECTOR
+    @property
+    def is_county_sports_admin(self): return self.is_county_sports_director  # backwards compat
+    @property
+    def is_cec_sports_member(self): return self.role == UserRole.CEC_SPORTS_MEMBER
+    @property
+    def is_treasurer(self): return self.role == UserRole.TREASURER
+    @property
+    def is_jury_chair(self): return self.role == UserRole.JURY_CHAIR
+    @property
+    def is_scout(self): return self.role == UserRole.SCOUT
+    @property
+    def is_secretary_general(self): return self.role == UserRole.SECRETARY_GENERAL
+    @property
+    def is_admin(self): return self.role == UserRole.ADMIN or self.is_superuser
+
+
+class KenyaCounty(models.TextChoices):
+    MOMBASA      = "Mombasa",       "Mombasa"
+    KWALE        = "Kwale",         "Kwale"
+    KILIFI       = "Kilifi",        "Kilifi"
+    TANA_RIVER   = "Tana River",    "Tana River"
+    LAMU         = "Lamu",          "Lamu"
+    TAITA_TAVETA = "Taita Taveta",  "Taita Taveta"
+    GARISSA      = "Garissa",       "Garissa"
+    WAJIR        = "Wajir",         "Wajir"
+    MANDERA      = "Mandera",       "Mandera"
+    MARSABIT     = "Marsabit",      "Marsabit"
+    ISIOLO       = "Isiolo",        "Isiolo"
+    MERU         = "Meru",          "Meru"
+    THARAKA_NITHI = "Tharaka Nithi","Tharaka Nithi"
+    EMBU         = "Embu",          "Embu"
+    KITUI        = "Kitui",         "Kitui"
+    MACHAKOS     = "Machakos",      "Machakos"
+    MAKUENI      = "Makueni",       "Makueni"
+    NYANDARUA    = "Nyandarua",     "Nyandarua"
+    NYERI        = "Nyeri",         "Nyeri"
+    KIRINYAGA    = "Kirinyaga",     "Kirinyaga"
+    MURANGA      = "Muranga",       "Murang'a"
+    KIAMBU       = "Kiambu",        "Kiambu"
+    TURKANA      = "Turkana",       "Turkana"
+    WEST_POKOT   = "West Pokot",    "West Pokot"
+    SAMBURU      = "Samburu",       "Samburu"
+    TRANS_NZOIA  = "Trans Nzoia",   "Trans Nzoia"
+    UASIN_GISHU  = "Uasin Gishu",  "Uasin Gishu"
+    ELGEYO_MARAKWET = "Elgeyo Marakwet", "Elgeyo Marakwet"
+    NANDI        = "Nandi",         "Nandi"
+    BARINGO      = "Baringo",       "Baringo"
+    LAIKIPIA     = "Laikipia",      "Laikipia"
+    NAKURU       = "Nakuru",        "Nakuru"
+    NAROK        = "Narok",         "Narok"
+    KAJIADO      = "Kajiado",       "Kajiado"
+    KERICHO      = "Kericho",       "Kericho"
+    BOMET        = "Bomet",         "Bomet"
+    KAKAMEGA     = "Kakamega",      "Kakamega"
+    VIHIGA       = "Vihiga",        "Vihiga"
+    BUNGOMA      = "Bungoma",       "Bungoma"
+    BUSIA        = "Busia",         "Busia"
+    SIAYA        = "Siaya",         "Siaya"
+    KISUMU       = "Kisumu",        "Kisumu"
+    HOMA_BAY     = "Homa Bay",      "Homa Bay"
+    MIGORI       = "Migori",        "Migori"
+    KISII        = "Kisii",         "Kisii"
+    NYAMIRA      = "Nyamira",       "Nyamira"
+    NAIROBI      = "Nairobi",       "Nairobi"

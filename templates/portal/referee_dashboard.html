@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}Referee Dashboard — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Referee Portal</span>
+    </div>
+    <h1>🏁 Referee Dashboard</h1>
+    <p>Welcome, {{ user.get_full_name }}{% if profile %} — {{ profile.get_level_display }}{% endif %}</p>
+</div>
+
+{% if no_profile %}
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-body" style="text-align:center;padding:3rem;">
+        <div style="font-size:3rem;">⚠️</div>
+        <h3>No Referee Profile Found</h3>
+        <p style="color:#666;">Your account has the referee role but no referee profile has been created yet.<br>
+        Please contact the Referee Manager or register as a referee.</p>
+        <a href="{% url 'referee_register' %}"
+           style="display:inline-block;margin-top:1rem;background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+            Register as Referee
+        </a>
+    </div>
+</div>
+{% else %}
+
+<!-- Quick Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#1B5E20;">{{ total_appointments }}</div>
+        <div style="color:#666;font-size:.85rem;">Total Appointments</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#FF8F00;">{{ pending_confirmation|length }}</div>
+        <div style="color:#666;font-size:.85rem;">Pending Confirmation</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#1565C0;">{{ upcoming_matches|length }}</div>
+        <div style="color:#666;font-size:.85rem;">Upcoming Matches</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#c62828;">{{ pending_reports|length }}</div>
+        <div style="color:#666;font-size:.85rem;">Reports Due</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#6A1B9A;">{{ pending_squads|length }}</div>
+        <div style="color:#666;font-size:.85rem;">Squads to Review</div>
+    </div>
+</div>
+
+{% if not profile.is_approved %}
+<div class="alert alert-warning" style="margin-bottom:1.5rem;">
+    <strong>⚠️ Account Pending Approval</strong> — Your referee profile is awaiting approval from the Referee Manager. Some features may be limited.
+</div>
+{% endif %}
+
+<!-- ═══ PENDING CONFIRMATIONS ═══ -->
+{% if pending_confirmation %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#FFF3E0;">
+        <h3>🔶 Pending Confirmation ({{ pending_confirmation|length }})</h3>
+    </div>
+    <div class="card-body">
+        {% for info in pending_confirmation %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem 0;{% if not forloop.last %}border-bottom:1px solid #eee;{% endif %}">
+            <div>
+                <strong>{{ info.fixture.home_team }} vs {{ info.fixture.away_team }}</strong>
+                <div style="font-size:.85rem;color:#666;">
+                    {{ info.match_date|date:"D, d M Y" }} · {{ info.fixture.kickoff_time|time:"H:i" }}
+                    {% if info.fixture.venue %} · {{ info.fixture.venue }}{% endif %}
+                </div>
+                <div style="font-size:.85rem;color:#1B5E20;font-weight:600;">Role: {{ info.role }}</div>
+            </div>
+            <a href="{% url 'appointment_action' appointment_pk=info.appointment.pk %}"
+               style="background:#FF8F00;color:#fff;padding:.5rem 1rem;border-radius:8px;text-decoration:none;font-size:.9rem;white-space:nowrap;">
+                ⚡ Respond
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ RETURNED / DRAFT REPORTS ═══ -->
+{% if returned_reports or draft_reports %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#FFEBEE;">
+        <h3>🔄 Reports Needing Attention</h3>
+    </div>
+    <div class="card-body">
+        {% for r in returned_reports %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid #eee;">
+            <div>
+                <strong>{{ r.fixture.home_team }} vs {{ r.fixture.away_team }}</strong>
+                <span class="badge badge-danger" style="margin-left:.5rem;">Returned</span>
+                {% if r.reviewer_notes %}<div style="font-size:.85rem;color:#c62828;">{{ r.reviewer_notes }}</div>{% endif %}
+            </div>
+            <a href="{% url 'match_report_form' fixture_pk=r.fixture.pk %}"
+               style="background:#c62828;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                Edit Report
+            </a>
+        </div>
+        {% endfor %}
+        {% for r in draft_reports %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;{% if not forloop.last %}border-bottom:1px solid #eee;{% endif %}">
+            <div>
+                <strong>{{ r.fixture.home_team }} vs {{ r.fixture.away_team }}</strong>
+                <span class="badge badge-warning" style="margin-left:.5rem;">Draft</span>
+            </div>
+            <a href="{% url 'match_report_form' fixture_pk=r.fixture.pk %}"
+               style="background:#FF8F00;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                Continue
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ CURRENT / TODAY'S MATCHES ═══ -->
+{% if current_matches %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E8F5E9;">
+        <h3>⚽ Today's Matches</h3>
+    </div>
+    <div class="card-body">
+        {% for info in current_matches %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;{% if not forloop.last %}border-bottom:1px solid #eee;{% endif %}">
+            <div>
+                <strong>{{ info.fixture.home_team }} vs {{ info.fixture.away_team }}</strong>
+                <div style="font-size:.85rem;color:#666;">
+                    {{ info.fixture.kickoff_time|time:"H:i" }}
+                    {% if info.fixture.venue %} · {{ info.fixture.venue }}{% endif %}
+                    · <span style="color:#1B5E20;font-weight:600;">{{ info.role }}</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:.5rem;">
+                {% if info.status == 'pending' %}
+                <a href="{% url 'appointment_action' appointment_pk=info.appointment.pk %}"
+                   style="background:#FF8F00;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">Respond</a>
+                {% else %}
+                <span class="badge badge-success">{{ info.status|title }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ UPCOMING MATCHES ═══ -->
+{% if upcoming_matches %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📅 Upcoming Matches ({{ upcoming_matches|length }})</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Match</th><th>Venue</th><th>Role</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for info in upcoming_matches %}
+                    <tr>
+                        <td>{{ info.match_date|date:"d M Y" }}</td>
+                        <td><strong>{{ info.fixture.home_team }}</strong> vs <strong>{{ info.fixture.away_team }}</strong></td>
+                        <td>{{ info.fixture.venue|default:"TBD" }}</td>
+                        <td><span style="color:#1B5E20;font-weight:600;">{{ info.role }}</span></td>
+                        <td>
+                            {% if info.status == 'confirmed' %}
+                            <span class="badge badge-success">Confirmed</span>
+                            {% elif info.status == 'pending' %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ info.status|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if info.status == 'pending' %}
+                            <a href="{% url 'appointment_action' appointment_pk=info.appointment.pk %}"
+                               style="background:#1B5E20;color:#fff;padding:.3rem .7rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                                Respond
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ PENDING SQUAD APPROVALS ═══ -->
+{% if pending_squads %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E3F2FD;">
+        <h3>📋 Squads Awaiting Approval ({{ pending_squads|length }})</h3>
+    </div>
+    <div class="card-body">
+        {% for sq in pending_squads %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;{% if not forloop.last %}border-bottom:1px solid #eee;{% endif %}">
+            <div>
+                <strong>{{ sq.team.name }}</strong>
+                <div style="font-size:.85rem;color:#666;">
+                    {{ sq.fixture.home_team }} vs {{ sq.fixture.away_team }} · {{ sq.fixture.match_date|date:"d M Y" }}
+                </div>
+            </div>
+            <a href="{% url 'squad_review' squad_pk=sq.pk %}"
+               style="background:#1565C0;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                Review Squad
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ PENDING MATCH REPORTS ═══ -->
+{% if pending_reports %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#FFF8E1;">
+        <h3>📝 Reports Due ({{ pending_reports|length }})</h3>
+    </div>
+    <div class="card-body">
+        {% for fix in pending_reports %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;{% if not forloop.last %}border-bottom:1px solid #eee;{% endif %}">
+            <div>
+                <strong>{{ fix.home_team }} vs {{ fix.away_team }}</strong>
+                <div style="font-size:.85rem;color:#666;">{{ fix.match_date|date:"d M Y" }}</div>
+            </div>
+            <a href="{% url 'match_report_form' fixture_pk=fix.pk %}"
+               style="background:#FF8F00;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                Write Report
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ MY PROFILE QUICK VIEW ═══ -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>👤 My Profile</h3>
+        <a href="{% url 'referee_edit_profile' %}"
+           style="background:#1B5E20;color:#fff;padding:.3rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+            Edit Profile
+        </a>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+            <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;color:#1B5E20;">{{ profile.get_referee_type_display }}</div>
+                <div style="font-size:.85rem;color:#666;">Official Type</div>
+            </div>
+            <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;color:#1565C0;">{{ profile.get_level_display }}</div>
+                <div style="font-size:.85rem;color:#666;">Level</div>
+            </div>
+            <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;color:#6A1B9A;">{{ profile.license_number }}</div>
+                <div style="font-size:.85rem;color:#666;">License</div>
+            </div>
+            <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;color:#FF8F00;">{{ profile.years_experience }} yrs</div>
+                <div style="font-size:.85rem;color:#666;">Experience</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ COMPLETED MATCHES ═══ -->
+{% if completed_matches %}
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-header"><h3>✅ Recent Completed Matches</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Match</th><th>Role</th><th>Result</th><th>Report</th></tr>
+                </thead>
+                <tbody>
+                    {% for info in completed_matches %}
+                    <tr>
+                        <td>{{ info.match_date|date:"d M Y" }}</td>
+                        <td>{{ info.fixture.home_team }} vs {{ info.fixture.away_team }}</td>
+                        <td>{{ info.role }}</td>
+                        <td>
+                            {% if info.fixture.home_score is not None %}
+                            {{ info.fixture.home_score }} - {{ info.fixture.away_score }}
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if info.fixture.match_report %}
+                            <a href="{% url 'match_report_detail' report_pk=info.fixture.match_report.pk %}"
+                               style="color:#1B5E20;">View</a>
+                            {% else %}
+                            <a href="{% url 'match_report_form' fixture_pk=info.fixture.pk %}"
+                               style="color:#FF8F00;">Write</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not pending_confirmation and not upcoming_matches and not current_matches %}
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-body" style="text-align:center;padding:3rem;">
+        <div style="font-size:3rem;">📅</div>
+        <h3>No upcoming appointments</h3>
+        <p style="color:#666;">You have no active match appointments. Check back later or update your profile.</p>
+        <a href="{% url 'referee_edit_profile' %}"
+           style="display:inline-block;margin-top:1rem;background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+            Edit Profile
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endif %}{# end no_profile else #}
+{% endblock %}

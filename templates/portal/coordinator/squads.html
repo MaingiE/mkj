@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Match Day Squads &mdash; {{ discipline_label }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .squad-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .squad-card h4 { font-size: .95rem; font-weight: 600; margin: 0; }
+    .squad-card .meta { font-size: .8rem; color: #757575; }
+    .status-badge { font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px; }
+    .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .filter-bar .btn { font-size: .8rem; padding: .35rem .6rem; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-people"></i> Match Day Squads — {{ discipline_label }}</h2>
+
+<div class="filter-bar">
+    <a href="{% url 'coordinator_squads' %}" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+    {% for val, lbl in status_choices %}
+    <a href="{% url 'coordinator_squads' %}?status={{ val }}" class="btn {% if status_filter == val %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ lbl }}</a>
+    {% endfor %}
+</div>
+
+{% for squad in squads %}
+<div class="squad-card">
+    <div>
+        <h4>{{ squad.team.name }}</h4>
+        <div class="meta">
+            {{ squad.fixture.competition.name }} &middot;
+            {{ squad.fixture.home_team.name }} vs {{ squad.fixture.away_team.name }} &middot;
+            {{ squad.fixture.match_date|date:"d M Y" }}
+        </div>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:center;">
+        <span class="status-badge" style="background:{% if squad.status == 'approved' %}#E8F5E9;color:#1B5E20{% elif squad.status == 'submitted' %}#FFF3E0;color:#E65100{% else %}#f5f5f5;color:#757575{% endif %};">{{ squad.get_status_display }}</span>
+        {% if squad.status == 'submitted' %}
+        <a href="{% url 'squad_review' squad_pk=squad.pk %}" class="btn btn-sm btn-primary">Review</a>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div style="text-align:center;padding:3rem;color:#999;">
+    <i class="bi bi-people" style="font-size:3rem;opacity:.3;"></i>
+    <p>No squad submissions found.</p>
+</div>
+{% endfor %}
+{% endblock %}

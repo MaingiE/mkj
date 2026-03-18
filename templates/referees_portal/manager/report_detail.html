@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags crispy_forms_filters %}
+
+{% block title %}Match Report Details - FKF Meru League{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-file-check"></i> Match Report Details</h2>
+                <a href="{% url 'referees:pending_reports' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Status Badge -->
+            <div class="mb-3">
+                {% if report.status == 'submitted' %}
+                    <span class="badge bg-warning text-dark fs-6">PENDING APPROVAL</span>
+                {% elif report.status == 'approved' %}
+                    <span class="badge bg-success fs-6">APPROVED</span>
+                    <small class="text-muted">by {{ report.approved_by.get_full_name|default:report.approved_by.username }} on {{ report.approved_at|date:"M d, Y" }}</small>
+                {% elif report.status == 'rejected' %}
+                    <span class="badge bg-danger fs-6">REJECTED</span>
+                    <small class="text-muted">by {{ report.approved_by.get_full_name|default:report.approved_by.username }} on {{ report.approved_at|date:"M d, Y" }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Match Info Header -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-futbol"></i> Match Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-5 text-center">
+                            <h5>{{ match.home_team }}</h5>
+                            {% if match.home_team.logo %}
+                                <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team }}" style="height: 80px;" class="mb-2">
+                            {% endif %}
+                            <h3 class="text-primary">{{ match.home_score|default:"-" }}</h3>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <p class="text-muted">vs</p>
+                            <p class="small">{{ match.match_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-md-5 text-center">
+                            <h5>{{ match.away_team }}</h5>
+                            {% if match.away_team.logo %}
+                                <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team }}" style="height: 80px;" class="mb-2">
+                            {% endif %}
+                            <h3 class="text-primary">{{ match.away_score|default:"-" }}</h3>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Referee:</strong><br>
+                            {{ report.referee.full_name }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Match Number:</strong><br>
+                            {{ report.match_number|default:"-" }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Round:</strong><br>
+                            {{ report.round_number|default:"-" }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>League Level:</strong><br>
+                            {{ report.league_level }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Section -->
+            {% if goals %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Goals ({{ goals.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Player</th>
+                                    <th>Minute</th>
+                                    <th>Type</th>
+                                    <th>Assist By</th>
+                                    <th>Jersey</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in goals %}
+                                <tr>
+                                    <td><strong>{{ goal.team }}</strong></td>
+                                    <td>{{ goal.player }}</td>
+                                    <td>{{ goal.minute }}'</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ goal.get_goal_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ goal.assist_by|default:"-" }}</td>
+                                    <td>{{ goal.jersey_number|default:"-" }}</td>
+                                    <td>{{ goal.notes|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Cautions Section -->
+            {% if cautions %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-flag"></i> Cautions ({{ cautions.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Player</th>
+                                    <th>Minute</th>
+                                    <th>Reason</th>
+                                    <th>Jersey</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for caution in cautions %}
+                                <tr>
+                                    <td><strong>{{ caution.team }}</strong></td>
+                                    <td>{{ caution.player }}</td>
+                                    <td>{{ caution.minute }}'</td>
+                                    <td>{{ caution.reason }}</td>
+                                    <td>{{ caution.jersey_number|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Incidents & Comments -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Incidents & Comments</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.serious_incidents %}
+                    <div class="mb-3">
+                        <strong class="text-danger">Serious Incidents:</strong>
+                        <p>{{ report.serious_incidents|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if report.penalties_not_converted %}
+                    <div class="mb-3">
+                        <strong class="text-warning">Penalties Not Converted:</strong>
+                        <p>{{ report.penalties_not_converted|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if report.referee_comments %}
+                    <div class="mb-3">
+                        <strong>Referee Comments:</strong>
+                        <p>{{ report.referee_comments|linebreaks }}</p>
+                    </div>
+                    {% else %}
+                    <p class="text-muted"><em>No additional comments provided.</em></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons (for managers) -->
+            {% if is_manager and report.status == 'submitted' %}
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'referees:approve_report' report.id %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Approve Report
+                        </a>
+                        <a href="{% url 'referees:reject_report' report.id %}" class="btn btn-danger btn-lg">
+                            <i class="fas fa-times"></i> Reject Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

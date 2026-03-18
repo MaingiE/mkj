@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Jury Dashboard — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    <div>
+        <h1>🏛️ Jury Dashboard</h1>
+        <p class="text-muted">Chair of the Jury — Appeals &amp; Competition Overview</p>
+    </div>
+    <a href="{% url 'appeals_list' %}" class="btn btn-outline">View All Appeals</a>
+</div>
+
+<!-- Appeals Statistics Cards -->
+<h3 style="margin-bottom:.75rem;"><i class="bi bi-briefcase"></i> Appeals Overview</h3>
+<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1rem; margin-bottom:2rem;">
+    <div class="card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#333;">{{ total_appeals }}</div>
+        <div style="color:#666; font-size:.85rem;">Total Appeals</div>
+    </div>
+    <div class="card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#ff9800;">{{ pending_response }}</div>
+        <div style="color:#666; font-size:.85rem;">Awaiting Response</div>
+    </div>
+    <div class="card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#2196f3;">{{ awaiting_decision }}</div>
+        <div style="color:#666; font-size:.85rem;">Awaiting Decision</div>
+    </div>
+    <div class="card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#4caf50;">{{ decided }}</div>
+        <div style="color:#666; font-size:.85rem;">Decided</div>
+    </div>
+    <div class="card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#9c27b0;">{{ my_decisions }}</div>
+        <div style="color:#666; font-size:.85rem;">My Decisions</div>
+    </div>
+</div>
+
+<!-- Competition Data Quick Access -->
+<h3 style="margin-bottom:.75rem;"><i class="bi bi-database"></i> Competition Data</h3>
+<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:1rem; margin-bottom:2rem;">
+    <a href="{% url 'jury_teams' %}" class="card" style="padding:1.25rem; text-decoration:none; color:inherit; transition:box-shadow .2s;">
+        <div style="display:flex; align-items:center; gap:.75rem;">
+            <div style="width:48px; height:48px; border-radius:10px; background:#e3f2fd; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-people-fill" style="font-size:1.4rem; color:#1565c0;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#333;">{{ total_teams }}</div>
+                <div style="font-size:.82rem; color:#666;">Registered Teams</div>
+            </div>
+        </div>
+        <div style="margin-top:.5rem; font-size:.75rem; color:#1565c0;">View &amp; Download →</div>
+    </a>
+    <a href="{% url 'jury_players' %}" class="card" style="padding:1.25rem; text-decoration:none; color:inherit; transition:box-shadow .2s;">
+        <div style="display:flex; align-items:center; gap:.75rem;">
+            <div style="width:48px; height:48px; border-radius:10px; background:#e8f5e9; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-person-check-fill" style="font-size:1.4rem; color:#2e7d32;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#333;">{{ total_players }}</div>
+                <div style="font-size:.82rem; color:#666;">Approved Players</div>
+            </div>
+        </div>
+        <div style="margin-top:.5rem; font-size:.75rem; color:#2e7d32;">View &amp; Download →</div>
+    </a>
+    <a href="{% url 'jury_fixtures' %}" class="card" style="padding:1.25rem; text-decoration:none; color:inherit; transition:box-shadow .2s;">
+        <div style="display:flex; align-items:center; gap:.75rem;">
+            <div style="width:48px; height:48px; border-radius:10px; background:#fff3e0; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-calendar-event" style="font-size:1.4rem; color:#e65100;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#333;">{{ total_fixtures }}</div>
+                <div style="font-size:.82rem; color:#666;">Fixtures ({{ completed_fixtures }} completed)</div>
+            </div>
+        </div>
+        <div style="margin-top:.5rem; font-size:.75rem; color:#e65100;">View &amp; Download →</div>
+    </a>
+    <a href="{% url 'jury_match_reports' %}" class="card" style="padding:1.25rem; text-decoration:none; color:inherit; transition:box-shadow .2s;">
+        <div style="display:flex; align-items:center; gap:.75rem;">
+            <div style="width:48px; height:48px; border-radius:10px; background:#f3e5f5; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-file-earmark-text" style="font-size:1.4rem; color:#7b1fa2;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#333;">{{ total_reports }}</div>
+                <div style="font-size:.82rem; color:#666;">Match Reports</div>
+            </div>
+        </div>
+        <div style="margin-top:.5rem; font-size:.75rem; color:#7b1fa2;">View &amp; Download →</div>
+    </a>
+    <a href="{% url 'jury_squads' %}" class="card" style="padding:1.25rem; text-decoration:none; color:inherit; transition:box-shadow .2s;">
+        <div style="display:flex; align-items:center; gap:.75rem;">
+            <div style="width:48px; height:48px; border-radius:10px; background:#e0f2f1; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-list-check" style="font-size:1.4rem; color:#00695c;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#333;">{{ total_squads }}</div>
+                <div style="font-size:.82rem; color:#666;">Squad Submissions</div>
+            </div>
+        </div>
+        <div style="margin-top:.5rem; font-size:.75rem; color:#00695c;">View &amp; Download →</div>
+    </a>
+    <a href="{% url 'jury_disciplinary' %}" class="card" style="padding:1.25rem; text-decoration:none; color:inherit; transition:box-shadow .2s;">
+        <div style="display:flex; align-items:center; gap:.75rem;">
+            <div style="width:48px; height:48px; border-radius:10px; background:#fbe9e7; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-exclamation-triangle-fill" style="font-size:1.4rem; color:#bf360c;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#333;">
+                    <span style="color:#f9a825;">{{ total_yellows }}</span>
+                    <span style="color:#999; font-size:1rem;">/</span>
+                    <span style="color:#e53935;">{{ total_reds }}</span>
+                </div>
+                <div style="font-size:.82rem; color:#666;">Yellow / Red Cards</div>
+            </div>
+        </div>
+        <div style="margin-top:.5rem; font-size:.75rem; color:#bf360c;">View &amp; Download →</div>
+    </a>
+</div>
+
+<!-- Recent Appeals -->
+<div class="card" style="padding:1.5rem;">
+    <h3 style="margin:0 0 1rem;">📋 Recent Appeals</h3>
+    {% if recent_appeals %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Appellant</th>
+                    <th>Respondent</th>
+                    <th>Status</th>
+                    <th>Filed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appeal in recent_appeals %}
+                <tr>
+                    <td>{{ appeal.pk }}</td>
+                    <td>
+                        {{ appeal.subject|truncatechars:40 }}
+                        {% if appeal.is_reappeal %}
+                        <span class="badge" style="background:#ff9800; color:#fff; font-size:.65rem;">RE-APPEAL</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ appeal.appellant_team }}</td>
+                    <td>{{ appeal.respondent_team }}</td>
+                    <td>
+                        <span class="badge {% if appeal.status == 'submitted' %}bg-warning{% elif appeal.status == 'response_received' %}bg-info{% elif appeal.status == 'under_review' %}bg-primary{% elif appeal.status == 'decided' %}bg-success{% else %}bg-dark{% endif %}" style="padding:3px 6px; border-radius:4px; color:#fff; font-size:.75rem;">
+                            {{ appeal.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ appeal.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-sm btn-outline">View</a>
+                        {% if appeal.status in 'response_received,under_review' %}
+                        <a href="{% url 'jury_decision' pk=appeal.pk %}" class="btn btn-sm btn-primary">Decide</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:#888; text-align:center; padding:2rem;">No appeals filed yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

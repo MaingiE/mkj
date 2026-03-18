@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% block title %}Match Report — {{ fixture }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'matches_list' %}">Matches</a>
+        <span>Match Report</span>
+    </div>
+    <h1>📝 {{ sport_family }} Match Report</h1>
+    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} — {{ fixture.match_date|date:"d M Y" }}</p>
+</div>
+
+{% if report and report.status == 'returned' and report.reviewer_notes %}
+<div class="alert alert-warning" style="margin-bottom:1.5rem;">
+    <strong>🔄 Returned for Revision:</strong> {{ report.reviewer_notes }}
+</div>
+{% endif %}
+
+<form method="post" id="reportForm">
+{% csrf_token %}
+
+<!-- Final Score -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>{% if sport_family == 'Football' %}⚽{% elif sport_family == 'Volleyball' %}🏐{% elif sport_family == 'Handball' %}🤾{% else %}🏀{% endif %} Final Score
+            <span style="font-size:.8rem;font-weight:normal;color:#666;margin-left:.5rem;">({{ sport_cfg.score_unit }})</span>
+        </h3>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;text-align:center;">
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.home_team.name }}</label>
+                <input type="number" name="home_score" min="0" value="{{ report.home_score|default:0 }}"
+                       style="width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
+            </div>
+            <div style="font-size:1.5rem;font-weight:bold;color:#999;">—</div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.away_team.name }}</label>
+                <input type="number" name="away_score" min="0" value="{{ report.away_score|default:0 }}"
+                       style="width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Period / Set / Quarter Scores -->
+{% if periods_for_form %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📊 {{ sport_cfg.period_label }} Scores</h3></div>
+    <div class="card-body">
+        <input type="hidden" name="period_count" value="{{ period_count }}">
+        <table style="width:100%;border-collapse:collapse;text-align:center;">
+            <thead>
+                <tr style="border-bottom:2px solid #ddd;">
+                    <th style="padding:.5rem;text-align:left;">{{ sport_cfg.period_label }}</th>
+                    <th style="padding:.5rem;">{{ fixture.home_team.name }}</th>
+                    <th style="padding:.5rem;">{{ fixture.away_team.name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in periods_for_form %}
+                <tr style="border-bottom:1px solid #eee;{% if p.is_overtime %}background:#fff8e1;{% endif %}">
+                    <td style="padding:.5rem;text-align:left;font-weight:600;">
+                        {{ p.label }}
+                        {% if p.is_overtime %}<span style="font-size:.75rem;color:#FF8F00;"> (OT)</span>{% endif %}
+                        <input type="hidden" name="period_{{ p.number }}_label" value="{{ p.label }}">
+                        {% if p.is_overtime %}<input type="hidden" name="period_{{ p.number }}_overtime" value="1">{% endif %}
+                    </td>
+                    <td style="padding:.5rem;">
+                        <input type="number" name="period_{{ p.number }}_home" min="0"
+                               value="{{ p.home_score }}"
+                               style="width:70px;padding:.4rem;text-align:center;border:1px solid #ddd;border-radius:6px;">
+                    </td>
+                    <td style="padding:.5rem;">
+                        <input type="number" name="period_{{ p.number }}_away" min="0"
+                               value="{{ p.away_score }}"
+                               style="width:70px;padding:.4rem;text-align:center;border:1px solid #ddd;border-radius:6px;">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Volleyball: Sets Won -->
+{% if sport_family == 'Volleyball' %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>🏐 Sets Won</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;text-align:center;">
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.home_team.name }}</label>
+                <input type="number" name="home_sets" min="0" max="3" value="{{ report.home_sets|default:0 }}"
+                       style="width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
+            </div>
+            <div style="font-size:1.2rem;font-weight:bold;color:#999;">—</div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.away_team.name }}</label>
+                <input type="number" name="away_sets" min="0" max="3" value="{{ report.away_sets|default:0 }}"
+                       style="width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Disciplinary -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>🟨 Disciplinary</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div>
+                <h4 style="margin-bottom:.5rem;">{{ fixture.home_team.name }}</h4>
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:.85rem;color:#666;">Yellow Cards</label>
+                        <input type="number" name="home_yellow_cards" min="0" value="{{ report.home_yellow_cards|default:0 }}"
+                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="font-size:.85rem;color:#666;">Red Cards</label>
+                        <input type="number" name="home_red_cards" min="0" value="{{ report.home_red_cards|default:0 }}"
+                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    </div>
+                    {% if sport_family == 'Handball' %}
+                    <div>
+                        <label style="font-size:.85rem;color:#666;">2-Min Suspensions</label>
+                        <input type="number" name="home_suspensions" min="0" value="{{ report.home_suspensions|default:0 }}"
+                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <h4 style="margin-bottom:.5rem;">{{ fixture.away_team.name }}</h4>
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:.85rem;color:#666;">Yellow Cards</label>
+                        <input type="number" name="away_yellow_cards" min="0" value="{{ report.away_yellow_cards|default:0 }}"
+                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="font-size:.85rem;color:#666;">Red Cards</label>
+                        <input type="number" name="away_red_cards" min="0" value="{{ report.away_red_cards|default:0 }}"
+                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    </div>
+                    {% if sport_family == 'Handball' %}
+                    <div>
+                        <label style="font-size:.85rem;color:#666;">2-Min Suspensions</label>
+                        <input type="number" name="away_suspensions" min="0" value="{{ report.away_suspensions|default:0 }}"
+                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Match Details -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📊 Match Details</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;">
+            {% if sport_cfg.default_duration %}
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Duration (mins)</label>
+                <input type="number" name="match_duration" min="1" value="{{ report.match_duration|default:sport_cfg.default_duration }}"
+                       style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">
+            </div>
+            {% endif %}
+            {% if sport_family == 'Football' %}
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Added Time HT</label>
+                <input type="number" name="added_time_ht" min="0" value="{{ report.added_time_ht|default:0 }}"
+                       style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Added Time FT</label>
+                <input type="number" name="added_time_ft" min="0" value="{{ report.added_time_ft|default:0 }}"
+                       style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">
+            </div>
+            {% endif %}
+            {% if sport_cfg.has_extra_time %}
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">
+                    <input type="checkbox" name="overtime_played" {% if report and report.overtime_played %}checked{% endif %}>
+                    {% if sport_family == 'Football' %}Extra Time Played{% else %}Overtime Played{% endif %}
+                </label>
+            </div>
+            <div id="overtimePeriodsWrap" style="{% if not report or not report.overtime_played %}display:none{% endif %}">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">
+                    {% if sport_family == 'Football' %}ET Halves{% else %}OT Periods{% endif %}
+                </label>
+                <input type="number" name="overtime_periods" min="1" value="{{ report.overtime_periods|default:1 }}"
+                       style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">
+            </div>
+            {% endif %}
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">
+                    {% if sport_family == 'Volleyball' or sport_family == 'Basketball 5×5' or sport_family == 'Basketball 3×3' %}
+                    Court Condition
+                    {% else %}
+                    Pitch Condition
+                    {% endif %}
+                </label>
+                <select name="pitch_condition" style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">
+                    {% for val, label in pitch_choices %}
+                    <option value="{{ val }}" {% if report and report.pitch_condition == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Weather</label>
+                <input type="text" name="weather" value="{{ report.weather|default:'' }}"
+                       style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;"
+                       placeholder="e.g., Sunny, Rainy">
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Attendance</label>
+                <input type="number" name="attendance" min="0" value="{{ report.attendance|default:'' }}"
+                       style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;"
+                       placeholder="Estimate">
+            </div>
+        </div>
+
+        <div style="margin-top:1rem;">
+            <label style="font-weight:600;display:block;margin-bottom:.3rem;">
+                <input type="checkbox" name="is_abandoned" {% if report and report.is_abandoned %}checked{% endif %}>
+                Match Abandoned
+            </label>
+        </div>
+        <div id="abandonReasonWrap" style="margin-top:.5rem;{% if not report or not report.is_abandoned %}display:none{% endif %}">
+            <label style="font-weight:600;display:block;margin-bottom:.3rem;">Abandonment Reason</label>
+            <textarea name="abandonment_reason" rows="2"
+                      style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">{{ report.abandonment_reason|default:'' }}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Match Officials -->
+{% if match_officials %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>🏁 Match Officials</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+            {% for official in match_officials %}
+            <div style="padding:.6rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-size:.8rem;color:#666;">{{ official.get_role_display }}</div>
+                <div style="font-weight:600;">{{ official.referee.user.get_full_name }}</div>
+                <div style="font-size:.8rem;">
+                    {% if official.status == 'confirmed' %}
+                    <span style="color:#2E7D32;">✅ Confirmed</span>
+                    {% elif official.status == 'pending' %}
+                    <span style="color:#FF8F00;">🔶 Pending</span>
+                    {% elif official.status == 'declined' %}
+                    <span style="color:#c62828;">❌ Declined</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Approved Squad Lineups (auto-populated from squad submissions) -->
+{% if home_squad or away_squad %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>👥 Approved Match Squads</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+            <!-- Home Team -->
+            <div>
+                <h4 style="color:#1B5E20;margin-bottom:.5rem;">{{ fixture.home_team.name }}</h4>
+                {% if home_squad %}
+                {% if home_starters %}
+                <div style="margin-bottom:.8rem;">
+                    <div style="font-weight:600;font-size:.85rem;color:#333;margin-bottom:.3rem;">
+                        {% if sport_family == 'Volleyball' %}Starting 6{% elif sport_family == 'Basketball 5×5' %}Starting 5{% elif sport_family == 'Basketball 3×3' %}Starting 3{% elif sport_family == 'Handball' %}Starting 7{% else %}Starting XI{% endif %}
+                    </div>
+                    {% for sp in home_starters %}
+                    <div style="display:flex;justify-content:space-between;padding:.2rem .4rem;{% if forloop.counter|divisibleby:2 %}background:#f9f9f9;{% endif %}border-radius:4px;font-size:.85rem;">
+                        <span>#{{ sp.shirt_number }} {{ sp.player.get_full_name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if home_subs %}
+                <div>
+                    <div style="font-weight:600;font-size:.85rem;color:#666;margin-bottom:.3rem;">Substitutes</div>
+                    {% for sp in home_subs %}
+                    <div style="display:flex;justify-content:space-between;padding:.2rem .4rem;{% if forloop.counter|divisibleby:2 %}background:#f9f9f9;{% endif %}border-radius:4px;font-size:.85rem;">
+                        <span>#{{ sp.shirt_number }} {{ sp.player.get_full_name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div style="color:#999;font-size:.85rem;">No approved squad submitted</div>
+                {% endif %}
+            </div>
+            <!-- Away Team -->
+            <div>
+                <h4 style="color:#1565C0;margin-bottom:.5rem;">{{ fixture.away_team.name }}</h4>
+                {% if away_squad %}
+                {% if away_starters %}
+                <div style="margin-bottom:.8rem;">
+                    <div style="font-weight:600;font-size:.85rem;color:#333;margin-bottom:.3rem;">
+                        {% if sport_family == 'Volleyball' %}Starting 6{% elif sport_family == 'Basketball 5×5' %}Starting 5{% elif sport_family == 'Basketball 3×3' %}Starting 3{% elif sport_family == 'Handball' %}Starting 7{% else %}Starting XI{% endif %}
+                    </div>
+                    {% for sp in away_starters %}
+                    <div style="display:flex;justify-content:space-between;padding:.2rem .4rem;{% if forloop.counter|divisibleby:2 %}background:#f9f9f9;{% endif %}border-radius:4px;font-size:.85rem;">
+                        <span>#{{ sp.shirt_number }} {{ sp.player.get_full_name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if away_subs %}
+                <div>
+                    <div style="font-weight:600;font-size:.85rem;color:#666;margin-bottom:.3rem;">Substitutes</div>
+                    {% for sp in away_subs %}
+                    <div style="display:flex;justify-content:space-between;padding:.2rem .4rem;{% if forloop.counter|divisibleby:2 %}background:#f9f9f9;{% endif %}border-radius:4px;font-size:.85rem;">
+                        <span>#{{ sp.shirt_number }} {{ sp.player.get_full_name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div style="color:#999;font-size:.85rem;">No approved squad submitted</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Referee Notes -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>🗒️ Referee Notes</h3></div>
+    <div class="card-body">
+        <textarea name="referee_notes" rows="4"
+                  style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;font-size:.95rem;"
+                  placeholder="Incidents, injuries, misconduct details, notable events...">{{ report.referee_notes|default:'' }}</textarea>
+    </div>
+</div>
+
+<!-- Match Events -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>📋 Match Events</h3>
+        <button type="button" id="addEventBtn"
+                style="background:#1B5E20;color:#fff;padding:.4rem 1rem;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;">
+            + Add Event
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="eventsContainer">
+            {% for evt in events %}
+            <div class="event-row" style="display:grid;grid-template-columns:120px 1fr 1fr 80px 1fr 40px;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid #eee;">
+                <select name="event_{{ forloop.counter0 }}_type" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    {% for val, label in event_types %}
+                    <option value="{{ val }}" {% if evt.event_type == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <select name="event_{{ forloop.counter0 }}_team" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    <option value="{{ fixture.home_team.pk }}" {% if evt.team_id == fixture.home_team.pk %}selected{% endif %}>{{ fixture.home_team.name }}</option>
+                    <option value="{{ fixture.away_team.pk }}" {% if evt.team_id == fixture.away_team.pk %}selected{% endif %}>{{ fixture.away_team.name }}</option>
+                </select>
+                <select name="event_{{ forloop.counter0 }}_player" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                    <option value="">— Player —</option>
+                    <optgroup label="{{ fixture.home_team.name }}">
+                    {% for p in home_players %}<option value="{{ p.pk }}" {% if evt.player_id == p.pk %}selected{% endif %}>#{{ p.shirt_number }} {{ p.get_full_name }}</option>{% endfor %}
+                    </optgroup>
+                    <optgroup label="{{ fixture.away_team.name }}">
+                    {% for p in away_players %}<option value="{{ p.pk }}" {% if evt.player_id == p.pk %}selected{% endif %}>#{{ p.shirt_number }} {{ p.get_full_name }}</option>{% endfor %}
+                    </optgroup>
+                </select>
+                <input type="number" name="event_{{ forloop.counter0 }}_minute" min="0" max="200"
+                       value="{{ evt.minute }}" placeholder="Min"
+                       style="padding:.4rem;border:1px solid #ddd;border-radius:6px;width:70px;">
+                <input type="text" name="event_{{ forloop.counter0 }}_notes" value="{{ evt.notes }}" placeholder="Notes"
+                       style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                <button type="button" class="remove-event-btn"
+                        style="background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;padding:.3rem .5rem;">✕</button>
+            </div>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="event_count" id="eventCount" value="{{ events|length }}">
+        <p style="color:#999;font-size:.85rem;margin-top:.5rem;" id="noEventsMsg"
+           {% if events %}style="display:none"{% endif %}>
+            No events recorded. Click "+ Add Event" to add goals, cards, substitutions, etc.
+        </p>
+    </div>
+</div>
+
+<!-- Submit Buttons -->
+<div style="display:flex;gap:1rem;justify-content:flex-end;margin-bottom:2rem;">
+    <a href="{% url 'matches_list' %}"
+       style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">Cancel</a>
+    <button type="submit" name="submit_action" value="draft"
+            style="background:#FF8F00;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;">
+        💾 Save Draft
+    </button>
+    <button type="submit" name="submit_action" value="submit"
+            style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
+            onclick="return confirm('Submit this report for review? You can still edit it until it is approved.')">
+        📤 Submit for Review
+    </button>
+</div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('eventsContainer');
+    const countInput = document.getElementById('eventCount');
+    const noEventsMsg = document.getElementById('noEventsMsg');
+
+    // Toggle abandon reason
+    const abandonCb = document.querySelector('[name="is_abandoned"]');
+    const abandonWrap = document.getElementById('abandonReasonWrap');
+    if (abandonCb) {
+        abandonCb.addEventListener('change', function() {
+            abandonWrap.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
+    // Toggle overtime periods
+    const otCb = document.querySelector('[name="overtime_played"]');
+    const otWrap = document.getElementById('overtimePeriodsWrap');
+    if (otCb && otWrap) {
+        otCb.addEventListener('change', function() {
+            otWrap.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
+    // Event type options HTML
+    const eventTypeOptions = `{% for val, label in event_types %}<option value="{{ val }}">{{ label }}</option>{% endfor %}`;
+    const homeTeamId = '{{ fixture.home_team.pk }}';
+    const homeTeamName = '{{ fixture.home_team.name }}';
+    const awayTeamId = '{{ fixture.away_team.pk }}';
+    const awayTeamName = '{{ fixture.away_team.name }}';
+
+    // Player options
+    let playerOptions = '<option value="">— Player —</option>';
+    playerOptions += `<optgroup label="${homeTeamName}">`;
+    {% for p in home_players %}
+    playerOptions += `<option value="{{ p.pk }}">#{{ p.shirt_number }} {{ p.get_full_name }}</option>`;
+    {% endfor %}
+    playerOptions += '</optgroup>';
+    playerOptions += `<optgroup label="${awayTeamName}">`;
+    {% for p in away_players %}
+    playerOptions += `<option value="{{ p.pk }}">#{{ p.shirt_number }} {{ p.get_full_name }}</option>`;
+    {% endfor %}
+    playerOptions += '</optgroup>';
+
+    function updateCount() {
+        const rows = container.querySelectorAll('.event-row');
+        countInput.value = rows.length;
+        rows.forEach((row, i) => {
+            row.querySelectorAll('select, input').forEach(el => {
+                const name = el.getAttribute('name');
+                if (name) {
+                    el.setAttribute('name', name.replace(/event_\d+_/, `event_${i}_`));
+                }
+            });
+        });
+        noEventsMsg.style.display = rows.length === 0 ? 'block' : 'none';
+    }
+
+    document.getElementById('addEventBtn').addEventListener('click', function() {
+        const idx = container.querySelectorAll('.event-row').length;
+        const row = document.createElement('div');
+        row.className = 'event-row';
+        row.style.cssText = 'display:grid;grid-template-columns:120px 1fr 1fr 80px 1fr 40px;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid #eee;';
+        row.innerHTML = `
+            <select name="event_${idx}_type" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">${eventTypeOptions}</select>
+            <select name="event_${idx}_team" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                <option value="${homeTeamId}">${homeTeamName}</option>
+                <option value="${awayTeamId}">${awayTeamName}</option>
+            </select>
+            <select name="event_${idx}_player" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">${playerOptions}</select>
+            <input type="number" name="event_${idx}_minute" min="0" max="200" placeholder="Min"
+                   style="padding:.4rem;border:1px solid #ddd;border-radius:6px;width:70px;">
+            <input type="text" name="event_${idx}_notes" placeholder="Notes"
+                   style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+            <button type="button" class="remove-event-btn"
+                    style="background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;padding:.3rem .5rem;">✕</button>
+        `;
+        container.appendChild(row);
+        updateCount();
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-event-btn')) {
+            e.target.closest('.event-row').remove();
+            updateCount();
+        }
+    });
+});
+</script>
+{% endblock %}

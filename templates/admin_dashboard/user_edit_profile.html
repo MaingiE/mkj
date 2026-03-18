@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile: {{ detail_user.get_full_name }} - KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ep-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .field label {
+        display: block;
+        font-size: .82rem;
+        font-weight: 600;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+    .field .hint {
+        font-size: .78rem;
+        color: #999;
+        margin-top: .2rem;
+    }
+    .field .req { color: #C62828; }
+    .sidebar-field {
+        margin-bottom: .75rem;
+    }
+    .sidebar-field .sf-label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: #757575;
+        margin-bottom: .1rem;
+    }
+    .sidebar-field .sf-value {
+        font-weight: 600;
+        font-size: .9rem;
+        color: #212121;
+    }
+    .sidebar-action {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .5rem .8rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: .85rem;
+        font-weight: 600;
+        transition: all .2s;
+    }
+    .sidebar-action:hover { transform: translateX(3px); }
+    @media (max-width: 768px) {
+        .ep-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'manage_league_admins' %}">User Management</a>
+        <a href="{% url 'user_detail' user_id=detail_user.id %}">{{ detail_user.get_full_name }}</a>
+        <span>Edit Profile</span>
+    </div>
+    <h1>Edit User Profile</h1>
+</div>
+
+<div class="ep-grid">
+    <!-- Edit Form -->
+    <div class="card">
+        <div class="card-header" style="background:#E8F5E9;">
+            <h3>Profile Details</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="field">
+                        <label>First Name <span class="req">*</span></label>
+                        <input type="text" name="first_name" class="form-control" required value="{{ detail_user.first_name }}">
+                    </div>
+                    <div class="field">
+                        <label>Last Name <span class="req">*</span></label>
+                        <input type="text" name="last_name" class="form-control" required value="{{ detail_user.last_name }}">
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="field">
+                        <label>Email <span class="req">*</span></label>
+                        <input type="email" name="email" class="form-control" required value="{{ detail_user.email }}">
+                        <div class="hint">Changing the email updates the user's login credentials.</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="field">
+                        <label>Phone *</label>
+                        <input type="tel" name="phone" class="form-control" value="{{ detail_user.phone|default:'' }}" placeholder="+254712345678" pattern="\+254\d{9}" maxlength="13" required title="Format: +254XXXXXXXXX">
+                    </div>
+                    <div class="field">
+                        <label>County</label>
+                        <select name="county" class="form-control">
+                            <option value="">-- Select County --</option>
+                            {% for value, label in county_choices %}
+                            <option value="{{ value }}" {% if detail_user.county == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:.8rem;margin-top:1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'user_detail' user_id=detail_user.id %}" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <div class="card" style="margin-bottom:1rem;">
+            <div class="card-header">
+                <h3>Current Info</h3>
+            </div>
+            <div class="card-body">
+                <div class="sidebar-field">
+                    <div class="sf-label">Name</div>
+                    <div class="sf-value">{{ detail_user.get_full_name }}</div>
+                </div>
+                <div class="sidebar-field">
+                    <div class="sf-label">Email</div>
+                    <div class="sf-value">{{ detail_user.email }}</div>
+                </div>
+                <div class="sidebar-field">
+                    <div class="sf-label">Role</div>
+                    <div class="sf-value">{{ detail_user.get_role_display }}</div>
+                </div>
+                <div class="sidebar-field">
+                    <div class="sf-label">Status</div>
+                    <div class="sf-value">
+                        {% if detail_user.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}
+                        {% if detail_user.is_suspended %}<span class="badge badge-gray" style="background:#212121;color:#fff;">Suspended</span>{% endif %}
+                    </div>
+                </div>
+                <div class="sidebar-field">
+                    <div class="sf-label">Joined</div>
+                    <div class="sf-value">{{ detail_user.date_joined|date:"d M Y" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Other Actions</h3>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:.5rem;">
+                <a href="{% url 'edit_user_roles' user_id=detail_user.id %}" class="sidebar-action" style="background:#E3F2FD;color:#1565C0;">
+                    <i class="bi bi-gear"></i> Change Role
+                </a>
+                <a href="{% url 'reset_league_admin_password' user_id=detail_user.id %}"
+                   onclick="return confirm('Reset password?')"
+                   class="sidebar-action" style="background:#FFF3E0;color:#E65100;">
+                    <i class="bi bi-key"></i> Reset Password
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

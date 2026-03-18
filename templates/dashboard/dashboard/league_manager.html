@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}League Manager Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-primary">League Manager Dashboard</h1>
+    <p class="lead">Welcome, {{ user.username }}! Manage league operations and activities.</p>
+    
+    <!-- Management Quick Links -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Team Management</h5>
+                    <p class="text-muted small">Approve teams and manage registrations</p>
+                    <a href="{% url 'teams:dashboard' %}" class="btn btn-primary w-100">Manage Teams</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-friends fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Player Management</h5>
+                    <p class="text-muted small">Oversee player registrations</p>
+                    <a href="{% url 'teams:admin_manage_players' %}" class="btn btn-success w-100">Manage Players</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-tie fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Officials Management</h5>
+                    <p class="text-muted small">Manage team officials</p>
+                    <a href="{% url 'teams:admin_manage_officials' %}" class="btn btn-info w-100">Manage Officials</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-futbol fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Match Management</h5>
+                    <p class="text-muted small">Manage fixtures & matches</p>
+                    <a href="{% url 'matches:manage_matches' %}" class="btn btn-warning w-100">Manage Matches</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transfer Management Quick Links -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-warning shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-exchange-alt text-warning"></i> Pending Transfers
+                        {% if pending_transfers > 0 %}
+                        <span class="badge bg-warning text-dark">{{ pending_transfers }}</span>
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted">Transfer requests awaiting parent club decision</p>
+                    <a href="{% url 'admin_dashboard:manage_transfers' %}" class="btn btn-warning">
+                        <i class="fas fa-eye"></i> View Transfers
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-times-circle text-danger"></i> Rejected Transfers
+                        {% if rejected_transfers > 0 %}
+                        <span class="badge bg-danger">{{ rejected_transfers }}</span>
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted">Transfers that may need admin review/override</p>
+                    <a href="{% url 'admin_dashboard:manage_transfers' %}" class="btn btn-danger">
+                        <i class="fas fa-search"></i> Review Rejections
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Registration Window Controls -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-cog"></i> Registration Controls</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card border-{% if league_settings.team_registration_open %}success{% else %}danger{% endif %}">
+                        <div class="card-body text-center">
+                            <h6 class="fw-bold">Team Registration</h6>
+                            <div class="mb-2">
+                                {% if league_settings.team_registration_open %}
+                                <span class="badge bg-success fs-5">OPEN</span>
+                                {% else %}
+                                <span class="badge bg-danger fs-5">CLOSED</span>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'admin_dashboard:toggle_registration' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="window_type" value="team">
+                                <button type="submit" class="btn btn-sm btn-{% if league_settings.team_registration_open %}danger{% else %}success{% endif %}">
+                                    {% if league_settings.team_registration_open %}
+                                    <i class="fas fa-lock"></i> Close
+                                    {% else %}
+                                    <i class="fas fa-unlock"></i> Open
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-{% if league_settings.player_registration_open %}success{% else %}danger{% endif %}">
+                        <div class="card-body text-center">
+                            <h6 class="fw-bold">Player Registration</h6>
+                            <div class="mb-2">
+                                {% if league_settings.player_registration_open %}
+                                <span class="badge bg-success fs-5">OPEN</span>
+                                {% else %}
+                                <span class="badge bg-danger fs-5">CLOSED</span>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'admin_dashboard:toggle_registration' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="window_type" value="player">
+                                <button type="submit" class="btn btn-sm btn-{% if league_settings.player_registration_open %}danger{% else %}success{% endif %}">
+                                    {% if league_settings.player_registration_open %}
+                                    <i class="fas fa-lock"></i> Close
+                                    {% else %}
+                                    <i class="fas fa-unlock"></i> Open
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-{% if league_settings.transfer_window_open %}success{% else %}danger{% endif %}">
+                        <div class="card-body text-center">
+                            <h6 class="fw-bold">Transfer Window</h6>
+                            <div class="mb-2">
+                                {% if league_settings.transfer_window_open %}
+                                <span class="badge bg-success fs-5">OPEN</span>
+                                {% else %}
+                                <span class="badge bg-danger fs-5">CLOSED</span>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'admin_dashboard:toggle_registration' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="window_type" value="transfer">
+                                <button type="submit" class="btn btn-sm btn-{% if league_settings.transfer_window_open %}danger{% else %}success{% endif %}">
+                                    {% if league_settings.transfer_window_open %}
+                                    <i class="fas fa-lock"></i> Close
+                                    {% else %}
+                                    <i class="fas fa-unlock"></i> Open
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deadline Controls -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="fas fa-hourglass-half"></i> Set/Update Deadlines (Countdown)</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'admin_dashboard:update_deadlines' %}">
+                {% csrf_token %}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Team Registration Deadline</label>
+                        <input type="datetime-local" name="team_deadline" class="form-control"
+                               value="{% if league_settings.team_registration_deadline %}{{ league_settings.team_registration_deadline|date:'Y-m-d\\TH:i' }}{% endif %}">
+                        <small class="text-muted">Leave blank to clear.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Player Registration Deadline</label>
+                        <input type="datetime-local" name="player_deadline" class="form-control"
+                               value="{% if league_settings.player_registration_deadline %}{{ league_settings.player_registration_deadline|date:'Y-m-d\\TH:i' }}{% endif %}">
+                        <small class="text-muted">Leave blank to clear.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Transfer Window Deadline</label>
+                        <input type="datetime-local" name="transfer_deadline" class="form-control"
+                               value="{% if league_settings.transfer_window_deadline %}{{ league_settings.transfer_window_deadline|date:'Y-m-d\\TH:i' }}{% endif %}">
+                        <small class="text-muted">Leave blank to clear.</small>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle"></i> Deadlines automatically close their windows when reached. 
+                        Use toggles above for instant close/open.
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Deadlines
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Match Reports Management -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> Match Reports Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6>Pending Match Reports</h6>
+                                    <p class="text-muted mb-0">Review submitted match reports</p>
+                                </div>
+                                <span class="badge bg-info fs-5">{{ pending_reports.count }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6>All Referees</h6>
+                                    <p class="text-muted mb-0">View referee information</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'admin_dashboard:approve_reports' %}" class="btn btn-info me-2">
+                            <i class="fas fa-file-alt"></i> Review Reports
+                        </a>
+                        <a href="{% url 'referees:all_referees' %}" class="btn btn-secondary">
+                            <i class="fas fa-users"></i> View Referees
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Operations -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-alt fa-2x text-primary mb-3"></i>
+                    <h6>Generate Fixtures</h6>
+                    <p class="text-muted small">Create match fixtures for the league</p>
+                    <a href="{% url 'admin_dashboard:generate_fixtures_admin' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus-circle"></i> Generate
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-3"></i>
+                    <h6>Reschedule Fixtures</h6>
+                    <p class="text-muted small">Update match dates and times</p>
+                    <a href="{% url 'admin_dashboard:reschedule_fixtures_admin' %}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-edit"></i> Reschedule
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-2x text-success mb-3"></i>
+                    <h6>View Statistics</h6>
+                    <p class="text-muted small">League statistics and analytics</p>
+                    <a href="{% url 'admin_dashboard:statistics_dashboard' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-chart-line"></i> View Stats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

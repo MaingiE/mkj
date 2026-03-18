@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Publish Decision — KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem;">
+    <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline" style="font-size:.85rem;">← Back to Appeal #{{ appeal.pk }}</a>
+</div>
+
+<div class="card" style="padding:2rem; max-width:600px;">
+    <h1 style="margin:0 0 1rem;">📢 Publish Jury Decision</h1>
+
+    <div style="background:#f8f9fa; padding:1rem; border-radius:4px; margin-bottom:1rem;">
+        <p><strong>Appeal:</strong> #{{ appeal.pk }} — {{ appeal.subject }}</p>
+        <p><strong>Outcome:</strong>
+            <span class="badge {% if decision.outcome == 'successful' %}bg-success{% elif decision.outcome == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}" style="padding:4px 8px; border-radius:4px; color:#fff;">
+                {{ decision.get_outcome_display }}
+            </span>
+        </p>
+        <p><strong>Evidence Files:</strong> {{ decision.evidence_files.count }}</p>
+    </div>
+
+    <div style="background:#fff3cd; padding:1rem; border-radius:4px; margin-bottom:1.5rem;">
+        <p style="margin:0;"><strong>⚠️ Publishing this decision will:</strong></p>
+        <ul style="margin:.5rem 0 0; padding-left:1.25rem;">
+            <li>Make the decision visible to both teams</li>
+            <li>Mark the appeal as "Decision Made"</li>
+            {% if decision.outcome == 'rejected' %}
+            <li>Allow the appellant team to file one re-appeal</li>
+            {% endif %}
+            {% if decision.outcome == 'more_info' %}
+            <li>Return the appeal to "Submitted" status for additional evidence</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:flex; gap:.5rem;">
+            <button type="submit" class="btn btn-success">📢 Publish Decision</button>
+            <a href="{% url 'upload_decision_evidence' pk=appeal.pk decision_pk=decision.pk %}" class="btn btn-outline">Back — Add More Evidence</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Discipline Coordinator Dashboard &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dc-hero {
+        background: linear-gradient(135deg, #00695C 0%, #00897B 50%, #26A69A 100%);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .dc-hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .dc-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+    .dc-hero p { opacity: .85; font-size: .95rem; position: relative; }
+    .dc-hero .hero-badge {
+        display: inline-block;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: .2rem .8rem;
+        border-radius: 20px;
+        font-size: .75rem;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        margin-bottom: .5rem;
+    }
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .dc-stat {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        border-left: 4px solid transparent;
+        transition: all .25s ease;
+    }
+    .dc-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .dc-stat .num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+    .dc-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; }
+    .dc-stat.teal   { border-left-color: #00695C; }
+    .dc-stat.teal .num { color: #00695C; }
+    .dc-stat.green  { border-left-color: #1B5E20; }
+    .dc-stat.green .num { color: #1B5E20; }
+    .dc-stat.blue   { border-left-color: #1565C0; }
+    .dc-stat.blue .num { color: #1565C0; }
+    .dc-stat.amber  { border-left-color: #E65100; }
+    .dc-stat.amber .num { color: #E65100; }
+    .dc-stat.red    { border-left-color: #C62828; }
+    .dc-stat.red .num { color: #C62828; }
+    .dc-stat.purple { border-left-color: #7B1FA2; }
+    .dc-stat.purple .num { color: #7B1FA2; }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .action-tile {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        text-decoration: none;
+        color: #212121;
+        transition: all .25s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        border: 1px solid transparent;
+    }
+    .action-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,.1);
+        border-color: #00695C;
+        color: #00695C;
+    }
+    .action-tile .tile-icon {
+        width: 44px; height: 44px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem; flex-shrink: 0;
+    }
+    .action-tile .tile-text h4 { font-size: .9rem; font-weight: 600; margin-bottom: .15rem; }
+    .action-tile .tile-text p { font-size: .78rem; color: #757575; margin: 0; line-height: 1.35; }
+    .action-tile .tile-badge {
+        background: #C62828;
+        color: #fff;
+        font-size: .7rem;
+        font-weight: 700;
+        padding: .1rem .45rem;
+        border-radius: 10px;
+        margin-left: .4rem;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .recent-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .65rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .recent-item:last-child { border-bottom: none; }
+    .recent-item .ri-main { font-weight: 600; font-size: .88rem; }
+    .recent-item .ri-sub { font-size: .78rem; color: #999; }
+    .ri-badge {
+        font-size: .75rem;
+        font-weight: 600;
+        padding: .2rem .6rem;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .two-col { grid-template-columns: 1fr; }
+        .actions-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="dc-hero">
+    <span class="hero-badge">Discipline Coordinator</span>
+    <h1><i class="bi bi-clipboard2-pulse"></i> {{ discipline_label }} Coordinator: {{ coordinator_name }}</h1>
+    <p>Manage competitions, fixtures, pools, referees, match reports and statistics for your discipline</p>
+</div>
+
+<!-- Stats -->
+<div class="stat-row">
+    <div class="dc-stat teal">
+        <div class="num">{{ stats.total_competitions }}</div>
+        <div class="lbl">Competitions</div>
+    </div>
+    <div class="dc-stat green">
+        <div class="num">{{ stats.active_competitions }}</div>
+        <div class="lbl">Active</div>
+    </div>
+    <div class="dc-stat blue">
+        <div class="num">{{ stats.total_fixtures }}</div>
+        <div class="lbl">Total Fixtures</div>
+    </div>
+    <div class="dc-stat teal">
+        <div class="num">{{ stats.completed_fixtures }}</div>
+        <div class="lbl">Completed</div>
+    </div>
+    <div class="dc-stat purple">
+        <div class="num">{{ stats.upcoming_fixtures }}</div>
+        <div class="lbl">Upcoming</div>
+    </div>
+    <div class="dc-stat amber">
+        <div class="num">{{ stats.pending_reports }}</div>
+        <div class="lbl">Pending Reports</div>
+    </div>
+    <div class="dc-stat red">
+        <div class="num">{{ stats.pending_referees }}</div>
+        <div class="lbl">Pending Referees</div>
+    </div>
+    <div class="dc-stat green">
+        <div class="num">{{ stats.total_teams }}</div>
+        <div class="lbl">Teams</div>
+    </div>
+    <div class="dc-stat blue">
+        <div class="num">{{ stats.total_venues }}</div>
+        <div class="lbl">Venues</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-header" style="background:linear-gradient(135deg,#00695C,#00897B);color:#fff;">
+        <h3 style="color:#fff;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+    </div>
+    <div class="card-body">
+        <div class="actions-grid">
+            <a href="{% url 'coordinator_competitions' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E0F2F1;color:#00695C;"><i class="bi bi-trophy"></i></div>
+                <div class="tile-text">
+                    <h4>My Competitions</h4>
+                    <p>View &amp; manage your discipline competitions</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_appointments' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-calendar-event"></i></div>
+                <div class="tile-text">
+                    <h4>Appointments</h4>
+                    <p>Appoint referees to fixtures</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_referees' %}" class="action-tile">
+                <div class="tile-icon" style="background:#FFF3E0;color:#E65100;"><i class="bi bi-flag"></i></div>
+                <div class="tile-text">
+                    <h4>Referees {% if stats.pending_referees %}<span class="tile-badge">{{ stats.pending_referees }}</span>{% endif %}</h4>
+                    <p>Approve pending &amp; manage referees</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_match_reports' %}" class="action-tile">
+                <div class="tile-icon" style="background:#FCE4EC;color:#AD1457;"><i class="bi bi-clipboard-data"></i></div>
+                <div class="tile-text">
+                    <h4>Match Reports {% if stats.pending_reports %}<span class="tile-badge">{{ stats.pending_reports }}</span>{% endif %}</h4>
+                    <p>Review &amp; approve match reports</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_squads' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;"><i class="bi bi-people"></i></div>
+                <div class="tile-text">
+                    <h4>Match Day Squads</h4>
+                    <p>View submitted squad lists</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_venues' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-geo-alt"></i></div>
+                <div class="tile-text">
+                    <h4>Venues</h4>
+                    <p>Select &amp; update match venues</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Active Competitions + Pending Reports -->
+<div class="two-col">
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="bi bi-trophy"></i> Active Competitions</h3>
+        </div>
+        <div class="card-body">
+            {% if active_competitions %}
+                {% for comp in active_competitions %}
+                <div class="recent-item">
+                    <div>
+                        <div class="ri-main">
+                            <a href="{% url 'coordinator_competition_manage' pk=comp.pk %}" style="color:#212121;text-decoration:none;">{{ comp.name }}</a>
+                        </div>
+                        <div class="ri-sub">{{ comp.get_sport_type_display }} &middot; {{ comp.get_age_group_display }}</div>
+                    </div>
+                    <span class="ri-badge" style="background:#E0F2F1;color:#00695C;">{{ comp.get_status_display }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:1.5rem;color:#999;">
+                    <i class="bi bi-trophy" style="font-size:2rem;opacity:.3;"></i>
+                    <p>No active competitions</p>
+                </div>
+            {% endif %}
+
+            {% if registration_competitions %}
+            <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid #eee;">
+                <div style="font-size:.78rem;font-weight:700;color:#757575;text-transform:uppercase;margin-bottom:.5rem;">Registration Open</div>
+                {% for comp in registration_competitions %}
+                <div class="recent-item">
+                    <div>
+                        <div class="ri-main">
+                            <a href="{% url 'coordinator_competition_manage' pk=comp.pk %}" style="color:#212121;text-decoration:none;">{{ comp.name }}</a>
+                        </div>
+                        <div class="ri-sub">{{ comp.get_sport_type_display }}</div>
+                    </div>
+                    <span class="ri-badge" style="background:#FFF8E1;color:#F57F17;">Registration</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="bi bi-clipboard-data"></i> Pending Match Reports</h3>
+        </div>
+        <div class="card-body">
+            {% if pending_reports %}
+                {% for report in pending_reports %}
+                <div class="recent-item">
+                    <div>
+                        <div class="ri-main">
+                            {{ report.fixture.home_team.name }} vs {{ report.fixture.away_team.name }}
+                        </div>
+                        <div class="ri-sub">{{ report.fixture.competition.name }} &middot; {{ report.submitted_at|date:"d M Y" }}</div>
+                    </div>
+                    <a href="{% url 'match_report_review' report_pk=report.pk %}" class="ri-badge" style="background:#FFF3E0;color:#E65100;">Review</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:1.5rem;color:#999;">
+                    <i class="bi bi-clipboard-check" style="font-size:2rem;opacity:.3;"></i>
+                    <p>No pending reports</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Results -->
+{% if recent_results %}
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header">
+        <h3><i class="bi bi-bar-chart-line"></i> Recent Results</h3>
+    </div>
+    <div class="card-body">
+        {% for fx in recent_results %}
+        <div class="recent-item">
+            <div>
+                <div class="ri-main">{{ fx.home_team.name }} {{ fx.home_score }} - {{ fx.away_score }} {{ fx.away_team.name }}</div>
+                <div class="ri-sub">{{ fx.competition.name }} &middot; {{ fx.match_date|date:"d M Y" }}</div>
+            </div>
+            <span class="ri-badge" style="background:#E8F5E9;color:#1B5E20;">Completed</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

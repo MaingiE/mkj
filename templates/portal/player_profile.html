@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}Player Profile &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Portal</a>
+        <span>Player Profile</span>
+    </div>
+    <h1><i class="bi bi-person"></i> Player Profile</h1>
+</div>
+
+<div style="display:grid;grid-template-columns:240px 1fr;gap:1.5rem;max-width:900px">
+    <!-- Photo & Quick Info -->
+    <div class="card" style="padding:1.5rem;text-align:center">
+        {% if player.photo %}
+        <img src="{{ player.photo.url }}" alt="Player photo" style="width:160px;height:160px;border-radius:50%;object-fit:cover;border:4px solid #e0e0e0;margin-bottom:1rem">
+        {% else %}
+        <div style="width:160px;height:160px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:3rem;color:#999">
+            <i class="bi bi-person"></i>
+        </div>
+        {% endif %}
+
+        {% if player_type == 'county' %}
+        <div style="font-size:1.15rem;font-weight:700;color:#333">{{ player.first_name }} {{ player.last_name }}</div>
+        {% else %}
+        <div style="font-size:1.15rem;font-weight:700;color:#333">{{ player.first_name }} {{ player.last_name }}</div>
+        {% endif %}
+
+        {% if player_type == 'county' %}
+        <div style="font-size:.85rem;color:#888;margin-top:.3rem">{{ player.discipline.get_sport_type_display }}</div>
+        <div style="font-size:.85rem;color:#888">{{ player.discipline.registration.county }} County</div>
+        {% else %}
+        <div style="font-size:.85rem;color:#888;margin-top:.3rem">{{ player.team.name }}</div>
+        {% endif %}
+
+        <!-- Verification Badge -->
+        <div style="margin-top:1rem">
+            {% if player_type == 'county' %}
+                {% if player.verification_status == 'verified' %}
+                <span style="background:#e8f5e9;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                    <i class="bi bi-check-circle"></i> Verified
+                </span>
+                {% elif player.verification_status == 'rejected' %}
+                <span style="background:#fce4ec;color:#C62828;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                    <i class="bi bi-x-circle"></i> Rejected
+                </span>
+                {% elif player.verification_status == 'resubmit' %}
+                <span style="background:#e3f2fd;color:#1565c0;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                    <i class="bi bi-arrow-repeat"></i> Resubmit
+                </span>
+                {% else %}
+                <span style="background:#fff3e0;color:#f57c00;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                    <i class="bi bi-hourglass-split"></i> Pending
+                </span>
+                {% endif %}
+            {% else %}
+                <span style="background:#e8f5e9;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                    <i class="bi bi-check-circle"></i> {{ player.get_verification_status_display }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="card" style="padding:1.5rem">
+        <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-info-circle"></i> Player Details</h2>
+        <table style="width:100%;font-size:.9rem">
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem 0;color:#888;width:180px">Full Name</td>
+                <td style="padding:.5rem 0;font-weight:600">{{ player.first_name }} {{ player.last_name }}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem 0;color:#888">Date of Birth</td>
+                <td style="padding:.5rem 0">{{ player.date_of_birth|date:"d M Y" }}</td>
+            </tr>
+            {% if player.age %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem 0;color:#888">Age</td>
+                <td style="padding:.5rem 0">{{ player.age }} years</td>
+            </tr>
+            {% endif %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem 0;color:#888">National ID</td>
+                <td style="padding:.5rem 0"><code>{{ player.national_id_number }}</code></td>
+            </tr>
+            {% if player.phone %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem 0;color:#888">Phone</td>
+                <td style="padding:.5rem 0">{{ player.phone }}</td>
+            </tr>
+            {% endif %}
+
+            {% if player_type == 'county' %}
+                {% if player.position %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Position</td>
+                    <td style="padding:.5rem 0">{{ player.position }}</td>
+                </tr>
+                {% endif %}
+                {% if player.jersey_number %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Jersey Number</td>
+                    <td style="padding:.5rem 0"><strong>{{ player.jersey_number }}</strong></td>
+                </tr>
+                {% endif %}
+                {% if player.huduma_number %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Huduma Number</td>
+                    <td style="padding:.5rem 0"><code>{{ player.huduma_number }}</code></td>
+                </tr>
+                {% endif %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Discipline</td>
+                    <td style="padding:.5rem 0">{{ player.discipline.get_sport_type_display }}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">County</td>
+                    <td style="padding:.5rem 0">{{ player.discipline.registration.county }}</td>
+                </tr>
+
+                <!-- Huduma Status -->
+                {% if player.huduma_status != 'not_checked' %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">IPRS / Huduma</td>
+                    <td style="padding:.5rem 0">
+                        {% if player.huduma_status == 'verified' %}
+                        <span style="color:#2e7d32;font-weight:600"><i class="bi bi-check-circle"></i> Verified</span>
+                        {% elif player.huduma_status == 'failed' %}
+                        <span style="color:#C62828;font-weight:600"><i class="bi bi-x-circle"></i> Failed</span>
+                        {% else %}
+                        <span style="color:#f57c00">{{ player.huduma_status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+
+                <!-- Higher League Status (non-football) -->
+                {% if player.higher_league_status != 'not_checked' %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Higher League Check</td>
+                    <td style="padding:.5rem 0">
+                        {% if player.higher_league_status == 'clear' %}
+                        <span style="color:#2e7d32;font-weight:600"><i class="bi bi-check-circle"></i> Clear</span>
+                        {% elif player.higher_league_status == 'flagged' %}
+                        <span style="color:#C62828;font-weight:600"><i class="bi bi-exclamation-triangle"></i> Flagged</span>
+                        <div style="font-size:.82rem;color:#C62828;margin-top:.2rem">{{ player.higher_league_details }}</div>
+                        {% else %}
+                        <span style="color:#888">Not checked</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            {% else %}
+                <!-- Team-based player -->
+                {% if player.shirt_number %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Shirt Number</td>
+                    <td style="padding:.5rem 0"><strong>{{ player.shirt_number }}</strong></td>
+                </tr>
+                {% endif %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem 0;color:#888">Team</td>
+                    <td style="padding:.5rem 0;font-weight:600">{{ player.team.name }}</td>
+                </tr>
+            {% endif %}
+
+            <tr>
+                <td style="padding:.5rem 0;color:#888">Registered</td>
+                <td style="padding:.5rem 0">{{ player.registered_at|date:"d M Y, H:i" }}</td>
+            </tr>
+        </table>
+
+        <!-- Documents -->
+        <h3 style="font-size:1rem;color:#333;margin-top:1.5rem;margin-bottom:.8rem"><i class="bi bi-file-earmark"></i> Documents</h3>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            {% if player.id_document %}
+            <a href="{{ player.id_document.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:#e3f2fd;color:#1565c0;border-radius:6px;font-size:.85rem;text-decoration:none;font-weight:600">
+                <i class="bi bi-file-earmark-person"></i> ID Document
+            </a>
+            {% endif %}
+            {% if player.birth_certificate %}
+            <a href="{{ player.birth_certificate.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:#e3f2fd;color:#1565c0;border-radius:6px;font-size:.85rem;text-decoration:none;font-weight:600">
+                <i class="bi bi-file-earmark-text"></i> Birth Certificate
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="javascript:history.back()" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+{% endblock %}

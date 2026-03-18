@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile — Referee Portal — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'referee_portal' %}">Referee Portal</a>
+        <span>Edit Profile</span>
+    </div>
+    <h1>👤 Edit My Profile</h1>
+    <p>Update your referee details and official type</p>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- Personal Info -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📋 Personal Information</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">First Name</label>
+                <input type="text" name="first_name" value="{{ user.first_name }}"
+                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;" required>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Last Name</label>
+                <input type="text" name="last_name" value="{{ user.last_name }}"
+                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;" required>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Phone *</label>
+                <input type="tel" name="phone" value="{{ user.phone }}"
+                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;"
+                       placeholder="+254712345678" pattern="\+254\d{9}" maxlength="13" required
+                       title="Format: +254XXXXXXXXX">
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Email</label>
+                <input type="email" value="{{ user.email }}" disabled
+                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;">
+                <small style="color:#666;">Email cannot be changed here</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Referee Type & Level -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E8F5E9;">
+        <h3>⚽ Official Type & Credentials</h3>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Official Type *</label>
+                <select name="referee_type"
+                        style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;" required>
+                    {% for val, label in referee_types %}
+                    <option value="{{ val }}" {% if profile.referee_type == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <small style="color:#666;">Are you a Referee or an Assistant Referee?</small>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Referee Level</label>
+                <select name="level"
+                        style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;">
+                    {% for val, label in levels %}
+                    <option value="{{ val }}" {% if profile.level == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">County</label>
+                <select name="county"
+                        style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;">
+                    <option value="">-- Select County --</option>
+                    {% for val, label in counties %}
+                    <option value="{{ val }}" {% if profile.county == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Years of Experience</label>
+                <input type="number" name="years_experience" value="{{ profile.years_experience }}" min="0"
+                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;">
+            </div>
+        </div>
+        <div style="margin-top:1rem;">
+            <label style="font-weight:600;display:block;margin-bottom:.3rem;">License Number</label>
+            <input type="text" value="{{ profile.license_number }}" disabled
+                   style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;">
+            <small style="color:#666;">License number cannot be changed. Contact admin if incorrect.</small>
+        </div>
+    </div>
+</div>
+
+<!-- Bio & Photo -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📝 Bio & Photo</h3></div>
+    <div class="card-body">
+        <div style="margin-bottom:1rem;">
+            <label style="font-weight:600;display:block;margin-bottom:.3rem;">Bio</label>
+            <textarea name="bio" rows="4"
+                      style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;"
+                      placeholder="Tell us about your officiating experience...">{{ profile.bio }}</textarea>
+        </div>
+        <div>
+            <label style="font-weight:600;display:block;margin-bottom:.3rem;">Profile Picture</label>
+            {% if profile.profile_picture %}
+            <div style="margin-bottom:.5rem;">
+                <img src="{{ profile.profile_picture.url }}" alt="Current photo"
+                     style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #ddd;">
+                <span style="color:#666;font-size:.85rem;margin-left:.5rem;">Current photo</span>
+            </div>
+            {% endif %}
+            <input type="file" name="profile_picture" accept="image/*"
+                   style="padding:.4rem;border:1px solid #ddd;border-radius:8px;">
+        </div>
+    </div>
+</div>
+
+<!-- Current Status (read-only) -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>📊 Account Status</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+            <div style="text-align:center;padding:1rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;font-size:1.2rem;color:{% if profile.is_approved %}#2E7D32{% else %}#FF8F00{% endif %}">
+                    {% if profile.is_approved %}Approved{% else %}Pending{% endif %}
+                </div>
+                <div style="font-size:.85rem;color:#666;">Approval Status</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;font-size:1.2rem;color:#1B5E20;">{{ profile.total_matches }}</div>
+                <div style="font-size:.85rem;color:#666;">Total Matches</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:#f9f9f9;border-radius:8px;">
+                <div style="font-weight:700;font-size:1.2rem;color:#1565C0;">{{ profile.avg_rating }}</div>
+                <div style="font-size:.85rem;color:#666;">Average Rating</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="display:flex;gap:1rem;justify-content:flex-end;">
+    <a href="{% url 'referee_portal' %}"
+       style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">Cancel</a>
+    <button type="submit"
+            style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;">
+        💾 Save Changes
+    </button>
+</div>
+</form>
+{% endblock %}

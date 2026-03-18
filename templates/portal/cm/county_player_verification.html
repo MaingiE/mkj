@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% block title %}Player Verification — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Player Verification</span>
+    </div>
+    <h1><i class="bi bi-shield-check"></i> Player Verification</h1>
+    <p>Verify players across all counties and disciplines.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.25rem">
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow">⏳</div>
+        <div class="stat-info"><h3>{{ stats.pending }}</h3><p>Pending</p></div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info"><h3>{{ stats.verified }}</h3><p>Verified</p></div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #C62828">
+        <div class="stat-icon" style="background:#fce4ec;color:#C62828">❌</div>
+        <div class="stat-info"><h3>{{ stats.rejected }}</h3><p>Rejected</p></div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #E65100">
+        <div class="stat-icon" style="background:#FFF3E0;color:#E65100">🔄</div>
+        <div class="stat-info"><h3>{{ stats.resubmit }}</h3><p>Resubmission</p></div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+    <form method="get" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <div style="min-width:240px;">
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Player Name or ID</label>
+            <input type="text" name="q" value="{{ player_query }}" class="form-control" placeholder="Search by first name, last name, or national ID">
+        </div>
+        <div>
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Discipline</label>
+            <select name="discipline" class="form-control" style="min-width:180px;" onchange="this.form.submit()">
+                <option value="">All Disciplines</option>
+                {% for val, label in disciplines %}
+                <option value="{{ val }}" {% if discipline_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">County</label>
+            <select name="county" class="form-control" style="min-width:180px;" onchange="this.form.submit()">
+                <option value="">All Counties</option>
+                {% for val, label in counties %}
+                <option value="{{ val }}" {% if county_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Huduma</label>
+            <select name="huduma" class="form-control" style="min-width:160px;" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="not_checked" {% if huduma_filter == 'not_checked' %}selected{% endif %}>Not Checked</option>
+                <option value="verified" {% if huduma_filter == 'verified' %}selected{% endif %}>Verified</option>
+                <option value="failed" {% if huduma_filter == 'failed' %}selected{% endif %}>Failed</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">FIFA/Higher League</label>
+            <select name="clearance" class="form-control" style="min-width:190px;" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="not_checked" {% if clearance_filter == 'not_checked' %}selected{% endif %}>Not Checked</option>
+                <option value="clear" {% if clearance_filter == 'clear' %}selected{% endif %}>Clear</option>
+                <option value="flagged" {% if clearance_filter == 'flagged' %}selected{% endif %}>Flagged</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm" style="padding:.45rem .9rem;">Search</button>
+        {% if discipline_filter or county_filter or huduma_filter or clearance_filter %}
+        <a href="?tab={{ tab }}" style="font-size:.85rem;color:#C62828;text-decoration:none;font-weight:600;">✕ Clear Filters</a>
+        {% elif player_query %}
+        <a href="?tab={{ tab }}" style="font-size:.85rem;color:#C62828;text-decoration:none;font-weight:600;">✕ Clear Search</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Tabs -->
+<div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0">
+    <a href="?tab=pending{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'pending' %}#E65100{% else %}transparent{% endif %};color:{% if tab == 'pending' %}#E65100{% else %}#888{% endif %};margin-bottom:-2px">
+        ⏳ Pending ({{ stats.pending }})
+    </a>
+    <a href="?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#1B5E20{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#1B5E20{% else %}#888{% endif %};margin-bottom:-2px">
+        ✅ Verified ({{ stats.verified }})
+    </a>
+    <a href="?tab=rejected{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px">
+        ❌ Rejected ({{ stats.rejected }})
+    </a>
+    <a href="?tab=resubmit{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if county_filter %}&county={{ county_filter }}{% endif %}{% if huduma_filter %}&huduma={{ huduma_filter }}{% endif %}{% if clearance_filter %}&clearance={{ clearance_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'resubmit' %}#E65100{% else %}transparent{% endif %};color:{% if tab == 'resubmit' %}#E65100{% else %}#888{% endif %};margin-bottom:-2px">
+        🔄 Resubmit ({{ stats.resubmit }})
+    </a>
+</div>
+
+<!-- Tab Content -->
+<div class="card" style="border-top-left-radius:0;border-top-right-radius:0">
+    <div class="card-body">
+
+        {% if tab == 'pending' %}
+        {% if pending_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Discipline</th>
+                        <th>Age</th>
+                        <th>National ID</th>
+                        <th>Photo</th>
+                        <th>ID Doc</th>
+                        <th>Birth Cert</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pending_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong><br><small style="color:#888">#{{ p.jersey_number|default:"—" }} · {{ p.position|default:"—" }}</small></td>
+                        <td>{{ p.discipline.registration.get_county_display }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.age }}</td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1B5E20">📸</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                        <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1B5E20">🪪</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                        <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1B5E20">📜</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                        <td><small>{{ p.registered_at|date:"d M Y" }}</small></td>
+                        <td>
+                            <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">🎉</div>
+            <h3>No pending players</h3>
+            <p style="color:#888">All county player registrations have been reviewed.</p>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'verified' %}
+        {% if verified_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Discipline</th>
+                        <th>Age</th>
+                        <th>National ID</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in verified_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong><br><small style="color:#888">#{{ p.jersey_number|default:"—" }} · {{ p.position|default:"—" }}</small></td>
+                        <td>{{ p.discipline.registration.get_county_display }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.age }}</td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td><small>{{ p.registered_at|date:"d M Y" }}</small></td>
+                        <td>
+                            <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">📋</div>
+            <h3>No verified players yet</h3>
+            <p style="color:#888">Verified players will appear here once reviewed.</p>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'rejected' %}
+        {% if rejected_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Discipline</th>
+                        <th>National ID</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in rejected_players %}
+                    <tr style="background:#fce4ec22">
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.registration.get_county_display }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td><small style="color:#C62828">{{ p.rejection_reason|truncatechars:50|default:"—" }}</small></td>
+                        <td>
+                            <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">✨</div>
+            <h3>No rejected players</h3>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'resubmit' %}
+        {% if resubmit_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Discipline</th>
+                        <th>National ID</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in resubmit_players %}
+                    <tr style="background:#FFF3E022">
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.registration.get_county_display }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td><small style="color:#E65100">{{ p.rejection_reason|truncatechars:50|default:"—" }}</small></td>
+                        <td>
+                            <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">✨</div>
+            <h3>No players awaiting resubmission</h3>
+        </div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

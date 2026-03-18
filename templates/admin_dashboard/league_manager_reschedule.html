@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Reschedule Match{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Reschedule Match</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label>Current Date: {{ match.match_date|date:'Y-m-d' }}</label>
+        </div>
+        <div class="mb-3">
+            <label>New Date</label>
+            <input type="date" name="new_date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>New Kickoff Time</label>
+            <input type="time" name="new_kickoff_time" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-warning">Reschedule</button>
+    </form>
+</div>
+{% endblock %}

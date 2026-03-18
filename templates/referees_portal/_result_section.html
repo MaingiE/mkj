@@ -1,0 +1,39 @@
+{# Partial: Live Result Section #}
+{% load crispy_forms_filters %}
+<div class="card mb-4">
+    <div class="card-header card-header-custom">
+        <h4 class="mb-0">Full-Time Result</h4>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-5 text-center">
+                <h5>{{ match.home_team }}</h5>
+                {% if match.home_team.logo %}
+                    <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team }}" class="team-logo mb-2">
+                {% endif %}
+                <div class="mt-2">{{ score_form.home_score|as_crispy_field }}</div>
+            </div>
+            <div class="col-md-2 text-center">
+                <div class="fw-bold">Vs</div>
+            </div>
+            <div class="col-md-5 text-center">
+                <h5>{{ match.away_team }}</h5>
+                {% if match.away_team.logo %}
+                    <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team }}" class="team-logo mb-2">
+                {% endif %}
+                <div class="mt-2">{{ score_form.away_score|as_crispy_field }}</div>
+            </div>
+        </div>
+        {% if can_edit %}
+            <div class="text-end mt-3">
+                <button type="submit" name="submit_score" class="btn btn-primary">
+                    <i class="fas fa-flag-checkered"></i> Save Full-Time Score
+                </button>
+            </div>
+        {% else %}
+            <div class="alert alert-warning mt-3" role="alert">
+                Viewing only. You are not the appointed center referee.
+            </div>
+        {% endif %}
+    </div>
+</div>

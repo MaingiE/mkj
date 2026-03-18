@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Appeals — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    <div>
+        <h1>⚖️ Appeals</h1>
+        <p class="text-muted">Jury & Appeals Management System</p>
+    </div>
+    <div style="display:flex; gap:0.5rem;">
+        {% if user.role == 'team_manager' %}
+        <a href="{% url 'submit_appeal' %}" class="btn btn-primary">📝 File New Appeal</a>
+        {% endif %}
+        {% if user.role == 'jury_chair' %}
+        <a href="{% url 'jury_dashboard' %}" class="btn btn-primary">📊 Jury Dashboard</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:1.5rem; padding:1rem;">
+    <form method="get" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+        <label style="font-weight:600;">Filter by Status:</label>
+        <select name="status" class="form-select" style="max-width:250px;" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if current_status %}
+        <a href="{% url 'appeals_list' %}" class="btn btn-outline" style="font-size:.85rem;">Clear Filter</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Appeals Table -->
+<div class="card">
+    {% if appeals %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Appellant</th>
+                    <th>Respondent</th>
+                    <th>Status</th>
+                    <th>Fee</th>
+                    <th>Filed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appeal in appeals %}
+                <tr>
+                    <td>{{ appeal.pk }}</td>
+                    <td>
+                        <a href="{% url 'appeal_detail' pk=appeal.pk %}">{{ appeal.subject|truncatechars:50 }}</a>
+                        {% if appeal.is_reappeal %}
+                        <span class="badge" style="background:#ff9800; color:#fff; font-size:.7rem; margin-left:.25rem;">RE-APPEAL</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ appeal.appellant_team }}</td>
+                    <td>{{ appeal.respondent_team }}</td>
+                    <td>
+                        <span class="badge {% if appeal.status == 'draft' %}bg-secondary{% elif appeal.status == 'submitted' %}bg-warning{% elif appeal.status == 'response_received' %}bg-info{% elif appeal.status == 'under_review' %}bg-primary{% elif appeal.status == 'decided' %}bg-success{% else %}bg-dark{% endif %}" style="padding:4px 8px; border-radius:4px; color:#fff; font-size:.78rem;">
+                            {{ appeal.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if appeal.fee_status == 'verified' %}bg-success{% elif appeal.fee_status == 'pending' %}bg-warning{% elif appeal.fee_status == 'refunded' %}bg-info{% else %}bg-danger{% endif %}" style="padding:4px 8px; border-radius:4px; color:#fff; font-size:.78rem;">
+                            {{ appeal.get_fee_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ appeal.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-sm btn-outline">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:3rem;">
+        <p style="font-size:1.2rem; color:#888;">⚖️ No appeals found.</p>
+        {% if user.role == 'team_manager' %}
+        <a href="{% url 'submit_appeal' %}" class="btn btn-primary" style="margin-top:1rem;">File Your First Appeal</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

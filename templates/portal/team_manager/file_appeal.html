@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}File Appeal &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'team_manager_dashboard' %}">Team Manager</a>
+        <span>File Appeal</span>
+    </div>
+    <h1><i class="bi bi-briefcase"></i> File Disciplinary Appeal</h1>
+    <p>Submit an appeal on behalf of {{ team.name }}. It will be reviewed by your County Sports Director before submission.</p>
+</div>
+
+<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.5rem"><i class="bi bi-info-circle"></i></span>
+    <div>
+        <strong style="color:#1565c0">Appeal Process</strong>
+        <div style="font-size:.88rem;color:#555">
+            Appeals are first reviewed by the County Sports Director, then forwarded to the Appeals Jury.
+            An appeal fee of KSh 2,000 applies.
+        </div>
+    </div>
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <form method="post" style="max-width:700px">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div style="margin-bottom:1rem">
+            <label style="display:block;font-weight:600;font-size:.88rem;color:#333;margin-bottom:.3rem">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color:#C62828;font-size:.82rem;margin-top:.2rem">{{ field.errors.0 }}</div>
+            {% endif %}
+            {% if field.help_text %}
+            <div style="color:#888;font-size:.8rem;margin-top:.2rem">{{ field.help_text }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Respondent team -->
+        <div style="margin-bottom:1rem">
+            <label style="display:block;font-weight:600;font-size:.88rem;color:#333;margin-bottom:.3rem">Respondent Team (optional)</label>
+            <select name="respondent_team" style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;font-size:.9rem">
+                <option value="">— Select team —</option>
+                {% for t in other_teams %}
+                <option value="{{ t.pk }}">{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display:flex;gap:.8rem;margin-top:1.5rem">
+            <button type="submit" class="btn btn--primary" style="padding:.5rem 1.5rem;font-size:.9rem">
+                <i class="bi bi-send"></i> Submit Appeal
+            </button>
+            <a href="{% url 'team_manager_dashboard' %}" class="btn" style="padding:.5rem 1.2rem;font-size:.9rem;background:#e0e0e0;color:#333;border-radius:8px;text-decoration:none;font-weight:600">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'team_manager_dashboard' %}" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

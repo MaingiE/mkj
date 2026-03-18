@@ -1,0 +1,629 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Audit Report — KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Hero ──────────────────────────────── */
+.audit-hero {
+    background: linear-gradient(135deg, #0D3B0F 0%, #1B5E20 50%, #2E7D32 100%);
+    border-radius: 16px; padding: 2rem 2.5rem; color: #fff;
+    margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.audit-hero::before {
+    content: ""; position: absolute; top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.audit-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+.audit-hero p { opacity: .85; font-size: .88rem; position: relative; margin: 0; }
+.audit-hero .hero-badge {
+    display: inline-block; background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25); padding: .2rem .8rem;
+    border-radius: 20px; font-size: .7rem; letter-spacing: .5px;
+    text-transform: uppercase; margin-bottom: .5rem;
+}
+.hero-actions { position: relative; display: flex; gap: .5rem; }
+.hero-actions a {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem 1rem; border-radius: 8px; font-size: .78rem; font-weight: 600;
+    text-decoration: none; transition: all .2s; border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+}
+.hero-actions a:hover { background: rgba(255,255,255,.15); }
+.hero-actions .exp-excel:hover { background: rgba(76,175,80,.3); border-color: rgba(76,175,80,.5); }
+.hero-actions .exp-pdf:hover { background: rgba(198,40,40,.3); border-color: rgba(198,40,40,.5); }
+
+/* ── Stat Cards ────────────────────────── */
+.stat-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.audit-stat {
+    background: #fff; border-radius: 12px; padding: 1.15rem 1.35rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 4px solid transparent;
+    transition: all .2s; position: relative;
+}
+.audit-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+.audit-stat .st-num { font-size: 1.8rem; font-weight: 800; line-height: 1.1; margin-bottom: .1rem; }
+.audit-stat .st-label { font-size: .78rem; color: #757575; font-weight: 500; }
+.audit-stat .st-icon { position: absolute; top: 1rem; right: 1.1rem; font-size: 1.6rem; opacity: .12; }
+
+.audit-stat.c-green  { border-left-color: #1B5E20; }
+.audit-stat.c-green  .st-num { color: #1B5E20; }
+.audit-stat.c-blue   { border-left-color: #1565C0; }
+.audit-stat.c-blue   .st-num { color: #1565C0; }
+.audit-stat.c-amber  { border-left-color: #E65100; }
+.audit-stat.c-amber  .st-num { color: #E65100; }
+.audit-stat.c-purple { border-left-color: #6A1B9A; }
+.audit-stat.c-purple .st-num { color: #6A1B9A; }
+
+/* ── Filter Bar ────────────────────────── */
+.filter-bar {
+    background: #fff; border-radius: 12px; padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 1rem;
+}
+.filter-bar .form-control,
+.filter-bar .form-select {
+    font-size: .85rem; border-radius: 8px; border-color: #e0e0e0;
+}
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: #1B5E20; box-shadow: 0 0 0 3px rgba(27,94,32,.1);
+}
+.filter-bar label {
+    font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; margin-bottom: .25rem; display: block;
+}
+.btn-search {
+    background: #1B5E20; color: #fff; border: none; font-size: .8rem;
+    font-weight: 600; padding: .5rem 1.2rem; border-radius: 8px; transition: background .2s;
+}
+.btn-search:hover { background: #2E7D32; color: #fff; }
+.btn-clear {
+    background: #fff; color: #757575; border: 1px solid #e0e0e0;
+    font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
+    transition: all .2s; text-decoration: none;
+}
+.btn-clear:hover { border-color: #C62828; color: #C62828; background: #FFF5F5; }
+.btn-reset {
+    background: #fff; color: #757575; border: 1px solid #e0e0e0;
+    font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
+    transition: all .2s;
+}
+.btn-reset:hover { border-color: #1B5E20; color: #1B5E20; background: #F1F8E9; }
+
+/* ── Filter Chips ──────────────────────── */
+.chip-bar { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: 1rem; }
+.chip-bar .lbl { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #999; }
+.filter-chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .25rem .7rem; border-radius: 20px; font-size: .75rem; font-weight: 500;
+    background: #E8F5E9; color: #1B5E20; border: 1px solid #C8E6C9;
+}
+.filter-chip.ch-amber { background: #FFF3E0; color: #E65100; border-color: #FFE0B2; }
+.filter-chip.ch-blue  { background: #E3F2FD; color: #1565C0; border-color: #BBDEFB; }
+.filter-chip.ch-purple { background: #F3E5F5; color: #6A1B9A; border-color: #E1BEE7; }
+.filter-chip .chip-x {
+    text-decoration: none; color: inherit; opacity: .5; font-size: .65rem;
+    transition: opacity .2s;
+}
+.filter-chip .chip-x:hover { opacity: 1; }
+
+/* ── White Card ────────────────────────── */
+.white-card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.white-card .card-head {
+    padding: .9rem 1.5rem; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+}
+.card-head .title { font-size: .95rem; font-weight: 600; color: #212121; display: flex; align-items: center; gap: .5rem; }
+.count-pill {
+    font-size: .72rem; font-weight: 600; padding: .15rem .6rem;
+    border-radius: 20px; background: #E8F5E9; color: #1B5E20;
+}
+.count-pill.red { background: #FFEBEE; color: #C62828; }
+.count-pill.blue { background: #E3F2FD; color: #1565C0; }
+
+/* ── Shared Table ──────────────────────── */
+.audit-table { width: 100%; border-collapse: collapse; }
+.audit-table thead th {
+    background: #FAFAFA; border-bottom: 2px solid #f0f0f0;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; padding: .7rem 1rem; white-space: nowrap;
+}
+.audit-table thead th:first-child { padding-left: 1.5rem; }
+.audit-table thead th:last-child { padding-right: 1.5rem; }
+
+.audit-table tbody tr { border-bottom: 1px solid #f5f5f5; transition: background .15s; }
+.audit-table tbody tr:last-child { border-bottom: none; }
+.audit-table tbody tr:hover { background: #FAFAFA; }
+.audit-table tbody tr.is-undone { opacity: .4; }
+
+.audit-table tbody td { padding: .75rem 1rem; vertical-align: middle; font-size: .85rem; color: #424242; }
+.audit-table tbody td:first-child { padding-left: 1.5rem; }
+.audit-table tbody td:last-child { padding-right: 1.5rem; }
+
+/* Timestamp */
+.ts-date { font-size: .82rem; font-weight: 500; color: #212121; }
+.ts-time { font-size: .72rem; color: #999; }
+
+/* User cell */
+.user-name { font-size: .82rem; font-weight: 500; color: #212121; }
+.user-email { font-size: .7rem; color: #999; }
+.user-system { font-size: .82rem; color: #999; }
+
+/* Role badge */
+.role-pill {
+    font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
+    padding: .15rem .45rem; border-radius: 4px;
+    background: #F5F5F5; color: #757575;
+}
+
+/* Action badges — SAME palette as activity logs */
+.action-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .2rem .6rem; border-radius: 6px;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+    white-space: nowrap;
+}
+.ab-success  { background: #E8F5E9; color: #1B5E20; }
+.ab-warning  { background: #FFF3E0; color: #E65100; }
+.ab-danger   { background: #FFEBEE; color: #C62828; }
+.ab-info     { background: #E3F2FD; color: #1565C0; }
+.ab-secondary { background: #F5F5F5; color: #757575; }
+
+.undone-tag {
+    font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+    padding: .1rem .4rem; border-radius: 4px;
+    background: #FFF3E0; color: #E65100; margin-left: .3rem;
+}
+
+/* Description */
+.desc-text { font-size: .82rem; color: #616161; max-width: 280px; }
+.desc-repr { font-size: .7rem; color: #999; margin-top: 1px; }
+
+/* IP */
+.ip-badge { font-size: .75rem; color: #1B5E20; background: #E8F5E9; padding: .15rem .5rem; border-radius: 5px; }
+
+/* ── Category Breakdown ────────────────── */
+.cat-row {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .65rem 1.3rem; border-bottom: 1px solid #f5f5f5;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-row:hover { background: #FAFAFA; }
+.cat-name { font-size: .82rem; font-weight: 500; color: #212121; min-width: 130px; }
+.cat-bar { height: 6px; background: #f0f0f0; border-radius: 99px; flex: 1; min-width: 60px; overflow: hidden; }
+.cat-bar .fill { height: 100%; border-radius: 99px; background: #1B5E20; transition: width .6s; }
+.cat-pct { font-size: .7rem; color: #999; min-width: 30px; text-align: right; }
+.cat-count { font-size: .82rem; font-weight: 700; color: #1B5E20; min-width: 35px; text-align: right; }
+
+/* ── Top Users ─────────────────────────── */
+.user-row {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .65rem 1.3rem; border-bottom: 1px solid #f5f5f5;
+}
+.user-row:last-child { border-bottom: none; }
+.user-row:hover { background: #FAFAFA; }
+.user-rank { font-size: .82rem; font-weight: 800; color: #bbb; width: 20px; text-align: center; }
+.user-avatar {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700; color: #fff; background: #1565C0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-info .name { font-size: .82rem; font-weight: 500; color: #212121; }
+.user-info .email { font-size: .7rem; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-count { font-size: 1.05rem; font-weight: 800; color: #1565C0; }
+
+/* ── Pagination ────────────────────────── */
+.pag-bar { padding: .9rem 1.5rem; border-top: 1px solid #f0f0f0; }
+.pag-info { font-size: .78rem; color: #999; }
+.pag-info strong { color: #424242; }
+.audit-pag .page-link {
+    font-size: .8rem; border-radius: 6px !important; margin: 0 2px;
+    padding: .3rem .6rem !important; border-color: #e0e0e0 !important;
+    color: #757575 !important; min-width: 30px; text-align: center;
+}
+.audit-pag .page-link:hover { border-color: #1B5E20 !important; color: #1B5E20 !important; background: #E8F5E9 !important; }
+.audit-pag .page-item.active .page-link { background: #1B5E20 !important; border-color: #1B5E20 !important; color: #fff !important; font-weight: 600; }
+.audit-pag .page-item.disabled .page-link { opacity: .35; pointer-events: none; }
+
+/* ── Empty State ───────────────────────── */
+.empty-state { padding: 3rem 2rem; text-align: center; }
+.empty-state .icon {
+    width: 48px; height: 48px; border-radius: 12px; margin: 0 auto .7rem;
+    background: #F5F5F5; display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: #bbb;
+}
+.empty-state h3 { font-size: .95rem; font-weight: 600; color: #616161; }
+.empty-state p { font-size: .82rem; color: #999; margin: 0; }
+
+/* ── Two-col layout ────────────────────── */
+.two-col { display: grid; grid-template-columns: 5fr 7fr; gap: 1.5rem; }
+@media (max-width: 992px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── Responsive ────────────────────────── */
+@media (max-width: 768px) {
+    .audit-hero { padding: 1.5rem; }
+    .audit-hero h1 { font-size: 1.3rem; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) { .stat-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="max-width:1360px">
+
+    <!-- ── HERO ──────────────────────────── -->
+    <div class="audit-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <span class="hero-badge"><i class="bi bi-shield-check me-1"></i> System Audit</span>
+                <h1>Audit Report</h1>
+                <p>Complete record of who did what and when across the entire system</p>
+            </div>
+            <div class="hero-actions">
+                <a href="{% url 'export_audit_excel' %}?{{ request.GET.urlencode }}" class="exp-excel">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Excel
+                </a>
+                <a href="{% url 'export_audit_pdf' %}?{{ request.GET.urlencode }}" class="exp-pdf">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STAT CARDS ────────────────────── -->
+    <div class="stat-row">
+        <div class="audit-stat c-green">
+            <div class="st-num">{{ total|default:0 }}</div>
+            <div class="st-label">Total Actions</div>
+            <i class="bi bi-database st-icon"></i>
+        </div>
+        <div class="audit-stat c-blue">
+            <div class="st-num">{{ today|default:0 }}</div>
+            <div class="st-label">Today</div>
+            <i class="bi bi-clock st-icon"></i>
+        </div>
+        <div class="audit-stat c-amber">
+            <div class="st-num">{{ this_week|default:0 }}</div>
+            <div class="st-label">This Week</div>
+            <i class="bi bi-calendar-week st-icon"></i>
+        </div>
+        <div class="audit-stat c-purple">
+            <div class="st-num">{{ this_month|default:0 }}</div>
+            <div class="st-label">This Month</div>
+            <i class="bi bi-calendar st-icon"></i>
+        </div>
+    </div>
+
+    <!-- ── FILTERS ───────────────────────── -->
+    <div class="filter-bar">
+        <form method="get" id="auditFilterForm">
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+                <div class="flex-grow-1" style="min-width:200px">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Search audit trail — users, actions, descriptions…"
+                           value="{{ f_search }}">
+                </div>
+                <button type="submit" class="btn btn-search">
+                    <i class="bi bi-search me-1"></i> Search
+                </button>
+                {% if f_search or f_category or f_user or f_date_from or f_date_to %}
+                <a href="{% url 'audit_report' %}" class="btn btn-clear">
+                    <i class="bi bi-x-lg me-1"></i> Clear All
+                </a>
+                {% endif %}
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-sm-4 col-md-auto" style="min-width:150px">
+                    <label><i class="bi bi-layers me-1"></i>Category</label>
+                    <select name="category" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if cat == f_category %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto" style="min-width:160px">
+                    <label><i class="bi bi-person me-1"></i>User</label>
+                    <select name="user" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Users</option>
+                        {% for u in all_users %}
+                        <option value="{{ u.id }}" {% if u.id|stringformat:"s" == f_user %}selected{% endif %}>{{ u.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto">
+                    <label><i class="bi bi-calendar me-1"></i>From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ f_date_from }}" onchange="this.form.submit()">
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto">
+                    <label><i class="bi bi-calendar me-1"></i>To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ f_date_to }}" onchange="this.form.submit()">
+                </div>
+                <div class="col-12 col-sm-4 col-md-auto">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-reset w-100" onclick="location.href='{% url 'audit_report' %}'">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── ACTIVE FILTER CHIPS ───────────── -->
+    {% if f_search or f_category or f_user or f_date_from or f_date_to %}
+    <div class="chip-bar">
+        <span class="lbl">Filters:</span>
+        {% if f_search %}
+        <span class="filter-chip">
+            <i class="bi bi-search" style="font-size:.6rem"></i> {{ f_search }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'search' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if f_category %}
+        <span class="filter-chip ch-amber">
+            <i class="bi bi-layers" style="font-size:.6rem"></i> {{ f_category }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'category' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if f_user %}
+        <span class="filter-chip ch-blue">
+            <i class="bi bi-person" style="font-size:.6rem"></i> {% for u in all_users %}{% if u.id|stringformat:"s" == f_user %}{{ u.email }}{% endif %}{% endfor %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'user' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if f_date_from %}
+        <span class="filter-chip ch-purple">
+            <i class="bi bi-calendar" style="font-size:.6rem"></i> from {{ f_date_from }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'date_from' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if f_date_to %}
+        <span class="filter-chip ch-purple">
+            <i class="bi bi-calendar" style="font-size:.6rem"></i> to {{ f_date_to }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'date_to' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── CATEGORY + TOP USERS (side by side) ── -->
+    <div class="two-col mb-4">
+        <!-- Categories -->
+        <div class="white-card">
+            <div class="card-head">
+                <div class="title"><i class="bi bi-pie-chart" style="color:#1B5E20"></i> Actions by Category</div>
+            </div>
+            <div>
+                {% for cs in category_stats %}
+                <div class="cat-row">
+                    <span class="cat-name">{{ cs.name }}</span>
+                    <div class="cat-bar">
+                        {% widthratio cs.count total 100 as pct %}
+                        <div class="fill" style="width:{% if total %}{{ pct }}{% else %}0{% endif %}%"></div>
+                    </div>
+                    <span class="cat-pct">{% if total %}{{ pct }}%{% else %}0%{% endif %}</span>
+                    <span class="cat-count">{{ cs.count }}</span>
+                </div>
+                {% empty %}
+                <div class="empty-state" style="padding:2rem 1rem">
+                    <div class="icon"><i class="bi bi-pie-chart"></i></div>
+                    <h3>No category data</h3>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Top Users -->
+        <div class="white-card">
+            <div class="card-head">
+                <div class="title"><i class="bi bi-trophy" style="color:#1565C0"></i> Most Active Users</div>
+                <span class="count-pill blue">Top {{ user_stats|length }}</span>
+            </div>
+            <div>
+                {% for us in user_stats %}
+                <div class="user-row">
+                    <span class="user-rank">{{ forloop.counter }}</span>
+                    <div class="user-avatar">{{ us.user__first_name|first|default:"?" }}</div>
+                    <div class="user-info">
+                        <div class="name">{{ us.user__first_name }} {{ us.user__last_name }}</div>
+                        <div class="email">{{ us.user__email }}</div>
+                    </div>
+                    <span class="role-pill">{{ us.user__role }}</span>
+                    <span class="user-count">{{ us.count }}</span>
+                </div>
+                {% empty %}
+                <div class="empty-state" style="padding:2rem 1rem">
+                    <div class="icon"><i class="bi bi-people"></i></div>
+                    <h3>No user data</h3>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CRITICAL ACTIONS ──────────────── -->
+    <div class="white-card mb-4">
+        <div class="card-head">
+            <div class="title"><i class="bi bi-shield-exclamation" style="color:#C62828"></i> Recent Critical Actions</div>
+            <span class="count-pill red">{{ critical_logs|length }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th style="width:13%">Date & Time</th>
+                        <th style="width:18%">Performed By</th>
+                        <th style="width:9%">Role</th>
+                        <th style="width:14%">Action</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in critical_logs %}
+                    <tr>
+                        <td>
+                            <div class="ts-date">{{ log.timestamp|date:"d M Y" }}</div>
+                            <div class="ts-time">{{ log.timestamp|time:"H:i" }}</div>
+                        </td>
+                        <td>
+                            {% if log.user %}
+                            <div class="user-name">{{ log.user.get_full_name }}</div>
+                            <div class="user-email">{{ log.user.email }}</div>
+                            {% else %}
+                            <span class="user-system"><i class="bi bi-robot me-1"></i>System</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.user %}<span class="role-pill">{{ log.user.get_role_display }}</span>{% endif %}
+                        </td>
+                        <td>
+                            <span class="action-badge ab-{{ log.action_class }}">
+                                <i class="bi bi-{{ log.action_icon }}"></i> {{ log.get_action_display }}
+                            </span>
+                        </td>
+                        <td><span class="desc-text">{{ log.description|truncatechars:150 }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">
+                        <div class="empty-state" style="padding:2rem 1rem">
+                            <h3 style="font-size:.85rem">No critical actions found</h3>
+                        </div>
+                    </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── FULL AUDIT TRAIL ──────────────── -->
+    <div class="white-card">
+        <div class="card-head">
+            <div class="title">
+                <i class="bi bi-journal-text" style="color:#1B5E20"></i> Full Audit Trail
+                <span class="count-pill">{{ total }} record{{ total|pluralize }}</span>
+            </div>
+            {% if page_obj.paginator.num_pages > 1 %}
+            <span class="count-pill blue">Page {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+            {% endif %}
+        </div>
+
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th style="width:11%">Date & Time</th>
+                        <th style="width:15%">User</th>
+                        <th style="width:8%">Role</th>
+                        <th style="width:13%">Action</th>
+                        <th>Description</th>
+                        <th style="width:8%">IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                    <tr {% if log.is_undone %}class="is-undone"{% endif %}>
+                        <td>
+                            <div class="ts-date">{{ log.timestamp|date:"d M Y" }}</div>
+                            <div class="ts-time">{{ log.timestamp|time:"H:i:s" }}</div>
+                        </td>
+                        <td>
+                            {% if log.user %}
+                            <div class="user-name">{{ log.user.get_full_name }}</div>
+                            <div class="user-email">{{ log.user.email }}</div>
+                            {% else %}
+                            <span class="user-system"><i class="bi bi-robot me-1"></i>System</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.user %}<span class="role-pill">{{ log.user.get_role_display }}</span>{% endif %}
+                        </td>
+                        <td>
+                            <span class="action-badge ab-{{ log.action_class }}">
+                                <i class="bi bi-{{ log.action_icon }}"></i> {{ log.get_action_display }}
+                            </span>
+                            {% if log.is_undone %}
+                            <br><span class="undone-tag"><i class="bi bi-arrow-counterclockwise"></i> Undone</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="desc-text">{{ log.description|truncatechars:120 }}</span>
+                            {% if log.object_repr %}
+                            <div class="desc-repr">{{ log.object_repr }}</div>
+                            {% endif %}
+                        </td>
+                        <td><span class="ip-badge">{{ log.ip_address|default:"-" }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="pag-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="pag-info">
+                Showing <strong>{{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count }}</strong> entries
+            </div>
+            <nav>
+                <ul class="pagination audit-pag mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-left"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><i class="bi bi-inbox"></i></div>
+            <h3>No activity recorded yet</h3>
+            <p>Try adjusting your filters or check back later</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

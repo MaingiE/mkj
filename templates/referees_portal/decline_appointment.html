@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Decline Appointment{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-times-circle me-2"></i>Decline Match Appointment
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if already_rejected %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            You have already declined this appointment.
+                        </div>
+                    {% endif %}
+
+                    <!-- Match Details -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-futbol me-2"></i>Match Details
+                        </h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Teams:</strong><br>
+                                {{ match.home_team }} vs {{ match.away_team }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Date:</strong> {{ match.match_date|date:"l, F d, Y" }}<br>
+                                <strong>Time:</strong> {{ match.kickoff_time|default:"TBD" }}
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <strong>Venue:</strong> {{ match.venue|default:"TBA" }}<br>
+                            <strong>Your Role:</strong> <span class="badge bg-primary">{{ role_display }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Decline Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-info-circle me-2"></i>Important</h6>
+                            <p class="mb-0">By declining this appointment, you are indicating that you cannot officiate this match. The Referees Manager will be notified and will need to find a replacement.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="reason" class="form-label">
+                                <strong>Reason for Declining <span class="text-danger">*</span></strong>
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="reason" 
+                                name="reason" 
+                                rows="5" 
+                                required
+                                placeholder="Please provide a clear reason for declining this appointment (e.g., personal emergency, prior commitment, illness, travel conflict, etc.)"
+                                {% if already_rejected %}disabled{% endif %}
+                            ></textarea>
+                            <div class="form-text">
+                                Please be specific. This information helps the Referees Manager understand your situation and plan accordingly.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {% if not already_rejected %}
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-times-circle me-2"></i>Decline Appointment
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

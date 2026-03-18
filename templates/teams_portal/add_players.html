@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Players - {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header card-header-custom">
+                    <h4 class="mb-0"><i class="fas fa-user-plus"></i> Add Players - {{ team.team_name }}</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages mb-3">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" enctype="multipart/form-data" id="playerForm">
+                        {% csrf_token %}
+                        
+                        <h5 class="text-primary mb-3"><i class="fas fa-id-card"></i> Player Information</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_first_name" class="form-label">First Name *</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <div class="text-danger small">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_last_name" class="form-label">Last Name *</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <div class="text-danger small">{{ form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_date_of_birth" class="form-label">Date of Birth *</label>
+                                {{ form.date_of_birth }}
+                                <small class="text-muted">Player must be 16-45 years old</small>
+                                {% if form.date_of_birth.errors %}
+                                <div class="text-danger small">{{ form.date_of_birth.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_id_number" class="form-label">ID/Passport Number *</label>
+                                {{ form.id_number }}
+                                <small class="text-muted">National ID or Passport</small>
+                                {% if form.id_number.errors %}
+                                <div class="text-danger small">{{ form.id_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-file-certificate"></i> FKF License Details</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_fkf_license_number" class="form-label">FKF License Number</label>
+                                {{ form.fkf_license_number }}
+                                <small class="text-muted">(Optional) Player's FKF license number</small>
+                                {% if form.fkf_license_number.errors %}
+                                <div class="text-danger small">{{ form.fkf_license_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_license_expiry_date" class="form-label">License Expiry Date</label>
+                                {{ form.license_expiry_date }}
+                                <small class="text-muted">(Optional) When license expires</small>
+                                {% if form.license_expiry_date.errors %}
+                                <div class="text-danger small">{{ form.license_expiry_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-futbol"></i> Team Details</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_position" class="form-label">Position *</label>
+                                {{ form.position }}
+                                {% if form.position.errors %}
+                                <div class="text-danger small">{{ form.position.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_jersey_number" class="form-label">Jersey Number *</label>
+                                {{ form.jersey_number }}
+                                <small class="text-muted">Between 1-99, unique per team</small>
+                                {% if form.jersey_number.errors %}
+                                <div class="text-danger small">{{ form.jersey_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_photo" class="form-label">Player Photo (Optional)</label>
+                            {{ form.photo }}
+                            <small class="text-muted">Max 2MB. Recommended: Passport size</small>
+                            {% if form.photo.errors %}
+                            <div class="text-danger small">{{ form.photo.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            {{ form.is_captain }}
+                            <label class="form-check-label" for="id_is_captain">
+                                This player is the team captain
+                            </label>
+                            {% if form.is_captain.errors %}
+                            <div class="text-danger small">{{ form.is_captain.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="submit" name="add_more" class="btn btn-primary me-2">
+                                <i class="fas fa-plus"></i> Add Player & Continue
+                            </button>
+                            <button type="submit" name="finish" class="btn btn-success">
+                                <i class="fas fa-check"></i> Finish Registration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Team Summary</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ team.team_name }}</h6>
+                    <p class="mb-1"><strong>Team Code:</strong> {{ team.team_code }}</p>
+                    <p class="mb-1"><strong>Location:</strong> {{ team.location }}</p>
+                    <p class="mb-1"><strong>Status:</strong> 
+                        <span class="badge bg-warning">Pending Approval</span>
+                    </p>
+                    <p class="mb-0"><strong>Players Added:</strong> {{ player_count }}</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Added Players ({{ player_count }})</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if players %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in players %}
+                                    <tr>
+                                        <td>{{ player.jersey_number }}</td>
+                                        <td>
+                                            {{ player.full_name }}
+                                            {% if player.is_captain %}
+                                            <span class="badge bg-warning">C</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ player.get_position_display }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No players added yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6><i class="fas fa-info-circle text-primary"></i> Notes</h6>
+                    <ul class="small">
+                        <li>Add at least 11 players (minimum squad)</li>
+                        <li>Maximum squad size: 30 players</li>
+                        <li>Each player needs valid ID</li>
+                        <li>FKF license is optional but recommended</li>
+                        <li>Click "Finish" when done adding players</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('playerForm');
+    const dobInput = document.querySelector('#id_date_of_birth');
+    const expiryInput = document.querySelector('#id_license_expiry_date');
+    
+    // Set max date for date of birth (16 years ago)
+    if (dobInput) {
+        const today = new Date();
+        const maxDate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
+        const minDate = new Date(today.getFullYear() - 45, today.getMonth(), today.getDate());
+        
+        dobInput.max = maxDate.toISOString().split('T')[0];
+        dobInput.min = minDate.toISOString().split('T')[0];
+    }
+    
+    // Set min date for license expiry (today)
+    if (expiryInput) {
+        const today = new Date().toISOString().split('T')[0];
+        expiryInput.min = today;
+    }
+    
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields (*)');
+                return false;
+            }
+            
+            // Disable buttons to prevent double submission
+            const buttons = form.querySelectorAll('button[type="submit"]');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.name === 'add_more') {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                } else if (btn.name === 'finish') {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finishing...';
+                }
+            });
+            
+            return true;
+        });
+    }
+    
+    // Remove error class when typing
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+});
+</script>
+
+<style>
+.form-control:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+.card-header-custom {
+    background-color: var(--primary-red);
+    color: white;
+}
+</style>
+{% endblock %}

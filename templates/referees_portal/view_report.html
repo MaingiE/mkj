@@ -1,0 +1,415 @@
+<!-- templates/referees/view_report.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Match Report - {{ report.match }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">My Matches</a></li>
+                    <li class="breadcrumb-item active">Report</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-file-alt me-2"></i>Match Report
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ report.match.home_team }} vs {{ report.match.away_team }}
+                    </p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-{{ report.status|default:'warning' }} mb-2">
+                        {{ report.get_status_display }}
+                    </span>
+                    <br>
+                    {% if report.status == 'draft' and report.match.referee and report.match.referee.user == request.user %}
+                    <a href="{% url 'referees:submit_comprehensive_report' report.match.id %}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>Edit Report
+                    </a>
+                    {% elif report.status == 'draft' and report.referee.user == request.user %}
+                    <button type="button" class="btn btn-warning btn-sm" disabled title="Only the appointed referee can edit the comprehensive report">
+                        <i class="fas fa-edit me-1"></i>Edit Report
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Matches
+                    </a>
+                </div>
+            </div>
+            <hr>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Match Info -->
+        <div class="col-lg-4">
+            <!-- Match Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-futbol me-2"></i>Match Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="40%"><strong>Match:</strong></td>
+                            <td>{{ report.match.home_team }} vs {{ report.match.away_team }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date:</strong></td>
+                            <td>{{ report.match.match_date|date:"F d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Time:</strong></td>
+                            <td>{{ report.match.match_time|time:"g:i A"|default:"TBA" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Venue:</strong></td>
+                            <td>{{ report.match.venue|default:"Not specified" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Competition:</strong></td>
+                            <td>{{ report.match.competition|default:"Friendly" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Match #:</strong></td>
+                            <td>{{ report.match_number|default:"Not set" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Round:</strong></td>
+                            <td>{{ report.round_number|default:"Not set" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Referee Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-shield me-2"></i>Referee Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="40%"><strong>Referee:</strong></td>
+                            <td>{{ report.referee.full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Grade:</strong></td>
+                            <td>{{ report.referee.get_grade_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>License #:</strong></td>
+                            <td>{{ report.referee.license_number }}</td>
+                        </tr>
+                        {% if report.submitted_at %}
+                        <tr>
+                            <td><strong>Submitted:</strong></td>
+                            <td>{{ report.submitted_at|date:"M d, Y g:i A" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Match Officials -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Match Officials
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for official in report.match.officials.all %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ official.get_position_display }}</span>
+                        <span class="fw-bold">
+                            {% if official.referee %}
+                            {{ official.referee.full_name }}
+                            {% else %}
+                            {{ official.name }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No officials assigned.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Report Content -->
+        <div class="col-lg-8">
+            <!-- Match Details -->
+            {% if venue_details %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>Venue & Conditions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Pitch Condition:</h6>
+                            <span class="badge bg-{{ venue_details.pitch_condition|default:'secondary' }}">
+                                {{ venue_details.get_pitch_condition_display|default:"Not rated" }}
+                            </span>
+                            
+                            <h6 class="mt-3">Weather:</h6>
+                            <p class="mb-1"><small>Before: {{ venue_details.weather_before|default:"Not recorded" }}</small></p>
+                            <p><small>During: {{ venue_details.weather_during|default:"Not recorded" }}</small></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Facilities:</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-{% if venue_details.home_changing_room %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                        Home Changing
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-{% if venue_details.away_changing_room %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                        Away Changing
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-{% if venue_details.seating_arrangement %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                        Seating
+                                    </p>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-{% if venue_details.ambulance %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                        Ambulance
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-{% if venue_details.stretcher %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                        Stretcher
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-{% if venue_details.ball_boys %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                        Ball Boys
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {% if venue_details.attendance %}
+                            <h6 class="mt-3">Attendance:</h6>
+                            <p>{{ venue_details.attendance }} spectators</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Match Timeline -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Match Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Goals -->
+                    {% if goals %}
+                    <h6>Goals:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Minute</th>
+                                    <th>Team</th>
+                                    <th>Scorer</th>
+                                    <th>Assist</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in goals %}
+                                <tr>
+                                    <td>{{ goal.minute }}'</td>
+                                    <td>{{ goal.team.short_name|default:goal.team.name }}</td>
+                                    <td>{{ goal.player.full_name }} (#{{ goal.jersey_number }})</td>
+                                    <td>
+                                        {% if goal.assist_by %}
+                                        {{ goal.assist_by.full_name }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if goal.goal_type == 'penalty' %}info{% elif goal.goal_type == 'own_goal' %}danger{% else %}success{% endif %}">
+                                            {{ goal.get_goal_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- Cards -->
+                    <div class="row mt-3">
+                        {% if cautions %}
+                        <div class="col-md-6">
+                            <h6>Yellow Cards:</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for caution in cautions %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>{{ caution.player.full_name }} (#{{ caution.jersey_number }})</span>
+                                    <span>{{ caution.minute }}'</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if expulsions %}
+                        <div class="col-md-6">
+                            <h6>Red Cards:</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for expulsion in expulsions %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>{{ expulsion.player.full_name }} (#{{ expulsion.jersey_number }})</span>
+                                    <span>{{ expulsion.minute }}'</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Substitutions -->
+                    {% if substitutions %}
+                    <h6 class="mt-3">Substitutions:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Minute</th>
+                                    <th>Team</th>
+                                    <th>Out</th>
+                                    <th>In</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub in substitutions %}
+                                <tr>
+                                    <td>{{ sub.minute }}'</td>
+                                    <td>{{ sub.team.short_name|default:sub.team.name }}</td>
+                                    <td>{{ sub.player_out.full_name }} (#{{ sub.jersey_out }})</td>
+                                    <td>{{ sub.player_in.full_name }} (#{{ sub.jersey_in }})</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Referee Comments -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comment-alt me-2"></i>Referee Comments & Incidents
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if report.referee_comments %}
+                    <h6>Referee Comments:</h6>
+                    <div class="border p-3 bg-light rounded">
+                        {{ report.referee_comments|linebreaks }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if report.serious_incidents %}
+                    <h6 class="mt-3">Serious Incidents:</h6>
+                    <div class="border p-3 bg-light rounded">
+                        {{ report.serious_incidents|linebreaks }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if report.penalties_not_converted %}
+                    <h6 class="mt-3">Penalties Not Converted:</h6>
+                    <div class="border p-3 bg-light rounded">
+                        {{ report.penalties_not_converted|linebreaks }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Administrative Info -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>Administrative Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Report Status:</h6>
+                            <p>
+                                <span class="badge bg-{{ report.status }}">
+                                    {{ report.get_status_display }}
+                                </span>
+                            </p>
+                            
+                            {% if report.submitted_at %}
+                            <p><strong>Submitted:</strong> {{ report.submitted_at|date:"M d, Y g:i A" }}</p>
+                            {% endif %}
+                            
+                            {% if report.approved_at %}
+                            <p><strong>Approved:</strong> {{ report.approved_at|date:"M d, Y" }}</p>
+                            <p><strong>Approved By:</strong> {{ report.approved_by.get_full_name }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {% if report.received_by %}
+                            <h6>Receiving Details:</h6>
+                            <p><strong>Received By:</strong> {{ report.received_by }}</p>
+                            <p><strong>Received:</strong> 
+                                {{ report.received_date|date:"M d, Y" }}
+                                at {{ report.received_time|time:"g:i A" }}
+                            </p>
+                            {% endif %}
+                            
+                            {% if report.entered_by %}
+                            <h6 class="mt-3">Entry Details:</h6>
+                            <p><strong>Entered By:</strong> {{ report.entered_by }}</p>
+                            <p><strong>Entered:</strong> 
+                                {{ report.entered_date|date:"M d, Y" }}
+                                at {{ report.entered_time|time:"g:i A" }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge.bg-draft { background-color: #ffc107; color: #000; }
+    .badge.bg-submitted { background-color: #0dcaf0; color: #000; }
+    .badge.bg-approved { background-color: #198754; color: #fff; }
+    .badge.bg-rejected { background-color: #dc3545; color: #fff; }
+</style>
+{% endblock %}

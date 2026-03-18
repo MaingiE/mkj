@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Welcome, {{ user.first_name }}!</h1>
+    <p>{{ user.get_role_display }} Dashboard</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    {% if user.role == 'admin' or user.role == 'competition_manager' %}
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-trophy"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.competitions }}</h3>
+            <p>Competitions</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.teams }}</h3>
+            <p>Teams</p>
+        </div>
+    </div>
+
+    {% if user.role == 'admin' or user.role == 'coordinator' or user.role == 'referee' %}
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-flag"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.referees }}</h3>
+            <p>Referees</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="bi bi-clipboard-data"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.fixtures }}</h3>
+            <p>Fixtures</p>
+        </div>
+    </div>
+
+    {% if user.role == 'admin' or user.role == 'competition_manager' %}
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-person-vcard"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.players }}</h3>
+            <p>Players</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-1">
+    <div class="card-header"><h3>Quick Actions</h3></div>
+    <div class="card-body">
+        <div class="quick-actions">
+            {% if user.role == 'admin' or user.role == 'competition_manager' %}
+            <a href="{% url 'competitions_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-trophy"></i></div>
+                <h4>Manage Competitions</h4>
+                <p>View and manage competitions</p>
+            </a>
+            <a href="{% url 'teams_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-people"></i></div>
+                <h4>Manage Teams</h4>
+                <p>View registered teams</p>
+            </a>
+            <a href="{% url 'matches_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
+                <h4>View Fixtures</h4>
+                <p>Scheduled matches</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'competition_manager' or user.role == 'admin' %}
+            <a href="{% url 'competitions_list' %}" class="action-card accent-purple">
+                <div class="action-icon"><i class="bi bi-bar-chart-line"></i></div>
+                <h4>Standings &amp; Stats</h4>
+                <p>View standings via competition</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'coordinator' %}
+            <a href="{% url 'coordinator_dashboard' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+                <h4>Coordinator Portal</h4>
+                <p>Manage your discipline</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'referee' %}
+            <a href="{% url 'matches_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
+                <h4>My Appointments</h4>
+                <p>View assigned fixtures</p>
+            </a>
+            <a href="{% url 'web_profile' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-person-circle"></i></div>
+                <h4>My Profile</h4>
+                <p>Update availability</p>
+            </a>
+            {% endif %}
+
+            {% if user.role == 'team_manager' %}
+            <a href="{% url 'teams_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-people"></i></div>
+                <h4>My Team</h4>
+                <p>Manage players & squads</p>
+            </a>
+            <a href="{% url 'matches_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
+                <h4>Upcoming Fixtures</h4>
+                <p>View scheduled matches</p>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'web_profile' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-person-circle"></i></div>
+                <h4>My Profile</h4>
+                <p>View account details</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Fixtures -->
+{% if recent_fixtures %}
+<div class="card">
+    <div class="card-header">
+        <h3>Recent / Upcoming Fixtures</h3>
+        <a href="{% url 'matches_list' %}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Competition</th>
+                        <th>Home</th>
+                        <th>Away</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in recent_fixtures %}
+                    <tr>
+                        <td>{{ f.match_date|date:"d M Y" }}</td>
+                        <td>{{ f.competition.name }}</td>
+                        <td><strong>{{ f.home_team.name }}</strong></td>
+                        <td><strong>{{ f.away_team.name }}</strong></td>
+                        <td>
+                            {% if f.status == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                            {% elif f.status == 'live' %}
+                            <span class="badge badge-danger">Live</span>
+                            {% elif f.status == 'confirmed' %}
+                            <span class="badge badge-info">Confirmed</span>
+                            {% elif f.status == 'postponed' %}
+                            <span class="badge badge-warning">Postponed</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ f.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if f.home_score is not None %}
+                            <strong>{{ f.home_score }} - {{ f.away_score }}</strong>
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}About KYISA{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE HERO — DARK CINEMATIC
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">About Us</span>
+        <h1 class="page-hero__title reveal">About <span class="text-gold">KYISA</span></h1>
+        <p class="page-hero__sub reveal">Kenya Youth Intercounty Sports Association — 11th Edition</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>About</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     WHO WE ARE
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec">
+    <div class="container" style="max-width:900px;">
+        <div class="sec-head">
+            <span class="badge">Our Story</span>
+            <h2 class="sec-title">Who We Are</h2>
+            <div class="sec-line"></div>
+        </div>
+        <div class="about-prose reveal">
+            <p>
+                The <strong>Kenya Youth Intercounty Sports Association (KYISA)</strong> organises
+                annual intercounty youth sporting competitions across all <strong>47 counties</strong>
+                of Kenya. The KYISA Games are designed to unearth and develop raw sporting talent
+                among Kenyan youth who are out of school and have missed mainstream scouting
+                opportunities.
+            </p>
+            <p>
+                Many talented young Kenyans aged <strong>18 to 23</strong> lack the platform to
+                showcase their abilities — they are not in universities or colleges, have never
+                played in any higher league, and have limited exposure to professional sports
+                institutions. KYISA bridges this gap by providing a competitive, structured
+                platform where these young athletes can be identified, nurtured, and linked
+                to professional sporting clubs and other institutions.
+            </p>
+            <p>
+                The <strong>11th Edition</strong> of the KYISA Games will be held from
+                <strong>10th – 20th April 2026</strong> in <strong>Laikipia County</strong>,
+                organised by the KYISA Executive Committee in collaboration with the
+                Laikipia County Government.
+            </p>
+        </div>
+        <div style="text-align:center;margin-top:1.5rem;" class="reveal">
+            <a href="{% url 'public_competitions' %}" class="btn btn--primary btn--lg">View Our Competitions</a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     WHAT WE DO
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec sec--dark">
+    <div class="container" style="max-width:960px;">
+        <div class="sec-head">
+            <span class="badge">What We Do</span>
+            <h2 class="sec-title">The Annual Youth Championship<br>For Ages 18 – 23</h2>
+            <div class="sec-line"></div>
+            <p class="sec-sub">KYISA is Kenya's premier annual intercounty sports championship, bringing together talented young athletes aged <strong>18 to 23</strong> from all 47 counties.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature reveal">
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+                </div>
+                <h3>Annual Championship</h3>
+                <p>Every year, KYISA hosts a week-long multi-sport championship where counties field their best youth athletes to compete for glory.</p>
+            </div>
+            <div class="feature reveal" style="--delay:.06s">
+                <div class="feature-icon feature-icon--gold">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                </div>
+                <h3>Youth Ages 18 – 23</h3>
+                <p>Exclusively for young Kenyans aged 18 to 23 — identifying, developing, and celebrating the next generation of sporting talent.</p>
+            </div>
+            <div class="feature reveal" style="--delay:.12s">
+                <div class="feature-icon feature-icon--red">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>Intercounty Competition</h3>
+                <p>Teams representing all 47 counties go head-to-head in football, basketball, volleyball, handball and more.</p>
+            </div>
+            <div class="feature reveal" style="--delay:.18s">
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                </div>
+                <h3>Results & Stats</h3>
+                <p>Real-time tracking of fixtures, results, standings, and player statistics across all competitions.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MISSION & VISION
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec">
+    <div class="container" style="max-width:960px;">
+        <div class="sec-head">
+            <span class="badge badge--green">Our Purpose</span>
+            <h2 class="sec-title">Mission &amp; Vision</h2>
+            <div class="sec-line"></div>
+        </div>
+        <div class="mv-grid">
+            <div class="mv-card reveal">
+                <div class="mv-card__accent mv-card__accent--green"></div>
+                <div class="mv-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                </div>
+                <h3 class="mv-card__title">Our Mission</h3>
+                <p class="mv-card__text">
+                    To identify, nurture, develop and promote sporting talents among the youth
+                    of Kenya; to promote peace and national cohesion among communities from
+                    different counties; and to link talented youth to professional sporting
+                    clubs and other institutions.
+                </p>
+            </div>
+            <div class="mv-card reveal" style="--delay:.08s">
+                <div class="mv-card__accent mv-card__accent--gold"></div>
+                <div class="mv-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F9A825" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+                </div>
+                <h3 class="mv-card__title">Our Vision</h3>
+                <p class="mv-card__text">
+                    A Kenya where every young athlete, regardless of their county of origin,
+                    has the opportunity to showcase their raw sporting talent and be scouted
+                    into professional clubs — promoting peace, national cohesion, and youth
+                    empowerment through sport.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CORE VALUES
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec sec--dark">
+    <div class="container" style="max-width:960px;">
+        <div class="sec-head">
+            <span class="badge">Our Principles</span>
+            <h2 class="sec-title">Core Values</h2>
+            <p class="sec-sub">The principles that guide everything we do</p>
+            <div class="sec-line"></div>
+        </div>
+        <div class="values-grid">
+            <div class="value-card reveal">
+                <div class="value-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v18M3 12h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                </div>
+                <h4 class="value-card__title">Fair Play</h4>
+                <p class="value-card__text">Ensuring integrity and fairness in every match and competition we organise.</p>
+            </div>
+            <div class="value-card reveal" style="--delay:.06s">
+                <div class="value-card__icon value-card__icon--gold">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                </div>
+                <h4 class="value-card__title">Inclusivity</h4>
+                <p class="value-card__text">Opening doors for youth from all 47 counties to participate equally.</p>
+            </div>
+            <div class="value-card reveal" style="--delay:.12s">
+                <div class="value-card__icon value-card__icon--red">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                </div>
+                <h4 class="value-card__title">Development</h4>
+                <p class="value-card__text">Continuously developing athletes, referees, and management capabilities.</p>
+            </div>
+            <div class="value-card reveal" style="--delay:.18s">
+                <div class="value-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/><circle cx="12" cy="12" r="10"/></svg>
+                </div>
+                <h4 class="value-card__title">Excellence</h4>
+                <p class="value-card__text">Striving for the highest standards in competition management and sportsmanship.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     STATS — DARK CINEMATIC STRIP
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="about-stats">
+    <div class="about-stats__bg"></div>
+    <div class="container about-stats__inner">
+        <div class="sec-head" style="margin-bottom:2.5rem;">
+            <h2 class="sec-title" style="color:#fff;">KYISA by the Numbers</h2>
+            <div class="sec-line" style="background:linear-gradient(90deg,#F9A825,#4CAF50);"></div>
+        </div>
+        <div class="about-stats__grid">
+            <div class="about-stat reveal">
+                <span class="about-stat__num" data-count="47">0</span>
+                <span class="about-stat__label">Counties Covered</span>
+            </div>
+            <div class="about-stat reveal" style="--delay:.06s">
+                <span class="about-stat__num" data-count="10">0</span>
+                <span class="about-stat__label">Editions Completed</span>
+            </div>
+            <div class="about-stat reveal" style="--delay:.12s">
+                <span class="about-stat__num">100+</span>
+                <span class="about-stat__label">Players Scouted</span>
+            </div>
+            <div class="about-stat reveal" style="--delay:.18s">
+                <span class="about-stat__num" data-count="{{ stats.teams|default:'0' }}">0</span>
+                <span class="about-stat__label">Registered Teams</span>
+            </div>
+            <div class="about-stat reveal" style="--delay:.24s">
+                <span class="about-stat__num" data-count="{{ stats.players|default:'0' }}">0</span>
+                <span class="about-stat__label">Active Players</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     AFFILIATIONS
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="affiliations-section">
+    <div class="container">
+        <p class="affil-label">Proudly affiliated with</p>
+        <div class="affil-row">
+            <div class="affil-item">
+                <img src="{% static 'img/fkf_logo.png' %}" alt="Football Kenya Federation">
+                <span>Football Kenya Federation</span>
+            </div>
+            <div class="affil-item">
+                <img src="{% static 'img/kbf_logo.jpg' %}" alt="Kenya Basketball Federation">
+                <span>Kenya Basketball Federation</span>
+            </div>
+            <div class="affil-item">
+                <img src="{% static 'img/kvf_logo.png' %}" alt="Kenya Volleyball Federation">
+                <span>Kenya Volleyball Federation</span>
+            </div>
+            <div class="affil-item">
+                <img src="{% static 'img/khf_logo.png' %}" alt="Kenya Handball Federation">
+                <span>Kenya Handball Federation</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* Scroll reveals */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* Counter animation */
+    var counterObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){
+                var el = e.target;
+                var target = parseInt(el.getAttribute('data-count')) || 0;
+                if(!target){ counterObs.unobserve(el); return; }
+                var cur = 0, step = Math.max(1, Math.ceil(target / 50));
+                var t = setInterval(function(){
+                    cur += step;
+                    if(cur >= target){ cur = target; clearInterval(t); }
+                    el.textContent = cur.toLocaleString();
+                }, 35);
+                counterObs.unobserve(el);
+            }
+        });
+    }, {threshold: 0.5});
+    document.querySelectorAll('.about-stat__num[data-count]').forEach(function(el){ counterObs.observe(el); });
+
+    /* Canvas particles */
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++){
+            particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        }
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+})();
+</script>
+{% endblock %}

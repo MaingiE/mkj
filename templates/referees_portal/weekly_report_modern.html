@@ -1,0 +1,726 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Match Officials Report - FKF Meru League{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1e3a8a;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+    
+    .report-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .report-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .report-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
+    }
+    
+    .report-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        font-weight: 300;
+    }
+    
+    .controls-panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 5px solid;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        opacity: 0.1;
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+    
+    .stat-card.blue { border-left-color: var(--info); }
+    .stat-card.blue::before { background: var(--info); }
+    
+    .stat-card.green { border-left-color: var(--success); }
+    .stat-card.green::before { background: var(--success); }
+    
+    .stat-card.orange { border-left-color: var(--warning); }
+    .stat-card.orange::before { background: var(--warning); }
+    
+    .stat-card.red { border-left-color: var(--danger); }
+    .stat-card.red::before { background: var(--danger); }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-description {
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    
+    .section-header {
+        padding: 1.5rem;
+        border-bottom: 2px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-export {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-export.pdf {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-export.excel {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .match-card {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        transition: background 0.2s;
+    }
+    
+    .match-card:last-child {
+        border-bottom: none;
+    }
+    
+    .match-card:hover {
+        background: #f9fafb;
+    }
+    
+    .match-card.critical {
+        border-left: 4px solid var(--danger);
+        background: #fef2f2;
+    }
+    
+    .match-card.warning {
+        border-left: 4px solid var(--warning);
+        background: #fffbeb;
+    }
+    
+    .match-card.success {
+        border-left: 4px solid var(--success);
+        background: #f0fdf4;
+    }
+    
+    .match-date-badge {
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-block;
+    }
+    
+    .match-teams {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0.5rem 0;
+    }
+    
+    .match-venue {
+        color: #6b7280;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .official-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin: 0.25rem;
+    }
+    
+    .official-badge.assigned {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .official-badge.vacant {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-pill {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-pill.complete {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-pill.partial {
+        background: #fed7aa;
+        color: #92400e;
+    }
+    
+    .status-pill.empty {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        background: #f3f4f6;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .filter-chip:hover {
+        background: #e5e7eb;
+    }
+    
+    .filter-chip.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .loading-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+    }
+    
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f4f6;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6b7280;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media print {
+        body {
+            background: white;
+        }
+        .controls-panel,
+        .export-buttons,
+        .btn {
+            display: none !important;
+        }
+        .section-card {
+            box-shadow: none;
+            border: 1px solid #e5e7eb;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <!-- Header -->
+    <div class="report-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="report-title">📋 Match Officials Report</h1>
+                <p class="report-subtitle">Comprehensive overview of referee assignments and match coverage</p>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-light">
+                    <i class="fas fa-print me-2"></i>Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Start Date</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">End Date</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">&nbsp;</label>
+                        <button onclick="loadReport()" class="btn btn-primary w-100">
+                            <i class="fas fa-sync-alt me-2"></i>Load Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <label class="form-label fw-bold d-block">Quick Filters</label>
+                <div class="d-flex gap-2 justify-content-end">
+                    <span class="filter-chip" onclick="loadLast7Days()">Last 7 Days</span>
+                    <span class="filter-chip" onclick="loadNextWeek()">Next Week</span>
+                    <span class="filter-chip" onclick="loadNext30Days()">Next 30 Days</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4" id="statisticsSection">
+        <div class="col-md-3">
+            <div class="stat-card blue">
+                <div class="stat-label">Total Matches</div>
+                <div class="stat-value" id="totalMatches">0</div>
+                <div class="stat-description">In selected period</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card green">
+                <div class="stat-label">Fully Assigned</div>
+                <div class="stat-value" id="fullyAssigned">0</div>
+                <div class="stat-description">All positions filled</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card orange">
+                <div class="stat-label">Partially Assigned</div>
+                <div class="stat-value" id="partiallyAssigned">0</div>
+                <div class="stat-description">Need more officials</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card red">
+                <div class="stat-label">Unassigned</div>
+                <div class="stat-value" id="unassigned">0</div>
+                <div class="stat-description">Critical attention needed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Officials Needed Section -->
+    <div class="section-card" id="officialsNeededSection">
+        <div class="section-header">
+            <h2 class="section-title">🚨 Officials Required</h2>
+            <div class="export-buttons">
+                <button class="btn-export excel" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i>Export Excel
+                </button>
+                <button class="btn-export pdf" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf"></i>Export PDF
+                </button>
+            </div>
+        </div>
+        <div class="p-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-center p-3 border rounded">
+                        <i class="fas fa-user-tie fa-2x text-primary mb-2"></i>
+                        <div class="h3 mb-1" id="refereesNeeded">0</div>
+                        <div class="text-muted small">Referees Needed</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 border rounded">
+                        <i class="fas fa-flag fa-2x text-warning mb-2"></i>
+                        <div class="h3 mb-1" id="ar1Needed">0</div>
+                        <div class="text-muted small">AR1 Needed</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 border rounded">
+                        <i class="fas fa-flag fa-2x text-info mb-2"></i>
+                        <div class="h3 mb-1" id="ar2Needed">0</div>
+                        <div class="text-muted small">AR2 Needed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Details Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2 class="section-title">🏆 Match Schedule & Assignments</h2>
+            <div>
+                <span class="badge bg-danger me-2" id="urgentCount">0 Urgent</span>
+                <span class="text-muted" id="matchCount">0 Matches</span>
+            </div>
+        </div>
+        <div id="matchesList">
+            <!-- Matches will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner mx-auto mb-3"></div>
+        <div class="fw-bold">Loading Report...</div>
+    </div>
+</div>
+
+<script>
+let currentData = null;
+
+// Format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+}
+
+// Format time
+function formatTime(timeString) {
+    if (!timeString) return 'TBD';
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+}
+
+// Load report
+async function loadReport() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`/referees/api/generate-weekly-report/?start_date=${startDate}&end_date=${endDate}`);
+        currentData = await response.json();
+        
+        updateStatistics(currentData);
+        updateOfficialsNeeded(currentData);
+        updateMatchesList(currentData);
+        
+    } catch (error) {
+        console.error('Error loading report:', error);
+        alert('Error loading report. Please try again.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Update statistics
+function updateStatistics(data) {
+    document.getElementById('totalMatches').textContent = data.summary.total_matches;
+    document.getElementById('fullyAssigned').textContent = data.summary.fully_assigned;
+    document.getElementById('partiallyAssigned').textContent = data.summary.partially_assigned;
+    document.getElementById('unassigned').textContent = data.summary.unassigned;
+}
+
+// Update officials needed
+function updateOfficialsNeeded(data) {
+    document.getElementById('refereesNeeded').textContent = data.summary.officials_needed.referees;
+    document.getElementById('ar1Needed').textContent = data.summary.officials_needed.assistant_referee_1;
+    document.getElementById('ar2Needed').textContent = data.summary.officials_needed.assistant_referee_2;
+}
+
+// Update matches list
+function updateMatchesList(data) {
+    const matchesList = document.getElementById('matchesList');
+    const matchCount = document.getElementById('matchCount');
+    const urgentCount = document.getElementById('urgentCount');
+    
+    if (data.matches.length === 0) {
+        matchesList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <h3>No matches found</h3>
+                <p>There are no matches scheduled in the selected date range.</p>
+            </div>
+        `;
+        matchCount.textContent = '0 Matches';
+        urgentCount.textContent = '0 Urgent';
+        return;
+    }
+    
+    let urgentMatchesCount = 0;
+    let html = '';
+    
+    data.matches.forEach(match => {
+        if (match.needs_attention) urgentMatchesCount++;
+        
+        const statusClass = match.assignment_status === 'fully_assigned' ? 'success' :
+                           match.assignment_status === 'partially_assigned' ? 'warning' : 'critical';
+        
+        const statusLabel = match.assignment_status === 'fully_assigned' ? 'Complete' :
+                           match.assignment_status === 'partially_assigned' ? 'Partial' : 'Empty';
+        
+        const statusPillClass = match.assignment_status === 'fully_assigned' ? 'complete' :
+                                match.assignment_status === 'partially_assigned' ? 'partial' : 'empty';
+        
+        html += `
+            <div class="match-card ${statusClass}">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <div class="match-date-badge">${formatDate(match.date)}</div>
+                        <div class="mt-2 text-muted small">
+                            <i class="fas fa-clock me-1"></i>${formatTime(match.time)}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="match-teams">${match.teams}</div>
+                        <div class="match-venue">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${match.venue || match.venue_details || 'Venue TBD'}</span>
+                            ${match.zone ? `<span class="badge bg-secondary ms-2">${match.zone}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div>
+                            <span class="official-badge ${match.officials.referee ? 'assigned' : 'vacant'}">
+                                <i class="fas fa-user-tie"></i>
+                                Referee: ${match.officials.referee || 'VACANT'}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="official-badge ${match.officials.assistant_referee_1 ? 'assigned' : 'vacant'}">
+                                <i class="fas fa-flag"></i>
+                                AR1: ${match.officials.assistant_referee_1 || 'VACANT'}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="official-badge ${match.officials.assistant_referee_2 ? 'assigned' : 'vacant'}">
+                                <i class="fas fa-flag"></i>
+                                AR2: ${match.officials.assistant_referee_2 || 'VACANT'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-1 text-end">
+                        <span class="status-pill ${statusPillClass}">${statusLabel}</span>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100" onclick="window.location.href='/referees/match/${match.id}/appoint/'">
+                            <i class="fas fa-edit"></i> Assign
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    matchesList.innerHTML = html;
+    matchCount.textContent = `${data.matches.length} Matches`;
+    urgentCount.textContent = `${urgentMatchesCount} Urgent`;
+}
+
+// Show/hide loading
+function showLoading(show) {
+    document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+}
+
+// Quick filters
+function loadLast7Days() {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 6);
+    
+    document.getElementById('startDate').value = start.toISOString().split('T')[0];
+    document.getElementById('endDate').value = end.toISOString().split('T')[0];
+    loadReport();
+}
+
+function loadNextWeek() {
+    const start = new Date();
+    const end = new Date();
+    end.setDate(start.getDate() + 7);
+    
+    document.getElementById('startDate').value = start.toISOString().split('T')[0];
+    document.getElementById('endDate').value = end.toISOString().split('T')[0];
+    loadReport();
+}
+
+function loadNext30Days() {
+    const start = new Date();
+    const end = new Date();
+    end.setDate(start.getDate() + 30);
+    
+    document.getElementById('startDate').value = start.toISOString().split('T')[0];
+    document.getElementById('endDate').value = end.toISOString().split('T')[0];
+    loadReport();
+}
+
+// Export to Excel
+function exportToExcel() {
+    if (!currentData) {
+        alert('Please load a report first');
+        return;
+    }
+    
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.open(`/referees/export/excel/?start_date=${startDate}&end_date=${endDate}`, '_blank');
+}
+
+// Export to PDF
+function exportToPDF() {
+    if (!currentData) {
+        alert('Please load a report first');
+        return;
+    }
+    
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.open(`/referees/export/pdf/?start_date=${startDate}&end_date=${endDate}`, '_blank');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates (next 7 days)
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    
+    document.getElementById('startDate').value = today.toISOString().split('T')[0];
+    document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
+    
+    loadReport();
+});
+</script>
+{% endblock %}

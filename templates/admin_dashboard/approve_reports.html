@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Approve Match Reports - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-primary">Approve Match Reports</h2>
+        <p class="lead">Review and approve submitted match reports</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Pending Match Reports</h5>
+        <span class="badge bg-white text-primary">{{ pending_reports.count }} Pending</span>
+    </div>
+    <div class="card-body">
+        {% if pending_reports %}
+        <div class="row">
+            {% for report in pending_reports %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">{{ report.match }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Referee:</strong> 
+                            {% if report.referee %}
+                                {{ report.referee.full_name }}
+                            {% else %}
+                                <span class="text-danger">No referee assigned</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Submitted:</strong> {{ report.submitted_at|date:"M d, Y H:i" }}</p>
+                        
+                        {% if report.major_incidents %}
+                        <p><strong>Major Incidents:</strong></p>
+                        <p class="text-muted">{{ report.major_incidents|truncatechars:100 }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-3">
+                            <form method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="report_id" value="{{ report.id }}">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            
+                            <form method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="report_id" value="{{ report.id }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </form>
+                            
+                            <a href="{% url 'view_report' report.id %}" class="btn btn-info">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h5>No Pending Reports</h5>
+            <p class="text-muted">All match reports have been processed.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

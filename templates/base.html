@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KYISA CMS{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="icon" href="{% static 'img/kyisa_logo_official.jpg' %}" type="image/jpeg">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% block body %}
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="navbar-brand">
+            <img src="{% static 'img/kyisa_logo_official.jpg' %}" alt="KYISA">
+            <span>KYISA</span>
+        </a>
+        <button class="nav-toggle" onclick="document.querySelector('.navbar-nav').classList.toggle('show')"><i class="bi bi-list"></i></button>
+        <ul class="navbar-nav">
+            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
+            {% if user.role == 'admin' or user.role == 'competition_manager' %}
+            <li>
+                <a href="{% url 'competitions_list' %}" class="{% if 'competition' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-trophy"></i> Competitions <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
+                <div class="nav-dropdown-menu">
+                    <a href="{% url 'competitions_list' %}"><i class="bi bi-list-ul"></i> All Competitions</a>
+                    {% if user.role == 'competition_manager' or user.role == 'admin' %}
+                    <a href="{% url 'cm_create_competition' %}"><i class="bi bi-plus-circle"></i> Create New</a>
+                    {% endif %}
+                </div>
+            </li>
+            {% endif %}
+            {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'verification_officer' or user.role == 'team_manager' %}
+            <li>
+                <a href="{% url 'teams_list' %}" class="{% if 'team' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people"></i> Teams <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
+                <div class="nav-dropdown-menu">
+                    <a href="{% url 'teams_list' %}"><i class="bi bi-people"></i> All Teams</a>
+                    {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'verification_officer' %}
+                    <a href="{% url 'pending_teams' %}"><i class="bi bi-clock"></i> County Registrations</a>
+                    <a href="{% url 'county_player_verification_list' %}"><i class="bi bi-person-vcard"></i> Player Verification</a>
+                    <a href="{% url 'player_clearance_dashboard' %}"><i class="bi bi-shield-check"></i> Player Clearance</a>
+                    {% endif %}
+                </div>
+            </li>
+            {% endif %}
+            {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'secretary_general' or user.role == 'verification_officer' or user.role == 'cec_sports' %}
+            <li><a href="{% url 'cec_sports_portal' %}" class="{% if request.resolver_match.url_name == 'cec_sports_portal' %}active{% endif %}"><i class="bi bi-people-fill"></i> CEC Sports</a></li>
+            {% endif %}
+            {% if user.role == 'treasurer' %}
+            <li><a href="{% url 'treasurer_dashboard' %}" class="{% if 'treasurer' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Treasurer</a></li>
+            {% endif %}
+            {% if user.role == 'county_sports_admin' %}
+            <li><a href="{% url 'county_admin_dashboard' %}" class="{% if 'county_admin' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-building"></i> My County</a></li>
+            {% endif %}
+            {% if user.role == 'team_manager' %}
+            <li><a href="{% url 'team_manager_dashboard' %}" class="{% if 'team_manager' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people"></i> My Team</a></li>
+            {% endif %}
+            {% if user.role == 'admin' or user.role == 'coordinator' or user.role == 'referee' %}
+            <li>
+                <a href="{% url 'referees_list' %}" class="{% if 'referee' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-flag"></i> Referees <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
+                <div class="nav-dropdown-menu">
+                    <a href="{% url 'referees_list' %}"><i class="bi bi-flag"></i> All Referees</a>
+                    {% if user.role == 'admin' or user.role == 'coordinator' %}
+                    <a href="{% url 'pending_referees' %}"><i class="bi bi-clock"></i> Pending Approval</a>
+                    <a href="{% url 'referee_appointments' %}"><i class="bi bi-calendar-event"></i> Appointments</a>
+                    {% endif %}
+                </div>
+            </li>
+            {% endif %}
+            <li><a href="{% url 'matches_list' %}" class="{% if 'match' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-clipboard-data"></i> Matches</a></li>
+        </ul>
+        <div class="navbar-user">
+            <a href="{% url 'home' %}" style="color:rgba(255,255,255,.65);font-size:.72rem;margin-right:.25rem;"><i class="bi bi-globe"></i></a>
+            <span class="role-badge">{{ user.get_role_display }}</span>
+            <span style="font-size:.82rem">{{ user.first_name }}</span>
+            <form method="post" action="{% url 'web_logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout"><i class="bi bi-box-arrow-right"></i></button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Layout -->
+    <div class="layout">
+        {% include 'includes/sidebar.html' %}
+        <main class="main-content">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+            {% block extra_js_content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        &copy; 2026 Kenya Youth Intercounty Sports Association (KYISA). All rights reserved.
+    </footer>
+    {% endblock %}
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

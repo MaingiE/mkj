@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Override Transfer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-unlock"></i> Admin Override: Force Approve Transfer</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Super Admin Action</h5>
+                        <p class="mb-0">
+                            You are about to override a rejection and force approval of this transfer.
+                            This action will immediately transfer the player.
+                        </p>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>Transfer Details</h5>
+                            <p><strong>Player:</strong> {{ transfer.player.full_name }}</p>
+                            <p><strong>From:</strong> {{ transfer.from_team.team_name }}</p>
+                            <p><strong>To:</strong> {{ transfer.to_team.team_name }}</p>
+                            <p><strong>Requested By:</strong> {{ transfer.requested_by.email }}</p>
+                            <p><strong>Rejected By:</strong> {{ transfer.parent_decision_by.email }}</p>
+                            <hr>
+                            <p><strong>Rejection Reason:</strong></p>
+                            <blockquote class="blockquote">
+                                {{ transfer.parent_decision_reason }}
+                            </blockquote>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">
+                                <strong>Admin Override Reason *</strong>
+                            </label>
+                            <textarea name="reason" id="reason" class="form-control" 
+                                      rows="4" required 
+                                      placeholder="Explain why you are overriding this rejection...">Admin override: Approved by super admin after review.</textarea>
+                            <small class="form-text text-muted">
+                                This reason will be logged in the transfer history.
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'manage_transfers' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Override & Approve Transfer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

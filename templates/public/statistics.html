@@ -1,0 +1,394 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-nav {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        justify-content: center;
+    }
+    .results-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .5rem 1.2rem;
+        border-radius: 30px;
+        font-size: .85rem;
+        font-weight: 600;
+        color: #333;
+        background: #F5F5F5;
+        transition: all .25s ease;
+        border: 1px solid transparent;
+    }
+    .results-nav a:hover, .results-nav a.active {
+        background: #1B5E20;
+        color: #fff;
+        border-color: #1B5E20;
+    }
+
+    .filter-bar {
+        display: flex;
+        gap: .75rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        justify-content: center;
+    }
+    .filter-bar label { font-weight: 600; font-size: .85rem; color: #333; }
+    .filter-bar select {
+        padding: .45rem .8rem;
+        border: 2px solid #E0E0E0;
+        border-radius: 10px;
+        font-size: .85rem;
+        min-width: 250px;
+        transition: border-color .2s;
+    }
+    .filter-bar select:focus { border-color: #1B5E20; outline: none; }
+
+    .summary-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    .summary-stat {
+        background: #fff;
+        border-radius: 14px;
+        padding: 1.25rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        border-top: 4px solid transparent;
+        transition: all .25s ease;
+    }
+    .summary-stat:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+    .summary-stat .num { font-size: 2rem; font-weight: 900; line-height: 1.1; }
+    .summary-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; margin-top: .15rem; }
+    .ss-green { border-top-color: #1B5E20; }
+    .ss-green .num { color: #1B5E20; }
+    .ss-blue { border-top-color: #1565C0; }
+    .ss-blue .num { color: #1565C0; }
+    .ss-amber { border-top-color: #F57F17; }
+    .ss-amber .num { color: #F57F17; }
+    .ss-red { border-top-color: #C62828; }
+    .ss-red .num { color: #C62828; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr; } }
+
+    .leaderboard {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        overflow: hidden;
+    }
+    .lb-head {
+        padding: .75rem 1.25rem;
+        font-weight: 700;
+        font-size: .95rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        color: #fff;
+    }
+    .lb-head.green { background: linear-gradient(135deg, #1B5E20, #2E7D32); }
+    .lb-head.blue { background: linear-gradient(135deg, #0D47A1, #1565C0); }
+    .lb-head.amber { background: linear-gradient(135deg, #E65100, #F57F17); }
+    .lb-head.teal { background: linear-gradient(135deg, #004D40, #00695C); }
+
+    .lb-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .82rem;
+    }
+    .lb-table th {
+        background: #FAFAFA;
+        padding: .5rem .6rem;
+        text-align: center;
+        font-weight: 600;
+        color: #777;
+        border-bottom: 1px solid #eee;
+        font-size: .72rem;
+        text-transform: uppercase;
+    }
+    .lb-table th:first-child, .lb-table td:first-child {
+        text-align: left;
+        padding-left: 1.25rem;
+    }
+    .lb-table td {
+        padding: .5rem .6rem;
+        text-align: center;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    .lb-table tr:hover { background: #F5F5F5; }
+
+    .rank-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: .7rem;
+        font-weight: 800;
+        margin-right: .3rem;
+    }
+    .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA000); color: #333; }
+    .rank-2 { background: linear-gradient(135deg, #E0E0E0, #BDBDBD); color: #333; }
+    .rank-3 { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #fff; }
+    .rank-other { background: #F5F5F5; color: #999; }
+
+    .player-name {
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+    .player-team {
+        font-size: .72rem;
+        color: #999;
+    }
+    .comp-tag {
+        font-size: .65rem;
+        background: #E8F5E9;
+        color: #1B5E20;
+        padding: .1rem .4rem;
+        border-radius: 4px;
+    }
+    .stat-highlight {
+        font-weight: 800;
+        font-size: .95rem;
+    }
+    .lb-empty {
+        text-align: center;
+        padding: 2rem;
+        color: #bbb;
+    }
+    .lb-empty i { font-size: 1.5rem; display: block; margin-bottom: .3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── PAGE HERO ───────────────────────────────────────────────────────────── -->
+<section class="hero" style="padding:3rem 2rem;">
+    <div class="hero-content">
+        <h1>Player Statistics</h1>
+        <h2>Top scorers, assist leaders, and disciplinary records — automatically updated</h2>
+    </div>
+</section>
+
+<!-- ── NAVIGATION TABS ────────────────────────────────────────────────────── -->
+<section class="section" style="padding-top:2rem;padding-bottom:0;">
+    <div class="container">
+        <div class="results-nav">
+            <a href="{% url 'public_results' %}"><i class="bi bi-trophy"></i> Results</a>
+            <a href="{% url 'public_statistics' %}" class="active"><i class="bi bi-bar-chart-line"></i> Statistics</a>
+        </div>
+    </div>
+</section>
+
+<!-- ── FILTER ─────────────────────────────────────────────────────────────── -->
+<section class="section" style="padding-top:1rem;padding-bottom:0;">
+    <div class="container">
+        <form class="filter-bar" method="get">
+            <label for="competition"><i class="bi bi-funnel"></i> Filter by Competition:</label>
+            <select name="competition" id="competition" onchange="this.form.submit()">
+                <option value="">All Competitions</option>
+                {% for comp in competitions %}
+                <option value="{{ comp.pk }}" {% if selected_competition and selected_competition.pk == comp.pk %}selected{% endif %}>
+                    {{ comp.name }} ({{ comp.get_status_display }})
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</section>
+
+<!-- ── SUMMARY STATS ──────────────────────────────────────────────────────── -->
+<section class="section" style="padding-top:1.5rem;">
+    <div class="container">
+        {% if selected_competition %}
+        <div style="text-align:center;margin-bottom:1.5rem;">
+            <h2 style="font-size:1.3rem;font-weight:800;color:#1B5E20;">{{ selected_competition.name }}</h2>
+            <p style="font-size:.85rem;color:#757575;">{{ selected_competition.get_sport_type_display }} &middot; {{ selected_competition.get_age_group_display }} &middot; {{ selected_competition.get_status_display }}</p>
+        </div>
+        {% endif %}
+
+        <div class="summary-row">
+            <div class="summary-stat ss-green">
+                <div class="num">{{ total_goals }}</div>
+                <div class="lbl">Total Goals</div>
+            </div>
+            <div class="summary-stat ss-blue">
+                <div class="num">{{ total_matches }}</div>
+                <div class="lbl">Completed Matches</div>
+            </div>
+            <div class="summary-stat ss-amber">
+                <div class="num">{{ total_yellows }}</div>
+                <div class="lbl">Yellow Cards</div>
+            </div>
+            <div class="summary-stat ss-red">
+                <div class="num">{{ total_reds }}</div>
+                <div class="lbl">Red Cards</div>
+            </div>
+        </div>
+
+        <!-- ── LEADERBOARDS ───────────────────────────────────────────────── -->
+        <div class="stats-grid">
+            <!-- TOP SCORERS -->
+            <div class="leaderboard">
+                <div class="lb-head green"><i class="bi bi-bullseye"></i> Top Scorers</div>
+                {% if top_scorers %}
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Team</th>
+                            {% if not selected_competition %}<th>Comp</th>{% endif %}
+                            <th>Apps</th>
+                            <th>G</th>
+                            <th>A</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in top_scorers %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">{{ forloop.counter }}</span>
+                                <span class="player-name">{{ s.player.first_name }} {{ s.player.last_name }}</span>
+                            </td>
+                            <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
+                            {% if not selected_competition %}<td><span class="comp-tag">{{ s.competition.name|truncatechars:15 }}</span></td>{% endif %}
+                            <td>{{ s.matches_played }}</td>
+                            <td class="stat-highlight" style="color:#1B5E20;">{{ s.goals }}</td>
+                            <td>{{ s.assists }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="lb-empty"><i class="bi bi-bullseye"></i><br>No goals recorded yet</div>
+                {% endif %}
+            </div>
+
+            <!-- TOP ASSISTERS -->
+            <div class="leaderboard">
+                <div class="lb-head blue"><i class="bi bi-hand-thumbs-up"></i> Assist Leaders</div>
+                {% if top_assisters %}
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Team</th>
+                            {% if not selected_competition %}<th>Comp</th>{% endif %}
+                            <th>Apps</th>
+                            <th>A</th>
+                            <th>G</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in top_assisters %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">{{ forloop.counter }}</span>
+                                <span class="player-name">{{ s.player.first_name }} {{ s.player.last_name }}</span>
+                            </td>
+                            <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
+                            {% if not selected_competition %}<td><span class="comp-tag">{{ s.competition.name|truncatechars:15 }}</span></td>{% endif %}
+                            <td>{{ s.matches_played }}</td>
+                            <td class="stat-highlight" style="color:#1565C0;">{{ s.assists }}</td>
+                            <td>{{ s.goals }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="lb-empty"><i class="bi bi-hand-thumbs-up"></i><br>No assists recorded yet</div>
+                {% endif %}
+            </div>
+
+            <!-- DISCIPLINARY -->
+            <div class="leaderboard">
+                <div class="lb-head amber"><i class="bi bi-card-heading"></i> Disciplinary</div>
+                {% if disciplinary %}
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Team</th>
+                            {% if not selected_competition %}<th>Comp</th>{% endif %}
+                            <th><i class="bi bi-square-fill" style="color:#F57F17;font-size:.6rem;"></i> Y</th>
+                            <th><i class="bi bi-square-fill" style="color:#C62828;font-size:.6rem;"></i> R</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in disciplinary %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge rank-other">{{ forloop.counter }}</span>
+                                <span class="player-name">{{ s.player.first_name }} {{ s.player.last_name }}</span>
+                            </td>
+                            <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
+                            {% if not selected_competition %}<td><span class="comp-tag">{{ s.competition.name|truncatechars:15 }}</span></td>{% endif %}
+                            <td style="color:#F57F17;font-weight:700;">{{ s.yellow_cards }}</td>
+                            <td style="color:#C62828;font-weight:700;">{{ s.red_cards }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="lb-empty"><i class="bi bi-card-heading"></i><br>No cards issued yet</div>
+                {% endif %}
+            </div>
+
+            <!-- CLEAN SHEETS -->
+            <div class="leaderboard">
+                <div class="lb-head teal"><i class="bi bi-shield-check"></i> Clean Sheet Leaders</div>
+                {% if clean_sheets %}
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>Goalkeeper</th>
+                            <th>Team</th>
+                            {% if not selected_competition %}<th>Comp</th>{% endif %}
+                            <th>Apps</th>
+                            <th>CS</th>
+                            <th>GC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in clean_sheets %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">{{ forloop.counter }}</span>
+                                <span class="player-name">{{ s.player.first_name }} {{ s.player.last_name }}</span>
+                            </td>
+                            <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
+                            {% if not selected_competition %}<td><span class="comp-tag">{{ s.competition.name|truncatechars:15 }}</span></td>{% endif %}
+                            <td>{{ s.matches_played }}</td>
+                            <td class="stat-highlight" style="color:#00695C;">{{ s.clean_sheets }}</td>
+                            <td>{{ s.goals_conceded }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="lb-empty"><i class="bi bi-shield-check"></i><br>No clean sheets recorded yet</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:2rem;font-size:.78rem;color:#999;">
+            <i class="bi bi-info-circle"></i> Statistics are automatically updated when match reports are approved by the Organising Secretary.
+        </div>
+    </div>
+</section>
+
+{% endblock %}

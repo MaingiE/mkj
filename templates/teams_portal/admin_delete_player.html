@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Player - {{ player.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5><i class="fas fa-trash-alt"></i> Delete Player</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Warning: This action cannot be undone!</h5>
+                        <p class="mb-0">All player statistics and history will be permanently deleted.</p>
+                    </div>
+                    
+                    <div class="player-info mb-4">
+                        <h5 class="text-center mb-3">{{ player.full_name }}</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="40%">Team</th>
+                                <td>{{ player.team.team_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Position</th>
+                                <td>{{ player.get_position_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>Jersey Number</th>
+                                <td>#{{ player.jersey_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>ID Number</th>
+                                <td>{{ player.id_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>Statistics</th>
+                                <td>
+                                    Goals: {{ player.goals_scored }} | 
+                                    Yellow Cards: {{ player.yellow_cards }} | 
+                                    Red Cards: {{ player.red_cards }}
+                                </td>
+                            </tr>
+                            {% if player.is_suspended %}
+                            <tr>
+                                <th>Status</th>
+                                <td><span class="badge badge-danger">Suspended</span></td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    
+                    <form method="post" class="text-center">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash"></i> Yes, Delete Player
+                        </button>
+                        <a href="{% url 'teams:admin_manage_players' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

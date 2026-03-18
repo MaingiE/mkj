@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ player.get_full_name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'teams_list' %}">Teams</a>
+        <a href="{% url 'team_detail' pk=team.pk %}">{{ team.name }}</a>
+        <span>Edit Player</span>
+    </div>
+    <h1>Edit Player: {{ player.get_full_name }}</h1>
+</div>
+
+<div class="card" style="max-width:600px">
+    <div class="card-header"><h3>Player Details</h3></div>
+    <div class="card-body">
+        {% if messages %}
+        {% for message in messages %}
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'error' %}#fce4ec{% else %}#e8f5e9{% endif %};border-left:4px solid {% if message.tags == 'error' %}#C62828{% else %}#1B5E20{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div style="margin-bottom:1rem">
+                <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.3rem;font-size:.9rem">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small style="color:#888;font-size:.8rem">{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<div style="color:#C62828;font-size:.85rem">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+
+            <div style="display:flex;gap:.75rem;margin-top:1rem">
+                <button type="submit" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.6rem 1.5rem">
+                    Save Changes
+                </button>
+                <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

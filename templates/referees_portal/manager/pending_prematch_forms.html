@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Pre-Match Approvals - Referees Manager{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <h2>Pre-Match Forms Pending Your Approval</h2>
+    <div class="card mt-4">
+        <div class="card-body">
+            {% if forms %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Match</th>
+                        <th>Date</th>
+                        <th>Referee</th>
+                        <th>Admin Approved</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in forms %}
+                    <tr>
+                        <td>{{ form.match.home_team }} vs {{ form.match.away_team }}</td>
+                        <td>{{ form.match.match_date|date:"M j, Y" }}</td>
+                        <td>{{ form.referee.full_name }}</td>
+                        <td>{{ form.admin_approved_at|date:"M j, H:i" }}</td>
+                        <td>
+                            <a href="{% url 'referees:manager_approve_prematch_form' form.id %}" class="btn btn-sm btn-primary">
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info">No pre-match forms are pending your approval at this time.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

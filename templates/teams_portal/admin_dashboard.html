@@ -1,0 +1,154 @@
+<!-- templates/teams/admin_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}League Admin - Team Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Team Management Dashboard</h1>
+    <p class="lead">League Admin Panel for managing all teams</p>
+    
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Teams</h6>
+                    <h2 class="mb-0">{{ teams_count }}</h2>
+                    <small>{{ active_teams }} Active • {{ pending_teams }} Pending</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Players</h6>
+                    <h2 class="mb-0">{{ total_players }}</h2>
+                    <small>{{ total_captains }} Captains</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Paid Teams</h6>
+                    <h2 class="mb-0">{{ paid_teams }}</h2>
+                    <small>{{ unpaid_teams }} Unpaid</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">Recent Activity</h6>
+                    <h2 class="mb-0">{{ recent_registrations }}</h2>
+                    <small>Last 7 days</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                    <h4>Register New Team</h4>
+                    <p>Register a new team to the league</p>
+                    <a href="{% url 'teams:team_registration' %}" class="btn btn-primary">Register Team</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-edit fa-3x text-success mb-3"></i>
+                    <h4>Edit Team Information</h4>
+                    <p>Update team details, officials, and status</p>
+                    <a href="{% url 'teams:all_teams' %}" class="btn btn-success">Manage Teams</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                    <h4>Manage Players</h4>
+                    <p>Add, remove, or edit player information</p>
+                    <a href="{% url 'teams:add_players_approved' %}" class="btn btn-warning">Manage Players</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Teams Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Team Registrations</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Coach</th>
+                        <th>Captain</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in recent_teams %}
+                    <tr>
+                        <td>{{ team.team_name }}</td>
+                        <td>{{ team.coach_name }}</td>
+                        <td>{{ team.captain_name }}</td>
+                        <td>
+                            <span class="badge bg-{% if team.status == 'approved' %}success{% elif team.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                {{ team.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if team.payment_status %}success{% else %}danger{% endif %}">
+                                {% if team.payment_status %}Paid{% else %}Unpaid{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'teams:team_dashboard' team.id %}" class="btn btn-sm btn-info">View</a>
+                            <a href="{% url 'teams:team_detail' team.id %}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="{% url 'admin:teams_team_change' team.id %}" class="btn btn-sm btn-secondary">Admin</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No teams registered yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="text-center">
+                <a href="{% url 'teams:all_teams' %}" class="btn btn-outline-primary">View All Teams</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Actions -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">League Admin Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/admin/teams/team/" class="btn btn-outline-primary">Teams Admin</a>
+                <a href="/admin/teams/player/" class="btn btn-outline-success">Players Admin</a>
+                <a href="{% url 'teams:add_players_approved' %}" class="btn btn-outline-warning">Bulk Add Players</a>
+                <a href="#" class="btn btn-outline-info">Generate Fixtures</a>
+                <a href="#" class="btn btn-outline-secondary">Download Reports</a>
+                <a href="/admin/" class="btn btn-outline-dark">Django Admin</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

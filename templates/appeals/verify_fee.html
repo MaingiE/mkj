@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Verify Fee — KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem;">
+    <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline" style="font-size:.85rem;">← Back to Appeal #{{ appeal.pk }}</a>
+</div>
+
+<div class="card" style="padding:2rem; max-width:600px;">
+    <h1 style="margin:0 0 .5rem;">✅ Verify Appeal Fee</h1>
+    <p class="text-muted">Appeal #{{ appeal.pk }}: {{ appeal.subject }}</p>
+
+    <div style="background:#f8f9fa; padding:1rem; border-radius:4px; margin:1rem 0;">
+        <p><strong>Fee Amount:</strong> KES {{ appeal.fee_amount|floatformat:0 }}</p>
+        <p><strong>Payment Reference:</strong> <code>{{ appeal.fee_reference }}</code></p>
+        <p><strong>Current Status:</strong> {{ appeal.get_fee_status_display }}</p>
+        <p><strong>Filed By:</strong> {{ appeal.appellant_user.get_full_name }} ({{ appeal.appellant_team }})</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div style="margin-bottom:1rem;">
+            <label for="{{ field.id_for_label }}" style="display:block; font-weight:600; margin-bottom:.25rem;">
+                {{ field.label }}
+            </label>
+            {{ field }}
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:1.5rem; display:flex; gap:.5rem;">
+            <button type="submit" class="btn btn-primary">Apply Action</button>
+            <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Competition Rules &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; color: #212121; }
+    .page-header .subtitle { font-size: .85rem; color: #757575; }
+
+    .rules-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        max-width: 800px;
+    }
+    .rules-card label {
+        display: block;
+        font-weight: 600;
+        font-size: .9rem;
+        margin-bottom: .5rem;
+        color: #333;
+    }
+    .rules-card textarea {
+        width: 100%;
+        min-height: 350px;
+        padding: .75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        font-size: .9rem;
+        line-height: 1.7;
+        resize: vertical;
+        font-family: inherit;
+    }
+    .rules-card textarea:focus {
+        outline: none;
+        border-color: #7B1FA2;
+        box-shadow: 0 0 0 3px rgba(123,31,162,.1);
+    }
+    .rules-card .help {
+        font-size: .78rem;
+        color: #999;
+        margin-top: .35rem;
+    }
+    .btn-row { display: flex; gap: .75rem; align-items: center; margin-top: 1.5rem; }
+    .rules-info {
+        background: #E8F5E9;
+        border-radius: 8px;
+        padding: .6rem 1rem;
+        font-size: .82rem;
+        color: #1B5E20;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-journal-text"></i> Competition Rules</h2>
+        <div class="subtitle">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="rules-card">
+    <div class="rules-info">
+        <i class="bi bi-info-circle"></i>
+        Rules are visible to all team managers and on the public competition page.
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="rules">
+            <i class="bi bi-journal-text"></i> Rules &amp; Regulations
+        </label>
+        <textarea name="rules" id="rules" placeholder="Enter competition rules, regulations, format details, disciplinary guidelines, tiebreaker criteria, etc.">{{ competition.rules }}</textarea>
+        <div class="help">Supports plain text. Separate sections with blank lines for readability.</div>
+
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save &amp; Publish Rules</button>
+            <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

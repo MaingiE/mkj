@@ -1,0 +1,606 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Activity Logs | KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Hero ──────────────────────────────── */
+.log-hero {
+    background: linear-gradient(135deg, #0D3B0F 0%, #1B5E20 50%, #2E7D32 100%);
+    border-radius: 16px; padding: 2rem 2.5rem; color: #fff;
+    margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.log-hero::before {
+    content: ""; position: absolute; top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.log-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+.log-hero p { opacity: .85; font-size: .88rem; position: relative; margin: 0; }
+.log-hero .hero-badge {
+    display: inline-block; background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25); padding: .2rem .8rem;
+    border-radius: 20px; font-size: .7rem; letter-spacing: .5px;
+    text-transform: uppercase; margin-bottom: .5rem;
+}
+.hero-actions { position: relative; display: flex; gap: .5rem; }
+.hero-actions a {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem 1rem; border-radius: 8px; font-size: .78rem; font-weight: 600;
+    text-decoration: none; transition: all .2s; border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+}
+.hero-actions a:hover { background: rgba(255,255,255,.15); }
+.hero-actions .exp-excel:hover { background: rgba(76,175,80,.3); border-color: rgba(76,175,80,.5); }
+.hero-actions .exp-pdf:hover { background: rgba(198,40,40,.3); border-color: rgba(198,40,40,.5); }
+
+/* ── Stat Cards ────────────────────────── */
+.stat-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.log-stat {
+    background: #fff; border-radius: 12px; padding: 1.15rem 1.35rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 4px solid transparent;
+    transition: all .2s; position: relative;
+}
+.log-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+.log-stat .st-num { font-size: 1.8rem; font-weight: 800; line-height: 1.1; margin-bottom: .1rem; }
+.log-stat .st-label { font-size: .78rem; color: #757575; font-weight: 500; }
+.log-stat .st-icon { position: absolute; top: 1rem; right: 1.1rem; font-size: 1.6rem; opacity: .12; }
+
+.log-stat.c-green  { border-left-color: #1B5E20; }
+.log-stat.c-green  .st-num { color: #1B5E20; }
+.log-stat.c-blue   { border-left-color: #1565C0; }
+.log-stat.c-blue   .st-num { color: #1565C0; }
+.log-stat.c-amber  { border-left-color: #E65100; }
+.log-stat.c-amber  .st-num { color: #E65100; }
+.log-stat.c-purple { border-left-color: #6A1B9A; }
+.log-stat.c-purple .st-num { color: #6A1B9A; }
+
+/* ── Filter Bar ────────────────────────── */
+.filter-bar {
+    background: #fff; border-radius: 12px; padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 1rem;
+}
+.filter-bar .form-control,
+.filter-bar .form-select {
+    font-size: .85rem; border-radius: 8px; border-color: #e0e0e0;
+}
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: #1B5E20; box-shadow: 0 0 0 3px rgba(27,94,32,.1);
+}
+.filter-bar label {
+    font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; margin-bottom: .25rem; display: block;
+}
+.btn-search {
+    background: #1B5E20; color: #fff; border: none; font-size: .8rem;
+    font-weight: 600; padding: .5rem 1.2rem; border-radius: 8px; transition: background .2s;
+}
+.btn-search:hover { background: #2E7D32; color: #fff; }
+.btn-clear {
+    background: #fff; color: #757575; border: 1px solid #e0e0e0;
+    font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
+    transition: all .2s; text-decoration: none;
+}
+.btn-clear:hover { border-color: #C62828; color: #C62828; background: #FFF5F5; }
+.btn-reset {
+    background: #fff; color: #757575; border: 1px solid #e0e0e0;
+    font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
+    transition: all .2s;
+}
+.btn-reset:hover { border-color: #1B5E20; color: #1B5E20; background: #F1F8E9; }
+
+/* ── Filter Chips ──────────────────────── */
+.chip-bar { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: 1rem; }
+.chip-bar .lbl { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #999; }
+.filter-chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .25rem .7rem; border-radius: 20px; font-size: .75rem; font-weight: 500;
+    background: #E8F5E9; color: #1B5E20; border: 1px solid #C8E6C9;
+}
+.filter-chip.ch-amber { background: #FFF3E0; color: #E65100; border-color: #FFE0B2; }
+.filter-chip.ch-blue  { background: #E3F2FD; color: #1565C0; border-color: #BBDEFB; }
+.filter-chip.ch-purple { background: #F3E5F5; color: #6A1B9A; border-color: #E1BEE7; }
+.filter-chip .chip-x {
+    text-decoration: none; color: inherit; opacity: .5; font-size: .65rem;
+    transition: opacity .2s;
+}
+.filter-chip .chip-x:hover { opacity: 1; }
+
+/* ── Table Card ────────────────────────── */
+.table-card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.table-card .card-head {
+    padding: .9rem 1.5rem; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+}
+.card-head .title { font-size: .95rem; font-weight: 600; color: #212121; display: flex; align-items: center; gap: .5rem; }
+.count-pill {
+    font-size: .72rem; font-weight: 600; padding: .15rem .6rem;
+    border-radius: 20px; background: #E8F5E9; color: #1B5E20;
+}
+
+.log-table { width: 100%; border-collapse: collapse; }
+.log-table thead th {
+    background: #FAFAFA; border-bottom: 2px solid #f0f0f0;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; padding: .7rem 1rem; white-space: nowrap;
+}
+.log-table thead th:first-child { padding-left: 1.5rem; }
+.log-table thead th:last-child { padding-right: 1.5rem; text-align: right; }
+
+.log-table tbody tr { border-bottom: 1px solid #f5f5f5; transition: background .15s; }
+.log-table tbody tr:last-child { border-bottom: none; }
+.log-table tbody tr:hover { background: #FAFAFA; }
+.log-table tbody tr.is-undone { opacity: .4; }
+
+.log-table tbody td { padding: .75rem 1rem; vertical-align: middle; font-size: .85rem; color: #424242; }
+.log-table tbody td:first-child { padding-left: 1.5rem; border-left: 3px solid var(--row-color, transparent); }
+.log-table tbody td:last-child { padding-right: 1.5rem; }
+
+/* Timestamp */
+.ts-date { font-size: .82rem; font-weight: 500; color: #212121; }
+.ts-time { font-size: .72rem; color: #999; }
+
+/* User cell */
+.user-avatar {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700; color: #fff; background: #1B5E20;
+}
+.user-name { font-size: .82rem; font-weight: 500; color: #212121; }
+.user-badge {
+    font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    padding: .1rem .4rem; border-radius: 4px;
+}
+.user-badge.admin { background: #FFF3E0; color: #E65100; }
+.user-system { font-size: .82rem; color: #999; }
+
+/* Action badges — CONSISTENT palette */
+.action-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .2rem .6rem; border-radius: 6px;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+    white-space: nowrap;
+}
+.ab-create, .ab-add     { background: #E8F5E9; color: #1B5E20; }
+.ab-update, .ab-edit,
+.ab-change              { background: #FFF3E0; color: #E65100; }
+.ab-delete, .ab-remove  { background: #FFEBEE; color: #C62828; }
+.ab-view, .ab-read      { background: #E3F2FD; color: #1565C0; }
+.ab-login, .ab-logout   { background: #F3E5F5; color: #6A1B9A; }
+.ab-default             { background: #F5F5F5; color: #757575; }
+
+.undone-tag {
+    font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+    padding: .1rem .4rem; border-radius: 4px;
+    background: #FFF3E0; color: #E65100; margin-left: .3rem;
+}
+
+/* Description */
+.desc-main { font-size: .82rem; color: #616161; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desc-repr { font-size: .7rem; color: #999; margin-top: 1px; }
+
+/* IP */
+.ip-badge { font-size: .75rem; color: #1B5E20; background: #E8F5E9; padding: .15rem .5rem; border-radius: 5px; }
+.ip-none { font-size: .82rem; color: #ccc; }
+
+/* Row action buttons */
+.btn-row {
+    width: 30px; height: 30px; border-radius: 6px;
+    background: #FAFAFA; border: 1px solid #e0e0e0;
+    color: #757575; font-size: .7rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none; transition: all .2s;
+}
+.btn-row:hover { border-color: #1B5E20; color: #1B5E20; background: #E8F5E9; }
+.btn-row.undo:hover { border-color: #E65100; color: #E65100; background: #FFF3E0; }
+
+/* ── Pagination ────────────────────────── */
+.pag-bar { padding: .9rem 1.5rem; border-top: 1px solid #f0f0f0; }
+.pag-info { font-size: .78rem; color: #999; }
+.pag-info strong { color: #424242; }
+.log-pag .page-link {
+    font-size: .8rem; border-radius: 6px !important; margin: 0 2px;
+    padding: .3rem .6rem !important; border-color: #e0e0e0 !important;
+    color: #757575 !important; min-width: 30px; text-align: center;
+}
+.log-pag .page-link:hover { border-color: #1B5E20 !important; color: #1B5E20 !important; background: #E8F5E9 !important; }
+.log-pag .page-item.active .page-link { background: #1B5E20 !important; border-color: #1B5E20 !important; color: #fff !important; font-weight: 600; }
+.log-pag .page-item.disabled .page-link { opacity: .35; pointer-events: none; }
+
+/* ── Empty State ───────────────────────── */
+.empty-state { padding: 3.5rem 2rem; text-align: center; }
+.empty-state .icon {
+    width: 52px; height: 52px; border-radius: 12px; margin: 0 auto .8rem;
+    background: #F5F5F5; display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: #bbb;
+}
+.empty-state h3 { font-size: 1rem; font-weight: 600; color: #616161; }
+.empty-state p { font-size: .82rem; color: #999; margin: 0; }
+
+/* ── Modal ─────────────────────────────── */
+.log-modal .modal-content { border-radius: 14px; border: none; box-shadow: 0 16px 48px rgba(0,0,0,.15); }
+.log-modal .modal-header { border-bottom: 1px solid #f0f0f0; padding: 1.1rem 1.5rem; }
+.log-modal .modal-title { font-size: 1rem; font-weight: 600; }
+.log-modal .modal-body { padding: 1.25rem 1.5rem; }
+.log-modal .modal-footer { border-top: 1px solid #f0f0f0; padding: .9rem 1.3rem; }
+.btn-danger-sm { background: #C62828; border: none; color: #fff; font-size: .8rem; font-weight: 600; padding: .45rem 1rem; border-radius: 8px; }
+.btn-danger-sm:hover { background: #B71C1C; color: #fff; }
+.btn-cancel { background: #fff; border: 1px solid #e0e0e0; color: #757575; font-size: .8rem; font-weight: 600; padding: .45rem 1rem; border-radius: 8px; }
+.btn-cancel:hover { border-color: #bbb; color: #424242; }
+
+/* ── Responsive ────────────────────────── */
+@media (max-width: 768px) {
+    .log-hero { padding: 1.5rem; }
+    .log-hero h1 { font-size: 1.3rem; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) { .stat-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="max-width:1360px">
+
+    <!-- ── HERO ──────────────────────────── -->
+    <div class="log-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <span class="hero-badge"><i class="bi bi-broadcast me-1"></i> Live Feed</span>
+                <h1>Activity Logs</h1>
+                <p>Track and monitor every system event in real-time</p>
+            </div>
+            <div class="hero-actions">
+                <a href="{% url 'export_logs_excel' %}?{{ request.GET.urlencode }}" class="exp-excel">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Excel
+                </a>
+                <a href="{% url 'export_logs_pdf' %}?{{ request.GET.urlencode }}" class="exp-pdf">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STAT CARDS ────────────────────── -->
+    <div class="stat-row">
+        <div class="log-stat c-green">
+            <div class="st-num">{{ total_logs|default:0|intcomma }}</div>
+            <div class="st-label">Total Logs</div>
+            <i class="bi bi-database st-icon"></i>
+        </div>
+        <div class="log-stat c-blue">
+            <div class="st-num">{{ today_logs|default:0 }}</div>
+            <div class="st-label">Today's Activity</div>
+            <i class="bi bi-clock st-icon"></i>
+        </div>
+        <div class="log-stat c-amber">
+            <div class="st-num">{{ user_stats|length }}</div>
+            <div class="st-label">Active Users</div>
+            <i class="bi bi-people st-icon"></i>
+        </div>
+        <div class="log-stat c-purple">
+            <div class="st-num">{{ action_stats|length }}</div>
+            <div class="st-label">Action Types</div>
+            <i class="bi bi-tags st-icon"></i>
+        </div>
+    </div>
+
+    <!-- ── FILTERS ───────────────────────── -->
+    <div class="filter-bar">
+        <form method="get" id="filterForm">
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+                <div class="flex-grow-1" style="min-width:200px">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Search user, action, description, IP…"
+                           value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn btn-search">
+                    <i class="bi bi-search me-1"></i> Search
+                </button>
+                {% if search_query or action_filter or user_filter or date_from or date_to %}
+                <a href="{% url 'activity_logs' %}" class="btn btn-clear">
+                    <i class="bi bi-x-lg me-1"></i> Clear
+                </a>
+                {% endif %}
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-sm-4 col-md-auto" style="min-width:150px">
+                    <label><i class="bi bi-lightning me-1"></i>Action</label>
+                    <select name="action" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Actions</option>
+                        {% for action in all_actions %}
+                        <option value="{{ action }}" {% if action == action_filter %}selected{% endif %}>{{ action }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto" style="min-width:160px">
+                    <label><i class="bi bi-person me-1"></i>User</label>
+                    <select name="user" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Users</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}" {% if user.id|stringformat:"s" == user_filter %}selected{% endif %}>
+                            {{ user.get_full_name|default:user.email }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto">
+                    <label><i class="bi bi-calendar me-1"></i>From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}" onchange="this.form.submit()">
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto">
+                    <label><i class="bi bi-calendar me-1"></i>To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}" onchange="this.form.submit()">
+                </div>
+                <div class="col-12 col-sm-4 col-md-auto">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-reset w-100" onclick="location.href='{% url 'activity_logs' %}'">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── ACTIVE FILTER CHIPS ───────────── -->
+    {% if search_query or action_filter or user_filter or date_from or date_to %}
+    <div class="chip-bar">
+        <span class="lbl">Filtered by:</span>
+        {% if search_query %}
+        <span class="filter-chip">
+            <i class="bi bi-search" style="font-size:.6rem"></i> {{ search_query }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'search' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if action_filter %}
+        <span class="filter-chip ch-amber">
+            <i class="bi bi-lightning" style="font-size:.6rem"></i> {{ action_filter }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'action' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if user_filter %}
+        <span class="filter-chip ch-blue">
+            <i class="bi bi-person" style="font-size:.6rem"></i> {% for user in all_users %}{% if user.id|stringformat:"s" == user_filter %}{{ user.get_full_name|default:user.email }}{% endif %}{% endfor %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'user' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if date_from %}
+        <span class="filter-chip ch-purple">
+            <i class="bi bi-calendar" style="font-size:.6rem"></i> from {{ date_from }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'date_from' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+        {% if date_to %}
+        <span class="filter-chip ch-purple">
+            <i class="bi bi-calendar" style="font-size:.6rem"></i> to {{ date_to }}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'date_to' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-x"><i class="bi bi-x"></i></a>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── TABLE ─────────────────────────── -->
+    <div class="table-card">
+        <div class="card-head">
+            <div class="title">
+                <i class="bi bi-list-ul"></i> Event Stream
+                <span class="count-pill">{{ page_obj.paginator.count|default:0 }} entries</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'activity_logs' %}" class="btn btn-reset btn-sm">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </a>
+                {% if request.user.is_superuser %}
+                <div class="dropdown">
+                    <button class="btn btn-reset btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots me-1"></i> Options
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
+                                <i class="bi bi-trash text-danger me-2"></i> Clear Old Logs
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                        <th>IP Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                    {% with al=log.action|lower %}
+                    <tr class="{% if log.is_undone %}is-undone{% endif %}"
+                        style="--row-color:{% if al == 'create' or al == 'add' %}#1B5E20{% elif al == 'update' or al == 'edit' or al == 'change' %}#E65100{% elif al == 'delete' or al == 'remove' %}#C62828{% elif al == 'view' or al == 'read' %}#1565C0{% elif al == 'login' or al == 'logout' %}#6A1B9A{% else %}transparent{% endif %}">
+
+                        <td>
+                            <div class="ts-date">{{ log.timestamp|date:"M d, Y" }}</div>
+                            <div class="ts-time">{{ log.timestamp|time:"h:i A" }}</div>
+                        </td>
+
+                        <td>
+                            {% if log.user %}
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar">{{ log.user.email|first|upper }}</div>
+                                <div>
+                                    <div class="user-name">{{ log.user.get_full_name|default:log.user.email }}</div>
+                                    {% if log.user.is_superuser %}<span class="user-badge admin">Admin</span>{% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="user-system"><i class="bi bi-robot me-1"></i>System</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="action-badge ab-{{ al }}">
+                                <i class="bi bi-{{ log.action_icon }}"></i> {{ log.get_action_display }}
+                            </span>
+                            {% if log.is_undone %}
+                            <span class="undone-tag"><i class="bi bi-arrow-counterclockwise"></i> Undone</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="desc-main" title="{{ log.description }}">{{ log.description }}</div>
+                            {% if log.object_repr %}
+                            <div class="desc-repr"><i class="bi bi-tag me-1"></i>{{ log.object_repr|truncatechars:34 }}</div>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if log.ip_address %}
+                            <span class="ip-badge">{{ log.ip_address }}</span>
+                            {% else %}
+                            <span class="ip-none">&mdash;</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="{% url 'activity_log_detail' log.id %}" class="btn-row" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if request.user.is_superuser and log.can_be_undone %}
+                                <a href="{% url 'undo_action' log.id %}" class="btn-row undo" title="Undo"
+                                   onclick="return confirm('Undo this action?')">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="pag-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="pag-info">
+                Showing <strong>{{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count|intcomma }}</strong> entries
+            </div>
+            <nav>
+                <ul class="pagination log-pag mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="bi bi-chevron-double-left"></i></a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-left"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="bi bi-chevron-double-right"></i></a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><i class="bi bi-inbox"></i></div>
+            <h3>No activity logs found</h3>
+            <p>Try adjusting your filters or check back later</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ── CLEAR LOGS MODAL ──────────────── -->
+{% if request.user.is_superuser %}
+<div class="modal fade log-modal" id="clearLogsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Clear Old Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Permanently delete all activity logs older than:</p>
+                <select class="form-select mt-2">
+                    <option value="30">30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90">90 days</option>
+                    <option value="180">6 months</option>
+                    <option value="365">1 year</option>
+                </select>
+                <p class="text-muted small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger-sm" onclick="alert('This feature connects to your backend to clear logs')">
+                    <i class="bi bi-trash me-1"></i> Clear Logs
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var timer;
+    var s = document.querySelector('input[name="search"]');
+    if (s) {
+        s.addEventListener('keyup', function() {
+            clearTimeout(timer);
+            var self = this;
+            timer = setTimeout(function() {
+                if (self.value.length >= 3 || self.value.length === 0) self.form.submit();
+            }, 500);
+        });
+    }
+});
+</script>
+{% endblock %}

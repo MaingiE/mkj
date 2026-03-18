@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}All Verifications &mdash; Secretary General{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'sg_dashboard' %}">Secretary General</a>
+        <span>Player Verifications</span>
+    </div>
+    <h1><i class="bi bi-person-vcard"></i> Player Verifications</h1>
+    <p>All player verification statuses across all disciplines (read-only)</p>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3" style="background:#f9f9f9;">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Discipline</label>
+            <select name="discipline" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Disciplines</option>
+                {% for val, label in disciplines %}
+                <option value="{{ val }}" {% if val == discipline_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Status</label>
+            <select name="tab" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="verified" {% if tab == 'verified' %}selected{% endif %}>Verified ({{ stats.verified }})</option>
+                <option value="pending" {% if tab == 'pending' %}selected{% endif %}>Pending ({{ stats.pending }})</option>
+                <option value="rejected" {% if tab == 'rejected' %}selected{% endif %}>Rejected ({{ stats.rejected }})</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Stats Strip -->
+<div class="row g-2 mb-3">
+    <div class="col-md-4">
+        <div class="card p-2 text-center {% if tab == 'verified' %}border-success{% endif %}">
+            <strong style="color:#4CAF50;">{{ stats.verified }}</strong> <span class="text-muted" style="font-size:.82rem;">Verified</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-2 text-center {% if tab == 'pending' %}border-warning{% endif %}">
+            <strong style="color:#FF9800;">{{ stats.pending }}</strong> <span class="text-muted" style="font-size:.82rem;">Pending</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-2 text-center {% if tab == 'rejected' %}border-danger{% endif %}">
+            <strong style="color:#F44336;">{{ stats.rejected }}</strong> <span class="text-muted" style="font-size:.82rem;">Rejected</span>
+        </div>
+    </div>
+</div>
+
+<!-- Players Table -->
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>Player Name</th>
+                    <th>County</th>
+                    <th>Discipline</th>
+                    <th>National ID</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if tab == 'verified' %}
+                    {% for p in verified_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.registration.county }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.national_id_number }}</td>
+                        <td><span class="badge bg-success">Verified</span></td>
+                        <td>{{ p.registered_at|date:"d M Y H:i"|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted text-center">No verified players found</td></tr>
+                    {% endfor %}
+                {% elif tab == 'pending' %}
+                    {% for p in pending_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.registration.county }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.national_id_number }}</td>
+                        <td><span class="badge bg-warning text-dark">Pending</span></td>
+                        <td>{{ p.registered_at|date:"d M Y H:i"|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted text-center">No pending players</td></tr>
+                    {% endfor %}
+                {% else %}
+                    {% for p in rejected_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.registration.county }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.national_id_number }}</td>
+                        <td><span class="badge bg-danger">Rejected</span></td>
+                        <td>{{ p.registered_at|date:"d M Y H:i"|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted text-center">No rejected players</td></tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

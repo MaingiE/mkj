@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Reschedule Fixtures - Admin Dashboard{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Reschedule Fixtures</li>
+    </ol>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">Reschedule Fixtures</h2>
+    <div class="card">
+        <div class="card-body">
+            {% if matches %}
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Match</th>
+                        <th>Date</th>
+                        <th>Kickoff Time</th>
+                        <th>Venue</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matches %}
+                    <tr>
+                        <td>{{ match.home_team }} vs {{ match.away_team }}</td>
+                        <td>{{ match.match_date|date:'M d, Y' }}</td>
+                        <td>{{ match.kickoff_time }}</td>
+                        <td>{{ match.venue }}</td>
+                        <td>{{ match.get_status_display }}</td>
+                        <td>
+                            <a href="{% url 'matches:reschedule_match' match.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-calendar-alt"></i> Reschedule
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">No fixtures available for rescheduling.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="mt-4">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

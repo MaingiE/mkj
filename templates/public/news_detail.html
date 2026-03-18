@@ -1,0 +1,178 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════
+   NEWS DETAIL PAGE
+═══════════════════════════════════════ */
+.nd-hero {
+    padding: 10rem 0 3rem;
+    background: linear-gradient(135deg, #0a1a0d 0%, #1B5E20 50%, #0d2810 100%);
+    position: relative; overflow: hidden;
+    text-align: center; color: #fff;
+}
+.nd-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+}
+.nd-hero .container { position: relative; z-index: 2; }
+.nd-breadcrumb {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .8rem; color: rgba(255,255,255,.6); margin-bottom: 1.5rem;
+}
+.nd-breadcrumb a { color: rgba(255,255,255,.7); transition: color .2s; }
+.nd-breadcrumb a:hover { color: #fff; }
+.nd-hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.4rem; font-weight: 800; margin-bottom: 1rem;
+    max-width: 800px; margin-left: auto; margin-right: auto;
+    line-height: 1.25; letter-spacing: -1px;
+}
+.nd-meta {
+    display: flex; justify-content: center; align-items: center; gap: 1.5rem;
+    font-size: .82rem; color: rgba(255,255,255,.65);
+}
+.nd-meta i { margin-right: .3rem; }
+
+/* ── Article Body ── */
+.nd-body {
+    max-width: 780px; margin: -2rem auto 3rem; padding: 0 1.5rem;
+    position: relative; z-index: 5;
+}
+.nd-featured-img {
+    border-radius: 16px; overflow: hidden; margin-bottom: 2.5rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,.1);
+}
+.nd-featured-img img { width: 100%; display: block; }
+.nd-content {
+    background: #fff; border-radius: 16px; padding: 3rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,.04);
+    font-size: 1.05rem; line-height: 1.8; color: #333;
+}
+.nd-content p { margin-bottom: 1.25rem; }
+.nd-content h2, .nd-content h3 {
+    font-family: 'Outfit', sans-serif; color: #1a1a1a;
+    margin-top: 2rem; margin-bottom: .75rem;
+}
+.nd-content img {
+    border-radius: 8px; margin: 1.5rem 0;
+}
+
+/* ── Author bar ── */
+.nd-author {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.5rem 0; margin-top: 2rem;
+    border-top: 1px solid #f0f0f0;
+}
+.nd-author-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #e8f5e9; display: flex; align-items: center; justify-content: center;
+    color: #1B5E20; font-weight: 700; font-size: 1rem;
+}
+.nd-author-info { line-height: 1.3; }
+.nd-author-info strong { font-size: .9rem; color: #1a1a1a; }
+.nd-author-info span { display: block; font-size: .78rem; color: #999; }
+
+/* ── Related Articles ── */
+.nd-related {
+    max-width: 900px; margin: 0 auto 4rem; padding: 0 1.5rem;
+}
+.nd-related h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; color: #1a1a1a;
+}
+.nd-rel-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+}
+.nd-rel-card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    text-decoration: none; transition: transform .25s, box-shadow .25s;
+}
+.nd-rel-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.nd-rel-img { height: 140px; overflow: hidden; background: #e8f5e9; }
+.nd-rel-img img { width: 100%; height: 100%; object-fit: cover; }
+.nd-rel-body { padding: 1rem; }
+.nd-rel-body h4 {
+    font-size: .88rem; font-weight: 600; color: #1a1a1a; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.nd-rel-body span { font-size: .72rem; color: #999; margin-top: .4rem; display: block; }
+@media (max-width: 700px) { .nd-rel-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── HERO ── -->
+<section class="nd-hero">
+    <div class="container">
+        <div class="nd-breadcrumb">
+            <a href="{% url 'home' %}">Home</a> <i class="bi bi-chevron-right"></i>
+            <a href="{% url 'news_media:news_list' %}">News</a> <i class="bi bi-chevron-right"></i>
+            <span>Article</span>
+        </div>
+        <h1>{{ article.title }}</h1>
+        <div class="nd-meta">
+            {% if article.category %}
+                <span><i class="bi bi-tag"></i> {{ article.category.name }}</span>
+            {% endif %}
+            <span><i class="bi bi-calendar3"></i> {{ article.published_at|date:"F d, Y" }}</span>
+            <span><i class="bi bi-clock"></i> {{ article.reading_time }} min read</span>
+        </div>
+    </div>
+</section>
+
+<!-- ── ARTICLE BODY ── -->
+<div class="nd-body">
+    {% if article.featured_image %}
+    <div class="nd-featured-img">
+        <img src="{{ article.featured_image.url }}" alt="{{ article.title }}">
+    </div>
+    {% endif %}
+
+    <div class="nd-content">
+        {{ article.content|linebreaks }}
+
+        {% if article.author %}
+        <div class="nd-author">
+            <div class="nd-author-avatar">{{ article.author.first_name|first }}{{ article.author.last_name|first }}</div>
+            <div class="nd-author-info">
+                <strong>{{ article.author.get_full_name }}</strong>
+                <span>Published {{ article.published_at|date:"M d, Y" }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if related %}
+<!-- ── RELATED ARTICLES ── -->
+<div class="nd-related">
+    <h3>Related Articles</h3>
+    <div class="nd-rel-grid">
+        {% for r in related %}
+        <a href="{% url 'news_media:news_detail' r.slug %}" class="nd-rel-card">
+            <div class="nd-rel-img">
+                {% if r.featured_image %}
+                    <img src="{{ r.featured_image.url }}" alt="{{ r.title }}">
+                {% else %}
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1B5E20;">
+                        <i class="bi bi-file-text" style="font-size:2rem;opacity:.3;"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="nd-rel-body">
+                <h4>{{ r.title }}</h4>
+                <span>{{ r.published_at|date:"M d, Y" }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

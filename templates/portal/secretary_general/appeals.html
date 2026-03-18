@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Appeals &amp; Decisions &mdash; Secretary General{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'sg_dashboard' %}">Secretary General</a>
+        <span>Appeals &amp; Decisions</span>
+    </div>
+    <h1><i class="bi bi-briefcase"></i> Appeals &amp; Decisions</h1>
+    <p>All appeals filed, responses received, and jury decisions (read-only)</p>
+</div>
+
+<!-- Filter -->
+<div class="card p-3 mb-3" style="background:#f9f9f9;">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Filter by Status</label>
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if val == current_status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Appeals Table -->
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Appellant (Team)</th>
+                    <th>Respondent (Team)</th>
+                    <th>Competition</th>
+                    <th>Status</th>
+                    <th>Filed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appeal in appeals %}
+                <tr>
+                    <td>{{ appeal.pk }}</td>
+                    <td><strong>{{ appeal.subject|truncatechars:40 }}</strong></td>
+                    <td>{{ appeal.appellant_team.name|default:"—" }}</td>
+                    <td>{{ appeal.respondent_team.name|default:"—" }}</td>
+                    <td>{{ appeal.competition.name|default:"—" }}</td>
+                    <td>
+                        <span class="badge {% if appeal.status == 'decided' %}bg-success{% elif appeal.status == 'submitted' %}bg-warning text-dark{% elif appeal.status == 'under_review' %}bg-info{% else %}bg-secondary{% endif %}">
+                            {{ appeal.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="font-size:.82rem;">{{ appeal.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'appeal_detail' appeal.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-muted text-center">No appeals found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

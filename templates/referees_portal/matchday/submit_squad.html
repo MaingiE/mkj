@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if can_edit %}Submit{% else %}View{% endif %} Matchday Squad - {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2">
+                <i class="fas fa-clipboard-list"></i> {% if can_edit %}Submit{% else %}View{% endif %} Matchday Squad
+            </h1>
+            <p class="text-muted">{{ match.home_team.team_name }} vs {{ match.away_team.team_name }} - {{ match.match_date|date:"d/m/Y" }}</p>
+        </div>
+        <div class="btn-group">
+            {% if can_request_edit %}
+            <a href="{% url 'referees:team_request_squad_edit' match.id %}" class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Request Edit
+            </a>
+            {% endif %}
+            <a href="{% url 'teams:team_manager_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Squad Status -->
+    <div class="alert {% if squad.status == 'approved' %}alert-success{% elif squad.status == 'submitted' %}alert-info{% else %}alert-warning{% endif %}">
+        <strong>Squad Status:</strong> {{ squad.get_status_display }}
+        {% if squad.submitted_at %}
+            | Submitted: {{ squad.submitted_at|date:"d/m/Y H:i" }}
+        {% endif %}
+        {% if squad.approved_at %}
+            | Approved: {{ squad.approved_at|date:"d/m/Y H:i" }} by {{ squad.approved_by.full_name }}
+        {% endif %}
+    </div>
+
+    {% if can_edit %}
+    <form method="post" id="squadForm">
+        {% csrf_token %}
+    {% endif %}
+        
+        <div class="row">
+            <!-- Starting 11 -->
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-running me-2"></i>Starting XI (7-11 players)
+                            <span class="badge bg-white text-success float-end" id="startingCount">0/11</span>
+                        </h5>
+                        <small>Must include at least 1 goalkeeper | Minimum 7 players required</small>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        {% regroup eligible_players by get_position_display as position_groups %}
+                        {% for position in position_groups %}
+                            <h6 class="text-primary mt-3">{{ position.grouper }}s</h6>
+                            {% for player in position.list %}
+                                <div class="form-check mb-2 p-2 border rounded hover-highlight" style="cursor: pointer;">
+                                    <input class="form-check-input starting-checkbox" 
+                                           type="checkbox" 
+                                           name="starting_players" 
+                                           value="{{ player.id }}"
+                                           id="starting_{{ player.id }}"
+                                           data-position="{{ player.position }}"
+                                           {% if player.id in selected_starting %}checked{% endif %}
+                                           {% if not can_edit %}disabled{% endif %}
+                                           style="width: 20px; height: 20px; cursor: pointer;">
+                                    <label class="form-check-label ms-2" for="starting_{{ player.id }}" style="cursor: pointer;">
+                                        <strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}
+                                        <span class="badge bg-secondary">{{ player.get_position_display }}</span>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Substitutes -->
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2"></i>Substitutes (up to 14 players)
+                            <span class="badge bg-white text-info float-end" id="subsCount">0/14</span>
+                        </h5>
+                        <small>Optional - select substitute players</small>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        {% regroup eligible_players by get_position_display as position_groups %}
+                        {% for position in position_groups %}
+                            <h6 class="text-primary mt-3">{{ position.grouper }}s</h6>
+                            {% for player in position.list %}
+                                <div class="form-check mb-2 p-2 border rounded hover-highlight" style="cursor: pointer;">
+                                    <input class="form-check-input sub-checkbox" 
+                                           type="checkbox" 
+                                           name="substitute_players" 
+                                           value="{{ player.id }}"
+                                           id="sub_{{ player.id }}"
+                                           {% if player.id in selected_subs %}checked{% endif %}
+                                           {% if not can_edit %}disabled{% endif %}
+                                           style="width: 20px; height: 20px; cursor: pointer;">
+                                    <label class="form-check-label ms-2" for="sub_{{ player.id }}" style="cursor: pointer;">
+                                        <strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}
+                                        <span class="badge bg-secondary">{{ player.get_position_display }}</span>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        {% if can_edit %}
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtn">
+                    <i class="fas fa-check-circle me-2"></i>Submit Squad
+                </button>
+                <a href="{% url 'referees:team_matchday_squad_list' %}" class="btn btn-secondary btn-lg px-5">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    {% if can_edit %}
+    </form>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startingCheckboxes = document.querySelectorAll('.starting-checkbox');
+    const subCheckboxes = document.querySelectorAll('.sub-checkbox');
+    const startingCount = document.getElementById('startingCount');
+    const subsCount = document.getElementById('subsCount');
+    const submitBtn = document.getElementById('submitBtn');
+    // Add click highlighting
+    document.querySelectorAll('.hover-highlight').forEach(div => {
+        div.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                if (checkbox && !checkbox.disabled) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+        
+        div.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        
+        div.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    function updateCounts() {
+        const startingChecked = document.querySelectorAll('.starting-checkbox:checked').length;
+        const subsChecked = document.querySelectorAll('.sub-checkbox:checked').length;
+        
+        startingCount.textContent = `${startingChecked}/11`;
+        subsCount.textContent = `${subsChecked}/14`;
+        
+        // Update badge colors - starting needs 7-11, subs can be 0-14
+        if (startingChecked >= 7 && startingChecked <= 11) {
+            startingCount.className = 'badge bg-white text-success float-end';
+        } else {
+            startingCount.className = 'badge bg-white text-warning float-end';
+        }
+        
+        subsCount.className = subsChecked <= 14 ? 'badge bg-white text-info float-end' : 'badge bg-white text-danger float-end';
+        
+        // Check if at least one goalkeeper is selected in starting lineup
+        const startingGKs = document.querySelectorAll('.starting-checkbox:checked[data-position="GK"]').length;
+        
+        // Disable/enable submit button - requires 7-11 starting with at least 1 GK
+        if (submitBtn) {
+            const isValid = startingChecked >= 7 && startingChecked <= 11 && subsChecked <= 14 && startingGKs >= 1;
+            submitBtn.disabled = !isValid;
+            
+            // Visual feedback on button
+            if (isValid) {
+                submitBtn.classList.remove('btn-secondary');
+                submitBtn.classList.add('btn-success');
+            } else {
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-secondary');
+            }
+        }
+        
+        // Highlight checked items
+        document.querySelectorAll('.starting-checkbox, .sub-checkbox').forEach(cb => {
+            const parent = cb.closest('.hover-highlight');
+            if (parent) {
+                if (cb.checked) {
+                    parent.style.backgroundColor = '#d4edda';
+                    parent.style.borderColor = '#28a745';
+                } else {
+                    parent.style.backgroundColor = '';
+                    parent.style.borderColor = '#dee2e6';
+                }
+            }
+        });
+    }
+    
+    function preventDuplicates(checkbox) {
+        const playerId = checkbox.value;
+        
+        if (checkbox.checked) {
+            // Uncheck the same player in the other list
+            if (checkbox.classList.contains('starting-checkbox')) {
+                const subCheckbox = document.getElementById(`sub_${playerId}`);
+                if (subCheckbox) {
+                    subCheckbox.checked = false;
+                }
+            } else {
+                const startingCheckbox = document.getElementById(`starting_${playerId}`);
+                if (startingCheckbox) {
+                    startingCheckbox.checked = false;
+                }
+            }
+        }
+        
+        updateCounts();
+    }
+    
+    startingCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            preventDuplicates(this);
+        });
+    });
+    
+    subCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            preventDuplicates(this);
+        });
+    });
+    
+    // Initial count and highlighting
+    updateCounts();
+    
+    console.log('Squad form initialized:', {
+        startingCheckboxes: startingCheckboxes.length,
+        subCheckboxes: subCheckboxes.length,
+        submitBtn: !!submitBtn
+    }unt
+    updateCounts();
+});
+</script>
+{% endblock %}

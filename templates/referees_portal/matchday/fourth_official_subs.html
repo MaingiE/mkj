@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Substitutions - {{ match }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Manage Substitutions</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Match Info Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-futbol me-2"></i>{{ match.home_team }} vs {{ match.away_team }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Date:</strong> {{ match.match_date|date:"F d, Y" }}</p>
+                            <p class="mb-1"><strong>Kick-off:</strong> {{ match.kickoff_time|time:"H:i" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Your Role:</strong> 
+                                {% if is_reserve_referee %}
+                                    <span class="badge bg-danger">Reserve Referee</span>
+                                    <br><small class="text-muted">(Full 4th Official + Concussion Sub powers)</small>
+                                {% else %}
+                                    <span class="badge bg-info">Reserve Referee</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-1"><strong>Match Status:</strong> 
+                                <span class="badge bg-success">In Progress</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Home Subs Used:</strong> {{ home_subs_count }}/5 
+                                {% if home_concussion_sub %}<small class="text-muted">(+1 concussion)</small>{% endif %}
+                            </p>
+                            <p class="mb-1"><strong>Away Subs Used:</strong> {{ away_subs_count }}/5
+                                {% if away_concussion_sub %}<small class="text-muted">(+1 concussion)</small>{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Substitution Opportunities Tracking -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-home me-2"></i>{{ match.home_team }} - Substitution Opportunities
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Used:</strong> {{ home_opportunities_used }}/3</p>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ home_progress_percentage }}%"
+                             aria-valuenow="{{ home_opportunities_used }}" aria-valuemin="0" aria-valuemax="3">
+                            {{ home_opportunities_used }}/3
+                        </div>
+                    </div>
+                    <small class="text-muted"><i class="fas fa-info-circle"></i> Maximum 3 opportunities (halftime excluded)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-plane me-2"></i>{{ match.away_team }} - Substitution Opportunities
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Used:</strong> {{ away_opportunities_used }}/3</p>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                             style="width: {{ away_progress_percentage }}%"
+                             aria-valuenow="{{ away_opportunities_used }}" aria-valuemin="0" aria-valuemax="3">
+                            {{ away_opportunities_used }}/3
+                        </div>
+                    </div>
+                    <small class="text-muted"><i class="fas fa-info-circle"></i> Maximum 3 opportunities (halftime excluded)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Substitution Requests -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Pending Substitution Requests
+                        <span class="badge bg-dark float-end">{{ pending_requests|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if home_requests or away_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Player Out</th>
+                                    <th>Player In</th>
+                                    <th>Minute</th>
+                                    <th>Type</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in home_requests %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ request.team.team_name }}</strong>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-down text-danger me-1"></i>
+                                        #{{ request.player_out.jersey_number }} {{ request.player_out.full_name }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-up text-success me-1"></i>
+                                        #{{ request.player_in.jersey_number }} {{ request.player_in.full_name }}
+                                    </td>
+                                    <td>
+                                        {% if request.minute %}
+                                            {{ request.minute }}'
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.sub_type == 'concussion' %}
+                                            <span class="badge bg-danger">Concussion</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="post" class="d-inline" action="{% url 'referees:reserve_referee_substitutions' match.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ request.id }}">
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <input type="number" name="minute" class="form-control form-control-sm" placeholder="Min" required min="1" max="120">
+                                                <button type="submit" name="action" value="effect_substitution" class="btn btn-success btn-sm" 
+                                                        onclick="return confirm('Effect this substitution?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% for request in away_requests %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ request.team.team_name }}</strong>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-down text-danger me-1"></i>
+                                        #{{ request.player_out.jersey_number }} {{ request.player_out.full_name }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-up text-success me-1"></i>
+                                        #{{ request.player_in.jersey_number }} {{ request.player_in.full_name }}
+                                    </td>
+                                    <td>{{ request.minute }}'</td>
+                                    <td>
+                                        {% if request.sub_type == 'concussion' %}
+                                            <span class="badge bg-danger">Concussion</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="post" class="d-inline" action="{% url 'referees:reserve_referee_substitutions' match.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ request.id }}">
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <input type="number" name="minute" class="form-control form-control-sm" placeholder="Min" required min="1" max="120">
+                                                <button type="submit" name="action" value="effect_substitution" class="btn btn-success btn-sm" 
+                                                        onclick="return confirm('Effect this substitution?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>No pending substitution requests at this time.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concussion Substitute Activation (Reserve Referee Only) -->
+    {% if is_reserve_referee %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-ambulance me-2"></i>Activate Concussion Substitute (6th Sub)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Reserve Referee Authority:</strong> Only you can activate the concussion substitute. This is an additional (6th) substitution beyond the regular 5.
+                    </div>
+                    
+                    <form method="post" action="{% url 'referees:activate_concussion_substitute' match.id %}" id="concussionForm">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="team" class="form-label"><strong>Team:</strong></label>
+                                <select class="form-select" id="team" name="team" required>
+                                    <option value="">Select Team</option>
+                                    <option value="{{ match.home_team.id }}">{{ match.home_team }}</option>
+                                    <option value="{{ match.away_team.id }}">{{ match.away_team }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="injured_player" class="form-label"><strong>Injured Player (Out):</strong></label>
+                                <select class="form-select" id="injured_player" name="injured_player" required disabled>
+                                    <option value="">Select team first</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="concussion_sub" class="form-label"><strong>Concussion Sub (In):</strong></label>
+                                <select class="form-select" id="concussion_sub" name="concussion_sub" required disabled>
+                                    <option value="">Select team first</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="minute" class="form-label"><strong>Minute:</strong></label>
+                                <input type="number" class="form-control" id="minute" name="minute" min="1" max="120" required>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label for="notes" class="form-label"><strong>Medical Notes:</strong></label>
+                                <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Details about the concussion incident..."></textarea>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-danger btn-lg" onclick="return confirm('Activate concussion substitute? This action cannot be undone.')">
+                                <i class="fas fa-first-aid me-2"></i>Activate Concussion Substitute
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Completed Substitutions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Completed Substitutions
+                        <span class="badge bg-light text-dark float-end">{{ completed_subs|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if completed_subs %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Minute</th>
+                                    <th>Team</th>
+                                    <th>Player Out</th>
+                                    <th>Player In</th>
+                                    <th>Type</th>
+                                    <th>Opportunity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub in completed_subs %}
+                                <tr>
+                                    <td><strong>{{ sub.minute }}'</strong></td>
+                                    <td>{{ sub.team.name }}</td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-down text-danger me-1"></i>
+                                        #{{ sub.player_out.jersey_number }} {{ sub.player_out.player.get_full_name }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-up text-success me-1"></i>
+                                        #{{ sub.player_in.jersey_number }} {{ sub.player_in.player.get_full_name }}
+                                    </td>
+                                    <td>
+                                        {% if sub.sub_type == 'concussion' %}
+                                            <span class="badge bg-danger">Concussion (6th)</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if sub.opportunity %}
+                                            Opportunity #{{ sub.opportunity.opportunity_number }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>No substitutions have been completed yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dynamic loading of players based on team selection
+document.addEventListener('DOMContentLoaded', function() {
+    const teamSelect = document.getElementById('team');
+    const injuredPlayerSelect = document.getElementById('injured_player');
+    const concussionSubSelect = document.getElementById('concussion_sub');
+
+    // Squad data passed from Django view
+    const homeSquad = {{ home_squad_json|safe }};
+    const awaySquad = {{ away_squad_json|safe }};
+
+    teamSelect.addEventListener('change', function() {
+        const teamId = parseInt(this.value);
+        let squadData = teamId === {{ match.home_team.id }} ? homeSquad : awaySquad;
+
+        // Populate injured player (starting players only)
+        injuredPlayerSelect.innerHTML = '<option value="">Select injured player</option>';
+        squadData.starting.forEach(player => {
+            injuredPlayerSelect.innerHTML += `<option value="${player.id}">#${player.jersey} ${player.name}</option>`;
+        });
+        injuredPlayerSelect.disabled = false;
+
+        // Populate concussion substitute (substitute players only)
+        concussionSubSelect.innerHTML = '<option value="">Select substitute</option>';
+        squadData.subs.forEach(player => {
+            concussionSubSelect.innerHTML += `<option value="${player.id}">#${player.jersey} ${player.name}</option>`;
+        });
+        concussionSubSelect.disabled = false;
+    });
+});
+</script>
+{% endblock %}

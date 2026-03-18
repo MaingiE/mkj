@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Referees KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Referees</span>
+    </div>
+    <h1>🏁 Referees</h1>
+    <p>{% if user.role == 'referee' %}Your referee profile and appointments{% else %}Manage registered referees{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>{% if user.role == 'referee' %}My Profile{% else %}All Referees{% endif %}</h3>
+    </div>
+    <div class="card-body">
+        {% if referees %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>License #</th>
+                        <th>Level</th>
+                        <th>County</th>
+                        <th>Matches</th>
+                        <th>Rating</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ref in referees %}
+                    <tr>
+                        <td><strong>{{ ref.user.get_full_name }}</strong></td>
+                        <td>{{ ref.license_number|default:"—" }}</td>
+                        <td>{{ ref.get_level_display }}</td>
+                        <td>{{ ref.county }}</td>
+                        <td>{{ ref.total_matches }}</td>
+                        <td>{{ ref.avg_rating }}</td>
+                        <td>
+                            {% if ref.is_approved %}
+                            <span class="badge badge-success">Approved</span>
+                            {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🏁</div>
+            <h3>No referees found</h3>
+            <p>Referees will appear here once registered.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upcoming Appointments -->
+{% if appointments %}
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h3>Referee Appointments</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Fixture</th><th>Referee</th><th>Role</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for appt in appointments %}
+                    <tr>
+                        <td>{{ appt.fixture.match_date|date:"d M Y" }}</td>
+                        <td>{{ appt.fixture.home_team }} vs {{ appt.fixture.away_team }}</td>
+                        <td>{{ appt.referee.user.get_full_name }}</td>
+                        <td>{{ appt.get_role_display }}</td>
+                        <td>
+                            {% if appt.status == 'confirmed' %}
+                            <span class="badge badge-success">Confirmed</span>
+                            {% elif appt.status == 'pending' %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% elif appt.status == 'declined' %}
+                            <span class="badge badge-danger">Declined</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ appt.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if appt.status == 'pending' and user.role == 'referee' %}
+                            <a href="{% url 'appointment_action' appointment_pk=appt.pk %}"
+                               style="background:#1B5E20;color:#fff;padding:.3rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                                Respond
+                            </a>
+                            {% elif appt.status == 'pending' %}
+                            <span style="color:#999;font-size:.85rem;">Awaiting referee</span>
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

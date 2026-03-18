@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Match Appointments — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Referee Appointments</span>
+    </div>
+    <h1>🏁 Match Appointments</h1>
+    <p>Assign referees to upcoming fixtures — overview of all matches needing officials</p>
+</div>
+
+<!-- ═══ SUMMARY CARDS ═══ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#c62828;">{{ total_needing }}</div>
+        <div style="color:#666;font-size:.85rem;">Needing Officials</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#FF8F00;">{{ total_partially }}</div>
+        <div style="color:#666;font-size:.85rem;">Partially Appointed</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#1B5E20;">{{ total_fully_appointed }}</div>
+        <div style="color:#666;font-size:.85rem;">Fully Appointed</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:700;color:#1565C0;">{{ approved_referees_count }}</div>
+        <div style="color:#666;font-size:.85rem;">Approved Referees</div>
+    </div>
+</div>
+
+<!-- ═══ FILTER TABS ═══ -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-body" style="padding:.8rem 1rem;">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <a href="?status=upcoming"
+               style="padding:.4rem 1rem;border-radius:20px;text-decoration:none;font-size:.9rem;
+                      {% if filter_status == 'upcoming' %}background:#1B5E20;color:#fff;{% else %}background:#f0f0f0;color:#333;{% endif %}">
+                📅 Upcoming
+            </a>
+            <a href="?status=all"
+               style="padding:.4rem 1rem;border-radius:20px;text-decoration:none;font-size:.9rem;
+                      {% if filter_status == 'all' %}background:#1B5E20;color:#fff;{% else %}background:#f0f0f0;color:#333;{% endif %}">
+                📋 All Fixtures
+            </a>
+            <a href="?status=past"
+               style="padding:.4rem 1rem;border-radius:20px;text-decoration:none;font-size:.9rem;
+                      {% if filter_status == 'past' %}background:#1B5E20;color:#fff;{% else %}background:#f0f0f0;color:#333;{% endif %}">
+                ✅ Past
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ FIXTURES LIST ═══ -->
+{% if fixture_data %}
+<div class="card">
+    <div class="card-header">
+        <h3>{{ filter_status|title }} Fixtures ({{ total_fixtures }})</h3>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Match</th>
+                        <th>Competition</th>
+                        <th>Venue</th>
+                        <th>Officials</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in fixture_data %}
+                    <tr style="{% if item.needs_officials and not item.fixture.status == 'completed' %}background:#FFF8E1;{% elif item.is_fully_appointed %}background:#F1F8E9;{% endif %}">
+                        <td style="white-space:nowrap;">
+                            {{ item.fixture.match_date|date:"d M Y" }}<br>
+                            <span style="font-size:.8rem;color:#666;">{{ item.fixture.kickoff_time|time:"H:i" }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ item.fixture.home_team }}</strong>
+                            <span style="color:#999;">vs</span>
+                            <strong>{{ item.fixture.away_team }}</strong>
+                        </td>
+                        <td style="font-size:.85rem;">{{ item.fixture.competition.name }}</td>
+                        <td style="font-size:.85rem;">{{ item.fixture.venue|default:"TBD" }}</td>
+                        <td>
+                            <div style="display:flex;gap:.3rem;flex-wrap:wrap;">
+                                {% for role in item.roles %}
+                                <span style="display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;
+                                    {% if role.status == 'confirmed' %}background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;
+                                    {% elif role.status == 'pending' %}background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;
+                                    {% elif role.status == 'declined' %}background:#FFEBEE;color:#c62828;border:1px solid #EF9A9A;
+                                    {% else %}background:#f5f5f5;color:#999;border:1px solid #ddd;{% endif %}"
+                                    title="{{ role.role_label }}: {{ role.referee_name|default:'Not Appointed' }}">
+                                    {{ role.role_label|truncatechars:10 }}
+                                    {% if role.appointment %}✓{% else %}—{% endif %}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            <div style="font-size:.75rem;color:#666;margin-top:.3rem;">
+                                {{ item.filled }}/{{ item.total_roles }} roles filled
+                            </div>
+                        </td>
+                        <td>
+                            {% if item.is_fully_appointed %}
+                            <span class="badge badge-success">Complete</span>
+                            {% elif item.filled > 0 %}
+                            <span class="badge badge-warning">Partial</span>
+                            {% else %}
+                            <span class="badge badge-danger">None</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'referee_appoint' fixture_pk=item.fixture.pk %}"
+                               style="display:inline-block;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;white-space:nowrap;
+                                      {% if item.needs_officials %}background:#1B5E20;color:#fff;{% else %}background:#f0f0f0;color:#333;{% endif %}">
+                                {% if item.needs_officials %}⚡ Appoint{% else %}📋 View{% endif %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="text-align:center;padding:3rem;">
+        <div style="font-size:3rem;">📅</div>
+        <h3>No fixtures found</h3>
+        <p style="color:#666;">There are no {{ filter_status }} fixtures to display. Try a different filter.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

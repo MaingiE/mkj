@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Match Reports — Jury | KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1><i class="bi bi-file-earmark-text"></i> Match Reports</h1>
+        <p class="text-muted">All submitted match reports from referees</p>
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+        <a href="{% url 'jury_export_match_reports_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+        <a href="{% url 'jury_export_match_reports_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger btn-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'jury_dashboard' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="padding:1rem; margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:end;">
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Competition</label>
+            <select name="competition" class="form-control">
+                <option value="">All Competitions</option>
+                {% for c in competitions %}
+                <option value="{{ c.pk }}" {% if filters.competition == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1; min-width:140px;">
+            <label style="font-size:.8rem; font-weight:600;">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All</option>
+                <option value="draft" {% if filters.status == "draft" %}selected{% endif %}>Draft</option>
+                <option value="submitted" {% if filters.status == "submitted" %}selected{% endif %}>Submitted</option>
+                <option value="approved" {% if filters.status == "approved" %}selected{% endif %}>Approved</option>
+                <option value="returned" {% if filters.status == "returned" %}selected{% endif %}>Returned</option>
+            </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Search</label>
+            <input type="text" name="search" value="{{ filters.search }}" class="form-control" placeholder="Team name…">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="height:38px;">Filter</button>
+        <a href="{% url 'jury_match_reports' %}" class="btn btn-outline btn-sm" style="height:38px; line-height:24px;">Clear</a>
+    </form>
+</div>
+
+<!-- Reports Table -->
+<div class="card" style="padding:1rem;">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Competition</th>
+                    <th>Home Team</th>
+                    <th>Away Team</th>
+                    <th>Score</th>
+                    <th>YC (H/A)</th>
+                    <th>RC (H/A)</th>
+                    <th>Referee</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ r.fixture.competition.name|default:"-" }}</td>
+                    <td><strong>{{ r.fixture.home_team.name|default:"TBD" }}</strong></td>
+                    <td><strong>{{ r.fixture.away_team.name|default:"TBD" }}</strong></td>
+                    <td><strong>{{ r.home_score }} - {{ r.away_score }}</strong></td>
+                    <td style="text-align:center;">
+                        <span style="color:#f9a825;">{{ r.home_yellow_cards|default:0 }}</span> / <span style="color:#f9a825;">{{ r.away_yellow_cards|default:0 }}</span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="color:#e53935;">{{ r.home_red_cards|default:0 }}</span> / <span style="color:#e53935;">{{ r.away_red_cards|default:0 }}</span>
+                    </td>
+                    <td>{% if r.referee and r.referee.user %}{{ r.referee.user.get_full_name }}{% else %}-{% endif %}</td>
+                    <td>
+                        <span class="badge {% if r.status == 'approved' %}bg-success{% elif r.status == 'submitted' %}bg-primary{% elif r.status == 'returned' %}bg-warning{% else %}bg-secondary{% endif %}" style="padding:3px 8px; border-radius:4px; color:#fff; font-size:.75rem;">
+                            {{ r.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ r.submitted_at|date:"d M Y"|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'match_report_detail' report_pk=r.pk %}" class="btn btn-sm btn-outline" title="View full report">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="11" style="text-align:center; color:#888; padding:2rem;">No match reports found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="font-size:.8rem; color:#888; margin:.5rem 0 0;">Showing {{ reports|length }} report{{ reports|length|pluralize }}.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,455 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block title %}KYISA 11th Edition — County Registration{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cr-page { padding: 120px 0 60px; background: linear-gradient(160deg, #0d1b0e 0%, #1B5E20 50%, #2E7D32 100%); min-height: 100vh; }
+    .cr-container { max-width: 720px; margin: 0 auto; padding: 0 1rem; }
+
+    /* Header */
+    .cr-header { text-align: center; margin-bottom: 2rem; }
+    .cr-header__logo { width: 72px; height: 72px; border-radius: 50%; border: 3px solid rgba(255,255,255,.2); margin-bottom: 1rem; object-fit: cover; }
+    .cr-header h1 { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; margin: 0; }
+    .cr-header h1 span { color: #F9A825; }
+    .cr-header__sub { color: rgba(255,255,255,.7); font-size: .95rem; margin-top: .4rem; }
+    .cr-header__date { display: inline-block; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); padding: .35rem 1rem; border-radius: 20px; font-size: .82rem; color: rgba(255,255,255,.8); margin-top: .6rem; backdrop-filter: blur(6px); }
+
+    /* Fee card */
+    .cr-fee { display: flex; align-items: center; gap: 1.2rem; background: rgba(255,255,255,.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+    .cr-fee__icon { font-size: 2.2rem; color: #F9A825; flex-shrink: 0; }
+    .cr-fee__label { font-size: .85rem; color: rgba(255,255,255,.65); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .cr-fee__amount { font-size: 1.8rem; font-weight: 800; color: #fff; line-height: 1.1; }
+    .cr-fee__note { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .2rem; }
+    .cr-card { background: #fff; border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .cr-card h3 { font-size: 1rem; font-weight: 700; color: #1B5E20; margin: 0 0 1rem; padding-bottom: .6rem; border-bottom: 2px solid #e8f5e9; display: flex; align-items: center; gap: .5rem; }
+    .cr-card h3 i { font-size: 1.1rem; }
+
+    /* Alert */
+    .cr-alert { margin-bottom: 1.5rem; padding: 1rem 1.2rem; border-radius: 10px; font-size: .9rem; line-height: 1.6; }
+    .cr-alert-success { background: #e8f5e9; border-left: 4px solid #1B5E20; }
+    .cr-alert-error { background: #fce4ec; border-left: 4px solid #C62828; }
+    .cr-alert-warning { background: #fff3e0; border-left: 4px solid #f57c00; }
+
+    /* Fields */
+    .cr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .cr-field { margin-bottom: 1.1rem; }
+    .cr-field label { display: block; font-weight: 600; color: #333; margin-bottom: .4rem; font-size: .88rem; }
+    .cr-field input, .cr-field select { width: 100%; padding: .7rem .9rem; border: 1.5px solid #d0d0d0; border-radius: 10px; font-size: .92rem; transition: border-color .2s, box-shadow .2s; background: #fafafa; }
+    .cr-field input:focus, .cr-field select:focus { outline: none; border-color: #1B5E20; box-shadow: 0 0 0 3px rgba(27,94,32,.1); background: #fff; }
+    .cr-field .err { color: #C62828; font-size: .8rem; margin-top: .3rem; }
+    .cr-field small { color: #999; font-size: .78rem; }
+
+    /* Divider */
+    .cr-section { margin-top: 1.8rem; }
+
+    /* Info box */
+    .cr-info { background: #fffde7; border: 1px solid #fff176; border-radius: 10px; padding: .9rem 1.1rem; margin-bottom: 1.5rem; font-size: .85rem; color: #5d4e00; display: flex; align-items: flex-start; gap: .6rem; }
+    .cr-info i { margin-top: 2px; flex-shrink: 0; }
+
+    /* Submit */
+    .cr-submit { width: 100%; padding: .95rem; background: linear-gradient(135deg, #1B5E20, #2E7D32); color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .2s; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+    .cr-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(27,94,32,.35); }
+    .cr-submit:active { transform: translateY(0); }
+
+    /* Non-field errors */
+    .cr-errors { color: #C62828; font-size: .88rem; margin-bottom: 1rem; padding: .8rem 1rem; background: #fce4ec; border-radius: 10px; }
+
+    /* Footer link */
+    .cr-footer { text-align: center; margin-top: 1.5rem; font-size: .88rem; color: rgba(255,255,255,.6); }
+    .cr-footer a { color: #F9A825; font-weight: 600; text-decoration: none; }
+    .cr-footer a:hover { text-decoration: underline; }
+
+    /* Steps pill */
+    .cr-steps { display: flex; gap: .5rem; margin-bottom: 1.8rem; justify-content: center; }
+    .cr-step { display: flex; align-items: center; gap: .4rem; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); padding: .4rem .9rem; border-radius: 20px; font-size: .75rem; color: rgba(255,255,255,.7); }
+    .cr-step i { font-size: .8rem; }
+    .cr-step--active { background: rgba(249,168,37,.15); border-color: rgba(249,168,37,.3); color: #F9A825; }
+
+    @media (max-width: 600px) {
+        .cr-row { grid-template-columns: 1fr; }
+        .cr-card { padding: 1.5rem; }
+        .cr-fee { flex-direction: column; text-align: center; }
+        .cr-steps { flex-wrap: wrap; justify-content: center; }
+    }
+
+    /* ── Account / Payment details ── */
+    .cr-acct { background: rgba(255,255,255,.06); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 1.4rem 1.5rem; margin-bottom: 1.5rem; }
+    .cr-acct__title { font-size: .85rem; font-weight: 700; color: #F9A825; text-transform: uppercase; letter-spacing: 1px; margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+    .cr-acct__row { display: flex; justify-content: space-between; padding: .35rem 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: .88rem; }
+    .cr-acct__label { color: rgba(255,255,255,.55); }
+    .cr-acct__value { color: #fff; font-weight: 600; text-align: right; }
+    .cr-acct__copy { background: rgba(249,168,37,.15); border: 1px solid rgba(249,168,37,.3); color: #F9A825; padding: .15rem .5rem; border-radius: 6px; font-size: .72rem; cursor: pointer; margin-left: .5rem; }
+    .cr-acct__copy:hover { background: rgba(249,168,37,.25); }
+
+    /* Payment method tabs */
+    .cr-pay-tabs { display: flex; gap: .5rem; margin-bottom: 1.2rem; }
+    .cr-pay-tab { flex: 1; text-align: center; padding: .8rem .5rem; background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all .2s; font-size: .85rem; font-weight: 600; color: #666; }
+    .cr-pay-tab:hover { border-color: #aaa; }
+    .cr-pay-tab.active { background: #e8f5e9; border-color: #1B5E20; color: #1B5E20; }
+    .cr-pay-tab i { display: block; font-size: 1.5rem; margin-bottom: .3rem; }
+
+    .cr-pay-panel { display: none; }
+    .cr-pay-panel.active { display: block; }
+
+    .cr-mpesa-prompt { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 12px; padding: 1.2rem; margin-bottom: 1.2rem; }
+    .cr-mpesa-prompt h4 { font-size: .92rem; font-weight: 700; color: #1B5E20; margin: 0 0 .5rem; }
+    .cr-mpesa-prompt p { font-size: .85rem; color: #555; margin: 0; }
+
+    .cr-stk-btn { width: 100%; padding: .85rem; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: #fff; border: none; border-radius: 10px; font-size: .95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: transform .15s, box-shadow .2s; margin-bottom: 1rem; }
+    .cr-stk-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(76,175,80,.35); }
+    .cr-stk-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .cr-stk-status { padding: .8rem 1rem; border-radius: 10px; font-size: .88rem; margin-bottom: 1rem; display: none; }
+    .cr-stk-status.info { background: #e3f2fd; border-left: 4px solid #1976D2; display: block; }
+    .cr-stk-status.success { background: #e8f5e9; border-left: 4px solid #2E7D32; display: block; }
+    .cr-stk-status.error { background: #fce4ec; border-left: 4px solid #C62828; display: block; }
+
+    .cr-divider { text-align: center; color: #999; font-size: .82rem; font-weight: 600; margin: 1.2rem 0; position: relative; }
+    .cr-divider::before, .cr-divider::after { content: ''; position: absolute; top: 50%; width: 35%; height: 1px; background: #ddd; }
+    .cr-divider::before { left: 0; }
+    .cr-divider::after { right: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="cr-page">
+<div class="cr-container">
+
+    <!-- Header -->
+    <div class="cr-header">
+        <img src="{% static 'img/kyisa_logo_official.jpg' %}" alt="KYISA" class="cr-header__logo">
+        <h1>KYISA <span>11th Edition</span></h1>
+        <p class="cr-header__sub">County Registration Portal</p>
+        <div class="cr-header__date"><i class="bi bi-calendar-event"></i> 11 Apr — 17 Apr 2026</div>
+    </div>
+
+    <!-- Steps -->
+    <div class="cr-steps">
+        <div class="cr-step cr-step--active"><i class="bi bi-1-circle"></i> Register</div>
+        <div class="cr-step"><i class="bi bi-2-circle"></i> Pay Fee</div>
+        <div class="cr-step"><i class="bi bi-3-circle"></i> Approval</div>
+        <div class="cr-step"><i class="bi bi-4-circle"></i> Add Players</div>
+    </div>
+
+    <!-- Fee -->
+    <div class="cr-fee">
+        <div class="cr-fee__icon"><i class="bi bi-credit-card-2-front"></i></div>
+        <div>
+            <div class="cr-fee__label">County Registration Fee</div>
+            <div class="cr-fee__amount">KSh {{ registration_fee|floatformat:0 }}</div>
+            <div class="cr-fee__note">Per county &bull; Pay via M-Pesa or Bank Transfer &bull; Approved by KYISA Treasurer</div>
+        </div>
+    </div>
+
+    <!-- Bank Account Details -->
+    <div class="cr-acct">
+        <div class="cr-acct__title"><i class="bi bi-bank"></i> KYISA Bank Account Details</div>
+        <div class="cr-acct__row">
+            <span class="cr-acct__label">Bank</span>
+            <span class="cr-acct__value">{{ bank_name }}</span>
+        </div>
+        <div class="cr-acct__row">
+            <span class="cr-acct__label">Branch</span>
+            <span class="cr-acct__value">{{ bank_branch }}</span>
+        </div>
+        <div class="cr-acct__row">
+            <span class="cr-acct__label">Account Name</span>
+            <span class="cr-acct__value">{{ bank_account_name }}</span>
+        </div>
+        <div class="cr-acct__row">
+            <span class="cr-acct__label">Account No.</span>
+            <span class="cr-acct__value">
+                {{ bank_account_no }}
+                <button type="button" class="cr-acct__copy" onclick="navigator.clipboard.writeText('{{ bank_account_no }}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" title="Copy account number">Copy</button>
+            </span>
+        </div>
+        {% if mpesa_paybill %}
+        <div class="cr-acct__row" style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.12)">
+            <span class="cr-acct__label"><i class="bi bi-phone"></i> M-Pesa Paybill</span>
+            <span class="cr-acct__value">
+                {{ mpesa_paybill }}
+                <button type="button" class="cr-acct__copy" onclick="navigator.clipboard.writeText('{{ mpesa_paybill }}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" title="Copy Paybill">Copy</button>
+            </span>
+        </div>
+        {% if mpesa_account_no %}
+        <div class="cr-acct__row">
+            <span class="cr-acct__label">Account No.</span>
+            <span class="cr-acct__value">{{ mpesa_account_no }}</span>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Form Card -->
+    <div class="cr-card">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="cr-alert cr-alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <h3><i class="bi bi-person"></i> Registrant Information</h3>
+            <div class="cr-row">
+                <div class="cr-field">
+                    <label for="id_first_name">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<div class="err">{{ form.first_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="cr-field">
+                    <label for="id_last_name">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<div class="err">{{ form.last_name.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="cr-field">
+                <label for="id_email">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="err">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="cr-field">
+                <label for="id_phone">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div class="err">{{ form.phone.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="cr-section">
+                <h3><i class="bi bi-geo-alt"></i> County Selection</h3>
+                <div class="cr-field">
+                    <label for="id_county">{{ form.county.label }}</label>
+                    {{ form.county }}
+                    <small>Counties already registered are greyed out and unavailable.</small>
+                    {% if form.county.errors %}<div class="err">{{ form.county.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="cr-section">
+                <h3><i class="bi bi-person-badge"></i> Director of Sports</h3>
+                <p style="font-size:.84rem;color:#777;margin:-0.5rem 0 1rem">Primary county contact person — their details will be on record.</p>
+                <div class="cr-field">
+                    <label for="id_director_name">{{ form.director_name.label }}</label>
+                    {{ form.director_name }}
+                    {% if form.director_name.errors %}<div class="err">{{ form.director_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="cr-field">
+                    <label for="id_director_phone">{{ form.director_phone.label }}</label>
+                    {{ form.director_phone }}
+                    {% if form.director_phone.errors %}<div class="err">{{ form.director_phone.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- ══════════════ PAYMENT SECTION ══════════════ -->
+            <div class="cr-section">
+                <h3><i class="bi bi-credit-card-2-front"></i> Payment — KSh {{ registration_fee|floatformat:0 }}</h3>
+                <p style="font-size:.84rem;color:#777;margin:-.5rem 0 1rem">Choose your preferred payment method below. Payment must be confirmed by the Treasurer before you can add players.</p>
+
+                <!-- Payment Method Tabs -->
+                <div class="cr-pay-tabs">
+                    <div class="cr-pay-tab active" data-tab="mpesa" onclick="switchPayTab('mpesa')">
+                        <i class="bi bi-phone"></i> Pay via M-Pesa
+                    </div>
+                    <div class="cr-pay-tab" data-tab="bank" onclick="switchPayTab('bank')">
+                        <i class="bi bi-bank"></i> Bank Transfer
+                    </div>
+                </div>
+                <input type="hidden" name="payment_method" id="id_payment_method" value="mpesa">
+
+                <!-- ── M-Pesa Panel ── -->
+                <div class="cr-pay-panel active" id="mpesa-panel">
+                    <div class="cr-mpesa-prompt">
+                        <h4><i class="bi bi-phone-vibrate"></i> M-Pesa STK Push</h4>
+                        <p>Enter your M-Pesa number below. After registering, you will receive a payment prompt on your phone. Enter your M-Pesa PIN to complete the payment.</p>
+                    </div>
+
+                    <div class="cr-field">
+                        <label for="id_mpesa_phone">M-Pesa Phone Number *</label>
+                        <input type="tel" name="mpesa_phone" id="id_mpesa_phone"
+                               class="form-control" placeholder="+254712345678"
+                               pattern="\+254\d{9}" maxlength="13"
+                               title="Format: +254XXXXXXXXX"
+                               style="width:100%;padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.92rem;background:#fafafa">
+                        <small style="color:#999;font-size:.78rem">The number that will receive the M-Pesa payment prompt</small>
+                    </div>
+
+                    <button type="button" id="stk-push-btn" class="cr-stk-btn">
+                        <i class="bi bi-phone"></i> Send M-Pesa Prompt
+                    </button>
+                    <div id="stk-status" class="cr-stk-status"></div>
+
+                    <div class="cr-divider">After payment, enter confirmation details below</div>
+
+                    <div class="cr-field">
+                        <label for="id_mpesa_code">M-Pesa Transaction Code</label>
+                        <input type="text" name="mpesa_reference" id="id_mpesa_code"
+                               class="form-control" placeholder="e.g. RIA7K8QX3P"
+                               maxlength="100"
+                               style="width:100%;padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.92rem;background:#fafafa;text-transform:uppercase">
+                        <small style="color:#999;font-size:.78rem">Enter the M-Pesa transaction code from your confirmation SMS</small>
+                    </div>
+                </div>
+
+                <!-- ── Bank Transfer Panel ── -->
+                <div class="cr-pay-panel" id="bank-panel">
+                    <div class="cr-mpesa-prompt" style="background:#e3f2fd;border-color:#90caf9">
+                        <h4 style="color:#1565C0"><i class="bi bi-bank"></i> Bank Transfer Details</h4>
+                        <p>Transfer <strong>KSh {{ registration_fee|floatformat:0 }}</strong> to the KYISA bank account shown above, then provide proof of payment below.</p>
+                    </div>
+
+                    <div class="cr-field">
+                        <label for="id_bank_reference">Bank Payment Reference</label>
+                        <input type="text" name="bank_reference" id="id_bank_reference"
+                               class="form-control" placeholder="Bank transfer reference code"
+                               maxlength="100"
+                               style="width:100%;padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.92rem;background:#fafafa">
+                        <small style="color:#999;font-size:.78rem">Reference code from your bank transfer receipt</small>
+                    </div>
+
+                    <div class="cr-field">
+                        <label for="id_bank_slip">Upload Bank Slip</label>
+                        <input type="file" name="bank_slip" id="id_bank_slip"
+                               accept="image/*,.pdf"
+                               style="width:100%;padding:.55rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.88rem;background:#fafafa">
+                        <small style="color:#999;font-size:.78rem">Upload a photo or PDF of the bank deposit slip</small>
+                    </div>
+                </div>
+
+                <!-- Payment amount -->
+                <div class="cr-field" style="margin-top:.5rem">
+                    <label for="id_payment_amount">Amount Paid (KSh) *</label>
+                    <input type="number" name="payment_amount" id="id_payment_amount"
+                           class="form-control" placeholder="{{ registration_fee|floatformat:0 }}"
+                           step="0.01" min="1"
+                           value="{{ registration_fee|floatformat:0 }}"
+                           style="width:100%;padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.92rem;background:#fafafa">
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="cr-errors">
+                {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="cr-info">
+                <i class="bi bi-envelope-check"></i>
+                <div>A secure temporary password will be generated and <strong>emailed</strong> to you. It will not be displayed on this page. Check your inbox (and spam) after registration.</div>
+            </div>
+
+            <div class="cr-info" style="background:#e8f5e9;border-color:#a5d6a7;color:#1b5e20">
+                <i class="bi bi-info-circle"></i>
+                <div>If you pay via <strong>M-Pesa STK Push</strong>, a payment prompt will be sent to your phone immediately after registration. You can also submit payment proof later from your portal dashboard.</div>
+            </div>
+
+            <button type="submit" class="cr-submit">
+                <i class="bi bi-check-circle"></i> Register & Submit Payment
+            </button>
+        </form>
+
+        <div class="cr-footer" style="color:#888;margin-top:1.5rem">
+            Already registered? <a href="{% url 'web_login' %}" style="color:#1B5E20">Log in to the portal</a>
+        </div>
+    </div>
+
+    <div class="cr-footer" style="margin-top:1.2rem">
+        <a href="{% url 'home' %}"><i class="bi bi-arrow-left"></i> Back to Home</a>
+    </div>
+</div>
+</section>
+
+<!-- Disable already-taken counties + Payment tab switching -->
+{{ taken_counties|json_script:"taken-counties-data" }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Disable already-taken counties
+    const taken = JSON.parse(document.getElementById('taken-counties-data').textContent);
+    const takenSet = new Set(taken);
+    const sel = document.getElementById('id_county');
+    if (sel) {
+        for (const opt of sel.options) {
+            if (opt.value && takenSet.has(opt.value)) {
+                opt.disabled = true;
+                opt.textContent += ' (registered)';
+                opt.style.color = '#aaa';
+            }
+        }
+    }
+
+    // ── Payment tab switching ──
+    window.switchPayTab = function(tab) {
+        document.querySelectorAll('.cr-pay-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.cr-pay-panel').forEach(function(p) { p.style.display = 'none'; });
+        document.getElementById('id_payment_method').value = tab;
+        if (tab === 'mpesa') {
+            document.querySelector('.cr-pay-tab:first-child').classList.add('active');
+            document.getElementById('mpesa-panel').style.display = 'block';
+        } else {
+            document.querySelector('.cr-pay-tab:last-child').classList.add('active');
+            document.getElementById('bank-panel').style.display = 'block';
+        }
+    };
+    // Initialize: show mpesa tab by default
+    switchPayTab('mpesa');
+
+    // ── M-Pesa STK Push trigger ──
+    const stkBtn = document.getElementById('stk-push-btn');
+    if (stkBtn) {
+        stkBtn.addEventListener('click', function() {
+            const phone = document.getElementById('id_mpesa_phone').value.trim();
+            const phoneRe = /^\+254\d{9}$/;
+            if (!phoneRe.test(phone)) {
+                alert('Enter a valid phone number in +254XXXXXXXXX format.');
+                return;
+            }
+            const statusEl = document.getElementById('stk-status');
+            stkBtn.disabled = true;
+            stkBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending prompt…';
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Sending M-Pesa payment prompt to ' + phone + '…';
+            statusEl.style.color = '#666';
+
+            fetch('{% url "mpesa_stk_push" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ phone: phone })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    statusEl.textContent = '✓ Payment prompt sent! Check your phone and enter the M-Pesa code below once payment completes.';
+                    statusEl.style.color = '#1B5E20';
+                    if (data.checkout_id) {
+                        let hidden = document.getElementById('id_mpesa_checkout_id');
+                        if (!hidden) {
+                            hidden = document.createElement('input');
+                            hidden.type = 'hidden';
+                            hidden.name = 'mpesa_checkout_id';
+                            hidden.id = 'id_mpesa_checkout_id';
+                            stkBtn.parentNode.appendChild(hidden);
+                        }
+                        hidden.value = data.checkout_id;
+                    }
+                } else {
+                    statusEl.textContent = '✗ ' + (data.error || 'Failed to send prompt. Please pay manually and enter the code.');
+                    statusEl.style.color = '#c62828';
+                }
+                stkBtn.disabled = false;
+                stkBtn.innerHTML = '<i class="bi bi-phone"></i> Send M-Pesa Prompt';
+            })
+            .catch(function() {
+                statusEl.textContent = '✗ Network error. Please pay manually and enter the M-Pesa code.';
+                statusEl.style.color = '#c62828';
+                stkBtn.disabled = false;
+                stkBtn.innerHTML = '<i class="bi bi-phone"></i> Send M-Pesa Prompt';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

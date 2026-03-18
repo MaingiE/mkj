@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}View Pre-Match Form{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3 mb-3">📋 PRE-MATCH MEETING FORM</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">View Pre-Match Form</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Match Details</h5>
+                        <span class="badge 
+                            {% if prematch_form.status == 'approved' %}bg-success
+                            {% elif prematch_form.status == 'rejected' %}bg-danger
+                            {% elif prematch_form.status == 'admin_approved' %}bg-info
+                            {% elif prematch_form.status == 'submitted' %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {{ prematch_form.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> {{ match.match_date|date:"l, F j, Y - H:i" }}</p>
+                            <p><strong>Teams:</strong> {{ match.home_team }} vs {{ match.away_team }}</p>
+                            <p><strong>Referee:</strong> {{ prematch_form.referee.full_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Match No:</strong> {{ match.id }}</p>
+                            <p><strong>Venue:</strong> {{ prematch_form.venue|default:"TBD" }}</p>
+                            <p><strong>Submitted:</strong> {{ prematch_form.submitted_at|date:"M j, Y H:i"|default:"Not yet" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if is_admin and prematch_form.status == 'submitted' %}
+                    <div class="mt-3">
+                        <a href="{% url 'referees:admin_approve_prematch_form' prematch_form.id %}" class="btn btn-success">
+                            <i class="fas fa-check"></i> Review & Approve (Admin)
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if is_manager and prematch_form.status == 'admin_approved' %}
+                    <div class="mt-3">
+                        <a href="{% url 'referees:manager_approve_prematch_form' prematch_form.id %}" class="btn btn-success">
+                            <i class="fas fa-check"></i> Review & Approve (Manager)
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Display form data in read-only format -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Form Details</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Match Officials</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Match Commissioner:</strong></td>
+                            <td>{{ prematch_form.match_commissioner_name }} - {{ prematch_form.match_commissioner_license }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Centre Referee:</strong></td>
+                            <td>{{ prematch_form.centre_referee_name }} - {{ prematch_form.centre_referee_license }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Assistant 1:</strong></td>
+                            <td>{{ prematch_form.asst1_referee_name }} - {{ prematch_form.asst1_referee_license }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Assistant 2:</strong></td>
+                            <td>{{ prematch_form.asst2_referee_name }} - {{ prematch_form.asst2_referee_license }}</td>
+                        </tr>
+                    </table>
+                    
+                    <h6 class="mt-4">Team Officials - Home</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Head Coach:</strong></td>
+                            <td>{{ prematch_form.home_head_coach }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Team Manager:</strong></td>
+                            <td>{{ prematch_form.home_team_manager }}</td>
+                        </tr>
+                    </table>
+                    
+                    <h6 class="mt-4">Team Officials - Away</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Head Coach:</strong></td>
+                            <td>{{ prematch_form.away_head_coach }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Team Manager:</strong></td>
+                            <td>{{ prematch_form.away_team_manager }}</td>
+                        </tr>
+                    </table>
+                    
+                    <h6 class="mt-4">Uniforms</h6>
+                    <p><strong>Home GK:</strong> {{ prematch_form.home_gk_shirt_color }}</p>
+                    <p><strong>Away GK:</strong> {{ prematch_form.away_gk_shirt_color }}</p>
+                    
+                    <h6 class="mt-4">Medical & Security</h6>
+                    <p><strong>Doctor Available:</strong> {{ prematch_form.doctor_available|yesno:"Yes,No" }}</p>
+                    <p><strong>Ambulance Available:</strong> {{ prematch_form.ambulance_available|yesno:"Yes,No" }}</p>
+                    <p><strong>Security Entrance:</strong> {{ prematch_form.security_entrance|yesno:"Yes,No" }}</p>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                {% if is_main_referee and not prematch_form.is_locked %}
+                <a href="{% url 'referees:submit_prematch_form' match.id %}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Form
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Opponent Team List &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'team_manager_dashboard' %}">Team Manager</a>
+        <span>Opponent View</span>
+    </div>
+    <h1><i class="bi bi-eye"></i> Opponent Team List</h1>
+    <p>{{ fixture.home_team.name }} vs {{ fixture.away_team.name }} &mdash; {{ fixture.match_date|date:"d M Y, H:i" }}</p>
+</div>
+
+<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.5rem"><i class="bi bi-check-circle"></i></span>
+    <div>
+        <strong style="color:#1B5E20">Both Squads Approved</strong>
+        <div style="font-size:.88rem;color:#555">The referee has approved both squads. You can now view the opponent starting players for confirmation and possible appeals.</div>
+    </div>
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-people"></i> {{ opponent.name }} — Starting Players</h2>
+
+    <!-- Starters -->
+    <h3 style="font-size:.95rem;color:#1B5E20;margin-bottom:.6rem"><i class="bi bi-star"></i> Starting XI</h3>
+    <div style="overflow-x:auto;margin-bottom:1.5rem">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+            <thead>
+                <tr style="background:#e8f5e9;text-align:left">
+                    <th style="padding:.5rem .8rem">Shirt</th>
+                    <th style="padding:.5rem .8rem">Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in opp_players %}
+                {% if sp.is_starter %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem .8rem;font-weight:700">#{{ sp.shirt_number }}</td>
+                    <td style="padding:.5rem .8rem;font-weight:600">{{ sp.player.first_name }} {{ sp.player.last_name }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'team_manager_dashboard' %}" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

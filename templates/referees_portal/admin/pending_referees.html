@@ -1,0 +1,225 @@
+<!-- templates/referees/admin/pending_referees.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pending Referee Applications{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Pending Referee Applications</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">👥 Pending Referee Applications</h1>
+            <p class="mb-0">Review and approve new referee registrations</p>
+        </div>
+        <div>
+            <a href="{% url 'referees:all_referees' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>All Referees
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Pending Applications</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_referees|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Approved Referees</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ approved_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Rejected Applications</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ rejected_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Applications Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Pending Applications ({{ pending_referees|length }})</h6>
+        </div>
+        <div class="card-body">
+            {% if pending_referees %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>FKF Number</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Specialization</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for referee in pending_referees %}
+                        <tr>
+                            <td class="text-center">
+                                {% if referee.photo %}
+                                <img src="{{ referee.photo.url }}" alt="{{ referee.full_name }}" 
+                                     class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white">{{ referee.first_name|first }}{{ referee.last_name|first }}</span>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ referee.full_name }}</strong><br>
+                                <small class="text-muted">ID: {{ referee.id_number|default:"Not provided" }}</small>
+                            </td>
+                            <td>{{ referee.fkf_number }}</td>
+                            <td>{{ referee.email }}</td>
+                            <td>{{ referee.phone_number|default:"-" }}</td>
+                            <td>
+                                {% if referee.specialization %}
+                                    <span class="badge bg-info">{{ referee.get_specialization_display }}</span>
+                                {% else %}
+                                    <span class="text-muted small">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ referee.date_joined|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'referees:approve_referee' referee.id %}" 
+                                       class="btn btn-success" title="Approve">
+                                        <i class="fas fa-check"></i> Approve
+                                    </a>
+                                    <a href="{% url 'referees:reject_referee' referee.id %}" 
+                                       class="btn btn-danger" title="Reject">
+                                        <i class="fas fa-times"></i> Reject
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h4 class="text-success">No Pending Applications</h4>
+                <p class="text-muted">All referee applications have been processed.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">📋 Approval Instructions</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>✅ Approve Referee:</h6>
+                    <ul>
+                        <li>Check FKF number validity</li>
+                        <li>Verify email address</li>
+                        <li>Review provided information</li>
+                        <li>System will auto-generate login credentials</li>
+                        <li>Referee will be notified via email</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>❌ Reject Referee:</h6>
+                    <ul>
+                        <li>Provide clear rejection reason</li>
+                        <li>Check for duplicate applications</li>
+                        <li>Verify license expiration</li>
+                        <li>Referee will be notified via email</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+
+<!-- DataTables JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "order": [[5, "desc"]],
+        "pageLength": 25,
+        "language": {
+            "search": "Search referee:",
+            "lengthMenu": "Show _MENU_ entries",
+            "info": "Showing _START_ to _END_ of _TOTAL_ applications"
+        }
+    });
+});
+</script>
+
+<style>
+.card {
+    border-radius: 10px;
+}
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fc;
+}
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

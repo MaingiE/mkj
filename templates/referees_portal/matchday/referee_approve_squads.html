@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Approve Matchday Squads - {{ match }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_squad_approval_list' %}">Squad Approvals</a></li>
+                    <li class="breadcrumb-item active">{{ match }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Match Info Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-futbol me-2"></i>{{ match.home_team }} vs {{ match.away_team }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Date:</strong> {{ match.match_date|date:"F d, Y" }}</p>
+                            <p class="mb-1"><strong>Kick-off:</strong> {{ match.kickoff_time|time:"H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Venue:</strong> {{ match.venue|default:"TBD" }}</p>
+                            <p class="mb-1"><strong>Round:</strong> {{ match.round_number|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Squad Approval Status -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="alert {% if home_squad.status == 'approved' %}alert-success{% elif home_squad.status == 'submitted' %}alert-warning{% else %}alert-secondary{% endif %}">
+                <strong>{{ match.home_team }} Status:</strong> 
+                <span class="badge {% if home_squad.status == 'approved' %}bg-success{% elif home_squad.status == 'submitted' %}bg-warning{% else %}bg-secondary{% endif %}">
+                    {{ home_squad.get_status_display }}
+                </span>
+                {% if home_squad.submitted_at %}
+                    <small class="d-block mt-1">Submitted: {{ home_squad.submitted_at|date:"M d, H:i" }}</small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="alert {% if away_squad.status == 'approved' %}alert-success{% elif away_squad.status == 'submitted' %}alert-warning{% else %}alert-secondary{% endif %}">
+                <strong>{{ match.away_team }} Status:</strong> 
+                <span class="badge {% if away_squad.status == 'approved' %}bg-success{% elif away_squad.status == 'submitted' %}bg-warning{% else %}bg-secondary{% endif %}">
+                    {{ away_squad.get_status_display }}
+                </span>
+                {% if away_squad.submitted_at %}
+                    <small class="d-block mt-1">Submitted: {{ away_squad.submitted_at|date:"M d, H:i" }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="approvalForm">
+        {% csrf_token %}
+        <input type="hidden" name="team" value="">
+        
+        <!-- Side-by-Side Squad Display -->
+        <div class="row">
+            <!-- HOME TEAM -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-home me-2"></i>{{ match.home_team }}
+                            {% if home_squad.status == 'submitted' %}
+                                <button type="submit" class="btn btn-sm btn-light float-end" 
+                                        name="action" value="approve_team"
+                                        onclick="document.querySelector('input[name=team]').value='home'; return confirm('Approve {{ match.home_team }} squad?');">
+                                    <i class="fas fa-check-double me-1"></i>Approve Home Team
+                                </button>
+                            {% elif home_squad.status == 'approved' %}
+                                <span class="badge bg-light text-success float-end">
+                                    <i class="fas fa-check-circle me-1"></i>Approved
+                                </span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Starting XI -->
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-star me-1"></i>Starting XI ({{ home_starting|length }}/11)
+                        </h6>
+                        <div class="list-group mb-4">
+                            {% for squad_player in home_starting %}
+                            <div class="list-group-item {% if squad_player.is_approved %}list-group-item-success{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    {% if home_squad.status == 'submitted' %}
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input player-checkbox" type="checkbox" 
+                                               name="approve_players" value="{{ squad_player.id }}"
+                                               {% if squad_player.is_approved %}checked disabled{% endif %}>
+                                    </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-dark me-2" style="font-size: 1rem; min-width: 45px;">
+                                                #{{ squad_player.player.jersey_number|default:squad_player.jersey_number }}
+                                            </span>
+                                            <div>
+                                                <strong>{{ squad_player.player.full_name }}</strong>
+                                                {% if squad_player.player.position == 'GK' %}
+                                                    <span class="badge bg-info ms-1">GK</span>
+                                                {% endif %}
+                                                {% if squad_player.is_captain %}
+                                                    <span class="badge bg-warning text-dark ms-1">C</span>
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-id-card me-1"></i>
+                                                    FKF: {{ squad_player.player.fkf_license_number|default:"Not provided" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if squad_player.is_approved %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item text-muted">
+                                <i class="fas fa-info-circle me-1"></i>No starting players submitted
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Substitutes -->
+                        <h6 class="text-secondary border-bottom pb-2 mb-3">
+                            <i class="fas fa-exchange-alt me-1"></i>Substitutes ({{ home_subs|length }}/14)
+                        </h6>
+                        <div class="list-group">
+                            {% for squad_player in home_subs %}
+                            <div class="list-group-item {% if squad_player.is_approved %}list-group-item-success{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    {% if home_squad.status == 'submitted' %}
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input player-checkbox" type="checkbox" 
+                                               name="approve_players" value="{{ squad_player.id }}"
+                                               {% if squad_player.is_approved %}checked disabled{% endif %}>
+                                    </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-secondary me-2" style="font-size: 1rem; min-width: 45px;">
+                                                #{{ squad_player.player.jersey_number|default:squad_player.jersey_number }}
+                                            </span>
+                                            <div>
+                                                <strong>{{ squad_player.player.full_name }}</strong>
+                                                {% if squad_player.player.position == 'GK' %}
+                                                    <span class="badge bg-info ms-1">GK</span>
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-id-card me-1"></i>
+                                                    FKF: {{ squad_player.player.fkf_license_number|default:"Not provided" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if squad_player.is_approved %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item text-muted">
+                                <i class="fas fa-info-circle me-1"></i>No substitute players submitted
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AWAY TEAM -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plane me-2"></i>{{ match.away_team }}
+                            {% if away_squad.status == 'submitted' %}
+                                <button type="submit" class="btn btn-sm btn-light float-end" 
+                                        name="action" value="approve_team"
+                                        onclick="document.querySelector('input[name=team]').value='away'; return confirm('Approve {{ match.away_team }} squad?');">
+                                    <i class="fas fa-check-double me-1"></i>Approve Away Team
+                                </button>
+                            {% elif away_squad.status == 'approved' %}
+                                <span class="badge bg-light text-success float-end">
+                                    <i class="fas fa-check-circle me-1"></i>Approved
+                                </span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Starting XI -->
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-star me-1"></i>Starting XI ({{ away_starting|length }}/11)
+                        </h6>
+                        <div class="list-group mb-4">
+                            {% for squad_player in away_starting %}
+                            <div class="list-group-item {% if squad_player.is_approved %}list-group-item-success{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    {% if away_squad.status == 'submitted' %}
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input player-checkbox" type="checkbox" 
+                                               name="approve_players" value="{{ squad_player.id }}"
+                                               {% if squad_player.is_approved %}checked disabled{% endif %}>
+                                    </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-dark me-2" style="font-size: 1rem; min-width: 45px;">
+                                                #{{ squad_player.player.jersey_number|default:squad_player.jersey_number }}
+                                            </span>
+                                            <div>
+                                                <strong>{{ squad_player.player.full_name }}</strong>
+                                                {% if squad_player.player.position == 'GK' %}
+                                                    <span class="badge bg-info ms-1">GK</span>
+                                                {% endif %}
+                                                {% if squad_player.is_captain %}
+                                                    <span class="badge bg-warning text-dark ms-1">C</span>
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-id-card me-1"></i>
+                                                    FKF: {{ squad_player.player.fkf_license_number|default:"Not provided" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if squad_player.is_approved %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item text-muted">
+                                <i class="fas fa-info-circle me-1"></i>No starting players submitted
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Substitutes -->
+                        <h6 class="text-secondary border-bottom pb-2 mb-3">
+                            <i class="fas fa-exchange-alt me-1"></i>Substitutes ({{ away_subs|length }}/14)
+                        </h6>
+                        <div class="list-group">
+                            {% for squad_player in away_subs %}
+                            <div class="list-group-item {% if squad_player.is_approved %}list-group-item-success{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    {% if away_squad.status == 'submitted' %}
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input player-checkbox" type="checkbox" 
+                                               name="approve_players" value="{{ squad_player.id }}"
+                                               {% if squad_player.is_approved %}checked disabled{% endif %}>
+                                    </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-secondary me-2" style="font-size: 1rem; min-width: 45px;">
+                                                #{{ squad_player.player.jersey_number|default:squad_player.jersey_number }}
+                                            </span>
+                                            <div>
+                                                <strong>{{ squad_player.player.full_name }}</strong>
+                                                {% if squad_player.player.position == 'GK' %}
+                                                    <span class="badge bg-info ms-1">GK</span>
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-id-card me-1"></i>
+                                                    FKF: {{ squad_player.player.fkf_license_number|default:"Not provided" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if squad_player.is_approved %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item text-muted">
+                                <i class="fas fa-info-circle me-1"></i>No substitute players submitted
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a href="{% url 'referees:referee_squad_approval_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to List
+                </a>
+                
+                {% if home_squad.status == 'submitted' or away_squad.status == 'submitted' %}
+                <button type="submit" class="btn btn-success btn-lg" name="action" value="approve_both"
+                        onclick="return confirm('Approve all submitted squads and populate match report?')">
+                    <i class="fas fa-check-double me-1"></i>Approve Submitted Teams
+                </button>
+                {% endif %}
+                
+                {% if home_squad.status == 'approved' and away_squad.status == 'approved' %}
+                <a href="{% url 'referees:submit_comprehensive_report' match.id %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-file-alt me-1"></i>Go to Match Report
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle "Approve All" buttons
+    document.querySelectorAll('.approve-all-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const team = this.getAttribute('data-team');
+            const teamCard = this.closest('.card');
+            const checkboxes = teamCard.querySelectorAll('.player-checkbox:not(:disabled)');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+            });
+            
+            // Show confirmation message
+            const count = checkboxes.length;
+            if (count > 0 && confirm(`Approve all ${count} players for this team?`)) {
+                document.getElementById('approvalForm').submit();
+            }
+        });
+    });
+
+    // Track selection count
+    const form = document.getElementById('approvalForm');
+    const checkboxes = form.querySelectorAll('.player-checkbox:not(:disabled)');
+    
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const selectedCount = form.querySelectorAll('.player-checkbox:checked:not(:disabled)').length;
+            console.log(`Selected ${selectedCount} players for approval`);
+        });
+    });
+});
+</script>
+{% endblock %}

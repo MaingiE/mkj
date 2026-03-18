@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}My Competitions &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dc-hero {
+        background: linear-gradient(135deg, #00695C 0%, #00897B 50%, #26A69A 100%);
+        border-radius: 16px; padding: 1.5rem 2rem; color: #fff; margin-bottom: 1.5rem;
+    }
+    .dc-hero h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: .2rem; }
+    .dc-hero p { opacity: .85; font-size: .9rem; }
+    .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .filter-bar .btn { font-size: .8rem; padding: .35rem .8rem; border-radius: 8px; }
+    .comp-card {
+        background: #fff; border-radius: 12px; padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 1rem;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem;
+    }
+    .comp-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .comp-card h4 { font-size: 1rem; font-weight: 600; margin: 0; }
+    .comp-card .meta { font-size: .8rem; color: #757575; }
+    .comp-badge {
+        font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dc-hero">
+    <h1><i class="bi bi-trophy"></i> {{ discipline_label }} — Competitions</h1>
+    <p>All competitions for your discipline</p>
+</div>
+
+<div class="filter-bar">
+    <a href="{% url 'coordinator_competitions' %}" class="btn {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+    {% for val, label in status_choices %}
+    <a href="{% url 'coordinator_competitions' %}?status={{ val }}" class="btn {% if current_status == val %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</a>
+    {% endfor %}
+</div>
+
+{% if competitions %}
+    {% for comp in competitions %}
+    <div class="comp-card">
+        <div>
+            <h4><a href="{% url 'coordinator_competition_manage' pk=comp.pk %}" style="color:#212121;text-decoration:none;">{{ comp.name }}</a></h4>
+            <div class="meta">
+                {{ comp.get_sport_type_display }} &middot; {{ comp.get_age_group_display }} &middot;
+                {{ comp.start_date|date:"d M Y" }} — {{ comp.end_date|date:"d M Y" }}
+            </div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+            <span class="comp-badge" style="background:#E0F2F1;color:#00695C;">{{ comp.get_status_display }}</span>
+            <a href="{% url 'coordinator_competition_manage' pk=comp.pk %}" class="btn btn-sm btn-outline-primary">Manage</a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div style="text-align:center;padding:3rem;color:#999;">
+        <i class="bi bi-trophy" style="font-size:3rem;opacity:.3;"></i>
+        <p>No competitions found for your discipline.</p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Change Role: {{ edit_user.get_full_name }} - KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .er-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .user-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem 1.5rem; }
+    .ui-field { margin-bottom: .6rem; }
+    .ui-field .label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: #757575;
+        margin-bottom: .1rem;
+    }
+    .ui-field .value { font-weight: 600; font-size: .92rem; color: #212121; }
+    .role-option {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        padding: .7rem .9rem;
+        border: 2px solid #E0E0E0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all .2s ease;
+        margin-bottom: .5rem;
+    }
+    .role-option:hover { border-color: #4CAF50; background: #FAFAFA; }
+    .role-option.selected {
+        border-color: #1B5E20;
+        background: #E8F5E9;
+    }
+    .role-option input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #1B5E20;
+        flex-shrink: 0;
+    }
+    .role-option .role-name {
+        font-weight: 600;
+        font-size: .92rem;
+        color: #212121;
+    }
+    .role-option .role-desc {
+        font-size: .78rem;
+        color: #757575;
+        line-height: 1.3;
+    }
+    @media (max-width: 768px) {
+        .er-grid { grid-template-columns: 1fr; }
+        .user-info-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'manage_league_admins' %}">User Management</a>
+        <a href="{% url 'user_detail' user_id=edit_user.id %}">{{ edit_user.get_full_name }}</a>
+        <span>Change Role</span>
+    </div>
+    <h1>Change User Role</h1>
+</div>
+
+<div class="er-grid">
+    <!-- User Info -->
+    <div class="card">
+        <div class="card-header" style="background:#E3F2FD;">
+            <h3>User Information</h3>
+        </div>
+        <div class="card-body">
+            <div class="user-info-grid">
+                <div class="ui-field">
+                    <div class="label">Full Name</div>
+                    <div class="value">{{ edit_user.get_full_name }}</div>
+                </div>
+                <div class="ui-field">
+                    <div class="label">Email</div>
+                    <div class="value">{{ edit_user.email }}</div>
+                </div>
+                <div class="ui-field">
+                    <div class="label">Current Role</div>
+                    <div class="value">
+                        <span style="display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.82rem;font-weight:600;
+                            {% if edit_user.role == 'admin' %}background:#E3F2FD;color:#1565C0;
+                            {% elif edit_user.role == 'competition_manager' %}background:#F3E5F5;color:#6A1B9A;
+                            {% elif edit_user.role == 'coordinator' %}background:#FFF3E0;color:#E65100;
+                            {% elif edit_user.role == 'referee' %}background:#E8F5E9;color:#1B5E20;
+                            {% elif edit_user.role == 'team_manager' %}background:#FCE4EC;color:#AD1457;
+                            {% elif edit_user.role == 'treasurer' %}background:#FFF8E1;color:#F57F17;
+                            {% else %}background:#ECEFF1;color:#455A64;{% endif %}">
+                            {{ edit_user.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="ui-field">
+                    <div class="label">Status</div>
+                    <div class="value">
+                        {% if edit_user.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}
+                        {% if edit_user.is_staff %}<span class="badge badge-warning" style="margin-left:.2rem;">Staff</span>{% endif %}
+                    </div>
+                </div>
+                <div class="ui-field">
+                    <div class="label">Joined</div>
+                    <div class="value">{{ edit_user.date_joined|date:"d M Y" }}</div>
+                </div>
+                <div class="ui-field">
+                    <div class="label">Last Login</div>
+                    <div class="value">
+                        {% if edit_user.last_login %}{{ edit_user.last_login|date:"d M Y H:i" }}{% else %}<span style="color:#bbb;">Never</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Selection -->
+    <div class="card">
+        <div class="card-header" style="background:#FFF3E0;">
+            <h3>Select New Role</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <p style="color:#757575;font-size:.88rem;margin-bottom:1rem;">
+                    Choose the role for this user. This immediately changes what they can access.
+                </p>
+
+                {% for value, label in role_choices %}
+                <label class="role-option {% if edit_user.role == value %}selected{% endif %}" id="ro-{{ value }}">
+                    <input type="radio" name="role" value="{{ value }}"
+                           {% if edit_user.role == value %}checked{% endif %}
+                           onchange="document.querySelectorAll('.role-option').forEach(e=>e.classList.remove('selected'));document.getElementById('ro-{{ value }}').classList.add('selected');">
+                    <div>
+                        <div class="role-name">{{ label }}</div>
+                        <div class="role-desc">
+                            {% if value == 'admin' %}Full system control, all management features
+                            {% elif value == 'competition_manager' %}Create and manage competitions, fixtures, teams
+                            {% elif value == 'coordinator' %}Manage discipline competitions, appoint referees, review match reports
+                            {% elif value == 'verification_officer' %}Verify county player registrations and documents
+                            {% elif value == 'referee' %}Accept appointments, submit match reports
+                            {% elif value == 'team_manager' %}Manage team players, squads, transfers
+                            {% elif value == 'county_sports_admin' %}County registration, add disciplines and players
+                            {% elif value == 'treasurer' %}Verify payments, approve team and county registrations
+                            {% elif value == 'jury_chair' %}Handle appeals, schedule hearings, publish decisions
+                            {% elif value == 'media_manager' %}Manage news articles, photo albums, and videos
+                            {% elif value == 'secretary_general' %}Oversight, audit reports, verification review
+                            {% elif value == 'scout' %}Talent scouting, player shortlists and notes
+                            {% else %}{{ label }} role{% endif %}
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+
+                <div class="alert alert-warning" style="margin-top:1rem;margin-bottom:1.25rem;">
+                    <strong>Warning:</strong> Changing the role will immediately affect what this user can see and do.
+                    {% if edit_user.role == 'referee' %}
+                    <br><span style="color:#C62828;">Moving away from Referee preserves their profile but removes access to referee features.</span>
+                    {% endif %}
+                </div>
+
+                <!-- Discipline assignment for Scout / Coordinator -->
+                <div id="discipline-section" style="display:none;margin-bottom:1.25rem;padding:1rem;background:#F5F5F5;border-radius:10px;border:1px solid #E0E0E0;">
+                    <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:.5rem;">
+                        <i class="bi bi-bullseye"></i> Assigned Discipline
+                    </label>
+                    <p style="color:#757575;font-size:.82rem;margin-bottom:.6rem;">
+                        Scouts and Coordinators are scoped to a specific sport discipline. Players and competitions will be filtered accordingly.
+                    </p>
+                    <select name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
+                        <option value="">— Not Assigned —</option>
+                        {% for val, label in sport_type_choices %}
+                        <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:flex;gap:.8rem;">
+                    <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Change role for {{ edit_user.email }}?')">
+                        Save Role Change
+                    </button>
+                    <a href="{% url 'user_detail' user_id=edit_user.id %}" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDisciplineSection() {
+    var checked = document.querySelector('input[name="role"]:checked');
+    var section = document.getElementById('discipline-section');
+    if (checked && (checked.value === 'scout' || checked.value === 'coordinator')) {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+}
+document.querySelectorAll('input[name="role"]').forEach(function(r) {
+    r.addEventListener('change', toggleDisciplineSection);
+});
+toggleDisciplineSection();
+</script>
+{% endblock %}

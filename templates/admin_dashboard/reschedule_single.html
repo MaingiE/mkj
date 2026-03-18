@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Reschedule Match - Admin Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">Reschedule Match</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5>{{ match.home_team }} vs {{ match.away_team }}</h5>
+                <p><strong>Current Date:</strong> {{ match.match_date|date:'M d, Y' }}<br>
+                    <strong>Current Time:</strong> {{ match.match_date|time:'H:i' }}<br>
+                    <strong>Kickoff Time:</strong> {{ match.kickoff_time }}<br>
+                    <strong>Venue:</strong> {{ match.venue }}</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="new_date" class="form-label">New Date</label>
+                    <input type="date" class="form-control" id="new_date" name="new_date" required>
+                </div>
+                <div class="mb-3">
+                    <label for="new_kickoff_time" class="form-label">Kickoff Time</label>
+                    <input type="time" class="form-control" id="new_kickoff_time" name="new_kickoff_time" value="{{ match.kickoff_time }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="new_round" class="form-label">Round</label>
+                    <select class="form-control" id="new_round" name="new_round" required>
+                        {% for r in rounds %}
+                            <option value="{{ r }}" {% if match.round_number == r %}selected{% endif %}>Round {{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-warning">Reschedule</button>
+                <a href="{% url 'reschedule_fixtures_admin' %}" class="btn btn-secondary ms-2">Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}{{ competition.name }}{% endblock %}
+
+{% block content %}
+
+<!-- ── PAGE HERO ───────────────────────────────────────────────────────────── -->
+<section class="hero" style="padding:3rem 2rem;">
+    <div class="hero-content">
+        <h1>{{ competition.name }}</h1>
+        <h2>{{ competition.description|default:"KYISA Intercounty Competition" }}</h2>
+    </div>
+</section>
+
+<!-- ── COMPETITION INFO ───────────────────────────────────────────────────── -->
+<section class="section">
+    <div class="container">
+        <div class="grid-2">
+            <!-- Details -->
+            <div class="card">
+                <div class="card-header"><h3>Competition Details</h3></div>
+                <div class="card-body">
+                    <table>
+                        <tr><td style="font-weight:600;width:40%;">Status</td>
+                            <td>
+                                {% if competition.status == 'active' %}
+                                    <span class="badge badge-success">Active</span>
+                                {% elif competition.status == 'upcoming' %}
+                                    <span class="badge badge-info">Upcoming</span>
+                                {% elif competition.status == 'completed' %}
+                                    <span class="badge badge-gray">Completed</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ competition.status|title }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr><td style="font-weight:600;">Start Date</td><td>{{ competition.start_date|date:"d M Y" }}</td></tr>
+                        <tr><td style="font-weight:600;">End Date</td><td>{{ competition.end_date|date:"d M Y"|default:"—" }}</td></tr>
+                        <tr><td style="font-weight:600;">Teams</td><td>{{ teams.count }}</td></tr>
+                        <tr><td style="font-weight:600;">Fixtures</td><td>{{ fixtures.count }}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Teams -->
+            <div class="card">
+                <div class="card-header"><h3>Participating Teams</h3></div>
+                <div class="card-body">
+                    {% if teams %}
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr><th>#</th><th>Team</th><th>County</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for team in teams %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ team.name }}</strong></td>
+                                    <td>{{ team.county|default:"—" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No teams registered yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── FIXTURES / RESULTS ─────────────────────────────────────────────────── -->
+<section class="section section-alt">
+    <div class="container">
+        <div class="section-header">
+            <h2>Fixtures & Results</h2>
+            <div class="line"></div>
+        </div>
+
+        {% if fixtures %}
+        <div class="grid-3">
+            {% for fixture in fixtures %}
+            <div class="match-card">
+                <div class="match-card-header">
+                    <span>{{ fixture.get_status_display|default:fixture.status|title }}</span>
+                    <span>{{ fixture.match_date|date:"d M Y" }}</span>
+                </div>
+                <div class="match-card-body">
+                    <div class="match-team">
+                        <div class="badge-icon">🛡️</div>
+                        <h4>{{ fixture.home_team.name }}</h4>
+                    </div>
+                    {% if fixture.status == 'completed' %}
+                    <div class="match-score">{{ fixture.home_score|default:"0" }} - {{ fixture.away_score|default:"0" }}</div>
+                    {% else %}
+                    <div class="match-vs">VS</div>
+                    {% endif %}
+                    <div class="match-team">
+                        <div class="badge-icon">🛡️</div>
+                        <h4>{{ fixture.away_team.name }}</h4>
+                    </div>
+                </div>
+                <div class="match-card-footer">
+                    <span>📍 {{ fixture.venue.name|default:"TBD" }}</span>
+                    <span>🕐 {{ fixture.match_date|date:"H:i" }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📅</div>
+            <h3>No Fixtures Scheduled</h3>
+            <p>Fixtures will appear here once the competition schedule is set.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section">
+    <div class="container" style="text-align:center;">
+        <a href="{% url 'public_competitions' %}" class="btn btn-outline">← Back to Competitions</a>
+    </div>
+</section>
+
+{% endblock %}

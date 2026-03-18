@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Competition Rules &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-file-earmark-text"></i> Competition Rules</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Competition Rules &amp; Criteria</label>
+                <textarea name="rules" class="form-control" rows="15" placeholder="Enter the rules, criteria, and regulations for this competition…">{{ competition.rules }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Save Rules</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

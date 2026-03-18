@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Team Registrations — Treasurer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'treasurer_dashboard' %}">Treasurer</a>
+        <span>Team Registrations</span>
+    </div>
+    <h1>⚽ Team Registrations</h1>
+    <p>Confirm payments and approve teams so they can log in and add players.</p>
+</div>
+
+<!-- Fee notice -->
+<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem">
+    <span style="font-size:2rem">💳</span>
+    <div>
+        <strong style="color:#1b5e20">One-Time County Registration Fee: KSh {{ registration_fee|floatformat:0 }}</strong>
+        <div style="font-size:.83rem;color:#555">This is a one-time fee per county. Confirm that the exact amount has been received before approving any team.</div>
+    </div>
+</div>
+
+<!-- Stats row -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem">
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #f57c00">
+        <div style="font-size:2rem;font-weight:800;color:#f57c00">{{ unpaid_count }}</div>
+        <div style="color:#888;font-size:.82rem">Awaiting Payment</div>
+    </div>
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #1565c0">
+        <div style="font-size:2rem;font-weight:800;color:#1565c0">{{ paid_count }}</div>
+        <div style="color:#888;font-size:.82rem">Ready to Approve</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 1 — STEP: Confirm Payment
+     ═══════════════════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:2rem">
+    <div class="card-header" style="background:#fff3e0;border-left:4px solid #f57c00">
+        <h3 style="color:#e65100">⏳ Step 1 — Confirm Payment ({{ unpaid_count }})</h3>
+        <p style="margin:0;font-size:.85rem;color:#888">Enter the M-Pesa or bank reference for each team after verifying their payment.</p>
+    </div>
+    <div class="card-body">
+        {% if unpaid_teams %}
+        {% for team in unpaid_teams %}
+        <div class="card" style="margin-bottom:1rem;border:1px solid #ffe0b2">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;padding:1rem 1.25rem">
+                <div>
+                    <strong style="font-size:1.05rem">{{ team.name }}</strong>
+                    <div style="font-size:.82rem;color:#666;margin-top:.2rem">
+                        📍 {{ team.county }}
+                        {% if team.contact_email %} &nbsp;·&nbsp; ✉️ {{ team.contact_email }}{% endif %}
+                        {% if team.contact_phone %} &nbsp;·&nbsp; 📞 {{ team.contact_phone }}{% endif %}
+                    </div>
+                    <div style="font-size:.78rem;color:#aaa;margin-top:.15rem">Registered: {{ team.registered_at|date:"d M Y H:i" }}</div>
+                </div>
+                <span style="background:#fff3e0;color:#e65100;padding:.3rem .8rem;border-radius:20px;font-size:.78rem;font-weight:600">⏳ Payment Pending</span>
+            </div>
+            <!-- Confirm payment form -->
+            <form method="post" style="display:flex;align-items:flex-end;gap:.75rem;flex-wrap:wrap;padding:.75rem 1.25rem 1rem;background:#fafafa;border-top:1px solid #f0e0cc">
+                {% csrf_token %}
+                <input type="hidden" name="team_id" value="{{ team.pk }}">
+                <input type="hidden" name="action" value="confirm_payment">
+                <div style="flex:1;min-width:180px">
+                    <label style="font-size:.78rem;font-weight:600;display:block;margin-bottom:.3rem">M-Pesa / Reference No. *</label>
+                    <input type="text" name="payment_reference" placeholder="e.g. QHX2KXPLO1" required
+                           style="width:100%;padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;font-size:.9rem">
+                </div>
+                <div style="width:140px">
+                    <label style="font-size:.78rem;font-weight:600;display:block;margin-bottom:.3rem">Amount (KSh)</label>
+                    <input type="number" name="payment_amount" value="{{ registration_fee }}" step="0.01" min="0"
+                           style="width:100%;padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;font-size:.9rem">
+                    <small style="font-size:.72rem;color:#888">Standard: KSh {{ registration_fee|floatformat:0 }}</small>
+                </div>
+                <button type="submit" class="btn btn--primary" style="padding:.55rem 1.2rem">
+                    ✅ Confirm Payment
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No teams awaiting payment confirmation.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 2 — STEP: Approve (payment already confirmed)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="card">
+    <div class="card-header" style="background:#e8f5e9;border-left:4px solid #2e7d32">
+        <h3 style="color:#1b5e20">✅ Step 2 — Approve Teams ({{ paid_count }})</h3>
+        <p style="margin:0;font-size:.85rem;color:#888">Payment confirmed. Click Approve to register the team and create their manager login.</p>
+    </div>
+    <div class="card-body">
+        {% if paid_teams %}
+        {% for team in paid_teams %}
+        <div class="card" style="margin-bottom:1rem;border:1px solid #c8e6c9">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;padding:1rem 1.25rem">
+                <div>
+                    <strong style="font-size:1.05rem">{{ team.name }}</strong>
+                    <div style="font-size:.82rem;color:#666;margin-top:.2rem">
+                        📍 {{ team.county }}
+                        {% if team.contact_email %} &nbsp;·&nbsp; ✉️ {{ team.contact_email }}{% endif %}
+                        {% if team.contact_phone %} &nbsp;·&nbsp; 📞 {{ team.contact_phone }}{% endif %}
+                    </div>
+                    <div style="font-size:.82rem;color:#2e7d32;margin-top:.3rem;font-weight:600">
+                        💳 Payment Ref: <code>{{ team.payment_reference }}</code>
+                        {% if team.payment_amount %} &nbsp;·&nbsp; KSh {{ team.payment_amount|floatformat:0 }}{% endif %}
+                        {% if team.payment_confirmed_at %} &nbsp;·&nbsp; {{ team.payment_confirmed_at|date:"d M Y H:i" }}{% endif %}
+                    </div>
+                </div>
+                <!-- Approve / Reject buttons -->
+                <div style="display:flex;gap:.5rem;flex-shrink:0">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="team_id" value="{{ team.pk }}">
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn--primary" style="padding:.5rem 1.1rem"
+                                onclick="return confirm('Approve {{ team.name }} and create manager login?')">
+                            ✅ Approve
+                        </button>
+                    </form>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="team_id" value="{{ team.pk }}">
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn" style="padding:.5rem 1.1rem;background:#c62828;color:#fff"
+                                onclick="return confirm('Reject {{ team.name }}?')">
+                            ❌ Reject
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No teams ready to approve yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Workflow explanation -->
+<div class="card" style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:#f5f5f5;border:none">
+    <strong>How it works:</strong>
+    <ol style="margin:.5rem 0 0 1.2rem;font-size:.88rem;color:#555;line-height:1.8">
+        <li>A team registers publicly at the KYISA website (status = <em>Pending</em>)</li>
+        <li>The county pays the <strong>one-time KSh {{ registration_fee|floatformat:0 }} county registration fee</strong> via M-Pesa or bank transfer</li>
+        <li>You enter the M-Pesa/bank reference and confirm payment → <em>Payment Confirmed</em></li>
+        <li>You click <strong>Approve</strong> → team status becomes <em>Registered</em></li>
+        <li>A team manager login is automatically created using the team's contact email</li>
+        <li>The temporary password is sent to the team manager email — they can then log in and add players</li>
+    </ol>
+</div>
+{% endblock %}

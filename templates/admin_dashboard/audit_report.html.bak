@@ -1,0 +1,892 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Audit Report — KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   AUDIT REPORT — DESIGN TOKENS
+═══════════════════════════════════════ */
+:root {
+  --ar-ink:        #080d0b;
+  --ar-surface:    #0e1412;
+  --ar-panel:      #131a17;
+  --ar-panel-hi:   #192320;
+  --ar-border:     rgba(255,255,255,0.055);
+  --ar-border-md:  rgba(255,255,255,0.10);
+
+  --ar-green:      #4ade80;
+  --ar-green-2:    #86efac;
+  --ar-green-dim:  rgba(74,222,128,0.12);
+  --ar-green-glow: rgba(74,222,128,0.18);
+  --ar-green-dark: #22543d;
+
+  --ar-amber:      #fbbf24;
+  --ar-amber-dim:  rgba(251,191,36,0.12);
+  --ar-amber-bdr:  rgba(251,191,36,0.28);
+
+  --ar-sky:        #38bdf8;
+  --ar-sky-dim:    rgba(56,189,248,0.12);
+  --ar-sky-bdr:    rgba(56,189,248,0.28);
+
+  --ar-rose:       #fb7185;
+  --ar-rose-dim:   rgba(251,113,133,0.12);
+  --ar-rose-bdr:   rgba(251,113,133,0.28);
+
+  --ar-violet:     #a78bfa;
+  --ar-violet-dim: rgba(167,139,250,0.12);
+  --ar-violet-bdr: rgba(167,139,250,0.28);
+
+  --ar-t1: #edfaf3;
+  --ar-t2: #92b3a0;
+  --ar-t3: #4e6b5b;
+
+  --ar-f-display: 'Syne', sans-serif;
+  --ar-f-body:    'DM Sans', sans-serif;
+  --ar-f-mono:    'JetBrains Mono', monospace;
+}
+
+/* ── PAGE OVERRIDE ────────────────────── */
+body              { background: var(--ar-ink) !important; color: var(--ar-t1) !important; font-family: var(--ar-f-body) !important; -webkit-font-smoothing: antialiased; }
+.main-content     { background: var(--ar-ink) !important; }
+.sidebar          { background: var(--ar-panel) !important; border-color: var(--ar-border) !important; }
+.footer           { background: var(--ar-panel) !important; color: var(--ar-t3) !important; border-color: var(--ar-border) !important; }
+
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--ar-panel-hi); }
+::-webkit-scrollbar-thumb { background: var(--ar-green-dark); border-radius: 99px; }
+
+/* ── HERO ─────────────────────────────── */
+.ar-hero {
+  position: relative; border-radius: 24px; overflow: hidden;
+  background: var(--ar-panel); border: 1px solid var(--ar-border);
+  padding: 2.2rem 2.5rem 1.8rem;
+  box-shadow: 0 8px 32px rgba(74,222,128,0.06);
+}
+.ar-hero::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, transparent, var(--ar-green), transparent);
+  border-radius: 0 99px 99px 0; z-index: 2;
+}
+.ar-hero-aurora {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.ar-hero-aurora::before {
+  content: ''; position: absolute;
+  width: 500px; height: 300px; right: -60px; top: -80px;
+  background: radial-gradient(ellipse, rgba(74,222,128,0.12) 0%, transparent 65%);
+  animation: arAuroraDrift 9s ease-in-out infinite alternate;
+}
+.ar-hero-aurora::after {
+  content: ''; position: absolute;
+  width: 280px; height: 280px; left: -40px; bottom: -100px;
+  background: radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 60%);
+  animation: arAuroraDrift 13s ease-in-out infinite alternate-reverse;
+}
+@keyframes arAuroraDrift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(18px,14px) scale(1.05); }
+}
+.ar-hero-dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(74,222,128,0.16) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 75% 100% at 85% 50%, black, transparent);
+  opacity: .35; pointer-events: none;
+}
+.ar-hero-content { position: relative; z-index: 3; }
+
+.ar-breadcrumb { font-family: var(--ar-f-mono); font-size: 11px; }
+.ar-breadcrumb .breadcrumb-item a { color: var(--ar-t3) !important; transition: color .2s; }
+.ar-breadcrumb .breadcrumb-item a:hover { color: var(--ar-green) !important; }
+.ar-breadcrumb .breadcrumb-item.active { color: var(--ar-green) !important; }
+.ar-breadcrumb .breadcrumb-item + .breadcrumb-item::before { color: var(--ar-t3) !important; }
+
+.ar-live-badge {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 99px; padding: .28rem .8rem;
+  font-family: var(--ar-f-mono); font-size: 10.5px; color: var(--ar-green);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.ar-live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ar-green);
+  animation: arLivePulse 2s ease-in-out infinite;
+}
+@keyframes arLivePulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,.5); }
+  50%     { opacity: .7; box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+}
+.ar-title {
+  font-family: var(--ar-f-display); font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-weight: 800; line-height: .95; letter-spacing: -.035em;
+}
+.ar-title .w-plain { color: var(--ar-t1); }
+.ar-title .w-grad {
+  background: linear-gradient(110deg, var(--ar-green) 0%, var(--ar-green-2) 55%, #d9f99d 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.ar-subtitle { font-size: 14px; color: var(--ar-t3); }
+
+/* Export buttons */
+.ar-btn-exp {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1.1rem; border-radius: 10px;
+  font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  border: 1px solid var(--ar-border-md); background: rgba(255,255,255,0.04);
+  color: var(--ar-t2); text-decoration: none; transition: all .2s;
+}
+.ar-btn-exp:hover            { background: rgba(255,255,255,0.09); color: var(--ar-t1); }
+.ar-btn-exp.v-excel:hover    { border-color: rgba(74,222,128,.35); color: var(--ar-green); background: var(--ar-green-dim); }
+.ar-btn-exp.v-pdf:hover      { border-color: var(--ar-rose-bdr); color: var(--ar-rose); background: var(--ar-rose-dim); }
+
+/* ── SEARCH + FILTER COMMAND BAR ──────── */
+.ar-command-bar {
+  background: var(--ar-panel); border: 1px solid var(--ar-border);
+  border-radius: 18px; padding: 1.4rem 1.6rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.ar-search-wrap {
+  position: relative; flex: 1; min-width: 220px;
+}
+.ar-search-wrap i {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--ar-t3); font-size: 14px; pointer-events: none; z-index: 2;
+}
+.ar-search {
+  width: 100%; padding: .7rem 1rem .7rem 2.5rem;
+  background: var(--ar-surface) !important; border: 1px solid var(--ar-border-md) !important;
+  border-radius: 12px !important; color: var(--ar-t1) !important;
+  font-family: var(--ar-f-body); font-size: 14px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.ar-search::placeholder { color: var(--ar-t3) !important; }
+.ar-search:focus {
+  border-color: rgba(74,222,128,0.45) !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.08) !important;
+  outline: none;
+}
+.ar-filter-select, .ar-filter-date {
+  background: var(--ar-surface) !important; border: 1px solid var(--ar-border-md) !important;
+  border-radius: 10px !important; color: var(--ar-t1) !important;
+  font-family: var(--ar-f-body); font-size: 13px; padding: .55rem .8rem;
+  transition: border-color .2s, box-shadow .2s; min-width: 140px;
+}
+.ar-filter-select:focus, .ar-filter-date:focus {
+  border-color: rgba(74,222,128,0.45) !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.08) !important;
+  outline: none;
+}
+.ar-filter-select option { background: var(--ar-panel-hi) !important; }
+.ar-filter-date { font-family: var(--ar-f-mono) !important; font-size: 12px !important; color-scheme: dark; }
+.ar-f-lbl {
+  font-family: var(--ar-f-mono); font-size: 9.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--ar-t3);
+  margin-bottom: .3rem; display: block;
+}
+
+/* Button variants */
+.ar-btn-primary {
+  background: var(--ar-green) !important; border: 1px solid var(--ar-green) !important;
+  color: #071209 !important; font-weight: 700; font-size: 12px;
+  letter-spacing: .04em; text-transform: uppercase;
+  border-radius: 10px; padding: .55rem 1.3rem; transition: all .2s;
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .35rem;
+}
+.ar-btn-primary:hover { background: var(--ar-green-2) !important; box-shadow: 0 0 16px var(--ar-green-glow) !important; }
+.ar-btn-ghost {
+  background: transparent !important; border: 1px solid var(--ar-border-md) !important;
+  color: var(--ar-t2) !important; font-size: 12px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  border-radius: 10px; padding: .55rem 1.1rem; transition: all .2s;
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .35rem;
+}
+.ar-btn-ghost:hover { border-color: var(--ar-rose-bdr) !important; color: var(--ar-rose) !important; background: var(--ar-rose-dim) !important; }
+.ar-btn-outline {
+  background: transparent !important; border: 1px solid var(--ar-border-md) !important;
+  color: var(--ar-t3) !important; font-size: 12px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  border-radius: 10px; padding: .55rem 1rem; transition: all .2s;
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .35rem;
+}
+.ar-btn-outline:hover { border-color: rgba(74,222,128,.35) !important; color: var(--ar-green) !important; background: var(--ar-green-dim) !important; }
+
+/* ── FILTER CHIPS ─────────────────────── */
+.ar-chips-label { font-family: var(--ar-f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .09em; color: var(--ar-t3); }
+.ar-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .25rem .75rem; border-radius: 99px;
+  font-family: var(--ar-f-mono); font-size: 11.5px;
+  border: 1px solid; transition: border-color .2s;
+}
+.ar-chip.ch-green  { color: var(--ar-green);  background: var(--ar-green-dim);  border-color: rgba(74,222,128,0.22); }
+.ar-chip.ch-amber  { color: var(--ar-amber);  background: var(--ar-amber-dim);  border-color: var(--ar-amber-bdr); }
+.ar-chip.ch-sky    { color: var(--ar-sky);     background: var(--ar-sky-dim);    border-color: var(--ar-sky-bdr); }
+.ar-chip.ch-violet { color: var(--ar-violet);  background: var(--ar-violet-dim); border-color: var(--ar-violet-bdr); }
+.ar-chip-close { opacity: .55; font-size: 10px; transition: opacity .2s; cursor: pointer; }
+.ar-chip-close:hover { opacity: 1; color: var(--ar-rose) !important; }
+
+/* ── STAT CARDS ───────────────────────── */
+.ar-stat-card {
+  position: relative; overflow: hidden;
+  background: var(--ar-panel); border: 1px solid var(--ar-border);
+  border-radius: 18px; padding: 1.35rem 1.5rem 1rem;
+  transition: transform .25s, border-color .25s, box-shadow .25s;
+  cursor: default;
+}
+.ar-stat-card:hover { transform: translateY(-4px); }
+.ar-stat-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 18px 18px 0 0;
+}
+.ar-stat-card.sc-green  { --sc: var(--ar-green);  --scd: var(--ar-green-dim);  --scb: rgba(74,222,128,.3); }
+.ar-stat-card.sc-sky    { --sc: var(--ar-sky);     --scd: var(--ar-sky-dim);    --scb: var(--ar-sky-bdr); }
+.ar-stat-card.sc-amber  { --sc: var(--ar-amber);   --scd: var(--ar-amber-dim);  --scb: var(--ar-amber-bdr); }
+.ar-stat-card.sc-violet { --sc: var(--ar-violet);  --scd: var(--ar-violet-dim); --scb: var(--ar-violet-bdr); }
+
+.ar-stat-card::before { background: var(--sc); opacity: .65; }
+.ar-stat-card::after {
+  content: ''; position: absolute;
+  top: -40px; right: -40px; width: 110px; height: 110px; border-radius: 50%;
+  background: radial-gradient(circle, var(--scd) 0%, transparent 70%);
+  pointer-events: none; opacity: .8; transition: opacity .3s;
+}
+.ar-stat-card:hover { border-color: var(--scb); box-shadow: 0 0 22px var(--scd); }
+.ar-stat-card:hover::after { opacity: 1.3; }
+
+.ar-sc-label { font-family: var(--ar-f-mono); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--ar-t3); margin-bottom: .4rem; }
+.ar-sc-value { font-family: var(--ar-f-display); font-size: 2.3rem; font-weight: 800; line-height: 1; color: var(--sc); margin-bottom: .25rem; text-shadow: 0 0 22px var(--scd); }
+.ar-sc-foot  { font-size: 11px; color: var(--ar-t3); font-family: var(--ar-f-mono); }
+.ar-sc-icon  { position: absolute; bottom: .6rem; right: 1rem; font-size: 2.2rem; color: var(--sc); opacity: .08; pointer-events: none; }
+
+/* ── TABLE PANEL ──────────────────────── */
+.ar-panel {
+  background: var(--ar-panel); border: 1px solid var(--ar-border);
+  border-radius: 18px; overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+}
+.ar-panel-header {
+  padding: 1rem 1.6rem; border-bottom: 1px solid var(--ar-border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; flex-wrap: wrap;
+}
+.ar-panel-title {
+  font-family: var(--ar-f-display); font-size: 15px; font-weight: 700;
+  letter-spacing: -.01em; color: var(--ar-t1);
+  display: flex; align-items: center; gap: .5rem;
+}
+.ar-panel-title i { font-size: 14px; }
+.ar-panel-title .ic-green  { color: var(--ar-green); }
+.ar-panel-title .ic-sky    { color: var(--ar-sky); }
+.ar-panel-title .ic-rose   { color: var(--ar-rose); }
+.ar-panel-title .ic-violet { color: var(--ar-violet); }
+.ar-count-badge {
+  font-family: var(--ar-f-mono); font-size: 11.5px;
+  background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.22);
+  color: var(--ar-green); border-radius: 99px; padding: .2rem .7rem;
+}
+
+/* ── TABLE ────────────────────────────── */
+.ar-table { width: 100%; border-collapse: collapse; }
+.ar-table thead th {
+  background: var(--ar-surface) !important;
+  border-bottom: 1px solid var(--ar-border) !important;
+  color: var(--ar-t3) !important;
+  font-family: var(--ar-f-mono) !important; font-size: 10.5px !important;
+  font-weight: 600 !important; text-transform: uppercase !important;
+  letter-spacing: .1em !important;
+  padding: .7rem 1rem !important; white-space: nowrap;
+}
+.ar-table thead th:first-child { padding-left: 1.5rem !important; }
+.ar-table thead th:last-child  { padding-right: 1.5rem !important; text-align: right !important; }
+
+.ar-table tbody tr {
+  border-bottom: 1px solid var(--ar-border) !important;
+  transition: background .15s;
+  opacity: 0; animation: arRowIn .35s cubic-bezier(.22,.68,0,1.1) forwards;
+}
+.ar-table tbody tr:last-child { border-bottom: none !important; }
+.ar-table tbody tr:hover { background: rgba(255,255,255,0.025) !important; }
+.ar-table tbody tr.is-undone { opacity: .35 !important; }
+
+.ar-table tbody td {
+  padding: .85rem 1rem !important; vertical-align: middle !important; border: none !important;
+}
+.ar-table tbody td:first-child { padding-left: 1.5rem !important; }
+.ar-table tbody td:last-child  { padding-right: 1.5rem !important; }
+
+@keyframes arRowIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.ar-table tbody tr:nth-child(1)  { animation-delay:.02s }
+.ar-table tbody tr:nth-child(2)  { animation-delay:.04s }
+.ar-table tbody tr:nth-child(3)  { animation-delay:.06s }
+.ar-table tbody tr:nth-child(4)  { animation-delay:.08s }
+.ar-table tbody tr:nth-child(5)  { animation-delay:.10s }
+.ar-table tbody tr:nth-child(6)  { animation-delay:.12s }
+.ar-table tbody tr:nth-child(7)  { animation-delay:.14s }
+.ar-table tbody tr:nth-child(8)  { animation-delay:.16s }
+.ar-table tbody tr:nth-child(9)  { animation-delay:.18s }
+.ar-table tbody tr:nth-child(10) { animation-delay:.20s }
+.ar-table tbody tr:nth-child(n+11){ animation-delay:.22s }
+
+/* Timestamp styles */
+.ar-ts-date { font-family: var(--ar-f-mono); font-size: 12px; color: var(--ar-t1); }
+.ar-ts-time { font-family: var(--ar-f-mono); font-size: 10.5px; color: var(--ar-t3); margin-top: 2px; }
+
+/* User display */
+.ar-u-name   { font-size: 13px; font-weight: 500; color: var(--ar-t1); line-height: 1.3; }
+.ar-u-email  { font-family: var(--ar-f-mono); font-size: 10.5px; color: var(--ar-t3); margin-top: 1px; }
+.ar-u-system { font-family: var(--ar-f-mono); font-size: 12px; color: var(--ar-t3); }
+
+/* Action badges */
+.ar-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .25rem .65rem; border-radius: 6px;
+  font-family: var(--ar-f-mono); font-size: 10.5px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .05em;
+  border: 1px solid; white-space: nowrap;
+}
+.ar-badge.ab-success  { color: var(--ar-green);  background: var(--ar-green-dim);   border-color: rgba(74,222,128,.22); }
+.ar-badge.ab-warning  { color: var(--ar-amber);  background: var(--ar-amber-dim);   border-color: var(--ar-amber-bdr); }
+.ar-badge.ab-danger   { color: var(--ar-rose);   background: var(--ar-rose-dim);    border-color: var(--ar-rose-bdr); }
+.ar-badge.ab-info     { color: var(--ar-violet);  background: var(--ar-violet-dim);  border-color: var(--ar-violet-bdr); }
+.ar-badge.ab-secondary { color: var(--ar-t2);    background: rgba(255,255,255,.04); border-color: var(--ar-border-md); }
+
+.ar-undone-tag {
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-family: var(--ar-f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ar-t3); background: rgba(255,255,255,.03); border: 1px solid var(--ar-border-md);
+  border-radius: 99px; padding: .12rem .45rem; margin-left: .3rem;
+}
+
+/* Role badge */
+.ar-role-badge {
+  font-family: var(--ar-f-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: .2rem .5rem; border-radius: 5px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--ar-border-md);
+  color: var(--ar-t2);
+}
+
+/* IP address */
+.ar-ip {
+  font-family: var(--ar-f-mono); font-size: 11px; color: var(--ar-t3);
+  background: rgba(74,222,128,0.04); border: 1px solid rgba(74,222,128,0.1);
+  border-radius: 5px; padding: .15rem .45rem;
+}
+
+/* Description */
+.ar-desc { font-size: 13px; color: var(--ar-t2); max-width: 280px; }
+.ar-desc-repr { font-family: var(--ar-f-mono); font-size: 10px; color: var(--ar-t3); margin-top: 2px; }
+
+/* Progress bar in category stats */
+.ar-progress {
+  height: 6px; background: var(--ar-surface); border-radius: 99px; overflow: hidden;
+  flex: 1; min-width: 60px;
+}
+.ar-progress-fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+.ar-progress-fill.pg-green  { background: var(--ar-green); box-shadow: 0 0 8px var(--ar-green-dim); }
+
+/* Category row */
+.ar-cat-row {
+  display: flex; align-items: center; gap: .75rem; padding: .7rem 1.3rem;
+  border-bottom: 1px solid var(--ar-border); transition: background .15s;
+}
+.ar-cat-row:last-child { border-bottom: none; }
+.ar-cat-row:hover { background: rgba(255,255,255,.02); }
+.ar-cat-name { font-size: 13px; font-weight: 500; color: var(--ar-t1); min-width: 140px; }
+.ar-cat-count {
+  font-family: var(--ar-f-mono); font-size: 12px; font-weight: 600;
+  color: var(--ar-green); min-width: 40px; text-align: right;
+}
+.ar-cat-pct {
+  font-family: var(--ar-f-mono); font-size: 10px; color: var(--ar-t3);
+  min-width: 35px; text-align: right;
+}
+
+/* User row in top users */
+.ar-user-row {
+  display: flex; align-items: center; gap: .85rem; padding: .7rem 1.3rem;
+  border-bottom: 1px solid var(--ar-border); transition: background .15s;
+}
+.ar-user-row:last-child { border-bottom: none; }
+.ar-user-row:hover { background: rgba(255,255,255,.02); }
+.ar-user-rank {
+  font-family: var(--ar-f-display); font-size: 14px; font-weight: 800;
+  color: var(--ar-t3); width: 22px; text-align: center;
+}
+.ar-user-avatar {
+  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+  background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ar-f-display); font-size: 12px; font-weight: 800; color: var(--ar-sky);
+}
+.ar-user-info { flex: 1; min-width: 0; }
+.ar-user-name { font-size: 13px; font-weight: 500; color: var(--ar-t1); }
+.ar-user-email { font-family: var(--ar-f-mono); font-size: 10px; color: var(--ar-t3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-user-count {
+  font-family: var(--ar-f-display); font-size: 16px; font-weight: 800;
+  color: var(--ar-sky); text-shadow: 0 0 12px var(--ar-sky-dim);
+}
+
+/* ── PAGINATION ───────────────────────── */
+.ar-pag-bar { padding: 1rem 1.5rem; border-top: 1px solid var(--ar-border); }
+.ar-pag-info { font-family: var(--ar-f-mono); font-size: 12px; color: var(--ar-t3); }
+.ar-pag-info strong { color: var(--ar-t2); }
+
+.ar-pagination .page-link {
+  background: var(--ar-surface) !important; border-color: var(--ar-border-md) !important;
+  color: var(--ar-t3) !important; font-family: var(--ar-f-mono) !important; font-size: 12px !important;
+  border-radius: 8px !important; margin: 0 2px; padding: .3rem .6rem !important;
+  transition: all .2s !important; min-width: 30px; text-align: center;
+}
+.ar-pagination .page-link:hover { border-color: rgba(74,222,128,.35) !important; color: var(--ar-green) !important; background: var(--ar-green-dim) !important; }
+.ar-pagination .page-item.active .page-link { background: var(--ar-green) !important; border-color: var(--ar-green) !important; color: #071209 !important; font-weight: 700 !important; box-shadow: 0 0 14px rgba(74,222,128,.3) !important; }
+.ar-pagination .page-item.disabled .page-link { opacity: .25 !important; pointer-events: none; }
+
+/* ── EMPTY STATE ──────────────────────── */
+.ar-empty { padding: 4rem 2rem; text-align: center; }
+.ar-empty-icon {
+  width: 56px; height: 56px; border-radius: 14px; margin: 0 auto .8rem;
+  background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: var(--ar-t3);
+}
+.ar-empty-title { font-family: var(--ar-f-display); font-size: 1.05rem; font-weight: 700; color: var(--ar-t2); }
+.ar-empty-sub   { font-size: 13px; color: var(--ar-t3); }
+
+/* ── SECTION TAB TOGGLE ───────────────── */
+.ar-section-toggle {
+  display: flex; gap: 2px; background: var(--ar-surface); border-radius: 10px; padding: 3px;
+  border: 1px solid var(--ar-border);
+}
+.ar-section-toggle label {
+  font-family: var(--ar-f-mono); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: .45rem 1rem; border-radius: 8px; cursor: pointer;
+  color: var(--ar-t3); transition: all .2s; user-select: none;
+  display: flex; align-items: center; gap: .35rem;
+}
+.ar-section-toggle input[type="radio"] { display: none; }
+.ar-section-toggle input[type="radio"]:checked + label {
+  background: var(--ar-green); color: #071209; box-shadow: 0 0 10px rgba(74,222,128,.2);
+}
+.ar-section-toggle label:hover { color: var(--ar-t1); }
+
+/* Collapsible sections */
+.ar-section { display: none; }
+.ar-section.active { display: block; }
+
+/* ── RESPONSIVE ───────────────────────── */
+@media (max-width: 768px) {
+  .ar-hero { padding: 1.5rem 1.3rem 1.2rem; }
+  .ar-title { font-size: 1.8rem !important; }
+  .ar-command-bar { padding: 1rem 1.1rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4" style="max-width:1440px">
+
+  <!-- ── HERO ──────────────────────────────── -->
+  <div class="ar-hero mb-4">
+    <div class="ar-hero-aurora"></div>
+    <div class="ar-hero-dots"></div>
+    <div class="ar-hero-content">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb ar-breadcrumb mb-3">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">~/dashboard</a></li>
+          <li class="breadcrumb-item active">audit_report</li>
+        </ol>
+      </nav>
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <div class="ar-live-badge mb-2"><span class="ar-live-dot"></span>System Audit</div>
+          <h1 class="ar-title mb-2">
+            <span class="w-plain">Audit</span> <span class="w-grad">Report</span>
+          </h1>
+          <p class="ar-subtitle mb-0">Complete record of <strong style="color:var(--ar-t1)">who</strong> did <strong style="color:var(--ar-t1)">what</strong> and <strong style="color:var(--ar-t1)">when</strong> across the entire system.</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <a href="{% url 'export_audit_excel' %}?{{ request.GET.urlencode }}" class="ar-btn-exp v-excel" data-bs-toggle="tooltip" title="Export to Excel">
+            <i class="fas fa-file-excel"></i> Excel
+          </a>
+          <a href="{% url 'export_audit_pdf' %}?{{ request.GET.urlencode }}" class="ar-btn-exp v-pdf" data-bs-toggle="tooltip" title="Export to PDF">
+            <i class="fas fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SEARCH + FILTERS (COMMAND BAR) ────── -->
+  <div class="ar-command-bar mb-4">
+    <form method="get" id="auditFilterForm">
+      <!-- Row 1: Search bar -->
+      <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+        <div class="ar-search-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" name="search" class="ar-search" placeholder="Search audit trail — users, actions, descriptions..." value="{{ f_search }}">
+        </div>
+        <button type="submit" class="ar-btn-primary">
+          <i class="fas fa-search"></i> Search
+        </button>
+        {% if f_search or f_category or f_user or f_date_from or f_date_to %}
+        <a href="{% url 'audit_report' %}" class="ar-btn-ghost">
+          <i class="fas fa-times"></i> Clear All
+        </a>
+        {% endif %}
+      </div>
+      <!-- Row 2: Filter controls -->
+      <div class="d-flex gap-3 flex-wrap align-items-end">
+        <div>
+          <label class="ar-f-lbl"><i class="fas fa-layer-group me-1" style="color:var(--ar-green)"></i>Category</label>
+          <select name="category" class="ar-filter-select form-select" onchange="this.form.submit()">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if cat == f_category %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="ar-f-lbl"><i class="fas fa-user me-1" style="color:var(--ar-sky)"></i>User</label>
+          <select name="user" class="ar-filter-select form-select" onchange="this.form.submit()">
+            <option value="">All Users</option>
+            {% for u in all_users %}
+            <option value="{{ u.id }}" {% if u.id|stringformat:"s" == f_user %}selected{% endif %}>{{ u.email }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="ar-f-lbl"><i class="fas fa-calendar me-1" style="color:var(--ar-amber)"></i>From</label>
+          <input type="date" name="date_from" class="ar-filter-date form-control" value="{{ f_date_from }}" onchange="this.form.submit()">
+        </div>
+        <div>
+          <label class="ar-f-lbl"><i class="fas fa-calendar me-1" style="color:var(--ar-amber)"></i>To</label>
+          <input type="date" name="date_to" class="ar-filter-date form-control" value="{{ f_date_to }}" onchange="this.form.submit()">
+        </div>
+        <div>
+          <label class="ar-f-lbl">&nbsp;</label>
+          <button type="button" class="ar-btn-outline" onclick="location.href='{% url 'audit_report' %}'">
+            <i class="fas fa-rotate-left"></i> Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── ACTIVE FILTER CHIPS ───────────────── -->
+  {% if f_search or f_category or f_user or f_date_from or f_date_to %}
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
+    <span class="ar-chips-label">Filters:</span>
+    {% if f_search %}
+    <span class="ar-chip ch-green">
+      <i class="fas fa-search" style="font-size:9px"></i> {{ f_search }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'search' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="ar-chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if f_category %}
+    <span class="ar-chip ch-amber">
+      <i class="fas fa-layer-group" style="font-size:9px"></i> {{ f_category }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'category' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="ar-chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if f_user %}
+    <span class="ar-chip ch-sky">
+      <i class="fas fa-user" style="font-size:9px"></i> {% for u in all_users %}{% if u.id|stringformat:"s" == f_user %}{{ u.email }}{% endif %}{% endfor %}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'user' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="ar-chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if f_date_from %}
+    <span class="ar-chip ch-violet">
+      <i class="fas fa-calendar" style="font-size:9px"></i> from {{ f_date_from }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'date_from' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="ar-chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if f_date_to %}
+    <span class="ar-chip ch-violet">
+      <i class="fas fa-calendar" style="font-size:9px"></i> to {{ f_date_to }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'date_to' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="ar-chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── STAT CARDS ────────────────────────── -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="ar-stat-card sc-green">
+        <div class="ar-sc-label">Total Actions</div>
+        <div class="ar-sc-value">{{ total|default:0 }}</div>
+        <div class="ar-sc-foot"><i class="fas fa-database me-1"></i>Lifetime</div>
+        <i class="fas fa-database ar-sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="ar-stat-card sc-sky">
+        <div class="ar-sc-label">Today</div>
+        <div class="ar-sc-value">{{ today|default:0 }}</div>
+        <div class="ar-sc-foot"><i class="fas fa-clock me-1"></i>Last 24h</div>
+        <i class="fas fa-clock ar-sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="ar-stat-card sc-amber">
+        <div class="ar-sc-label">This Week</div>
+        <div class="ar-sc-value">{{ this_week|default:0 }}</div>
+        <div class="ar-sc-foot"><i class="fas fa-calendar-week me-1"></i>7 days</div>
+        <i class="fas fa-calendar-week ar-sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="ar-stat-card sc-violet">
+        <div class="ar-sc-label">This Month</div>
+        <div class="ar-sc-value">{{ this_month|default:0 }}</div>
+        <div class="ar-sc-foot"><i class="fas fa-calendar me-1"></i>Month</div>
+        <i class="fas fa-calendar ar-sc-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CATEGORY BREAKDOWN + TOP USERS ──────── -->
+  <div class="row g-4 mb-4">
+    <!-- Categories -->
+    <div class="col-lg-5">
+      <div class="ar-panel h-100">
+        <div class="ar-panel-header">
+          <span class="ar-panel-title"><i class="fas fa-chart-pie ic-green"></i> Actions by Category</span>
+        </div>
+        <div>
+          {% for cs in category_stats %}
+          <div class="ar-cat-row">
+            <span class="ar-cat-name">{{ cs.name }}</span>
+            <div class="ar-progress">
+              {% widthratio cs.count total 100 as pct %}
+              <div class="ar-progress-fill pg-green" style="width:{% if total %}{{ pct }}{% else %}0{% endif %}%"></div>
+            </div>
+            <span class="ar-cat-pct">{% if total %}{{ pct }}%{% else %}0%{% endif %}</span>
+            <span class="ar-cat-count">{{ cs.count }}</span>
+          </div>
+          {% empty %}
+          <div class="ar-empty" style="padding:2.5rem 1rem">
+            <div class="ar-empty-icon"><i class="fas fa-chart-pie"></i></div>
+            <div class="ar-empty-title">No category data</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <!-- Top Users -->
+    <div class="col-lg-7">
+      <div class="ar-panel h-100">
+        <div class="ar-panel-header">
+          <span class="ar-panel-title"><i class="fas fa-trophy ic-sky"></i> Most Active Users</span>
+          <span class="ar-count-badge">Top {{ user_stats|length }}</span>
+        </div>
+        <div>
+          {% for us in user_stats %}
+          <div class="ar-user-row">
+            <span class="ar-user-rank">{{ forloop.counter }}</span>
+            <div class="ar-user-avatar">{{ us.user__first_name|first|default:"?" }}</div>
+            <div class="ar-user-info">
+              <div class="ar-user-name">{{ us.user__first_name }} {{ us.user__last_name }}</div>
+              <div class="ar-user-email">{{ us.user__email }}</div>
+            </div>
+            <span class="ar-role-badge">{{ us.user__role }}</span>
+            <span class="ar-user-count">{{ us.count }}</span>
+          </div>
+          {% empty %}
+          <div class="ar-empty" style="padding:2.5rem 1rem">
+            <div class="ar-empty-icon"><i class="fas fa-users"></i></div>
+            <div class="ar-empty-title">No user data</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CRITICAL ACTIONS ──────────────────── -->
+  <div class="ar-panel mb-4">
+    <div class="ar-panel-header">
+      <span class="ar-panel-title"><i class="fas fa-shield-halved ic-rose"></i> Recent Critical Actions</span>
+      <span class="ar-count-badge" style="background:var(--ar-rose-dim);border-color:var(--ar-rose-bdr);color:var(--ar-rose)">{{ critical_logs|length }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="ar-table">
+        <thead>
+          <tr>
+            <th style="width:13%">Date &amp; Time</th>
+            <th style="width:18%">Performed By</th>
+            <th style="width:9%">Role</th>
+            <th style="width:14%">Action</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in critical_logs %}
+          <tr>
+            <td>
+              <div class="ar-ts-date">{{ log.timestamp|date:"d M Y" }}</div>
+              <div class="ar-ts-time">{{ log.timestamp|time:"H:i" }}</div>
+            </td>
+            <td>
+              {% if log.user %}
+              <div class="ar-u-name">{{ log.user.get_full_name }}</div>
+              <div class="ar-u-email">{{ log.user.email }}</div>
+              {% else %}
+              <span class="ar-u-system"><i class="fas fa-robot me-1" style="opacity:.4"></i>System</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if log.user %}
+              <span class="ar-role-badge">{{ log.user.get_role_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="ar-badge ab-{{ log.action_class }}">
+                <i class="fas fa-{{ log.action_icon }}"></i> {{ log.get_action_display }}
+              </span>
+            </td>
+            <td><span class="ar-desc">{{ log.description|truncatechars:150 }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5">
+            <div class="ar-empty" style="padding:2rem 1rem">
+              <div class="ar-empty-title" style="font-size:.9rem">No critical actions found</div>
+            </div>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── FULL AUDIT TRAIL ──────────────────── -->
+  <div class="ar-panel">
+    <div class="ar-panel-header">
+      <span class="ar-panel-title"><i class="fas fa-scroll ic-green"></i> Full Audit Trail</span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="ar-count-badge">{{ total }} record{{ total|pluralize }}</span>
+        {% if page_obj.paginator.num_pages > 1 %}
+        <span class="ar-count-badge" style="background:var(--ar-sky-dim);border-color:var(--ar-sky-bdr);color:var(--ar-sky)">Page {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% if page_obj %}
+    <div class="table-responsive">
+      <table class="ar-table">
+        <thead>
+          <tr>
+            <th style="width:11%">Date &amp; Time</th>
+            <th style="width:15%">User</th>
+            <th style="width:8%">Role</th>
+            <th style="width:13%">Action</th>
+            <th>Description</th>
+            <th style="width:8%">IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in page_obj %}
+          <tr {% if log.is_undone %}class="is-undone"{% endif %}>
+            <td>
+              <div class="ar-ts-date">{{ log.timestamp|date:"d M Y" }}</div>
+              <div class="ar-ts-time">{{ log.timestamp|time:"H:i:s" }}</div>
+            </td>
+            <td>
+              {% if log.user %}
+              <div class="ar-u-name">{{ log.user.get_full_name }}</div>
+              <div class="ar-u-email">{{ log.user.email }}</div>
+              {% else %}
+              <span class="ar-u-system"><i class="fas fa-robot me-1" style="opacity:.4"></i>System</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if log.user %}
+              <span class="ar-role-badge">{{ log.user.get_role_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="ar-badge ab-{{ log.action_class }}">
+                <i class="fas fa-{{ log.action_icon }}"></i> {{ log.get_action_display }}
+              </span>
+              {% if log.is_undone %}
+              <br><span class="ar-undone-tag"><i class="fas fa-undo"></i> Undone</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="ar-desc">{{ log.description|truncatechars:120 }}</span>
+              {% if log.object_repr %}
+              <div class="ar-desc-repr">{{ log.object_repr }}</div>
+              {% endif %}
+            </td>
+            <td><span class="ar-ip">{{ log.ip_address|default:"-" }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="ar-pag-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="ar-pag-info">
+        Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+        of <strong>{{ page_obj.paginator.count }}</strong> entries
+      </div>
+      <nav>
+        <ul class="pagination ar-pagination mb-0">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="fas fa-angles-left"></i></a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="fas fa-angle-left"></i></a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angles-left"></i></span></li>
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i></span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="fas fa-angle-right"></i></a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if f_category %}&category={{ f_category }}{% endif %}{% if f_user %}&user={{ f_user }}{% endif %}{% if f_date_from %}&date_from={{ f_date_from }}{% endif %}{% if f_date_to %}&date_to={{ f_date_to }}{% endif %}{% if f_search %}&search={{ f_search }}{% endif %}"><i class="fas fa-angles-right"></i></a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-right"></i></span></li>
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angles-right"></i></span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="ar-empty">
+      <div class="ar-empty-icon"><i class="fas fa-inbox"></i></div>
+      <div class="ar-empty-title">No activity recorded yet</div>
+      <p class="ar-empty-sub mb-0">Try adjusting your filters or check back later</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

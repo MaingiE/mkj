@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags crispy_forms_filters %}
+
+{% block title %}Approved Squad - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Header -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-users"></i> APPROVED MATCHDAY SQUAD
+                    </h3>
+                    <p class="mb-0 mt-2">
+                        <strong>{{ match.home_team }} vs {{ match.away_team }}</strong> - 
+                        {{ match.match_date|date:"l, F j, Y" }} at {{ match.kickoff_time }}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Squad Approved!</strong> Your matchday squad has been approved by the referee and is now locked for this match.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Starting Lineup -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-check"></i> STARTING LINEUP (11 Players)
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if starting_players %}
+                        <div class="row">
+                            {% for squad_player in starting_players %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100 border-success">
+                                    <div class="card-body text-center">
+                                        {% if squad_player.player.photo %}
+                                            <img src="{{ squad_player.player.photo.url }}" 
+                                                 alt="{{ squad_player.player.full_name }}" 
+                                                 class="rounded-circle mb-2" 
+                                                 style="width: 60px; height: 60px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
+                                                 style="width: 60px; height: 60px;">
+                                                <i class="fas fa-user text-muted fa-2x"></i>
+                                            </div>
+                                        {% endif %}
+                                        <h6 class="card-title mb-1">
+                                            <span class="badge bg-primary me-1">#{{ squad_player.jersey_number }}</span>
+                                            {{ squad_player.player.full_name }}
+                                        </h6>
+                                        <p class="card-text small text-muted mb-1">
+                                            {{ squad_player.player.get_position_display }}
+                                        </p>
+                                        {% if squad_player.player.fkf_license_number %}
+                                            <small class="text-success">
+                                                <i class="fas fa-id-card"></i> {{ squad_player.player.fkf_license_number }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No starting players found in the approved squad.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Substitute Players -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-people-group"></i> SUBSTITUTE PLAYERS ({{ substitute_players|length }})
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if substitute_players %}
+                        <div class="row">
+                            {% for squad_player in substitute_players %}
+                            <div class="col-md-6 col-lg-3 mb-3">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-body text-center">
+                                        {% if squad_player.player.photo %}
+                                            <img src="{{ squad_player.player.photo.url }}" 
+                                                 alt="{{ squad_player.player.full_name }}" 
+                                                 class="rounded-circle mb-2" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        <h6 class="card-title mb-1">
+                                            <span class="badge bg-secondary me-1">#{{ squad_player.jersey_number }}</span>
+                                            {{ squad_player.player.full_name }}
+                                        </h6>
+                                        {% if squad_player.player.fkf_license_number %}
+                                            <small class="text-success">
+                                                <i class="fas fa-id-card"></i> {{ squad_player.player.fkf_license_number }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No substitute players found in the approved squad.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Completed Substitutions -->
+            {% if completed_subs %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exchange-alt"></i> COMPLETED SUBSTITUTIONS ({{ completed_subs|length }})
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Minute</th>
+                                    <th>Player Out</th>
+                                    <th>Player In</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub in completed_subs %}
+                                <tr>
+                                    <td><strong>{{ sub.minute }}'</strong></td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-down text-danger me-1"></i>
+                                        #{{ sub.jersey_out }} {{ sub.player_out.full_name }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-arrow-circle-up text-success me-1"></i>
+                                        #{{ sub.jersey_in }} {{ sub.player_in.full_name }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Completed</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <a href="{% url 'teams:team_manager_dashboard' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="{% url 'referees:team_request_substitution' match.id %}" class="btn btn-success">
+                        <i class="fas fa-exchange-alt"></i> Request Substitution
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

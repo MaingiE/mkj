@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Replace {{ role_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">🔄 Replace {{ role_name }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:appoint_match_officials' match.id %}">Appoint Officials</a></li>
+                    <li class="breadcrumb-item active">Replace {{ role_name }}</li>
+                </ol>
+            </nav>
+            <p class="text-muted mb-0">Replace the current {{ role_name|lower }} with another available referee</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'referees:appoint_match_officials' match.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Appointments
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Match Info & Current Official -->
+        <div class="col-lg-4 mb-4">
+            <!-- Match Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-futbol me-2"></i>Match Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ match.home_team }} vs {{ match.away_team }}</h5>
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td width="100"><strong>Date:</strong></td>
+                            <td>{{ match_date|date:"l, F j, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Time:</strong></td>
+                            <td>{{ match.kickoff_time|default:"To be confirmed" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Venue:</strong></td>
+                            <td>{{ match.venue }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Zone:</strong></td>
+                            <td>{{ match.zone.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Round:</strong></td>
+                            <td>Round {{ match.round_number }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Current Official Card -->
+            <div class="card shadow">
+                <div class="card-header py-3 {% if current_referee %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-user me-2"></i>Current {{ role_name }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if current_referee %}
+                    <div class="text-center mb-4">
+                        {% if current_referee.photo %}
+                        <img src="{{ current_referee.photo.url }}" alt="{{ current_referee.full_name }}" 
+                             class="img-thumbnail rounded-circle mb-3" 
+                             style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 100px; height: 100px;">
+                            <span class="text-white fs-3">{{ current_referee.first_name|first }}{{ current_referee.last_name|first }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <h5>{{ current_referee.full_name }}</h5>
+                        <p class="text-muted mb-1">{{ current_referee.fkf_number }}</p>
+                        <p class="text-muted mb-3">{{ current_referee.get_level_display|default:"Level not set" }}</p>
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted d-block">Phone</small>
+                                    <strong>{{ current_referee.phone_number|default:"-" }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted d-block">County</small>
+                                    <strong>{{ current_referee.county|default:"-" }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">⚠️ Replacement Notes</h6>
+                        <ul class="mb-0 small">
+                            <li>Current referee will be notified</li>
+                            <li>Confirmation status will be reset</li>
+                            <li>Replacement will need to confirm</li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No {{ role_name }} Appointed</h5>
+                        <p class="text-muted">This position is currently vacant.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Replacement Form -->
+        <div class="col-lg-8">
+            <!-- Replacement Form Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center bg-info text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-exchange-alt me-2"></i>Select Replacement Referee
+                    </h6>
+                    <span class="badge bg-white text-info">{{ available_referees|length }} Available</span>
+                </div>
+                <div class="card-body">
+                    {% if available_referees %}
+                    <form method="post" id="replaceForm">
+                        {% csrf_token %}
+                        
+                        <!-- Current Official -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">Current {{ role_name }}</h6>
+                            <div class="alert alert-secondary">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ current_referee.full_name|default:"Not appointed" }}</strong>
+                                        {% if current_referee %}
+                                        <div class="small text-muted">
+                                            {{ current_referee.fkf_number }} • {{ current_referee.get_level_display|default:"No level" }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">To be replaced</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Select New Referee -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">Select New {{ role_name }}</h6>
+                            
+                            <!-- Search and Filter -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="searchReferee" 
+                                               placeholder="Search by name or FKF number...">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-filter"></i>
+                                        </span>
+                                        <select class="form-select" id="filterLevel">
+                                            <option value="">All Levels</option>
+                                            <option value="fifa_elite">FIFA Elite</option>
+                                            <option value="fkf_premier">FKF Premier League</option>
+                                            <option value="fkf_national_super">FKF National Super League</option>
+                                            <option value="fkf_division_1">FKF Division 1</option>
+                                            <option value="fkf_division_2">FKF Division 2</option>
+                                            <option value="fkf_county">FKF County League</option>
+                                            <option value="grassroot">Grassroot</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Referee Selection -->
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-hover mb-0" id="refereeTable">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th width="50">Select</th>
+                                            <th>Referee</th>
+                                            <th>Level</th>
+                                            <th>County</th>
+                                            <th>Phone</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for referee in available_referees %}
+                                        <tr class="referee-row" 
+                                            data-name="{{ referee.full_name|lower }}"
+                                            data-fkf="{{ referee.fkf_number|lower }}"
+                                            data-level="{{ referee.level|default:'' }}"
+                                            data-county="{{ referee.county|default:''|lower }}">
+                                            <td>
+                                                <input type="radio" name="new_referee" 
+                                                       value="{{ referee.id }}" 
+                                                       class="form-check-input referee-select"
+                                                       id="referee_{{ referee.id }}"
+                                                       required>
+                                            </td>
+                                            <td>
+                                                <label for="referee_{{ referee.id }}" class="form-check-label cursor-pointer">
+                                                    <div class="d-flex align-items-center">
+                                                        {% if referee.photo %}
+                                                        <img src="{{ referee.photo.url }}" 
+                                                             class="rounded-circle me-2" 
+                                                             style="width: 32px; height: 32px; object-fit: cover;">
+                                                        {% else %}
+                                                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center me-2" 
+                                                             style="width: 32px; height: 32px;">
+                                                            <span class="text-white small">{{ referee.first_name|first }}{{ referee.last_name|first }}</span>
+                                                        </div>
+                                                        {% endif %}
+                                                        <div>
+                                                            <div class="fw-bold">{{ referee.full_name }}</div>
+                                                            <small class="text-muted">{{ referee.fkf_number }}</small>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ referee.get_level_display|default:"-" }}</span>
+                                            </td>
+                                            <td>{{ referee.county|default:"-" }}</td>
+                                            <td>{{ referee.phone_number|default:"-" }}</td>
+                                            <td>
+                                                {% if referee.can_be_appointed %}
+                                                <span class="badge bg-success">Available</span>
+                                                {% else %}
+                                                <span class="badge bg-danger">Unavailable</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Selected Referee Preview -->
+                            <div class="card mt-3" id="selectedPreview" style="display: none;">
+                                <div class="card-body">
+                                    <h6>Selected Referee:</h6>
+                                    <div class="d-flex align-items-center">
+                                        <div id="selectedPhoto" class="me-3"></div>
+                                        <div>
+                                            <h5 id="selectedName" class="mb-1"></h5>
+                                            <p class="text-muted mb-0" id="selectedDetails"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Replacement Reason -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">Replacement Details</h6>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label for="reason" class="form-label">Reason for Replacement (Optional)</label>
+                                    <textarea name="reason" id="reason" class="form-control" 
+                                              rows="3" placeholder="e.g., Original referee unavailable due to injury, schedule conflict, etc."></textarea>
+                                    <small class="form-text text-muted">
+                                        This information will be recorded in the system logs but not shared with the replaced referee.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmReplace" required>
+                                <label class="form-check-label" for="confirmReplace">
+                                    I confirm that I want to replace 
+                                    <strong>{{ current_referee.full_name|default:"the current referee" }}</strong> 
+                                    as {{ role_name }} for this match.
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'referees:appoint_match_officials' match.id %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-exchange-alt me-2"></i>Replace {{ role_name }}
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <!-- No Available Referees -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-user-times fa-3x text-danger mb-3"></i>
+                        <h4 class="text-danger">No Available Referees</h4>
+                        <p class="text-muted">There are no available referees for this match date.</p>
+                        <p class="text-muted">All referees are either:</p>
+                        <ul class="text-muted">
+                            <li>Already appointed to other matches on {{ match_date|date:"d/m/Y" }}</li>
+                            <li>Marked as unavailable for this date</li>
+                            <li>Not approved or active in the system</li>
+                        </ul>
+                        <div class="mt-4">
+                            <a href="{% url 'referees:appoint_match_officials' match.id %}" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Appointments
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="card shadow">
+                <div class="card-header py-3 bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i>Important Notes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>📋 What Happens:</h6>
+                            <ul class="small">
+                                <li>Current referee will be removed from this match</li>
+                                <li>Their confirmation status will be reset</li>
+                                <li>New referee will need to confirm appointment</li>
+                                <li>Match officials status may change</li>
+                                <li>System will log the replacement</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>⏰ Timeline:</h6>
+                            <ul class="small">
+                                <li><strong>Immediate:</strong> Referee is replaced in system</li>
+                                <li><strong>Within 24 hours:</strong> Referees are notified</li>
+                                <li><strong>Before match:</strong> New referee must confirm</li>
+                                <li><strong>After match:</strong> Reports reflect actual officials</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important:</strong> Referee replacements should only be done when absolutely necessary. 
+                        Frequent changes can disrupt match preparation.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 0;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+.referee-row:hover {
+    background-color: rgba(0,0,0,.05);
+    cursor: pointer;
+}
+.referee-row.selected {
+    background-color: #cfe2ff !important;
+}
+.form-check-input.referee-select {
+    cursor: pointer;
+}
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+.sticky-top {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 1;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Row click selection
+    document.querySelectorAll('.referee-row').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.type === 'radio' || e.target.tagName === 'INPUT') return;
+            
+            const radio = this.querySelector('.referee-select');
+            if (radio && !radio.disabled) {
+                radio.checked = true;
+                
+                // Update UI
+                document.querySelectorAll('.referee-row').forEach(r => {
+                    r.classList.remove('selected');
+                });
+                this.classList.add('selected');
+                
+                // Update preview
+                updateSelectedPreview(this);
+            }
+        });
+    });
+    
+    // Radio button change
+    document.querySelectorAll('.referee-select').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const row = this.closest('.referee-row');
+            document.querySelectorAll('.referee-row').forEach(r => {
+                r.classList.remove('selected');
+            });
+            if (this.checked) {
+                row.classList.add('selected');
+                updateSelectedPreview(row);
+            }
+        });
+    });
+    
+    // Update selected referee preview
+    function updateSelectedPreview(row) {
+        const name = row.querySelector('.fw-bold').textContent;
+        const fkf = row.querySelector('.text-muted').textContent;
+        const level = row.querySelector('.badge').textContent;
+        const county = row.cells[3].textContent;
+        
+        const photoDiv = row.querySelector('.rounded-circle, .bg-secondary');
+        let photoHTML = '';
+        if (photoDiv) {
+            if (photoDiv.classList.contains('rounded-circle') && photoDiv.src) {
+                photoHTML = `<img src="${photoDiv.src}" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">`;
+            } else {
+                const initials = name.split(' ').map(n => n[0]).join('');
+                photoHTML = `<div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 50px; height: 50px;">
+                            <span class="text-white">${initials}</span>
+                        </div>`;
+            }
+        }
+        
+        document.getElementById('selectedPhoto').innerHTML = photoHTML;
+        document.getElementById('selectedName').textContent = name;
+        document.getElementById('selectedDetails').textContent = `${fkf} • ${level} • ${county}`;
+        document.getElementById('selectedPreview').style.display = 'block';
+    }
+    
+    // Search functionality
+    const searchInput = document.getElementById('searchReferee');
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filterTable();
+    });
+    
+    // Level filter
+    const levelFilter = document.getElementById('filterLevel');
+    levelFilter.addEventListener('change', filterTable);
+    
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const levelFilterValue = levelFilter.value;
+        
+        document.querySelectorAll('.referee-row').forEach(row => {
+            const name = row.dataset.name;
+            const fkf = row.dataset.fkf;
+            const level = row.dataset.level;
+            
+            let show = true;
+            
+            // Search filter
+            if (searchTerm && !name.includes(searchTerm) && !fkf.includes(searchTerm)) {
+                show = false;
+            }
+            
+            // Level filter
+            if (levelFilterValue && level !== levelFilterValue) {
+                show = false;
+            }
+            
+            row.style.display = show ? '' : 'none';
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('replaceForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const selectedReferee = document.querySelector('input[name="new_referee"]:checked');
+            const confirmCheckbox = document.getElementById('confirmReplace');
+            
+            if (!selectedReferee) {
+                e.preventDefault();
+                alert('Please select a replacement referee.');
+                return false;
+            }
+            
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Please confirm the replacement by checking the confirmation box.');
+                return false;
+            }
+            
+            const currentReferee = '{{ current_referee.full_name|default:"current referee" }}';
+            const newRefereeName = document.querySelector('.referee-row.selected .fw-bold').textContent;
+            
+            if (!confirm(`Are you sure you want to replace ${currentReferee} with ${newRefereeName} as {{ role_name }}?`)) {
+                e.preventDefault();
+                return false;
+            }
+            
+            return true;
+        });
+    }
+    
+    // Initialize: Select first available referee by default
+    const firstAvailable = document.querySelector('.referee-select:not(:disabled)');
+    if (firstAvailable) {
+        firstAvailable.checked = true;
+        const firstRow = firstAvailable.closest('.referee-row');
+        firstRow.classList.add('selected');
+        updateSelectedPreview(firstRow);
+    }
+});
+</script>
+{% endblock %}

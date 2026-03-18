@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Edit Standings &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-list-ol"></i> Edit Standings</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <div>
+        <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="recalculate_all"><button class="btn btn-sm btn-warning">Recalculate All</button></form>
+        <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm ms-1">&larr; Back</a>
+    </div>
+</div>
+
+<div class="alert alert-warning" style="font-size:.86rem;">
+    <strong>Exceptional case only:</strong> Manual standings overrides are restricted to exceptional cases and are automatically submitted to SG tracking with your reason.
+</div>
+
+{% for pd in pool_data %}
+<div class="card mb-3">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:1rem;"><i class="bi bi-grid-3x3-gap"></i> {{ pd.pool.name }}</h3>
+        <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="recalculate"><input type="hidden" name="pool_id" value="{{ pd.pool.pk }}"><button class="btn btn-sm btn-outline-warning">Recalculate</button></form>
+    </div>
+    <div class="card-body" style="overflow-x:auto;">
+        <table class="table table-sm" style="font-size:.85rem;">
+            <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Bonus</th><th>Pts</th><th>Exception Reason</th><th></th></tr></thead>
+            <tbody>
+                {% for pt in pd.teams %}
+                <tr>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_standings">
+                        <input type="hidden" name="pool_team_id" value="{{ pt.pk }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ pt.team.name }}</td>
+                        <td><input type="number" name="played" value="{{ pt.played }}" class="form-control form-control-sm" style="width:50px;" min="0"></td>
+                        <td><input type="number" name="won" value="{{ pt.won }}" class="form-control form-control-sm" style="width:50px;" min="0"></td>
+                        <td><input type="number" name="drawn" value="{{ pt.drawn }}" class="form-control form-control-sm" style="width:50px;" min="0"></td>
+                        <td><input type="number" name="lost" value="{{ pt.lost }}" class="form-control form-control-sm" style="width:50px;" min="0"></td>
+                        <td><input type="number" name="goals_for" value="{{ pt.goals_for }}" class="form-control form-control-sm" style="width:50px;" min="0"></td>
+                        <td><input type="number" name="goals_against" value="{{ pt.goals_against }}" class="form-control form-control-sm" style="width:50px;" min="0"></td>
+                        <td>{{ pt.goal_difference }}</td>
+                        <td><input type="number" name="bonus_points" value="{{ pt.bonus_points }}" class="form-control form-control-sm" style="width:50px;"></td>
+                        <td><strong>{{ pt.points }}</strong></td>
+                        <td style="min-width:220px;">
+                            <input type="text" name="exceptional_reason" class="form-control form-control-sm" placeholder="Reason for exceptional override" required minlength="12">
+                            <label style="display:block;font-size:.72rem;margin-top:.2rem;color:#666;">
+                                <input type="checkbox" name="confirm_exceptional" value="1" required> Exceptional case
+                            </label>
+                        </td>
+                        <td><button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-check"></i></button></td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% empty %}
+<div style="text-align:center;padding:3rem;color:#999;">No pools found for this competition.</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Exceptional Overrides - Secretary General{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'sg_dashboard' %}">Secretary General</a>
+        <span>Exceptional Overrides</span>
+    </div>
+    <h1><i class="bi bi-shield-exclamation"></i> Exceptional Coordinator Overrides</h1>
+    <p>Read-only tracking for exceptional results and standings edits submitted for SG oversight.</p>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div style="font-size:.78rem;color:#777;">Total Overrides</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#1B5E20;">{{ stats.total }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div style="font-size:.78rem;color:#777;">Result Overrides</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#1565C0;">{{ stats.result_overrides }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div style="font-size:.78rem;color:#777;">Standings Overrides</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#E65100;">{{ stats.standings_overrides }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div style="font-size:.78rem;color:#777;">Pending SG Review</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#6A1B9A;">{{ stats.pending }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div style="font-size:.78rem;color:#777;">Acknowledged</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#2E7D32;">{{ stats.acknowledged }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div style="font-size:.78rem;color:#777;">Rejected</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#C62828;">{{ stats.rejected }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 mb-3" style="background:#f9f9f9;">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Coordinator</label>
+            <select name="user" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Coordinators</option>
+                {% for u in users %}
+                <option value="{{ u.pk }}" {% if u.pk|stringformat:"s" == user_filter %}selected{% endif %}>{{ u.get_full_name }} ({{ u.get_role_display }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Discipline</label>
+            <select name="discipline" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Disciplines</option>
+                {% for val, label in discipline_choices %}
+                <option value="{{ val }}" {% if val == discipline_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Override Type</label>
+            <select name="action" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Types</option>
+                {% for val, label in action_choices %}
+                <option value="{{ val }}" {% if val == action_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">SG Review Status</label>
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Competition Search</label>
+            <input type="text" name="competition" class="form-control form-control-sm" value="{{ competition_filter }}" placeholder="Competition name">
+        </div>
+        <button type="submit" class="btn btn-sm btn-success" style="margin-bottom:2px;">Apply</button>
+        <button type="submit" name="export" value="csv" class="btn btn-sm btn-outline-primary" style="margin-bottom:2px;">Export CSV</button>
+        <button type="submit" name="export" value="pdf" class="btn btn-sm btn-outline-dark" style="margin-bottom:2px;">Export PDF</button>
+        {% if competition_filter or discipline_filter or user_filter or action_filter or status_filter != 'pending' %}
+        <a href="{% url 'sg_exceptional_overrides' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>Date / Time</th>
+                    <th>Coordinator</th>
+                    <th>Discipline</th>
+                    <th>Type</th>
+                    <th>Reason</th>
+                    <th>Description</th>
+                    <th>SG Review</th>
+                    <th>IP</th>
+                    <th style="min-width:240px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size:.82rem;white-space:nowrap;">{{ log.timestamp|date:"d M Y H:i" }}</td>
+                    <td>{{ log.user.get_full_name|default:log.user.email }}</td>
+                    <td style="font-size:.82rem;">{{ log.user.assigned_discipline|default:"-" }}</td>
+                    <td>
+                        {% if log.action == 'RESULT_OVERRIDE' %}
+                        <span class="badge bg-primary">Result Override</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Standings Override</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.84rem;">{{ log.extra_data.reason|default:"-" }}</td>
+                    <td style="font-size:.84rem;">{{ log.description|truncatechars:90 }}</td>
+                    <td style="font-size:.82rem;">
+                        {% if log.extra_data.sg_review_status == 'acknowledged' %}
+                        <span class="badge bg-success">Acknowledged</span>
+                        {% elif log.extra_data.sg_review_status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pending</span>
+                        {% endif %}
+                        {% if log.extra_data.sg_reviewed_by_name %}
+                        <div class="text-muted" style="font-size:.75rem;">{{ log.extra_data.sg_reviewed_by_name }}</div>
+                        {% endif %}
+                        {% if log.extra_data.sg_review_note %}
+                        <div style="font-size:.75rem;max-width:230px;">{{ log.extra_data.sg_review_note|truncatechars:55 }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.82rem;">{{ log.ip_address|default:"-" }}</td>
+                    <td>
+                        <form method="post" class="d-flex flex-column gap-1">
+                            {% csrf_token %}
+                            <input type="hidden" name="log_id" value="{{ log.pk }}">
+                            <input type="hidden" name="next" value="{{ current_query }}">
+                            <input type="text" name="review_note" class="form-control form-control-sm" placeholder="SG remark (required for rejection)">
+                            <div class="d-flex gap-1">
+                                <button type="submit" name="decision" value="acknowledged" class="btn btn-sm btn-outline-success">Acknowledge</button>
+                                <button type="submit" name="decision" value="rejected" class="btn btn-sm btn-outline-danger">Reject</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-muted text-center">No exceptional overrides found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if logs|length >= 200 %}
+    <p class="text-muted mt-2 mb-0" style="font-size:.82rem;"><em>Showing most recent 200 entries.</em></p>
+    {% endif %}
+</div>
+{% endblock %}

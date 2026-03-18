@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Competitions — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Competitions</span>
+    </div>
+    <h1><i class="bi bi-trophy"></i> Competitions</h1>
+    <p>Manage all KYISA competitions and tournaments</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>All Competitions</h3>
+        <span class="toolbar-count" id="compCount"></span>
+    </div>
+    <div class="card-body">
+        {% if competitions %}
+        <div class="toolbar">
+            <div class="toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="compSearch" placeholder="Search..." oninput="filterComps()">
+            </div>
+            <select class="toolbar-select" id="sportFilter" onchange="filterComps()">
+                <option value="">All Sports</option>
+            </select>
+            <select class="toolbar-select" id="compStatusFilter" onchange="filterComps()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="registration">Registration</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="group_stage">Group Stage</option>
+                <option value="knockout">Knockout</option>
+                <option value="completed">Completed</option>
+            </select>
+            <div class="toolbar-spacer"></div>
+        </div>
+        <div class="table-responsive">
+            <table id="compsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Sport</th>
+                        <th>Season</th>
+                        <th>Age</th>
+                        <th>Status</th>
+                        <th>Start</th>
+                        <th>Teams</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in competitions %}
+                    <tr data-sport="{{ comp.get_sport_type_display }}" data-status="{{ comp.status }}">
+                        <td><strong>{{ comp.name }}</strong></td>
+                        <td style="font-size:.78rem">{{ comp.get_sport_type_display }}</td>
+                        <td>{{ comp.season }}</td>
+                        <td>{{ comp.get_age_group_display }}</td>
+                        <td>
+                            {% if comp.status == 'active' %}
+                            <span class="badge badge-success">Active</span>
+                            {% elif comp.status == 'registration' %}
+                            <span class="badge badge-info">Registration</span>
+                            {% elif comp.status == 'completed' %}
+                            <span class="badge badge-gray">Completed</span>
+                            {% elif comp.status == 'upcoming' %}
+                            <span class="badge badge-warning">Upcoming</span>
+                            {% elif comp.status == 'group_stage' %}
+                            <span class="badge badge-info">Group Stage</span>
+                            {% elif comp.status == 'knockout' %}
+                            <span class="badge badge-warning">Knockout</span>
+                            {% else %}
+                            <span class="badge badge-danger">{{ comp.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ comp.start_date|date:"d M 'y" }}</td>
+                        <td>{{ comp.teams.count }}/{{ comp.max_teams }}</td>
+                        <td class="text-nowrap">
+                            <a href="{% url 'competition_detail' comp.pk %}" class="btn btn-outline btn-xs">View</a>
+                            {% if user.role == 'competition_manager' or user.role == 'admin' or user.is_superuser %}
+                            <a href="{% url 'competition_standings' comp.pk %}" class="btn btn-outline btn-xs btn-blue">Standings</a>
+                            <a href="{% url 'competition_reports' comp.pk %}" class="btn btn-outline btn-xs btn-purple">Reports</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><i class="bi bi-trophy"></i></div>
+            <h3>No competitions yet</h3>
+            <p>Competitions will appear here once created.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js_content %}
+<script>
+function filterComps() {
+    const q = document.getElementById('compSearch').value.toLowerCase();
+    const sport = document.getElementById('sportFilter').value;
+    const status = document.getElementById('compStatusFilter').value;
+    const rows = document.querySelectorAll('#compsTable tbody tr');
+    let visible = 0;
+    rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        const show = (!q || text.includes(q)) && (!sport || r.dataset.sport === sport) && (!status || r.dataset.status === status);
+        r.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('compCount').textContent = visible + ' of ' + rows.length;
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const sports = new Set();
+    document.querySelectorAll('#compsTable tbody tr').forEach(r => {
+        if (r.dataset.sport) sports.add(r.dataset.sport);
+    });
+    const sel = document.getElementById('sportFilter');
+    [...sports].sort().forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        sel.appendChild(o);
+    });
+    filterComps();
+});
+</script>
+{% endblock %}
+{% endblock %}

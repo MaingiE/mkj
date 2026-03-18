@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Team Official{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-user-plus"></i> Add Team Official</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="team_id" class="form-label">Team *</label>
+                            <select name="team_id" id="team_id" class="form-control" required>
+                                <option value="">Select Team</option>
+                                {% for team in teams %}
+                                <option value="{{ team.id }}">{{ team.team_name }} ({{ team.zone.name }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name *</label>
+                            <input type="text" name="full_name" id="full_name" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Position *</label>
+                            <select name="position" id="position" class="form-control" required>
+                                <option value="">Select Position</option>
+                                {% for code, name in positions %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">Phone Number *</label>
+                            <input type="tel" name="phone_number" id="phone_number" class="form-control" required
+                                   pattern="\+254\d{9}" maxlength="13" placeholder="+254712345678"
+                                   title="Phone number must be in the format +254XXXXXXXXX">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email (Optional)</label>
+                            <input type="email" name="email" id="email" class="form-control">
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Add Official
+                            </button>
+                            <a href="{% url 'teams:admin_manage_officials' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

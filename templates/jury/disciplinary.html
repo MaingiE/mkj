@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Disciplinary Sanctions — Jury | KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1><i class="bi bi-exclamation-triangle-fill"></i> Disciplinary Sanctions</h1>
+        <p class="text-muted">Yellow cards, red cards &amp; second yellows across all matches</p>
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+        <a href="{% url 'jury_export_disciplinary_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+        <a href="{% url 'jury_export_disciplinary_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger btn-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'jury_dashboard' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="padding:1rem; margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:end;">
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Competition</label>
+            <select name="competition" class="form-control">
+                <option value="">All Competitions</option>
+                {% for c in competitions %}
+                <option value="{{ c.pk }}" {% if filters.competition == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Team</label>
+            <select name="team" class="form-control">
+                <option value="">All Teams</option>
+                {% for t in teams %}
+                <option value="{{ t.pk }}" {% if filters.team == t.pk|stringformat:"d" %}selected{% endif %}>{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1; min-width:140px;">
+            <label style="font-size:.8rem; font-weight:600;">Card Type</label>
+            <select name="card_type" class="form-control">
+                <option value="">All Cards</option>
+                <option value="yellow_card" {% if filters.card_type == "yellow_card" %}selected{% endif %}>Yellow Card</option>
+                <option value="red_card" {% if filters.card_type == "red_card" %}selected{% endif %}>Red Card</option>
+                <option value="second_yellow" {% if filters.card_type == "second_yellow" %}selected{% endif %}>Second Yellow</option>
+            </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Search</label>
+            <input type="text" name="search" value="{{ filters.search }}" class="form-control" placeholder="Player or team…">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="height:38px;">Filter</button>
+        <a href="{% url 'jury_disciplinary' %}" class="btn btn-outline btn-sm" style="height:38px; line-height:24px;">Clear</a>
+    </form>
+</div>
+
+<!-- Team Summary Cards -->
+{% if team_summary %}
+<div class="card" style="padding:1.25rem; margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem;"><i class="bi bi-bar-chart-fill"></i> Sanctions by Team</h3>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th style="text-align:center;"><span style="display:inline-block; width:18px; height:18px; background:#f9a825; border-radius:2px;" title="Yellow Cards"></span> Yellow</th>
+                    <th style="text-align:center;"><span style="display:inline-block; width:18px; height:18px; background:#e53935; border-radius:2px;" title="Red Cards"></span> Red</th>
+                    <th style="text-align:center;"><span style="display:inline-block; width:18px; height:18px; background:#ff6f00; border-radius:2px;" title="Second Yellow"></span> 2nd Yellow</th>
+                    <th style="text-align:center;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ts in team_summary %}
+                <tr>
+                    <td><strong>{{ ts.team__name }}</strong></td>
+                    <td style="text-align:center;">{{ ts.yellows }}</td>
+                    <td style="text-align:center;">{{ ts.reds }}</td>
+                    <td style="text-align:center;">{{ ts.second_yellows }}</td>
+                    <td style="text-align:center;"><strong>{{ ts.total }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Individual Cards Log -->
+<div class="card" style="padding:1rem;">
+    <h3 style="margin:0 0 1rem;">Card-by-Card Log</h3>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Competition</th>
+                    <th>Match</th>
+                    <th>Team</th>
+                    <th>Player</th>
+                    <th>Card</th>
+                    <th>Minute</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in events %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ ev.report.fixture.match_date|date:"d M Y"|default:"-" }}</td>
+                    <td>{{ ev.report.fixture.competition.name|default:"-" }}</td>
+                    <td>{{ ev.report.fixture.home_team.name }} vs {{ ev.report.fixture.away_team.name }}</td>
+                    <td><strong>{{ ev.team.name|default:"-" }}</strong></td>
+                    <td>{% if ev.player %}{{ ev.player.first_name }} {{ ev.player.last_name }}{% else %}Unknown{% endif %}</td>
+                    <td>
+                        {% if ev.event_type == "yellow_card" %}
+                            <span style="display:inline-block; width:16px; height:22px; background:#f9a825; border-radius:2px; vertical-align:middle;" title="Yellow Card"></span>
+                        {% elif ev.event_type == "red_card" %}
+                            <span style="display:inline-block; width:16px; height:22px; background:#e53935; border-radius:2px; vertical-align:middle;" title="Red Card"></span>
+                        {% elif ev.event_type == "second_yellow" %}
+                            <span style="display:inline-block; width:16px; height:22px; background:linear-gradient(135deg, #f9a825 50%, #e53935 50%); border-radius:2px; vertical-align:middle;" title="Second Yellow / Red"></span>
+                        {% endif %}
+                        <span style="font-size:.8rem; margin-left:4px;">{{ ev.get_event_type_display }}</span>
+                    </td>
+                    <td>{{ ev.minute|default:"-" }}'</td>
+                    <td style="font-size:.85rem; max-width:180px; overflow:hidden; text-overflow:ellipsis;">{{ ev.notes|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" style="text-align:center; color:#888; padding:2rem;">No disciplinary events found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="font-size:.8rem; color:#888; margin:.5rem 0 0;">Showing {{ events|length }} event{{ events|length|pluralize }}.</p>
+</div>
+{% endblock %}

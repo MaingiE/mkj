@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Select Team - Manage Players{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary"><i class="fas fa-users me-2"></i>Select Team to Manage Players</h2>
+            <p class="lead">Choose a team to add or manage players</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for team in teams %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if team.logo %}
+                        <img src="{{ team.logo.url }}" alt="{{ team.team_name }}" 
+                             style="width: 60px; height: 60px; object-fit: contain;" class="me-3">
+                        {% else %}
+                        <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-3"
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-0">{{ team.team_name }}</h5>
+                            <small class="text-muted">{{ team.zone.name }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">
+                            <i class="fas fa-users me-1"></i>
+                            {{ team.players.count }} Players
+                        </small>
+                        <small class="text-muted d-block">
+                            <i class="fas fa-user-tie me-1"></i>
+                            {{ team.contact_person }}
+                        </small>
+                    </div>
+                    
+                    <a href="{% url 'teams:add_players_approved' %}?team_id={{ team.id }}" 
+                       class="btn btn-primary w-100">
+                        <i class="fas fa-user-plus me-2"></i>Manage Players
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No approved teams found.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,51 @@
+{# Partial: Cautions Section #}
+{% load crispy_forms_tags crispy_forms_filters %}
+<div class="card mb-4">
+    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Cautions</h4>
+        <button type="button" class="btn btn-sm btn-warning" id="add-card-form">
+            <i class="fas fa-plus"></i> Add Card
+        </button>
+    </div>
+    <div class="card-body" id="card-formset">
+        {{ card_formset.management_form }}
+        {% for form in card_formset %}
+        <div class="formset-form {% if form.instance.pk %}existing-form{% else %}new-form{% endif %} border-bottom pb-3 mb-3" id="card-form-{{ forloop.counter0 }}">
+            <div class="row g-3">
+                <div class="col-md-3">{{ form.team|as_crispy_field }}</div>
+                <div class="col-md-3">{{ form.player|as_crispy_field }}</div>
+                <div class="col-md-2">{{ form.minute|as_crispy_field }}</div>
+                <div class="col-md-2">{{ form.jersey_number|as_crispy_field }}</div>
+                <div class="col-md-2">{{ form.reason|as_crispy_field }}</div>
+            </div>
+            {% if form.instance.pk %}
+                {{ form.DELETE }}
+            {% else %}
+                <div class="mt-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-card-form">Remove</button>
+                </div>
+            {% endif %}
+            {{ form.id }}
+        </div>
+        {% endfor %}
+    </div>
+
+    {# Template for adding new caution forms dynamically #}
+    <div id="empty-card" class="d-none">
+        {% with form=card_formset.empty_form %}
+        <div class="formset-form new-form border-bottom pb-3 mb-3" id="card-form-__prefix__">
+            <div class="row g-3">
+                <div class="col-md-3">{{ form.team|as_crispy_field }}</div>
+                <div class="col-md-3">{{ form.player|as_crispy_field }}</div>
+                <div class="col-md-2">{{ form.minute|as_crispy_field }}</div>
+                <div class="col-md-2">{{ form.jersey_number|as_crispy_field }}</div>
+                <div class="col-md-2">{{ form.reason|as_crispy_field }}</div>
+            </div>
+            <div class="mt-2">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-card-form">Remove</button>
+            </div>
+            {{ form.id }}
+        </div>
+        {% endwith %}
+    </div>
+</div>

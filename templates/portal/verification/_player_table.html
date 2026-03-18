@@ -1,0 +1,55 @@
+{% if current_players %}
+<div class="table-responsive">
+    <table>
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Age</th>
+                <th>National ID</th>
+                <th>Photo</th>
+                <th>ID Doc</th>
+                <th>Birth Cert</th>
+                <th>Status</th>
+                <th>Registered</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in current_players %}
+            <tr>
+                <td>
+                    <strong>{{ p.first_name }} {{ p.last_name }}</strong>
+                    <br><small style="color:#888">#{{ p.jersey_number|default:"—" }} · {{ p.position|default:"—" }}</small>
+                </td>
+                <td>{{ p.age }}</td>
+                <td>{{ p.national_id_number|default:"—" }}</td>
+                <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1B5E20">📸</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1B5E20">🪪</a>{% else %}<span style="color:#C62828">✕</span>{% endif %}</td>
+                <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1B5E20">📜</a>{% else %}<span style="color:#888">—</span>{% endif %}</td>
+                <td>
+                    {% if p.verification_status == 'pending' %}
+                    <span style="background:#FFF3E0;color:#E65100;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Pending</span>
+                    {% elif p.verification_status == 'verified' %}
+                    <span style="background:#E8F5E9;color:#1B5E20;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Verified</span>
+                    {% elif p.verification_status == 'rejected' %}
+                    <span style="background:#FFEBEE;color:#C62828;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Rejected</span>
+                    {% elif p.verification_status == 'resubmit' %}
+                    <span style="background:#F3E5F5;color:#6A1B9A;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">Resubmit</span>
+                    {% endif %}
+                </td>
+                <td><small>{{ p.registered_at|date:"d M Y" }}</small></td>
+                <td>
+                    <a href="{% url 'verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="padding:3rem;text-align:center">
+    <div style="font-size:3rem">📋</div>
+    <h3 style="margin:.5rem 0">No players in this category</h3>
+    <p style="color:#888">No players match the current filter.</p>
+</div>
+{% endif %}

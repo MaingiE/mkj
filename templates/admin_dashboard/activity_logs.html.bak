@@ -1,0 +1,904 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Activity Logs | KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════ */
+:root {
+  --ink:           #080d0b;
+  --surface:       #0e1412;
+  --panel:         #131a17;
+  --panel-hi:      #192320;
+  --border:        rgba(255,255,255,0.055);
+  --border-md:     rgba(255,255,255,0.10);
+
+  --green:         #4ade80;
+  --green-2:       #86efac;
+  --green-dim:     rgba(74,222,128,0.12);
+  --green-glow:    rgba(74,222,128,0.18);
+  --green-dark:    #22543d;
+
+  --amber:         #fbbf24;
+  --amber-dim:     rgba(251,191,36,0.12);
+  --amber-bdr:     rgba(251,191,36,0.28);
+
+  --sky:           #38bdf8;
+  --sky-dim:       rgba(56,189,248,0.12);
+  --sky-bdr:       rgba(56,189,248,0.28);
+
+  --rose:          #fb7185;
+  --rose-dim:      rgba(251,113,133,0.12);
+  --rose-bdr:      rgba(251,113,133,0.28);
+
+  --violet:        #a78bfa;
+  --violet-dim:    rgba(167,139,250,0.12);
+  --violet-bdr:    rgba(167,139,250,0.28);
+
+  --t1: #edfaf3;
+  --t2: #92b3a0;
+  --t3: #4e6b5b;
+
+  --f-display: 'Syne', sans-serif;
+  --f-body:    'DM Sans', sans-serif;
+  --f-mono:    'JetBrains Mono', monospace;
+}
+
+body {
+  background-color: var(--ink) !important;
+  color: var(--t1) !important;
+  font-family: var(--f-body) !important;
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+}
+
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--panel-hi); }
+::-webkit-scrollbar-thumb { background: var(--green-dark); border-radius: 99px; }
+
+/* ── HERO ─────────────────────────────── */
+.al-hero {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 2.5rem 2.7rem 2.2rem;
+  box-shadow: 0 8px 32px rgba(74,222,128,0.07);
+}
+.al-hero-aurora {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.al-hero-aurora::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 300px;
+  right: -60px; top: -80px;
+  background: radial-gradient(ellipse, rgba(74,222,128,0.13) 0%, transparent 65%);
+  animation: auroraDrift 9s ease-in-out infinite alternate;
+}
+.al-hero-aurora::after {
+  content: '';
+  position: absolute;
+  width: 280px; height: 280px;
+  left: -40px; bottom: -100px;
+  background: radial-gradient(ellipse, rgba(56,189,248,0.07) 0%, transparent 60%);
+  animation: auroraDrift 13s ease-in-out infinite alternate-reverse;
+}
+@keyframes auroraDrift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(18px,14px) scale(1.05); }
+}
+.al-hero-dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(74,222,128,0.18) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 75% 100% at 85% 50%, black, transparent);
+  opacity: .4; pointer-events: none;
+}
+.al-hero::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, transparent, var(--green), transparent);
+  border-radius: 0 99px 99px 0; z-index: 2;
+}
+.al-hero-content { position: relative; z-index: 3; }
+
+.al-breadcrumb { font-family: var(--f-mono); font-size: 11px; }
+.al-breadcrumb .breadcrumb-item a { color: var(--t3) !important; transition: color .2s; }
+.al-breadcrumb .breadcrumb-item a:hover { color: var(--green) !important; }
+.al-breadcrumb .breadcrumb-item.active { color: var(--green) !important; }
+.al-breadcrumb .breadcrumb-item + .breadcrumb-item::before { color: var(--t3) !important; }
+
+.al-live-badge {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 99px; padding: .28rem .8rem;
+  font-family: var(--f-mono); font-size: 10.5px; color: var(--green);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.al-live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,.5); }
+  50%      { opacity: .7; box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+}
+
+/* Title improvements */
+.al-title {
+  font-family: var(--f-display);
+  font-size: clamp(2.1rem, 4vw, 3.1rem);
+  font-weight: 800; line-height: .95; letter-spacing: -.035em;
+  margin-bottom: .5rem;
+}
+.al-title .w-plain { color: var(--t1); }
+.al-title .w-grad  {
+  background: linear-gradient(110deg, var(--green) 0%, var(--green-2) 55%, #d9f99d 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.al-subtitle { font-size: 14px; font-weight: 400; color: var(--t3); margin-bottom: .5rem; }
+
+/* Export button improvements */
+.btn-exp {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .52rem 1.15rem; border-radius: 10px;
+  font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  border: 1px solid var(--border-md); background: rgba(255,255,255,0.04);
+  color: var(--t2); text-decoration: none; transition: all .2s;
+  box-shadow: 0 2px 8px rgba(74,222,128,0.04);
+}
+.btn-exp:hover            { background: rgba(255,255,255,0.09); color: var(--t1); }
+.btn-exp.v-excel:hover    { border-color: rgba(74,222,128,.35); color: var(--green); background: var(--green-dim); }
+.btn-exp.v-pdf:hover      { border-color: var(--rose-bdr); color: var(--rose); background: var(--rose-dim); }
+
+/* ── STAT CARDS ───────────────────────── */
+.al-stat-card {
+  position: relative; overflow: hidden;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 18px; padding: 1.45rem 1.6rem 1.1rem;
+  transition: transform .25s, border-color .25s, box-shadow .25s;
+  cursor: default;
+  box-shadow: 0 4px 16px rgba(56,189,248,0.04);
+}
+.al-stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px var(--scd); }
+.al-stat-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 18px 18px 0 0;
+}
+/* color variants */
+.al-stat-card.sc-green  { --sc: var(--green);  --scd: var(--green-dim);  --scb: rgba(74,222,128,.3); }
+.al-stat-card.sc-sky    { --sc: var(--sky);    --scd: var(--sky-dim);    --scb: var(--sky-bdr); }
+.al-stat-card.sc-amber  { --sc: var(--amber);  --scd: var(--amber-dim);  --scb: var(--amber-bdr); }
+.al-stat-card.sc-violet { --sc: var(--violet); --scd: var(--violet-dim); --scb: var(--violet-bdr); }
+
+.al-stat-card::before { background: var(--sc); opacity: .65; }
+.al-stat-card::after {
+  content: ''; position: absolute;
+  top: -40px; right: -40px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, var(--scd) 0%, transparent 70%);
+  pointer-events: none; opacity: .8; transition: opacity .3s;
+}
+.al-stat-card:hover { border-color: var(--scb); box-shadow: 0 0 22px var(--scd); }
+.al-stat-card:hover::after { opacity: 1.3; }
+
+/* Stat card improvements */
+.sc-label { font-family: var(--f-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--t3); margin-bottom: .5rem; }
+.sc-value { font-family: var(--f-display); font-size: 2.5rem; font-weight: 800; line-height: 1; color: var(--sc); margin-bottom: .3rem; text-shadow: 0 0 22px var(--scd); }
+.sc-foot  { font-size: 12px; color: var(--t3); font-family: var(--f-mono); }
+.sc-icon  { position: absolute; bottom: .7rem; right: 1.1rem; font-size: 2.4rem; color: var(--sc); opacity: .09; pointer-events: none; }
+
+/* ── FILTER PANEL ─────────────────────── */
+.al-filter-panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.5rem 1.7rem;
+  box-shadow: 0 2px 8px rgba(251,191,36,0.04);
+}
+.al-search-group .input-group-text {
+  background: var(--surface) !important; border-color: var(--border-md) !important;
+  color: var(--t3) !important;
+}
+/* Search input improvements */
+.al-search-input {
+  background: var(--surface) !important; border-color: var(--border-md) !important;
+  color: var(--t1) !important; font-family: var(--f-body) !important; font-size: 14px !important;
+  border-radius: 8px !important;
+}
+.al-search-input::placeholder { color: var(--t3) !important; }
+.al-search-input:focus {
+  background: var(--surface) !important;
+  border-color: rgba(74,222,128,0.45) !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.08) !important;
+  color: var(--t1) !important;
+}
+.al-select, .al-date {
+  background: var(--surface) !important; border-color: var(--border-md) !important;
+  color: var(--t1) !important; font-family: var(--f-body) !important; font-size: 13px !important;
+}
+.al-select:focus, .al-date:focus {
+  background: var(--surface) !important;
+  border-color: rgba(74,222,128,0.45) !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.08) !important;
+  color: var(--t1) !important;
+}
+.al-select option { background: var(--panel-hi) !important; }
+.al-date { font-family: var(--f-mono) !important; font-size: 12px !important; color-scheme: dark; }
+
+.f-lbl { font-family: var(--f-mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .09em; color: var(--t3); margin-bottom: .3rem; display: block; }
+
+/* Bootstrap button overrides */
+.btn-al-primary  { background: var(--green) !important; border-color: var(--green) !important; color: #071209 !important; font-weight: 700; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; transition: all .2s !important; }
+.btn-al-primary:hover { background: var(--green-2) !important; border-color: var(--green-2) !important; box-shadow: 0 0 16px var(--green-glow) !important; }
+.btn-al-ghost    { background: transparent !important; border-color: var(--border-md) !important; color: var(--t2) !important; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; transition: all .2s !important; }
+.btn-al-ghost:hover   { border-color: var(--rose-bdr) !important; color: var(--rose) !important; background: var(--rose-dim) !important; }
+.btn-al-outline  { background: transparent !important; border-color: var(--border-md) !important; color: var(--t3) !important; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; transition: all .2s !important; }
+.btn-al-outline:hover { border-color: rgba(74,222,128,.35) !important; color: var(--green) !important; background: var(--green-dim) !important; }
+
+/* ── ACTIVE CHIPS ─────────────────────── */
+.al-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .28rem .8rem; border-radius: 99px;
+  font-family: var(--f-mono); font-size: 12px;
+  border: 1px solid; transition: border-color .2s;
+  box-shadow: 0 2px 8px rgba(167,139,250,0.04);
+}
+.al-chip.ch-green  { color: var(--green);  background: var(--green-dim);   border-color: rgba(74,222,128,0.22); }
+.al-chip.ch-amber  { color: var(--amber);  background: var(--amber-dim);   border-color: var(--amber-bdr); }
+.al-chip.ch-sky    { color: var(--sky);    background: var(--sky-dim);     border-color: var(--sky-bdr); }
+.al-chip.ch-violet { color: var(--violet); background: var(--violet-dim);  border-color: var(--violet-bdr); }
+/* Chip close improvements */
+.chip-close { opacity: .55; font-size: 10px; transition: opacity .2s, color .2s; }
+.chip-close:hover { opacity: 1; color: var(--rose) !important; background: var(--rose-dim); border-radius: 99px; }
+
+.chips-label { font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .09em; color: var(--t3); }
+
+/* ── TABLE PANEL ──────────────────────── */
+.al-table-panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+  box-shadow: 0 4px 16px rgba(251,113,133,0.04);
+}
+/* Table header improvements */
+.al-table-header {
+  padding: 1.1rem 1.7rem; border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+/* Table title improvements */
+.al-table-title {
+  font-family: var(--f-display); font-size: 15.5px; font-weight: 700;
+  letter-spacing: -.01em; color: var(--t1);
+}
+.al-table-title i { color: var(--green); }
+/* Count badge improvements */
+.al-count-badge {
+  font-family: var(--f-mono); font-size: 12px;
+  background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.22);
+  color: var(--green); border-radius: 99px; padding: .22rem .75rem;
+}
+
+/* BS dropdown override */
+.al-dropdown-menu {
+  background: var(--panel-hi) !important; border: 1px solid var(--border-md) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.6) !important;
+  min-width: 175px !important; padding: .3rem 0 !important;
+}
+.al-dropdown-menu .dropdown-item {
+  color: var(--t2) !important; font-size: 13px !important; padding: .5rem .9rem !important;
+  display: flex; align-items: center; gap: .5rem;
+  transition: background .15s, color .15s !important;
+}
+.al-dropdown-menu .dropdown-item:hover { background: rgba(255,255,255,0.04) !important; color: var(--t1) !important; }
+.al-dropdown-menu .dropdown-item.text-danger:hover { color: var(--rose) !important; background: var(--rose-dim) !important; }
+.al-dropdown-menu .dropdown-divider { border-color: var(--border) !important; }
+
+.btn-al-opts {
+  background: var(--surface) !important; border-color: var(--border-md) !important;
+  color: var(--t2) !important; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600;
+}
+.btn-al-opts:hover { color: var(--t1) !important; border-color: var(--border-md) !important; background: var(--panel-hi) !important; }
+
+/* ── THE TABLE ────────────────────────── */
+.al-table { width: 100%; border-collapse: collapse; }
+.al-table thead th {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--t3) !important;
+  font-family: var(--f-mono) !important; font-size: 11px !important;
+  font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .12em !important;
+  padding: .75rem 1.1rem !important; white-space: nowrap;
+}
+.al-table thead th:first-child { padding-left: 1.7rem !important; }
+.al-table thead th:last-child  { padding-right: 1.7rem !important; text-align: right !important; }
+
+/* Table row improvements */
+.al-table tbody tr {
+  border-bottom: 1px solid var(--border) !important;
+  transition: background .15s, box-shadow .2s;
+  opacity: 0; animation: rowIn .38s cubic-bezier(.22,.68,0,1.1) forwards;
+}
+.al-table tbody tr:last-child { border-bottom: none !important; }
+.al-table tbody tr:hover { background: rgba(255,255,255,0.028) !important; box-shadow: 0 2px 8px rgba(56,189,248,0.04); }
+.al-table tbody tr.is-undone { opacity: .36 !important; background: rgba(251,191,36,0.04) !important; }
+
+/* Table cell improvements */
+.al-table tbody td { padding: .95rem 1.1rem !important; vertical-align: middle !important; border: none !important; }
+.al-table tbody td:first-child { border-left: 3px solid var(--row-accent, transparent) !important; padding-left: 1.6rem !important; }
+.al-table tbody td:last-child  { padding-right: 1.7rem !important; }
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-5px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.al-table tbody tr:nth-child(1)  { animation-delay:.03s }
+.al-table tbody tr:nth-child(2)  { animation-delay:.06s }
+.al-table tbody tr:nth-child(3)  { animation-delay:.09s }
+.al-table tbody tr:nth-child(4)  { animation-delay:.12s }
+.al-table tbody tr:nth-child(5)  { animation-delay:.15s }
+.al-table tbody tr:nth-child(6)  { animation-delay:.18s }
+.al-table tbody tr:nth-child(7)  { animation-delay:.21s }
+.al-table tbody tr:nth-child(8)  { animation-delay:.24s }
+.al-table tbody tr:nth-child(9)  { animation-delay:.27s }
+.al-table tbody tr:nth-child(10) { animation-delay:.30s }
+.al-table tbody tr:nth-child(n+11){ animation-delay:.32s }
+
+/* timestamp */
+.ts-date { font-family: var(--f-mono); font-size: 12px; color: var(--t1); }
+.ts-time { font-family: var(--f-mono); font-size: 10.5px; color: var(--t3); margin-top: 2px; }
+
+/* avatar improvements */
+.al-avatar {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.22);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--f-display); font-size: 13px; font-weight: 800; color: var(--green);
+  transition: box-shadow .2s;
+}
+tr:hover .al-avatar { box-shadow: 0 0 12px rgba(74,222,128,0.22); }
+.u-name   { font-size: 13px; font-weight: 500; color: var(--t1); line-height: 1.3; }
+.u-admin  {
+  font-family: var(--f-mono); font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--amber); background: var(--amber-dim); border: 1px solid var(--amber-bdr);
+  border-radius: 99px; padding: .08rem .45rem;
+}
+.u-system { font-family: var(--f-mono); font-size: 12px; color: var(--t3); }
+
+/* action badges */
+.al-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .28rem .7rem; border-radius: 6px;
+  font-family: var(--f-mono); font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .05em;
+  border: 1px solid; white-space: nowrap; transition: box-shadow .2s;
+}
+tr:hover .al-badge { box-shadow: 0 0 10px var(--bg, transparent); }
+
+.ab-create, .ab-add    { color: var(--green);  background: var(--green-dim);   border-color: rgba(74,222,128,.22); --bg: rgba(74,222,128,.15); }
+.ab-update, .ab-edit,
+.ab-change             { color: var(--amber);  background: var(--amber-dim);   border-color: var(--amber-bdr);    --bg: rgba(251,191,36,.15); }
+.ab-delete, .ab-remove { color: var(--rose);   background: var(--rose-dim);    border-color: var(--rose-bdr);     --bg: rgba(251,113,133,.15); }
+.ab-view,   .ab-read   { color: var(--sky);    background: var(--sky-dim);     border-color: var(--sky-bdr);      --bg: rgba(56,189,248,.15); }
+.ab-login,  .ab-logout { color: var(--violet); background: var(--violet-dim);  border-color: var(--violet-bdr);   --bg: rgba(167,139,250,.15); }
+.ab-default            { color: var(--t2);    background: rgba(255,255,255,.04); border-color: var(--border-md); }
+
+.ab-undone {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-family: var(--f-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--t3); background: rgba(255,255,255,.03); border: 1px solid var(--border-md);
+  border-radius: 99px; padding: .15rem .5rem; margin-left: .35rem;
+}
+
+/* description */
+.desc-main { font-size: 13px; color: var(--t2); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desc-repr { font-family: var(--f-mono); font-size: 10.5px; color: var(--t3); margin-top: 2px; }
+
+/* IP */
+.al-ip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-family: var(--f-mono); font-size: 12px; color: var(--green);
+  background: rgba(74,222,128,0.05); border: 1px solid rgba(74,222,128,0.12);
+  border-radius: 6px; padding: .2rem .55rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+tr:hover .al-ip { border-color: rgba(74,222,128,.28); box-shadow: 0 0 8px rgba(74,222,128,.1); }
+.ip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); opacity: .55; }
+
+/* row action buttons improvements */
+.btn-row-ic {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border-md);
+  color: var(--t3); font-size: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: all .2s; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(74,222,128,0.04);
+}
+.btn-row-ic:hover           { border-color: rgba(74,222,128,.4); color: var(--green); background: var(--green-dim); box-shadow: 0 0 10px rgba(74,222,128,.12); }
+.btn-row-ic.ic-undo:hover   { border-color: var(--amber-bdr); color: var(--amber); background: var(--amber-dim); }
+
+/* ── EMPTY STATE ─────────────────────── */
+.al-empty { padding: 4.5rem 2.2rem; text-align: center; }
+.al-empty-icon {
+  width: 60px; height: 60px; border-radius: 14px; margin: 0 auto .85rem;
+  background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.14);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: var(--t3);
+}
+.al-empty-title { font-family: var(--f-display); font-size: 1.1rem; font-weight: 700; color: var(--t2); }
+.al-empty-sub   { font-size: 13px; color: var(--t3); }
+
+/* ── PAGINATION ───────────────────────── */
+.al-pag-bar { padding: 1.1rem 1.7rem; border-top: 1px solid var(--border); }
+.al-pag-info { font-family: var(--f-mono); font-size: 12px; color: var(--t3); }
+.al-pag-info strong { color: var(--t2); }
+
+/* Pagination improvements */
+.al-pagination .page-link {
+  background: var(--surface) !important; border-color: var(--border-md) !important;
+  color: var(--t3) !important; font-family: var(--f-mono) !important; font-size: 13px !important;
+  border-radius: 8px !important; margin: 0 3px; padding: .35rem .65rem !important;
+  transition: all .2s !important; min-width: 32px; text-align: center;
+}
+.al-pagination .page-link:hover { border-color: rgba(74,222,128,.35) !important; color: var(--green) !important; background: var(--green-dim) !important; }
+.al-pagination .page-item.active .page-link { background: var(--green) !important; border-color: var(--green) !important; color: #071209 !important; font-weight: 700 !important; box-shadow: 0 0 14px rgba(74,222,128,.35) !important; }
+.al-pagination .page-item.disabled .page-link { opacity: .28 !important; pointer-events: none; }
+
+/* ── MODAL ────────────────────────────── */
+.al-modal .modal-content {
+  background: var(--panel-hi) !important; border: 1px solid var(--border-md) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 32px 80px rgba(0,0,0,.7) !important; color: var(--t1) !important;
+}
+.al-modal .modal-header { border-bottom: 1px solid var(--border) !important; padding: 1.3rem 1.6rem !important; }
+.al-modal .modal-title  { font-family: var(--f-display) !important; font-size: 1.05rem !important; font-weight: 700 !important; color: var(--t1) !important; }
+.al-modal .btn-close    { filter: invert(1) !important; opacity: .4 !important; }
+.al-modal .btn-close:hover { opacity: .9 !important; }
+.al-modal .modal-body   { padding: 1.4rem 1.6rem !important; color: var(--t2) !important; font-size: 13px !important; }
+.al-modal .modal-footer { border-top: 1px solid var(--border) !important; padding: 1rem 1.4rem !important; }
+.al-modal .form-select  { background-color: var(--surface) !important; border-color: var(--border-md) !important; color: var(--t1) !important; font-family: var(--f-body) !important; font-size: 13px !important; color-scheme: dark; }
+.al-modal .form-select option { background: var(--panel-hi) !important; }
+.al-modal .form-select:focus  { border-color: rgba(74,222,128,.4) !important; box-shadow: 0 0 0 3px rgba(74,222,128,.08) !important; }
+.al-modal .text-muted   { color: var(--t3) !important; }
+
+.btn-al-danger   { background: var(--rose) !important; border-color: var(--rose) !important; color: white !important; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; transition: opacity .2s !important; }
+.btn-al-danger:hover { opacity: .85 !important; }
+.btn-al-sec      { background: transparent !important; border-color: var(--border-md) !important; color: var(--t2) !important; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.btn-al-sec:hover { color: var(--t1) !important; border-color: var(--border-md) !important; background: rgba(255,255,255,.04) !important; }
+
+/* tooltip style */
+.tooltip-inner { background: var(--panel-hi) !important; color: var(--t1) !important; border: 1px solid var(--border-md) !important; font-family: var(--f-mono) !important; font-size: 11px !important; }
+.tooltip-arrow::before { border-top-color: var(--panel-hi) !important; }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 py-4" style="max-width:1440px">
+
+  <!-- ── HERO ──────────────────────────────── -->
+  <div class="al-hero mb-4">
+    <div class="al-hero-aurora"></div>
+    <div class="al-hero-dots"></div>
+    <div class="al-hero-content">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb al-breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">~/dashboard</a></li>
+          <li class="breadcrumb-item active">activity_logs</li>
+        </ol>
+      </nav>
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <div class="al-live-badge mb-2"><span class="al-live-dot"></span>Live Feed</div>
+          <h1 class="al-title mb-2">
+            <span class="w-plain">Activity</span> <span class="w-grad">Logs</span>
+          </h1>
+          <p class="al-subtitle mb-0">Track and monitor every system event in real-time</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <a href="{% url 'export_logs_excel' %}?{{ request.GET.urlencode }}" class="btn-exp v-excel"
+             data-bs-toggle="tooltip" title="Export to Excel">
+            <i class="fas fa-file-excel"></i> Excel
+          </a>
+          <a href="{% url 'export_logs_pdf' %}?{{ request.GET.urlencode }}" class="btn-exp v-pdf"
+             data-bs-toggle="tooltip" title="Export to PDF">
+            <i class="fas fa-file-pdf"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STAT CARDS ─────────────────────────── -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="al-stat-card sc-green">
+        <div class="sc-label">Total Logs</div>
+        <div class="sc-value">{{ total_logs|default:0|intcomma }}</div>
+        <div class="sc-foot"><i class="fas fa-arrow-trend-up me-1"></i>Lifetime activity</div>
+        <i class="fas fa-database sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="al-stat-card sc-sky">
+        <div class="sc-label">Today's Activity</div>
+        <div class="sc-value" style="color:var(--sky);text-shadow:0 0 20px var(--sky-dim)">{{ today_logs|default:0 }}</div>
+        <div class="sc-foot"><i class="fas fa-clock me-1"></i>Last 24 hours</div>
+        <i class="fas fa-calendar-day sc-icon" style="color:var(--sky)"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="al-stat-card sc-amber">
+        <div class="sc-label">Active Users</div>
+        <div class="sc-value" style="color:var(--amber);text-shadow:0 0 20px var(--amber-dim)">{{ user_stats|length }}</div>
+        <div class="sc-foot"><i class="fas fa-user-check me-1"></i>Unique users</div>
+        <i class="fas fa-users sc-icon" style="color:var(--amber)"></i>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="al-stat-card sc-violet">
+        <div class="sc-label">Action Types</div>
+        <div class="sc-value" style="color:var(--violet);text-shadow:0 0 20px var(--violet-dim)">{{ action_stats|length }}</div>
+        <div class="sc-foot"><i class="fas fa-chart-pie me-1"></i>Distinct actions</div>
+        <i class="fas fa-tags sc-icon" style="color:var(--violet)"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FILTER PANEL ───────────────────────── -->
+  <div class="al-filter-panel mb-3">
+    <form method="get" id="filterForm">
+      <!-- Search row -->
+      <div class="d-flex gap-2 mb-3 flex-wrap al-search-group">
+        <div class="input-group flex-grow-1" style="min-width:220px">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" name="search" class="form-control al-search-input"
+                 placeholder="Search user, action, description, IP address…"
+                 value="{{ search_query }}">
+        </div>
+        <button type="submit" class="btn btn-al-primary px-4 rounded-2">
+          <i class="fas fa-search me-1"></i> Search
+        </button>
+        {% if search_query or action_filter or user_filter or date_from or date_to %}
+        <a href="{% url 'activity_logs' %}" class="btn btn-al-ghost rounded-2">
+          <i class="fas fa-times me-1"></i> Clear
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Filter controls -->
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-md-3 col-lg-auto" style="min-width:150px">
+          <label class="f-lbl"><i class="fas fa-bolt me-1" style="color:var(--green)"></i>Action</label>
+          <select name="action" class="form-select al-select" onchange="this.form.submit()">
+            <option value="">All Actions</option>
+            {% for action in all_actions %}
+            <option value="{{ action }}" {% if action == action_filter %}selected{% endif %}>{{ action }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3 col-lg-auto" style="min-width:165px">
+          <label class="f-lbl"><i class="fas fa-user me-1" style="color:var(--sky)"></i>User</label>
+          <select name="user" class="form-select al-select" onchange="this.form.submit()">
+            <option value="">All Users</option>
+            {% for user in all_users %}
+            <option value="{{ user.id }}" {% if user.id|stringformat:"s" == user_filter %}selected{% endif %}>
+              {{ user.get_full_name|default:user.email }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2 col-lg-auto">
+          <label class="f-lbl"><i class="fas fa-calendar-alt me-1" style="color:var(--amber)"></i>From</label>
+          <input type="date" name="date_from" class="form-control al-date" value="{{ date_from }}" onchange="this.form.submit()">
+        </div>
+        <div class="col-6 col-sm-4 col-md-2 col-lg-auto">
+          <label class="f-lbl"><i class="fas fa-calendar-alt me-1" style="color:var(--amber)"></i>To</label>
+          <input type="date" name="date_to" class="form-control al-date" value="{{ date_to }}" onchange="this.form.submit()">
+        </div>
+        <div class="col-12 col-sm-4 col-md-2 col-lg-auto">
+          <label class="f-lbl">&nbsp;</label>
+          <button type="button" class="btn btn-al-outline w-100 rounded-2"
+                  onclick="window.location.href='{% url 'activity_logs' %}'">
+            <i class="fas fa-rotate-left me-1"></i> Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── ACTIVE FILTER CHIPS ────────────────── -->
+  {% if search_query or action_filter or user_filter or date_from or date_to %}
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <span class="chips-label">Filtered by:</span>
+    {% if search_query %}
+    <span class="al-chip ch-green">
+      <i class="fas fa-search" style="font-size:9px"></i>{{ search_query }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'search' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if action_filter %}
+    <span class="al-chip ch-amber">
+      <i class="fas fa-bolt" style="font-size:9px"></i>{{ action_filter }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'action' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if user_filter %}
+    <span class="al-chip ch-sky">
+      <i class="fas fa-user" style="font-size:9px"></i>{% for user in all_users %}{% if user.id|stringformat:"s" == user_filter %}{{ user.get_full_name|default:user.email }}{% endif %}{% endfor %}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'user' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if date_from %}
+    <span class="al-chip ch-violet">
+      <i class="fas fa-calendar" style="font-size:9px"></i>from {{ date_from }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'date_from' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+    {% if date_to %}
+    <span class="al-chip ch-violet">
+      <i class="fas fa-calendar" style="font-size:9px"></i>to {{ date_to }}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'date_to' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="chip-close text-decoration-none ms-1" style="color:inherit"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── TABLE ──────────────────────────────── -->
+  <div class="al-table-panel">
+    <!-- Header bar -->
+    <div class="al-table-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2 al-table-title">
+        <i class="fas fa-stream"></i>
+        Event Stream
+        <span class="al-count-badge">{{ page_obj.paginator.count|default:0 }} entries</span>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'activity_logs' %}" class="btn btn-sm btn-al-opts rounded-2">
+          <i class="fas fa-rotate-right me-1"></i>Refresh
+        </a>
+        {% if request.user.is_superuser %}
+        <div class="dropdown">
+          <button class="btn btn-sm btn-al-opts rounded-2 dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fas fa-ellipsis me-1"></i>Options
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end al-dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#columnModal">
+                <i class="fas fa-columns" style="color:var(--sky)"></i> Customize Columns
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
+                <i class="fas fa-trash-alt"></i> Clear Old Logs
+              </a>
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="table-responsive">
+      <table class="al-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Description</th>
+            <th>IP Address</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in page_obj %}
+          {% with al=log.action|lower %}
+          <tr class="{% if log.is_undone %}is-undone{% endif %}"
+              style="--row-accent:{% if al == 'create' or al == 'add' %}var(--green){% elif al == 'update' or al == 'edit' or al == 'change' %}var(--amber){% elif al == 'delete' or al == 'remove' %}var(--rose){% elif al == 'view' or al == 'read' %}var(--sky){% elif al == 'login' or al == 'logout' %}var(--violet){% else %}transparent{% endif %}">
+
+            <!-- Timestamp -->
+            <td>
+              <div class="ts-date"><i class="far fa-calendar-alt me-1 opacity-25"></i>{{ log.timestamp|date:"M d, Y" }}</div>
+              <div class="ts-time"><i class="far fa-clock me-1"></i>{{ log.timestamp|time:"h:i A" }}</div>
+            </td>
+
+            <!-- User -->
+            <td>
+              {% if log.user %}
+              <div class="d-flex align-items-center gap-2">
+                <div class="al-avatar">{{ log.user.email|first|upper }}</div>
+                <div>
+                  <div class="u-name">{{ log.user.get_full_name|default:log.user.email }}</div>
+                  {% if log.user.is_superuser %}<span class="u-admin">Admin</span>{% endif %}
+                </div>
+              </div>
+              {% else %}
+              <span class="u-system"><i class="fas fa-robot me-1 opacity-40"></i>System</span>
+              {% endif %}
+            </td>
+
+            <!-- Action -->
+            <td>
+              <span class="al-badge ab-{{ al }}">
+                <i class="fas fa-{{ log.action_icon }}"></i>{{ log.get_action_display }}
+              </span>
+              {% if log.is_undone %}
+              <span class="ab-undone"><i class="fas fa-undo"></i>Undone</span>
+              {% endif %}
+            </td>
+
+            <!-- Description -->
+            <td>
+              <div class="desc-main" title="{{ log.description }}">{{ log.description }}</div>
+              {% if log.object_repr %}
+              <div class="desc-repr">
+                <i class="fas fa-tag me-1 opacity-40"></i>{{ log.object_repr|truncatechars:34 }}
+              </div>
+              {% endif %}
+            </td>
+
+            <!-- IP -->
+            <td>
+              {% if log.ip_address %}
+              <span class="al-ip"><span class="ip-dot"></span>{{ log.ip_address }}</span>
+              {% else %}
+              <span style="font-family:var(--f-mono);font-size:12px;color:var(--t3)">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="d-flex justify-content-end gap-1">
+                <a href="{% url 'activity_log_detail' log.id %}"
+                   class="btn-row-ic"
+                   data-bs-toggle="tooltip" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </a>
+                {% if request.user.is_superuser and log.can_be_undone %}
+                <a href="{% url 'undo_action' log.id %}"
+                   class="btn-row-ic ic-undo"
+                   data-bs-toggle="tooltip" title="Undo Action"
+                   onclick="return confirm('Undo this action?')">
+                  <i class="fas fa-rotate-left"></i>
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="al-pag-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="al-pag-info">
+        Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+        of <strong>{{ page_obj.paginator.count|intcomma }}</strong> entries
+      </div>
+      <nav>
+        <ul class="pagination al-pagination mb-0">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angles-left"></i></a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angles-left"></i></span></li>
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i></span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angles-right"></i></a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-right"></i></span></li>
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-angles-right"></i></span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="al-empty">
+      <div class="al-empty-icon"><i class="fas fa-stream"></i></div>
+      <div class="al-empty-title">No activity logs found</div>
+      <p class="al-empty-sub mb-0">Try adjusting your filters or check back later</p>
+    </div>
+    {% endif %}
+  </div>
+  <!-- /table panel -->
+
+</div>
+<!-- /container -->
+
+
+<!-- ── CLEAR LOGS MODAL ───────────────────── -->
+{% if request.user.is_superuser %}
+<div class="modal fade al-modal" id="clearLogsModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-triangle-exclamation text-danger me-2"></i>Clear Old Logs
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Permanently delete all activity logs older than:</p>
+        <select class="form-select mt-2">
+          <option value="30">30 days</option>
+          <option value="60">60 days</option>
+          <option value="90">90 days</option>
+          <option value="180">6 months</option>
+          <option value="365">1 year</option>
+        </select>
+        <p class="text-muted small mt-3 mb-0">
+          <i class="fas fa-circle-info me-1"></i>This action cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-al-sec rounded-2" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-al-danger rounded-2"
+                onclick="alert('This feature connects to your backend to clear logs')">
+          <i class="fas fa-trash-alt me-1"></i>Clear Logs
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Bootstrap tooltips
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+  });
+
+  // Debounced search
+  let timer;
+  const s = document.querySelector('input[name="search"]');
+  if (s) {
+    s.addEventListener('keyup', function () {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (this.value.length >= 3 || this.value.length === 0) this.form.submit();
+      }, 500);
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Manage Pools &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: .5rem; }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; }
+    .pool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
+    .pool-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: hidden; }
+    .pool-head { background: linear-gradient(135deg, #00695C, #00897B); color: #fff; padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .pool-head h3 { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
+    .pool-team-item { display: flex; justify-content: space-between; align-items: center; padding: .6rem 1rem; border-bottom: 1px solid #f5f5f5; font-size: .85rem; }
+    .pool-team-item:last-child { border-bottom: none; }
+    .pool-team-item .county-tag { font-size: .7rem; background: #E0F2F1; color: #00695C; padding: .1rem .4rem; border-radius: 4px; }
+    .pool-empty { padding: 1rem; text-align: center; color: #bbb; font-size: .85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-grid-3x3-gap"></i> Manage Pools</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<!-- Create Pool -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="post" class="d-flex gap-2 align-items-end flex-wrap">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_pool">
+            <div>
+                <label class="form-label" style="font-size:.8rem;">Pool Name</label>
+                <input type="text" name="pool_name" class="form-control form-control-sm" placeholder="e.g. Pool A" required>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Create Pool</button>
+        </form>
+    </div>
+</div>
+
+<!-- Pools -->
+<div class="pool-grid">
+    {% for pool in pools %}
+    <div class="pool-card">
+        <div class="pool-head">
+            <h3>{{ pool.name }} ({{ pool.pool_teams.count }})</h3>
+            <form method="post" onsubmit="return confirm('Delete this pool?');" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_pool">
+                <input type="hidden" name="pool_id" value="{{ pool.pk }}">
+                <button type="submit" class="btn btn-sm btn-outline-light"><i class="bi bi-trash"></i></button>
+            </form>
+        </div>
+        {% for pt in pool.pool_teams.all %}
+        <div class="pool-team-item">
+            <div>{{ pt.team.name }} <span class="county-tag">{{ pt.team.county }}</span></div>
+            <form method="post" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="remove_team">
+                <input type="hidden" name="pool_team_id" value="{{ pt.pk }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+            </form>
+        </div>
+        {% empty %}
+        <div class="pool-empty">No teams assigned</div>
+        {% endfor %}
+        <!-- Add team -->
+        {% if eligible_teams %}
+        <div style="padding:.75rem 1rem;border-top:1px solid #eee;">
+            <form method="post" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_team">
+                <input type="hidden" name="pool_id" value="{{ pool.pk }}">
+                <select name="team_id" class="form-select form-select-sm" required>
+                    <option value="">Add team…</option>
+                    {% for t in eligible_teams %}<option value="{{ t.pk }}">{{ t.name }} ({{ t.county }})</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:2rem;color:#999;">
+        <i class="bi bi-grid-3x3-gap" style="font-size:2rem;opacity:.3;"></i>
+        <p>No pools created yet. Create one above.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

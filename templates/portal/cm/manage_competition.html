@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comp-hero {
+        background: linear-gradient(135deg, #4A148C 0%, #7B1FA2 50%, #9C27B0 100%);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .comp-hero h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: .2rem; }
+    .comp-hero .meta {
+        font-size: .85rem;
+        opacity: .85;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+    }
+    .comp-hero .hero-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: flex-start; }
+    .comp-hero .hero-actions .btn { font-size: .8rem; padding: .35rem .8rem; }
+    .comp-badge {
+        display: inline-block;
+        padding: .15rem .6rem;
+        border-radius: 6px;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .badge-active { background: rgba(76,175,80,.2); color: #2E7D32; }
+    .badge-registration { background: rgba(255,193,7,.2); color: #F57F17; }
+    .badge-completed { background: rgba(0,0,0,.1); color: #fff; }
+    .badge-draft { background: rgba(255,255,255,.2); color: #fff; }
+
+    .mini-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: .75rem;
+        margin-bottom: 1.5rem;
+    }
+    .mini-stat {
+        background: #fff;
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+        text-align: center;
+    }
+    .mini-stat .num { font-size: 1.3rem; font-weight: 800; color: #7B1FA2; }
+    .mini-stat .lbl { font-size: .72rem; color: #757575; font-weight: 500; }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: .75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .section-title .actions { display: flex; gap: .4rem; }
+
+    .pool-card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(0,0,0,.06);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .pool-header {
+        background: #F3E5F5;
+        padding: .6rem 1rem;
+        font-weight: 700;
+        font-size: .9rem;
+        color: #4A148C;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .standings-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .82rem;
+    }
+    .standings-table th {
+        background: #FAFAFA;
+        padding: .45rem .6rem;
+        text-align: center;
+        font-weight: 600;
+        color: #666;
+        border-bottom: 1px solid #eee;
+    }
+    .standings-table th:first-child, .standings-table td:first-child { text-align: left; padding-left: 1rem; }
+    .standings-table td {
+        padding: .45rem .6rem;
+        text-align: center;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    .standings-table tr:hover { background: #FAFAFA; }
+    .pos-badge {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+        text-align: center;
+        border-radius: 50%;
+        font-size: .7rem;
+        font-weight: 700;
+        margin-right: .3rem;
+    }
+    .pos-1 { background: #FFD700; color: #333; }
+    .pos-2 { background: #C0C0C0; color: #333; }
+    .pos-3 { background: #CD7F32; color: #fff; }
+    .pos-other { background: #EEE; color: #666; }
+
+    .fixture-list {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(0,0,0,.06);
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .fixture-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .5rem 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: .82rem;
+        gap: .5rem;
+    }
+    .fixture-item:last-child { border-bottom: none; }
+    .fixture-teams { flex: 1; font-weight: 600; }
+    .fixture-meta { font-size: .75rem; color: #999; white-space: nowrap; }
+    .fixture-badge {
+        font-size: .7rem;
+        font-weight: 600;
+        padding: .15rem .5rem;
+        border-radius: 4px;
+    }
+    .fb-scheduled { background: #E3F2FD; color: #1565C0; }
+    .fb-completed { background: #E8F5E9; color: #1B5E20; }
+    .fb-cancelled { background: #FFEBEE; color: #C62828; }
+    .fb-postponed { background: #FFF8E1; color: #F57F17; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+    .no-data {
+        text-align: center;
+        padding: 1.5rem;
+        color: #bbb;
+        font-size: .85rem;
+    }
+    .no-data i { font-size: 1.5rem; display: block; margin-bottom: .3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Header -->
+<div class="comp-hero">
+    <div>
+        <h1><i class="bi bi-trophy"></i> {{ competition.name }}</h1>
+        <div class="meta">
+            <span><i class="bi bi-controller"></i> {{ competition.get_sport_type_display }}</span>
+            <span><i class="bi bi-gender-ambiguous"></i> {{ competition.get_gender_display }}</span>
+            <span><i class="bi bi-diagram-3"></i> {{ competition.get_format_type_display }}</span>
+            <span><i class="bi bi-people"></i> {{ competition.get_age_group_display }}</span>
+            <span><i class="bi bi-calendar3"></i> {{ competition.start_date|date:"d M" }} - {{ competition.end_date|date:"d M Y" }}</span>
+            <span class="comp-badge {% if competition.status == 'active' or competition.status == 'group_stage' or competition.status == 'knockout' %}badge-active{% elif competition.status == 'registration' %}badge-registration{% elif competition.status == 'completed' %}badge-completed{% else %}badge-draft{% endif %}">
+                {{ competition.get_status_display }}
+            </span>
+        </div>
+    </div>
+    <div class="hero-actions">
+        <a href="{% url 'cm_edit_competition' pk=competition.pk %}" class="btn btn-secondary"><i class="bi bi-pencil"></i> Edit</a>
+        <a href="{% url 'cm_manage_pools' pk=competition.pk %}" class="btn btn-secondary"><i class="bi bi-collection"></i> Pools</a>
+        <a href="{% url 'cm_generate_fixtures' pk=competition.pk %}" class="btn btn-secondary"><i class="bi bi-calendar-plus"></i> Fixtures</a>
+        <a href="{% url 'cm_allocate_venues' pk=competition.pk %}" class="btn btn-secondary"><i class="bi bi-geo-alt"></i> Venues</a>
+        <a href="{% url 'cm_edit_standings' pk=competition.pk %}" class="btn btn-secondary"><i class="bi bi-table"></i> Standings</a>
+        <a href="{% url 'cm_competition_rules' pk=competition.pk %}" class="btn btn-secondary"><i class="bi bi-journal-text"></i> Rules</a>
+    </div>
+</div>
+
+<!-- Mini Stats -->
+<div class="mini-stats">
+    <div class="mini-stat">
+        <div class="num">{{ pool_data|length }}</div>
+        <div class="lbl">Pools</div>
+    </div>
+    <div class="mini-stat">
+        <div class="num">{{ teams_in_comp.count }}</div>
+        <div class="lbl">Teams</div>
+    </div>
+    <div class="mini-stat">
+        <div class="num">{{ group_fixtures.count }}</div>
+        <div class="lbl">Group Fixtures</div>
+    </div>
+    <div class="mini-stat">
+        <div class="num">{{ knockout_fixtures.count }}</div>
+        <div class="lbl">Knockout Fixtures</div>
+    </div>
+    <div class="mini-stat">
+        <div class="num">{{ pending_reports }}</div>
+        <div class="lbl">Pending Reports</div>
+    </div>
+    <div class="mini-stat">
+        <div class="num">{{ approved_reports }}</div>
+        <div class="lbl">Approved</div>
+    </div>
+</div>
+
+<!-- Pool Standings -->
+<div class="section-title">
+    <span><i class="bi bi-collection"></i> Pool Standings</span>
+    <div class="actions">
+        <a href="{% url 'cm_manage_pools' pk=competition.pk %}" class="btn btn-primary btn-sm" style="font-size:.75rem;"><i class="bi bi-plus"></i> Manage Pools</a>
+        <a href="{% url 'cm_edit_standings' pk=competition.pk %}" class="btn btn-secondary btn-sm" style="font-size:.75rem;"><i class="bi bi-pencil"></i> Edit Standings</a>
+    </div>
+</div>
+
+{% if pool_data %}
+    {% for pd in pool_data %}
+    <div class="pool-card">
+        <div class="pool-header">
+            {{ pd.pool.name }}
+            <span style="font-size:.75rem;font-weight:500;color:#7B1FA2;">{{ pd.teams|length }} teams</span>
+        </div>
+        {% if pd.teams %}
+        <table class="standings-table">
+            <thead>
+                <tr>
+                    <th style="width:30%;">Team</th>
+                    <th>P</th><th>W</th><th>D</th><th>L</th>
+                    <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pt in pd.teams %}
+                <tr>
+                    <td>
+                        <span class="pos-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-other{% endif %}">{{ forloop.counter }}</span>
+                        {{ pt.team.name }}
+                    </td>
+                    <td>{{ pt.played }}</td>
+                    <td>{{ pt.won }}</td>
+                    <td>{{ pt.drawn }}</td>
+                    <td>{{ pt.lost }}</td>
+                    <td>{{ pt.goals_for }}</td>
+                    <td>{{ pt.goals_against }}</td>
+                    <td>{{ pt.goal_difference }}</td>
+                    <td><strong>{{ pt.points }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">No teams in this pool yet</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="no-data" style="background:#fff;border-radius:10px;padding:2rem;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-bottom:1.5rem;">
+        <i class="bi bi-collection"></i>
+        No pools created yet.
+        <a href="{% url 'cm_manage_pools' pk=competition.pk %}">Create pools</a>
+    </div>
+{% endif %}
+
+<!-- Fixtures -->
+<div class="two-col" style="margin-top:.5rem;">
+    <!-- Group Fixtures -->
+    <div>
+        <div class="section-title">
+            <span><i class="bi bi-calendar-event"></i> Group Stage Fixtures</span>
+            <a href="{% url 'cm_generate_fixtures' pk=competition.pk %}" class="btn btn-primary btn-sm" style="font-size:.75rem;"><i class="bi bi-lightning"></i> Generate</a>
+        </div>
+        {% if group_fixtures %}
+        <div class="fixture-list">
+            {% for f in group_fixtures %}
+            <div class="fixture-item">
+                <div class="fixture-teams">
+                    {{ f.home_team.name|default:"TBD" }} vs {{ f.away_team.name|default:"TBD" }}
+                    {% if f.pool %}<span style="font-size:.7rem;color:#7B1FA2;font-weight:400;"> ({{ f.pool.name }})</span>{% endif %}
+                </div>
+                <div class="fixture-meta">
+                    {{ f.match_date|date:"d M" }}
+                    {% if f.kickoff_time %}{{ f.kickoff_time|time:"H:i" }}{% endif %}
+                    {% if f.venue %}<br>{{ f.venue.name }}{% endif %}
+                </div>
+                <span class="fixture-badge fb-{{ f.status }}">{{ f.get_status_display }}</span>
+                <a href="{% url 'cm_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" style="font-size:.75rem;color:#7B1FA2;" title="Edit"><i class="bi bi-pencil-square"></i></a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-data" style="background:#fff;border-radius:10px;padding:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+            <i class="bi bi-calendar-x"></i>
+            No group fixtures generated yet
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Knockout Fixtures -->
+    <div>
+        <div class="section-title">
+            <span><i class="bi bi-diagram-3"></i> Knockout Bracket</span>
+        </div>
+        {% if knockout_fixtures %}
+        <div class="fixture-list">
+            {% for f in knockout_fixtures %}
+            <div class="fixture-item">
+                <div class="fixture-teams">
+                    {{ f.home_team.name|default:"TBD" }} vs {{ f.away_team.name|default:"TBD" }}
+                    <span style="font-size:.7rem;color:#E65100;font-weight:400;"> {{ f.get_knockout_round_display }}</span>
+                </div>
+                <div class="fixture-meta">
+                    {{ f.match_date|date:"d M" }}
+                    {% if f.kickoff_time %}{{ f.kickoff_time|time:"H:i" }}{% endif %}
+                </div>
+                <span class="fixture-badge fb-{{ f.status }}">{{ f.get_status_display }}</span>
+                <a href="{% url 'cm_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" style="font-size:.75rem;color:#7B1FA2;" title="Edit"><i class="bi bi-pencil-square"></i></a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-data" style="background:#fff;border-radius:10px;padding:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+            <i class="bi bi-diagram-3"></i>
+            No knockout fixtures yet
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Match Reports -->
+{% if pending_reports > 0 %}
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header" style="background:#FFF8E1;">
+        <h3 style="color:#E65100;"><i class="bi bi-exclamation-triangle"></i> {{ pending_reports }} Pending Match Report{{ pending_reports|pluralize }}</h3>
+    </div>
+    <div class="card-body">
+        <a href="{% url 'competition_reports' pk=competition.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-clipboard-check"></i> Review Reports</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Competition Rules Preview -->
+{% if competition.rules %}
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header">
+        <h3><i class="bi bi-journal-text"></i> Competition Rules</h3>
+    </div>
+    <div class="card-body" style="max-height:200px;overflow-y:auto;">
+        <div style="font-size:.85rem;white-space:pre-wrap;line-height:1.6;">{{ competition.rules }}</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

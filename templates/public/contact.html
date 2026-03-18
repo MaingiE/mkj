@@ -1,0 +1,208 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Contact{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE HERO — DARK CINEMATIC
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">Get In Touch</span>
+        <h1 class="page-hero__title reveal">Contact <span class="text-gold">Us</span></h1>
+        <p class="page-hero__sub reveal">Have a question about KYISA? Reach out and we'll get back to you.</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>Contact</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CONTACT SECTION
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec">
+    <div class="container">
+        <div class="contact-layout">
+            <!-- ── Left: Contact Info ── -->
+            <div class="contact-info">
+                <span class="badge">Reach Out</span>
+                <h2 class="contact-info__title">We'd Love to Hear From You</h2>
+                <p class="contact-info__desc">Have questions about KYISA competitions, team registration? Drop us a line.</p>
+
+                <div class="contact-cards">
+                    <div class="contact-card reveal">
+                        <div class="contact-card__icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="contact-card__label">Location</h4>
+                            <p class="contact-card__text">P.O BOX 20655-00200<br>Nairobi, Kenya</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-card reveal">
+                        <div class="contact-card__icon contact-card__icon--gold">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="contact-card__label">Email</h4>
+                            <p class="contact-card__text">Info.kyisa@gmail.com<br>info@kyisa.org</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-card reveal">
+                        <div class="contact-card__icon contact-card__icon--accent">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="contact-card__label">Phone</h4>
+                            <p class="contact-card__text">+254 700 000 000<br>+254 711 000 000</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-card reveal">
+                        <div class="contact-card__icon contact-card__icon--dark">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="contact-card__label">Office Hours</h4>
+                            <p class="contact-card__text">Mon – Fri: 8:00 AM – 5:00 PM EAT<br>Sat – Sun: Closed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social links -->
+                <div class="contact-socials">
+                    <span class="contact-socials__label">Follow KYISA</span>
+                    <div class="contact-socials__row">
+                        <a href="#" class="contact-social" aria-label="Facebook">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+                        </a>
+                        <a href="#" class="contact-social" aria-label="Twitter/X">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        <a href="#" class="contact-social" aria-label="Instagram">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Right: Contact Form ── -->
+            <div class="contact-form-wrap reveal">
+                <h3 class="contact-form__heading">Send us a Message</h3>
+                <p class="contact-form__sub">Fill in the form below and we'll respond within 24 hours.</p>
+
+                {% if contact_sent %}
+                <div class="alert alert-success" style="margin-bottom:1.25rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Thank you for your message! We'll get back to you soon.
+                </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'contact' %}">
+                    {% csrf_token %}
+                    <div class="contact-form__row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" name="first_name" class="form-control" required placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" name="last_name" class="form-control" required placeholder="Doe">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" class="form-control" required placeholder="you@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select name="subject" class="form-control">
+                            <option value="general">General Enquiry</option>
+                            <option value="registration">Team Registration</option>
+                            <option value="competition">Competition Information</option>
+                            <option value="referee">Referee Programme</option>
+                            <option value="partnership">Partnership / Sponsorship</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="message" class="form-control" rows="5" required placeholder="Tell us how we can help..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center;padding:.8rem 1.5rem;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MAP SECTION
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec sec--dark">
+    <div class="container">
+        <div class="sec-head">
+            <span class="badge">Location</span>
+            <h2 class="sec-title">Find Us</h2>
+            <div class="sec-line"></div>
+        </div>
+        <div class="contact-map">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d255282.35853743783!2d36.68224!3d-1.3028618!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f1172d84d49a7%3A0xf7cf0254b297924c!2sNairobi%2C%20Kenya!5e0!3m2!1sen!2s!4v1"
+                width="100%" height="350" style="border:0;border-radius:14px;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade" title="KYISA Location — Nairobi, Kenya"></iframe>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* Scroll reveals */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* Canvas particles */
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++){
+            particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        }
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+})();
+</script>
+{% endblock %}

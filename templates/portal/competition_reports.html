@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Match Reports &#8212; {{ competition.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'competitions_list' %}">Competitions</a>
+        <a href="{% url 'competition_detail' competition.pk %}">{{ competition.name }}</a>
+        <span>Match Reports</span>
+    </div>
+    <h1><i class="bi bi-clipboard-data"></i> Match Reports &#8212; {{ competition.name }}</h1>
+    <p>Review and approve match reports. Approved reports automatically update standings and player statistics.</p>
+</div>
+
+<!-- Stats -->
+<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <div class="card" style="padding:1rem 1.5rem;text-align:center;border-top:3px solid #f57c00;flex:1;min-width:150px">
+        <div style="font-size:1.8rem;font-weight:800;color:#f57c00">{{ submitted_count }}</div>
+        <div style="color:#888;font-size:.82rem">Awaiting Approval</div>
+    </div>
+    <div class="card" style="padding:1rem 1.5rem;text-align:center;border-top:3px solid #2e7d32;flex:1;min-width:150px">
+        <div style="font-size:1.8rem;font-weight:800;color:#2e7d32">{{ approved_count }}</div>
+        <div style="color:#888;font-size:.82rem">Approved</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <a href="?status=submitted" class="btn {% if filter_status == 'submitted' %}btn--primary{% else %}btn--light{% endif %}" style="padding:.4rem 1rem;font-size:.85rem">Pending ({{ submitted_count }})</a>
+    <a href="?status=approved" class="btn {% if filter_status == 'approved' %}btn--primary{% else %}btn--light{% endif %}" style="padding:.4rem 1rem;font-size:.85rem">Approved ({{ approved_count }})</a>
+    <a href="?status=returned" class="btn {% if filter_status == 'returned' %}btn--primary{% else %}btn--light{% endif %}" style="padding:.4rem 1rem;font-size:.85rem">Returned</a>
+    <a href="?status=all" class="btn {% if filter_status == 'all' %}btn--primary{% else %}btn--light{% endif %}" style="padding:.4rem 1rem;font-size:.85rem">All</a>
+</div>
+
+<!-- Reports Table -->
+<div class="card">
+    <div class="card-body" style="overflow-x:auto;padding:0">
+        {% if reports %}
+        <table style="margin:0">
+            <thead>
+                <tr>
+                    <th>Match</th>
+                    <th style="text-align:center">Score</th>
+                    <th>Referee</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>
+                        <strong>{{ report.fixture.home_team.name }}</strong>
+                        <span style="color:#888">vs</span>
+                        <strong>{{ report.fixture.away_team.name }}</strong>
+                    </td>
+                    <td style="text-align:center;font-weight:700;font-family:monospace;font-size:1.1rem">
+                        {{ report.home_score }} &#8212; {{ report.away_score }}
+                    </td>
+                    <td>{{ report.referee.user.get_full_name|default:"&#8212;" }}</td>
+                    <td style="font-size:.82rem;color:#888">{{ report.submitted_at|date:"d M Y H:i"|default:"&#8212;" }}</td>
+                    <td>
+                        {% if report.status == 'submitted' %}
+                        <span class="badge badge--warning">Pending Review</span>
+                        {% elif report.status == 'approved' %}
+                        <span class="badge badge--success">Approved</span>
+                        {% elif report.status == 'returned' %}
+                        <span class="badge badge--danger">Returned</span>
+                        {% else %}
+                        <span class="badge badge--light">{{ report.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if report.status == 'submitted' %}
+                        <a href="{% url 'competition_report_approve' competition.pk report.pk %}" class="btn btn--primary" style="padding:.3rem .8rem;font-size:.8rem">Review &#8594;</a>
+                        {% else %}
+                        <a href="{% url 'competition_report_approve' competition.pk report.pk %}" class="btn btn--light" style="padding:.3rem .8rem;font-size:.8rem">View</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No match reports found for the selected filter.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,859 @@
+{% extends "base.html" %}
+{% block title %}User Management - KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .um-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .um-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+    }
+
+    .um-header p {
+        color: #757575;
+        font-size: .9rem;
+        margin-top: .15rem;
+    }
+
+    .um-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: .75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .um-stat-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: .85rem 1rem;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+        border-top: 3px solid #E0E0E0;
+        transition: all .2s;
+    }
+
+    .um-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, .1);
+    }
+
+    .um-stat-card .num {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .um-stat-card .lbl {
+        font-size: .72rem;
+        color: #757575;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .um-stat-card.green {
+        border-top-color: #1B5E20;
+    }
+
+    .um-stat-card.green .num {
+        color: #1B5E20;
+    }
+
+    .um-stat-card.red {
+        border-top-color: #C62828;
+    }
+
+    .um-stat-card.red .num {
+        color: #C62828;
+    }
+
+    .um-stat-card.blue {
+        border-top-color: #1565C0;
+    }
+
+    .um-stat-card.blue .num {
+        color: #1565C0;
+    }
+
+    .um-stat-card.amber {
+        border-top-color: #E65100;
+    }
+
+    .um-stat-card.amber .num {
+        color: #E65100;
+    }
+
+    .um-stat-card.purple {
+        border-top-color: #6A1B9A;
+    }
+
+    .um-stat-card.purple .num {
+        color: #6A1B9A;
+    }
+
+    .um-stat-card.teal {
+        border-top-color: #00695C;
+    }
+
+    .um-stat-card.teal .num {
+        color: #00695C;
+    }
+
+    .create-form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1.5fr 1.5fr 1.2fr 1.5fr auto;
+        gap: .75rem;
+        align-items: end;
+    }
+
+    .create-form-grid label {
+        font-size: .8rem;
+        font-weight: 600;
+        display: block;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+
+    .create-form-grid .req {
+        color: #C62828;
+    }
+
+    .filter-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr 2fr;
+        gap: .75rem;
+        align-items: end;
+    }
+
+    .filter-bar label {
+        font-size: .8rem;
+        font-weight: 600;
+        display: block;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+
+    .search-group {
+        display: flex;
+        gap: .4rem;
+    }
+
+    .search-group input {
+        flex: 1;
+    }
+
+    /* ═══ MODERNIZED USER TABLE ═══ */
+    .user-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .user-table thead th {
+        background: #F8F9FA;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: #757575;
+        padding: .75rem 1rem;
+        border-bottom: 2px solid #E0E0E0;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .user-table thead th:first-child {
+        border-radius: 8px 0 0 0;
+    }
+
+    .user-table thead th:last-child {
+        border-radius: 0 8px 0 0;
+        text-align: center;
+    }
+
+    .user-table tbody tr {
+        transition: background .15s;
+    }
+
+    .user-table tbody tr:hover {
+        background: #FAFAFA;
+    }
+
+    .user-table tbody td {
+        padding: .7rem 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: .88rem;
+        vertical-align: middle;
+    }
+
+    .user-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-email {
+        font-weight: 600;
+        font-size: .88rem;
+        word-break: break-all;
+    }
+
+    .user-name {
+        font-size: .85rem;
+        color: #333;
+    }
+
+    .user-meta {
+        font-size: .8rem;
+        color: #757575;
+    }
+
+    .role-pill {
+        display: inline-block;
+        padding: .15rem .55rem;
+        border-radius: 6px;
+        font-size: .73rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .8rem;
+        font-weight: 600;
+    }
+
+    .status-dot::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-dot.active::before {
+        background: #1B5E20;
+    }
+
+    .status-dot.active {
+        color: #1B5E20;
+    }
+
+    .status-dot.inactive::before {
+        background: #C62828;
+    }
+
+    .status-dot.inactive {
+        color: #C62828;
+    }
+
+    .status-dot.suspended::before {
+        background: #212121;
+    }
+
+    .status-dot.suspended {
+        color: #212121;
+    }
+
+    /* ═══ ACTIONS DROPDOWN ═══ */
+    .actions-dropdown {
+        position: relative;
+        display: inline-block;
+        text-align: center;
+        width: 100%;
+    }
+
+    .actions-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .4rem .85rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        color: #555;
+        font-size: .78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .2s;
+        white-space: nowrap;
+        font-family: inherit;
+    }
+
+    .actions-trigger:hover {
+        border-color: #1B5E20;
+        color: #1B5E20;
+        background: #f6faf6;
+    }
+
+    .actions-trigger.open {
+        border-color: #1B5E20;
+        color: #1B5E20;
+        background: #f6faf6;
+        box-shadow: 0 2px 8px rgba(27, 94, 32, .12);
+    }
+
+    .actions-trigger svg {
+        width: 14px;
+        height: 14px;
+        transition: transform .2s;
+    }
+
+    .actions-trigger.open svg {
+        transform: rotate(180deg);
+    }
+
+    .actions-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        min-width: 200px;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
+        z-index: 100;
+        padding: .35rem 0;
+        animation: dropdown-in .15s ease;
+    }
+
+    .actions-menu.show {
+        display: block;
+    }
+
+    @keyframes dropdown-in {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .actions-menu .menu-label {
+        font-size: .65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: #aaa;
+        padding: .5rem 1rem .25rem;
+    }
+
+    .actions-menu .menu-divider {
+        height: 1px;
+        background: #f0f0f0;
+        margin: .25rem 0;
+    }
+
+    .actions-menu a,
+    .actions-menu button {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        width: 100%;
+        padding: .55rem 1rem;
+        font-size: .82rem;
+        font-weight: 500;
+        color: #333;
+        text-decoration: none;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-family: inherit;
+        text-align: left;
+        transition: all .15s;
+    }
+
+    .actions-menu a:hover,
+    .actions-menu button:hover {
+        background: #f5f7f5;
+        color: #1B5E20;
+    }
+
+    .actions-menu .menu-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .85rem;
+        flex-shrink: 0;
+    }
+
+    .actions-menu .menu-icon.view {
+        background: #E3F2FD;
+        color: #1565C0;
+    }
+
+    .actions-menu .menu-icon.role {
+        background: #F3E5F5;
+        color: #6A1B9A;
+    }
+
+    .actions-menu .menu-icon.toggle {
+        background: #FFF3E0;
+        color: #E65100;
+    }
+
+    .actions-menu .menu-icon.key {
+        background: #E8F5E9;
+        color: #1B5E20;
+    }
+
+    .actions-menu .menu-icon.del {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .actions-menu .danger-item:hover {
+        background: #FFF5F5;
+        color: #C62828;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .info-grid h4 {
+        font-size: .9rem;
+        font-weight: 700;
+        margin-bottom: .5rem;
+        color: #333;
+    }
+
+    .info-grid ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-grid li {
+        font-size: .82rem;
+        color: #555;
+        padding: .25rem 0;
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .info-grid li strong {
+        color: #212121;
+    }
+
+    @media (max-width: 1024px) {
+        .create-form-grid {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .filter-bar {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .user-table .hide-md {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .create-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-bar {
+            grid-template-columns: 1fr;
+        }
+
+        .um-stats {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .user-table .hide-sm {
+            display: none;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="um-header">
+    <div>
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <span>User Management</span>
+        </div>
+        <h1>User Management</h1>
+        <p>Create and manage all system users, roles, and access</p>
+    </div>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline" style="border-radius:8px;">&larr; Dashboard</a>
+</div>
+
+<!-- Stats -->
+<div class="um-stats">
+    <div class="um-stat-card green">
+        <div class="num">{{ user_stats.total }}</div>
+        <div class="lbl">Total Users</div>
+    </div>
+    <div class="um-stat-card blue">
+        <div class="num">{{ user_stats.active }}</div>
+        <div class="lbl">Active</div>
+    </div>
+    <div class="um-stat-card red">
+        <div class="num">{{ user_stats.inactive }}</div>
+        <div class="lbl">Inactive</div>
+    </div>
+    <div class="um-stat-card purple">
+        <div class="num">{{ user_stats.admins }}</div>
+        <div class="lbl">Admins</div>
+    </div>
+    <div class="um-stat-card amber">
+        <div class="num">{{ user_stats.team_managers }}</div>
+        <div class="lbl">Team Mgrs</div>
+    </div>
+    <div class="um-stat-card teal">
+        <div class="num">{{ user_stats.referees }}</div>
+        <div class="lbl">Referees</div>
+    </div>
+</div>
+
+<!-- Create New User -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;">
+        <h3 style="color:#fff;">+ Create New User</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'create_league_admin' %}">
+            {% csrf_token %}
+            <div class="create-form-grid">
+                <div>
+                    <label>Email <span class="req">*</span></label>
+                    <input type="email" name="email" class="form-control" required placeholder="user@example.com">
+                </div>
+                <div>
+                    <label>First Name <span class="req">*</span></label>
+                    <input type="text" name="first_name" class="form-control" required placeholder="John">
+                </div>
+                <div>
+                    <label>Last Name <span class="req">*</span></label>
+                    <input type="text" name="last_name" class="form-control" required placeholder="Doe">
+                </div>
+                <div>
+                    <label>Phone <span class="req">*</span></label>
+                    <input type="tel" name="phone" class="form-control" placeholder="+254712345678" pattern="\+254\d{9}" maxlength="13" required title="Format: +254XXXXXXXXX">
+                </div>
+                <div>
+                    <label>Role <span class="req">*</span></label>
+                    <select name="role" class="form-control" required>
+                        <option value="">Select Role...</option>
+                        {% for value, label in role_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" style="white-space:nowrap;height:38px;">
+                        + Create
+                    </button>
+                </div>
+            </div>
+            <div class="alert alert-info" style="margin-top:.75rem;margin-bottom:0;">
+                A one-time password will be generated. The user must change it on first login.
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filters & Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-body">
+        <form method="get" class="filter-bar">
+            <div>
+                <label>Filter by Role</label>
+                <select name="role" class="form-control" onchange="this.form.submit()">
+                    <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All Roles</option>
+                    {% for value, label in role_choices %}
+                    <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Filter by Status</label>
+                <select name="status" class="form-control" onchange="this.form.submit()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only
+                    </option>
+                </select>
+            </div>
+            <div>
+                <label>Search Users</label>
+                <div class="search-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search by name or email..."
+                        value="{{ search_query }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                    {% if search_query %}
+                    <a href="{% url 'manage_league_admins' %}" class="btn btn-outline btn-sm" title="Clear">&times;</a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>All Users ({{ users.count }})</h3>
+    </div>
+    <div style="overflow-x:auto;">
+        {% if users %}
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th class="hide-md">Joined</th>
+                    <th class="hide-md">Last Login</th>
+                    <th style="text-align:center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="user-email">
+                            {{ user.email }}
+                            {% if user.is_superuser %}
+                            <span class="badge badge-danger"
+                                style="font-size:.6rem;vertical-align:middle;margin-left:.25rem;">SU</span>
+                            {% endif %}
+                            {% if user.is_staff %}
+                            <span class="badge badge-warning"
+                                style="font-size:.6rem;vertical-align:middle;margin-left:.15rem;">Staff</span>
+                            {% endif %}
+                        </div>
+                        <div class="user-name" style="margin-top:.15rem;">{{ user.first_name }} {{ user.last_name }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="role-pill" style="
+                            {% if user.role == 'admin' %}background:#E3F2FD;color:#1565C0;
+                            {% elif user.role == 'competition_manager' %}background:#F3E5F5;color:#6A1B9A;
+                            {% elif user.role == 'coordinator' %}background:#FFF3E0;color:#E65100;
+                            {% elif user.role == 'referee' %}background:#E8F5E9;color:#1B5E20;
+                            {% elif user.role == 'team_manager' %}background:#FCE4EC;color:#AD1457;
+                            {% elif user.role == 'treasurer' %}background:#FFF8E1;color:#F57F17;
+                            {% elif user.role == 'jury_chair' %}background:#ECEFF1;color:#455A64;
+                            {% else %}background:#f5f5f5;color:#333;{% endif %}">
+                            {{ user.get_role_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.is_suspended %}
+                        <span class="status-dot suspended">Suspended</span>
+                        {% elif user.is_active %}
+                        <span class="status-dot active">Active</span>
+                        {% else %}
+                        <span class="status-dot inactive">Inactive</span>
+                        {% endif %}
+                        {% if user.must_change_password %}
+                        <span
+                            style="background:#FFF8E1;color:#F57F17;padding:.1rem .35rem;border-radius:4px;font-size:.65rem;font-weight:700;margin-left:.2rem;">OTP</span>
+                        {% endif %}
+                    </td>
+                    <td class="user-meta hide-md">{{ user.date_joined|date:"d M Y" }}</td>
+                    <td class="user-meta hide-md">
+                        {% if user.last_login %}{{ user.last_login|date:"d M Y" }}{% else %}<span
+                            style="color:#bbb;">Never</span>{% endif %}
+                    </td>
+                    <td>
+                        <!-- ═══ ACTIONS DROPDOWN ═══ -->
+                        <div class="actions-dropdown">
+                            <button type="button" class="actions-trigger" onclick="toggleDropdown(this)">
+                                Actions
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <div class="actions-menu">
+                                <div class="menu-label">Manage</div>
+                                <a href="{% url 'user_detail' user_id=user.id %}">
+                                    <span class="menu-icon view"><i class="bi bi-eye"></i></span>
+                                    View Profile
+                                </a>
+                                <a href="{% url 'edit_user_roles' user_id=user.id %}">
+                                    <span class="menu-icon role"><i class="bi bi-gear"></i></span>
+                                    Change Role
+                                </a>
+                                <div class="menu-divider"></div>
+                                <div class="menu-label">Account</div>
+                                <a href="{% url 'toggle_league_admin_status' user_id=user.id %}"
+                                    onclick="return confirm('{% if user.is_active %}Deactivate{% else %}Activate{% endif %} {{ user.email }}?')">
+                                    <span class="menu-icon toggle">
+                                        {% if user.is_active %}<i class="bi bi-pause-fill"></i>{% else %}<i
+                                            class="bi bi-play-fill"></i>{% endif %}
+                                    </span>
+                                    {% if user.is_active %}Deactivate{% else %}Activate{% endif %} User
+                                </a>
+                                <a href="{% url 'reset_league_admin_password' user_id=user.id %}"
+                                    onclick="return confirm('Reset password for {{ user.email }}?')">
+                                    <span class="menu-icon key"><i class="bi bi-key"></i></span>
+                                    Reset Password
+                                </a>
+                                {% if not user.is_superuser and user != request.user %}
+                                <div class="menu-divider"></div>
+                                <a href="{% url 'delete_user' user_id=user.id %}" class="danger-item"
+                                    onclick="return confirm('WARNING: DELETE {{ user.email }}? This cannot be undone!')">
+                                    <span class="menu-icon del"><i class="bi bi-trash"></i></span>
+                                    Delete User
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:#999;">
+            <div style="font-size:2rem;margin-bottom:.5rem;"><i class="bi bi-people"></i></div>
+            <p>No users found matching your filters.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Discipline Coordinators by Role -->
+<div class="card">
+    <div class="card-header" style="background:#FFF3E0;">
+        <h3>Discipline Coordinators by Sport</h3>
+    </div>
+    <div class="card-body">
+        <div class="info-grid">
+            <div>
+                <ul>
+                    {% for row in sport_coordinator_rows %}
+                    <li>
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        <strong>{{ row.sport_label }} Coordinator:</strong>
+                        {% if row.coordinators %}
+                            {% for c in row.coordinators %}
+                                {{ c.get_full_name|default:c.email }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <span style="color:#C62828;">Not Assigned</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h4>Unassigned Coordinators</h4>
+                {% if unassigned_coordinators %}
+                <ul>
+                    {% for c in unassigned_coordinators %}
+                    <li><i class="bi bi-person-exclamation"></i> {{ c.get_full_name|default:c.email }} ({{ c.email }})</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="margin:0;color:#666;">All coordinator users are assigned to a discipline.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Panel -->
+<div class="card">
+    <div class="card-header" style="background:#E3F2FD;">
+        <h3>User Management Guide</h3>
+    </div>
+    <div class="card-body">
+        <div class="info-grid">
+            <div>
+                <h4>Available Roles</h4>
+                <ul>
+                    <li><i class="bi bi-shield-check"></i> <strong>System Admin:</strong> Full system control</li>
+                    <li><i class="bi bi-trophy"></i> <strong>Organising Secretary:</strong> Manage competitions, fixtures &amp; teams</li>
+                    <li><i class="bi bi-clipboard2-pulse"></i> <strong>Discipline Coordinator:</strong> Manage assigned discipline</li>
+                    <li><i class="bi bi-person-check"></i> <strong>Verification Officer:</strong> Verify county players</li>
+                    <li><i class="bi bi-flag"></i> <strong>Referee:</strong> Match reports &amp; appointments</li>
+                    <li><i class="bi bi-people"></i> <strong>Team Manager:</strong> Manage own team &amp; players</li>
+                    <li><i class="bi bi-geo-alt"></i> <strong>County Sports Director:</strong> County registration &amp; players</li>
+                    <li><i class="bi bi-cash-stack"></i> <strong>Treasurer:</strong> Verify payments &amp; fees</li>
+                    <li><i class="bi bi-briefcase"></i> <strong>Chair of the Jury:</strong> Handle appeals &amp; hearings</li>
+                    <li><i class="bi bi-newspaper"></i> <strong>Media Manager:</strong> News, articles &amp; media</li>
+                    <li><i class="bi bi-pen"></i> <strong>Secretary General:</strong> Oversight &amp; audit</li>
+                    <li><i class="bi bi-binoculars"></i> <strong>Scout:</strong> Talent scouting &amp; shortlists</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Actions Menu</h4>
+                <ul>
+                    <li><i class="bi bi-eye"></i> <strong>View Profile:</strong> Full user details &amp; activity</li>
+                    <li><i class="bi bi-gear"></i> <strong>Change Role:</strong> Reassign user permissions</li>
+                    <li><i class="bi bi-pause-fill"></i> <strong>Toggle Status:</strong> Activate or deactivate account
+                    </li>
+                    <li><i class="bi bi-key"></i> <strong>Reset Password:</strong> Generate new one-time password</li>
+                    <li><i class="bi bi-trash"></i> <strong>Delete:</strong> Permanently remove user</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle dropdown
+    function toggleDropdown(btn) {
+        const menu = btn.nextElementSibling;
+        const isOpen = menu.classList.contains('show');
+
+        // Close all open dropdowns first
+        closeAllDropdowns();
+
+        if (!isOpen) {
+            menu.classList.add('show');
+            btn.classList.add('open');
+        }
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.actions-menu.show').forEach(m => m.classList.remove('show'));
+        document.querySelectorAll('.actions-trigger.open').forEach(b => b.classList.remove('open'));
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.actions-dropdown')) {
+            closeAllDropdowns();
+        }
+    });
+
+    // Close dropdown on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeAllDropdowns();
+        }
+    });
+</script>
+{% endblock %}

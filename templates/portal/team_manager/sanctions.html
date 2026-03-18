@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Disciplinary Sanctions &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'team_manager_dashboard' %}">Team Manager</a>
+        <span>Sanctions</span>
+    </div>
+    <h1><i class="bi bi-exclamation-triangle"></i> Disciplinary Sanctions</h1>
+    <p>View yellow/red cards for your team and opponents</p>
+</div>
+
+<!-- Own team sanctions -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-people"></i> My Team Sanctions</h2>
+    {% if own_sanctions %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+            <thead>
+                <tr style="background:#f5f5f5;text-align:left">
+                    <th style="padding:.6rem .8rem">Player</th>
+                    <th style="padding:.6rem .8rem">Team</th>
+                    <th style="padding:.6rem .8rem">Competition</th>
+                    <th style="padding:.6rem .8rem;text-align:center">
+                        <span style="background:#fff176;color:#333;padding:.15rem .5rem;border-radius:4px;font-size:.78rem">YC</span>
+                    </th>
+                    <th style="padding:.6rem .8rem;text-align:center">
+                        <span style="background:#ef5350;color:#fff;padding:.15rem .5rem;border-radius:4px;font-size:.78rem">RC</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in own_sanctions %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem .8rem;font-weight:600">{{ s.player.first_name }} {{ s.player.last_name }}</td>
+                    <td style="padding:.5rem .8rem">{{ s.team.name }}</td>
+                    <td style="padding:.5rem .8rem;font-size:.82rem">{{ s.competition.name }}</td>
+                    <td style="padding:.5rem .8rem;text-align:center;font-weight:700;color:{% if s.yellow_cards >= 3 %}#e65100{% else %}#333{% endif %}">{{ s.yellow_cards }}</td>
+                    <td style="padding:.5rem .8rem;text-align:center;font-weight:700;color:{% if s.red_cards > 0 %}#C62828{% else %}#333{% endif %}">{{ s.red_cards }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:1.5rem;color:#888">
+        <i class="bi bi-check-circle" style="font-size:1.5rem;display:block;margin-bottom:.3rem;color:#2e7d32"></i>
+        No sanctions recorded for your team.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Opponent sanctions -->
+<div class="card" style="padding:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-eye"></i> Opponent Sanctions (Recent)</h2>
+    {% if opponent_sanctions %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+            <thead>
+                <tr style="background:#f5f5f5;text-align:left">
+                    <th style="padding:.6rem .8rem">Player</th>
+                    <th style="padding:.6rem .8rem">Team</th>
+                    <th style="padding:.6rem .8rem">Competition</th>
+                    <th style="padding:.6rem .8rem;text-align:center">
+                        <span style="background:#fff176;color:#333;padding:.15rem .5rem;border-radius:4px;font-size:.78rem">YC</span>
+                    </th>
+                    <th style="padding:.6rem .8rem;text-align:center">
+                        <span style="background:#ef5350;color:#fff;padding:.15rem .5rem;border-radius:4px;font-size:.78rem">RC</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in opponent_sanctions %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.5rem .8rem;font-weight:600">{{ s.player.first_name }} {{ s.player.last_name }}</td>
+                    <td style="padding:.5rem .8rem">{{ s.team.name }}</td>
+                    <td style="padding:.5rem .8rem;font-size:.82rem">{{ s.competition.name }}</td>
+                    <td style="padding:.5rem .8rem;text-align:center;font-weight:700">{{ s.yellow_cards }}</td>
+                    <td style="padding:.5rem .8rem;text-align:center;font-weight:700;color:{% if s.red_cards > 0 %}#C62828{% else %}#333{% endif %}">{{ s.red_cards }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:1.5rem;color:#888">
+        <i class="bi bi-info-circle" style="font-size:1.5rem;display:block;margin-bottom:.3rem"></i>
+        No opponent sanctions available from recent fixtures.
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'team_manager_dashboard' %}" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

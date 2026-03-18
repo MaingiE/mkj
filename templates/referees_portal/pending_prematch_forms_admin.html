@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Pre-Match Forms (Admin){% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Pre-Match Forms (Admin Approval)</li>
+    </ol>
+</nav>
+
+<div class="container-fluid py-4">
+    <h2>Pre-Match Forms Pending Admin Approval</h2>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            {% if forms %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Match</th>
+                        <th>Date</th>
+                        <th>Referee</th>
+                        <th>Submitted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in forms %}
+                    <tr>
+                        <td>{{ form.match.home_team }} vs {{ form.match.away_team }}</td>
+                        <td>{{ form.match.match_date|date:"M j, Y" }}</td>
+                        <td>{{ form.referee.full_name }}</td>
+                        <td>{{ form.submitted_at|date:"M j, H:i" }}</td>
+                        <td>
+                            <a href="{% url 'referees:admin_approve_prematch_form' form.id %}" class="btn btn-sm btn-primary">
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">No forms pending admin approval.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

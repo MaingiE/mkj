@@ -1,0 +1,126 @@
+<!-- referees/matchday/referee_review_edit_requests.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Squad Edit Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">📋 Squad Edit Requests</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Edit Requests</li>
+                </ol>
+            </nav>
+            <p class="text-muted mb-0">Review and respond to team requests to edit approved squads</p>
+            <div class="mt-2">
+                <span class="badge bg-info">Approved: {{ approved_count }}</span>
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    {% if pending_requests %}
+        <div class="row">
+            {% for request in pending_requests %}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header py-3 bg-warning text-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold">
+                                <i class="fas fa-edit me-2"></i>{{ request.squad.team.team_name }}
+                            </h6>
+                            <span class="badge bg-warning">Pending Review</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Match Info -->
+                        <div class="mb-3">
+                            <h6 class="text-primary">{{ request.squad.match.home_team.team_name }} vs {{ request.squad.match.away_team.team_name }}</h6>
+                            <small class="text-muted">
+                                {{ request.squad.match.match_date|date:"M d, Y" }} at {{ request.squad.match.kickoff_time|default:"TBD" }}
+                            </small>
+                        </div>
+
+                        <!-- Request Details -->
+                        <div class="mb-3">
+                            <strong>Requested by:</strong> {{ request.requested_by.get_full_name }}<br>
+                            <strong>Requested on:</strong> {{ request.requested_at|date:"M d, Y H:i" }}<br>
+                            <strong>Reason:</strong>
+                            <div class="mt-2 p-2 bg-light rounded">
+                                {{ request.reason }}
+                            </div>
+                        </div>
+
+                        <!-- Action Form -->
+                        <form method="post" class="mt-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="request_id" value="{{ request.id }}">
+                            
+                            <div class="mb-3">
+                                <label for="notes_{{ request.id }}" class="form-label">
+                                    <strong>Review Notes (Optional)</strong>
+                                </label>
+                                <textarea 
+                                    name="notes" 
+                                    id="notes_{{ request.id }}" 
+                                    class="form-control" 
+                                    rows="2" 
+                                    placeholder="Add any notes about your decision..."
+                                ></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" name="action" value="decline" class="btn btn-outline-danger me-md-2">
+                                    <i class="fas fa-times me-1"></i>Decline
+                                </button>
+                                <button type="submit" name="action" value="approve" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i>Approve
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h4>No Pending Requests</h4>
+                <p class="text-muted">All squad edit requests have been reviewed.</p>
+                <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Auto-submit form when action button is clicked
+document.querySelectorAll('button[type="submit"][name="action"]').forEach(button => {
+    button.addEventListener('click', function(e) {
+        // Find the closest form and set the action value
+        const form = this.closest('form');
+        const actionInput = form.querySelector('input[name="action"]');
+        if (!actionInput) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'action';
+            hiddenInput.value = this.value;
+            form.appendChild(hiddenInput);
+        }
+    });
+});
+</script>
+{% endblock %}

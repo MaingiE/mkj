@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Approved Players — Jury | KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1><i class="bi bi-person-check-fill"></i> Approved Players</h1>
+        <p class="text-muted">Verified players eligible for competition</p>
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+        <a href="{% url 'jury_export_players_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+        <a href="{% url 'jury_export_players_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger btn-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'jury_dashboard' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="padding:1rem; margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:end;">
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Competition</label>
+            <select name="competition" class="form-control">
+                <option value="">All Competitions</option>
+                {% for c in competitions %}
+                <option value="{{ c.pk }}" {% if filters.competition == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Team</label>
+            <select name="team" class="form-control">
+                <option value="">All Teams</option>
+                {% for t in teams %}
+                <option value="{{ t.pk }}" {% if filters.team == t.pk|stringformat:"d" %}selected{% endif %}>{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1; min-width:140px;">
+            <label style="font-size:.8rem; font-weight:600;">Verification</label>
+            <select name="verification" class="form-control">
+                <option value="" {% if not filters.verification %}selected{% endif %}>Verified (default)</option>
+                <option value="verified" {% if filters.verification == "verified" %}selected{% endif %}>Verified</option>
+                <option value="pending" {% if filters.verification == "pending" %}selected{% endif %}>Pending</option>
+                <option value="rejected" {% if filters.verification == "rejected" %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Search</label>
+            <input type="text" name="search" value="{{ filters.search }}" class="form-control" placeholder="Player name or ID…">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="height:38px;">Filter</button>
+        <a href="{% url 'jury_players' %}" class="btn btn-outline btn-sm" style="height:38px; line-height:24px;">Clear</a>
+    </form>
+</div>
+
+<!-- Players Table -->
+<div class="card" style="padding:1rem;">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Player Name</th>
+                    <th>Team</th>
+                    <th>Competition</th>
+                    <th>Position</th>
+                    <th>Shirt</th>
+                    <th>DOB</th>
+                    <th>Age</th>
+                    <th>ID Number</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in players %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                    <td>{{ p.team.name }}</td>
+                    <td>{{ p.team.competition.name|default:"-" }}</td>
+                    <td>{{ p.get_position_display }}</td>
+                    <td>{{ p.shirt_number }}</td>
+                    <td>{{ p.date_of_birth|date:"d M Y"|default:"-" }}</td>
+                    <td>{{ p.age|default:"-" }}</td>
+                    <td style="font-size:.85rem;">{{ p.national_id_number|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if p.status == 'eligible' %}bg-success{% elif p.status == 'suspended' %}bg-danger{% elif p.status == 'injured' %}bg-warning{% else %}bg-secondary{% endif %}" style="padding:3px 8px; border-radius:4px; color:#fff; font-size:.75rem;">
+                            {{ p.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" style="text-align:center; color:#888; padding:2rem;">No players found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="font-size:.8rem; color:#888; margin:.5rem 0 0;">Showing {{ players|length }} player{{ players|length|pluralize }}.</p>
+</div>
+{% endblock %}

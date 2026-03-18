@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Organising Secretary Dashboard &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cm-hero {
+        background: linear-gradient(135deg, #4A148C 0%, #7B1FA2 50%, #9C27B0 100%);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .cm-hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .cm-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+    .cm-hero p { opacity: .85; font-size: .95rem; position: relative; }
+    .cm-hero .hero-badge {
+        display: inline-block;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: .2rem .8rem;
+        border-radius: 20px;
+        font-size: .75rem;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        margin-bottom: .5rem;
+    }
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .cm-stat {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        border-left: 4px solid transparent;
+        transition: all .25s ease;
+    }
+    .cm-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .cm-stat .num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+    .cm-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; }
+    .cm-stat.purple  { border-left-color: #7B1FA2; }
+    .cm-stat.purple .num { color: #7B1FA2; }
+    .cm-stat.green   { border-left-color: #1B5E20; }
+    .cm-stat.green .num { color: #1B5E20; }
+    .cm-stat.blue    { border-left-color: #1565C0; }
+    .cm-stat.blue .num { color: #1565C0; }
+    .cm-stat.amber   { border-left-color: #E65100; }
+    .cm-stat.amber .num { color: #E65100; }
+    .cm-stat.red     { border-left-color: #C62828; }
+    .cm-stat.red .num { color: #C62828; }
+    .cm-stat.teal    { border-left-color: #00695C; }
+    .cm-stat.teal .num { color: #00695C; }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .action-tile {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        text-decoration: none;
+        color: #212121;
+        transition: all .25s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        border: 1px solid transparent;
+    }
+    .action-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,.1);
+        border-color: #7B1FA2;
+        color: #7B1FA2;
+    }
+    .action-tile .tile-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .action-tile .tile-text h4 { font-size: .9rem; font-weight: 600; margin-bottom: .15rem; }
+    .action-tile .tile-text p { font-size: .78rem; color: #757575; margin: 0; line-height: 1.35; }
+    .action-tile .tile-badge {
+        background: #C62828;
+        color: #fff;
+        font-size: .7rem;
+        font-weight: 700;
+        padding: .1rem .45rem;
+        border-radius: 10px;
+        margin-left: .4rem;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .recent-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .65rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .recent-item:last-child { border-bottom: none; }
+    .recent-item .ri-main { font-weight: 600; font-size: .88rem; }
+    .recent-item .ri-sub { font-size: .78rem; color: #999; }
+    .ri-badge {
+        font-size: .75rem;
+        font-weight: 600;
+        padding: .2rem .6rem;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .two-col { grid-template-columns: 1fr; }
+        .actions-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="cm-hero">
+    <span class="hero-badge">Organising Secretary</span>
+    <h1><i class="bi bi-trophy"></i> Organising Secretary Dashboard</h1>
+    <p>Create competitions, manage pools, generate fixtures, approve results</p>
+</div>
+
+<!-- Stats -->
+<div class="stat-row">
+    <div class="cm-stat purple">
+        <div class="num">{{ stats.total_competitions }}</div>
+        <div class="lbl">Competitions</div>
+    </div>
+    <div class="cm-stat green">
+        <div class="num">{{ stats.active_competitions }}</div>
+        <div class="lbl">Active</div>
+    </div>
+    <div class="cm-stat blue">
+        <div class="num">{{ stats.total_fixtures }}</div>
+        <div class="lbl">Total Fixtures</div>
+    </div>
+    <div class="cm-stat teal">
+        <div class="num">{{ stats.completed_fixtures }}</div>
+        <div class="lbl">Completed</div>
+    </div>
+    <div class="cm-stat amber">
+        <div class="num">{{ stats.pending_reports }}</div>
+        <div class="lbl">Pending Reports</div>
+    </div>
+    <div class="cm-stat green">
+        <div class="num">{{ stats.total_teams }}</div>
+        <div class="lbl">Approved Teams</div>
+    </div>
+    <div class="cm-stat blue">
+        <div class="num">{{ stats.total_venues }}</div>
+        <div class="lbl">Venues</div>
+    </div>
+    <div class="cm-stat red">
+        <div class="num">{{ stats.paid_counties }}</div>
+        <div class="lbl">Paid Counties</div>
+    </div>
+    <div class="cm-stat amber">
+        <div class="num">{{ stats.pending_county_players }}</div>
+        <div class="lbl">County Players Pending</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-header" style="background:linear-gradient(135deg,#4A148C,#7B1FA2);color:#fff;">
+        <h3 style="color:#fff;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+    </div>
+    <div class="card-body">
+        <div class="actions-grid">
+            <a href="{% url 'cm_create_competition' %}" class="action-tile">
+                <div class="tile-icon" style="background:#F3E5F5;color:#7B1FA2;"><i class="bi bi-plus-circle"></i></div>
+                <div class="tile-text">
+                    <h4>Create Competition</h4>
+                    <p>New league, cup, or tournament</p>
+                </div>
+            </a>
+            <a href="{% url 'cm_venues' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-geo-alt"></i></div>
+                <div class="tile-text">
+                    <h4>Manage Venues</h4>
+                    <p>Add and configure match venues</p>
+                </div>
+            </a>
+            <a href="{% url 'pending_teams' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;"><i class="bi bi-check-circle"></i></div>
+                <div class="tile-text">
+                    <h4>County Registrations</h4>
+                    <p>Review pending county registrations</p>
+                </div>
+            </a>
+            <a href="{% url 'county_player_verification_list' %}" class="action-tile">
+                <div class="tile-icon" style="background:#FFF3E0;color:#E65100;"><i class="bi bi-person-vcard"></i></div>
+                <div class="tile-text">
+                    <h4>Player Verification {% if stats.pending_county_players %}<span class="tile-badge">{{ stats.pending_county_players }}</span>{% endif %}</h4>
+                    <p>Review pending players by county and discipline</p>
+                </div>
+            </a>
+            <a href="{% url 'competitions_list' %}" class="action-tile">
+                <div class="tile-icon" style="background:#FCE4EC;color:#AD1457;"><i class="bi bi-list-ul"></i></div>
+                <div class="tile-text">
+                    <h4>All Competitions</h4>
+                    <p>View and manage all competitions</p>
+                </div>
+            </a>
+            <a href="{% url 'teams_list' %}" class="action-tile">
+                <div class="tile-icon" style="background:#ECEFF1;color:#455A64;"><i class="bi bi-people"></i></div>
+                <div class="tile-text">
+                    <h4>All Teams</h4>
+                    <p>Browse registered teams</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Active Competitions + Pending Reports -->
+<div class="two-col">
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="bi bi-trophy"></i> Active Competitions</h3>
+        </div>
+        <div class="card-body">
+            {% if active_competitions %}
+                {% for comp in active_competitions %}
+                <div class="recent-item">
+                    <div>
+                        <div class="ri-main">
+                            <a href="{% url 'cm_competition_manage' pk=comp.pk %}" style="color:#212121;text-decoration:none;">{{ comp.name }}</a>
+                        </div>
+                        <div class="ri-sub">{{ comp.get_sport_type_display }} &middot; {{ comp.get_age_group_display }}</div>
+                    </div>
+                    <span class="ri-badge" style="background:#E8F5E9;color:#1B5E20;">{{ comp.get_status_display }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:1.5rem;color:#999;">
+                    <i class="bi bi-trophy" style="font-size:2rem;opacity:.3;"></i>
+                    <p>No active competitions</p>
+                </div>
+            {% endif %}
+
+            {% if registration_competitions %}
+            <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid #eee;">
+                <div style="font-size:.78rem;font-weight:700;color:#757575;text-transform:uppercase;margin-bottom:.5rem;">Registration Open</div>
+                {% for comp in registration_competitions %}
+                <div class="recent-item">
+                    <div>
+                        <div class="ri-main">
+                            <a href="{% url 'cm_competition_manage' pk=comp.pk %}" style="color:#212121;text-decoration:none;">{{ comp.name }}</a>
+                        </div>
+                        <div class="ri-sub">{{ comp.get_sport_type_display }}</div>
+                    </div>
+                    <span class="ri-badge" style="background:#FFF8E1;color:#F57F17;">Registration</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="bi bi-clipboard-data"></i> Pending Match Reports</h3>
+        </div>
+        <div class="card-body">
+            {% if pending_reports %}
+                {% for report in pending_reports %}
+                <div class="recent-item">
+                    <div>
+                        <div class="ri-main">{{ report.fixture.home_team }} vs {{ report.fixture.away_team }}</div>
+                        <div class="ri-sub">
+                            {{ report.fixture.competition.name|truncatechars:25 }} &middot;
+                            {{ report.home_score }}-{{ report.away_score }} &middot;
+                            {{ report.submitted_at|date:"d M" }}
+                        </div>
+                    </div>
+                    <a href="{% url 'competition_report_approve' pk=report.fixture.competition.pk report_pk=report.pk %}"
+                       class="btn btn-primary btn-sm" style="font-size:.78rem;">Review</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:1.5rem;color:#999;">
+                    <i class="bi bi-clipboard-check" style="font-size:2rem;opacity:.3;"></i>
+                    <p>No pending reports</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Sport Breakdown -->
+{% if sport_breakdown %}
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h3><i class="bi bi-bar-chart-line"></i> Competitions by Sport</h3></div>
+    <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:.75rem;">
+            {% for sport in sport_breakdown %}
+            <div style="background:#F3E5F5;border-radius:8px;padding:.5rem 1rem;display:flex;align-items:center;gap:.5rem;">
+                <span style="font-weight:700;color:#7B1FA2;">{{ sport.count }}</span>
+                <span style="font-size:.85rem;color:#333;">{{ sport.label }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

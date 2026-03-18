@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Browse Players — Scout — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'scout_dashboard' %}">Scout</a>
+        <span>Browse Players</span>
+    </div>
+    <h1><i class="bi bi-search"></i> Browse Verified Players</h1>
+    <p>{{ total }} verified players available. Add to your shortlist for tracking.</p>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+    <form method="get" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+        <div style="min-width:220px;flex:1;">
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Player Name</label>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search by name">
+        </div>
+        <div>
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">Discipline</label>
+            <select name="discipline" class="form-control" style="min-width:180px;" onchange="this.form.submit()">
+                <option value="">All Disciplines</option>
+                {% for val, label in disciplines %}
+                <option value="{{ val }}" {% if discipline_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.25rem;">County</label>
+            <select name="county" class="form-control" style="min-width:160px;" onchange="this.form.submit()">
+                <option value="">All Counties</option>
+                {% for c in counties %}
+                <option value="{{ c }}" {% if county_filter == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm" style="padding:.45rem .9rem;">Search</button>
+        {% if discipline_filter or county_filter or search_query %}
+        <a href="{% url 'scout_players' %}" style="font-size:.85rem;color:#C62828;text-decoration:none;font-weight:600;">✕ Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if players %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Discipline</th>
+                        <th>Age</th>
+                        <th>Position</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in players %}
+                    <tr>
+                        <td>
+                            {% if p.photo %}
+                            <img src="{{ p.photo.url }}" alt="" style="width:28px;height:34px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:.4rem;">
+                            {% endif %}
+                            <strong>{{ p.first_name }} {{ p.last_name }}</strong>
+                        </td>
+                        <td>{{ p.discipline.registration.get_county_display }}</td>
+                        <td>{{ p.discipline.get_sport_type_display }}</td>
+                        <td>{{ p.age }}</td>
+                        <td>{{ p.position|default:"—" }}</td>
+                        <td>
+                            {% if p.pk in shortlisted_ids %}
+                            <span style="background:#E8F5E9;color:#1B5E20;padding:.25rem .6rem;border-radius:12px;font-size:.78rem;font-weight:600;">
+                                ✓ Shortlisted
+                            </span>
+                            {% else %}
+                            <form method="post" action="{% url 'scout_add_to_shortlist' player_pk=p.pk %}" style="display:inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="rating" value="3">
+                                <button type="submit" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.25rem .65rem;font-size:.78rem;">
+                                    <i class="bi bi-plus"></i> Shortlist
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="padding:3rem;text-align:center;">
+        <div style="font-size:3rem">📋</div>
+        <h3>No players found</h3>
+        <p style="color:#888">No verified players match your filters.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

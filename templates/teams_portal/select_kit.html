@@ -1,0 +1,1221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Select Kit Colors & Images - {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1">
+                                <i class="fas fa-tshirt text-primary me-2"></i>Team Kit Setup
+                            </h1>
+                            <p class="text-muted mb-0">Customize your team's kit colors and upload kit images</p>
+                        </div>
+                        <div class="badge bg-{% if team.status == 'approved' %}success{% else %}warning{% endif %} fs-6">
+                            {{ team.get_status_display }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert -->
+            <div class="alert alert-info mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-2">Complete Kit Setup Required</h5>
+                        <p class="mb-0">
+                            You must complete your team kit setup to participate in matches. 
+                            <strong>All kit images except Third kits are mandatory.</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kit Setup Form -->
+            <form method="POST" action="/teams/select-kit/" enctype="multipart/form-data" id="kitForm">
+                {% csrf_token %}
+                
+                <div class="row g-4">
+                    <!-- Outfield Players Kits -->
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-user me-2"></i>Outfield Players Kits
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-4">
+                                    <!-- Home Kit -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0">Home Kit</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Colors Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-tshirt me-2"></i>Jersey Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="home_jersey_color" 
+                                                               value="{{ team.home_jersey_color|default:'#dc3545' }}"
+                                                               required>
+                                                        <small class="text-muted">Primary jersey color for home matches</small>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-running me-2"></i>Shorts Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="home_shorts_color" 
+                                                               value="{{ team.home_shorts_color|default:'#ffffff' }}"
+                                                               required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-socks me-2"></i>Socks Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="home_socks_color" 
+                                                               value="{{ team.home_socks_color|default:'#dc3545' }}"
+                                                               required>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Image Upload Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2">
+                                                        <i class="fas fa-image me-2"></i>Kit Image *
+                                                        <span class="badge bg-danger ms-2">Required</span>
+                                                    </h6>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-upload me-2"></i>Upload Home Kit Image *
+                                                        </label>
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="home_kit_image" 
+                                                               accept="image/*"
+                                                               id="homeKitImage"
+                                                               {% if not team.home_kit_image %}required{% endif %}>
+                                                        <div class="form-text">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Required: PNG or JPG. Max 5MB. Shows your actual kit design.
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Current Image Preview -->
+                                                    {% if team.home_kit_image %}
+                                                    <div class="current-image mt-3 border rounded p-3 bg-light">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Current Home Kit Image
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img src="{{ team.home_kit_image.url }}" 
+                                                                 alt="Current Home Kit" 
+                                                                 class="img-fluid rounded border mb-2" 
+                                                                 style="max-height: 120px;">
+                                                            <div>
+                                                                <a href="{{ team.home_kit_image.url }}" target="_blank" 
+                                                                   class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="removeCurrentImage('homeKitImage')">
+                                                                    <i class="fas fa-times me-1"></i>Change Image
+                                                                </button>
+                                                            </div>
+                                                            <div class="small text-muted mt-1">
+                                                                Current image will be kept unless you upload a new one
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Image Preview (for new upload) -->
+                                                    <div id="homeKitPreview" class="mt-3 border rounded p-3 bg-light d-none">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-eye me-2"></i>
+                                                            New Image Preview
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img id="homeKitPreviewImg" src="" alt="Preview" class="img-fluid rounded border mb-2" style="max-height: 120px;">
+                                                            <div class="small text-muted">Preview of new image</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Color Preview -->
+                                                <div class="mt-3 p-3 border rounded">
+                                                    <h6 class="mb-2 fw-bold">
+                                                        <i class="fas fa-palette me-2"></i>Color Preview
+                                                    </h6>
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="kit-preview">
+                                                            <div class="kit-jersey" id="homeJerseyPreview"
+                                                                 style="background-color: {{ team.home_jersey_color|default:'#dc3545' }}; color: white; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Jersey
+                                                            </div>
+                                                            <div class="kit-shorts" id="homeShortsPreview"
+                                                                 style="background-color: {{ team.home_shorts_color|default:'#ffffff' }}; color: black; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Shorts
+                                                            </div>
+                                                            <div class="kit-socks" id="homeSocksPreview"
+                                                                 style="background-color: {{ team.home_socks_color|default:'#dc3545' }}; color: white; padding: 5px; border-radius: 5px;">
+                                                                Socks
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Away Kit -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border">
+                                            <div class="card-header bg-info text-white">
+                                                <h5 class="mb-0">Away Kit</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Colors Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-tshirt me-2"></i>Jersey Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="away_jersey_color" 
+                                                               value="{{ team.away_jersey_color|default:'#ffffff' }}"
+                                                               required>
+                                                        <small class="text-muted">Primary jersey color for away matches</small>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-running me-2"></i>Shorts Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="away_shorts_color" 
+                                                               value="{{ team.away_shorts_color|default:'#dc3545' }}"
+                                                               required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-socks me-2"></i>Socks Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="away_socks_color" 
+                                                               value="{{ team.away_socks_color|default:'#ffffff' }}"
+                                                               required>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Image Upload Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2">
+                                                        <i class="fas fa-image me-2"></i>Kit Image *
+                                                        <span class="badge bg-danger ms-2">Required</span>
+                                                    </h6>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-upload me-2"></i>Upload Away Kit Image *
+                                                        </label>
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="away_kit_image" 
+                                                               accept="image/*"
+                                                               id="awayKitImage"
+                                                               {% if not team.away_kit_image %}required{% endif %}>
+                                                        <div class="form-text">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Required: PNG or JPG. Max 5MB. Shows your actual kit design.
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Current Image Preview -->
+                                                    {% if team.away_kit_image %}
+                                                    <div class="current-image mt-3 border rounded p-3 bg-light">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Current Away Kit Image
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img src="{{ team.away_kit_image.url }}" 
+                                                                 alt="Current Away Kit" 
+                                                                 class="img-fluid rounded border mb-2" 
+                                                                 style="max-height: 120px;">
+                                                            <div>
+                                                                <a href="{{ team.away_kit_image.url }}" target="_blank" 
+                                                                   class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="removeCurrentImage('awayKitImage')">
+                                                                    <i class="fas fa-times me-1"></i>Change Image
+                                                                </button>
+                                                            </div>
+                                                            <div class="small text-muted mt-1">
+                                                                Current image will be kept unless you upload a new one
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Image Preview (for new upload) -->
+                                                    <div id="awayKitPreview" class="mt-3 border rounded p-3 bg-light d-none">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-eye me-2"></i>
+                                                            New Image Preview
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img id="awayKitPreviewImg" src="" alt="Preview" class="img-fluid rounded border mb-2" style="max-height: 120px;">
+                                                            <div class="small text-muted">Preview of new image</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Color Preview -->
+                                                <div class="mt-3 p-3 border rounded">
+                                                    <h6 class="mb-2 fw-bold">
+                                                        <i class="fas fa-palette me-2"></i>Color Preview
+                                                    </h6>
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="kit-preview">
+                                                            <div class="kit-jersey" id="awayJerseyPreview"
+                                                                 style="background-color: {{ team.away_jersey_color|default:'#ffffff' }}; color: black; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Jersey
+                                                            </div>
+                                                            <div class="kit-shorts" id="awayShortsPreview"
+                                                                 style="background-color: {{ team.away_shorts_color|default:'#dc3545' }}; color: white; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Shorts
+                                                            </div>
+                                                            <div class="kit-socks" id="awaySocksPreview"
+                                                                 style="background-color: {{ team.away_socks_color|default:'#ffffff' }}; color: black; padding: 5px; border-radius: 5px;">
+                                                                Socks
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Third Kit (Optional) -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border">
+                                            <div class="card-header bg-warning text-dark">
+                                                <h5 class="mb-0">Third Kit (Optional)</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Colors Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-tshirt me-2"></i>Jersey Color
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="third_jersey_color" 
+                                                               value="{{ team.third_jersey_color|default:'#6c757d' }}">
+                                                        <small class="text-muted">Optional alternative kit</small>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-running me-2"></i>Shorts Color
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="third_shorts_color" 
+                                                               value="{{ team.third_shorts_color|default:'#6c757d' }}">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-socks me-2"></i>Socks Color
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="third_socks_color" 
+                                                               value="{{ team.third_socks_color|default:'#6c757d' }}">
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Image Upload Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2">
+                                                        <i class="fas fa-image me-2"></i>Kit Image
+                                                        <span class="badge bg-secondary ms-2">Optional</span>
+                                                    </h6>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">
+                                                            <i class="fas fa-upload me-2"></i>Upload Third Kit Image
+                                                        </label>
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="third_kit_image" 
+                                                               accept="image/*"
+                                                               id="thirdKitImage">
+                                                        <div class="form-text">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Optional: PNG or JPG. Max 5MB.
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Current Image Preview -->
+                                                    {% if team.third_kit_image %}
+                                                    <div class="current-image mt-3 border rounded p-3 bg-light">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Current Third Kit Image
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img src="{{ team.third_kit_image.url }}" 
+                                                                 alt="Current Third Kit" 
+                                                                 class="img-fluid rounded border mb-2" 
+                                                                 style="max-height: 120px;">
+                                                            <div>
+                                                                <a href="{{ team.third_kit_image.url }}" target="_blank" 
+                                                                   class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="removeCurrentImage('thirdKitImage')">
+                                                                    <i class="fas fa-times me-1"></i>Remove Image
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Image Preview (for new upload) -->
+                                                    <div id="thirdKitPreview" class="mt-3 border rounded p-3 bg-light d-none">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-eye me-2"></i>
+                                                            New Image Preview
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img id="thirdKitPreviewImg" src="" alt="Preview" class="img-fluid rounded border mb-2" style="max-height: 120px;">
+                                                            <div class="small text-muted">Preview of new image</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Color Preview -->
+                                                <div class="mt-3 p-3 border rounded">
+                                                    <h6 class="mb-2 fw-bold">
+                                                        <i class="fas fa-palette me-2"></i>Color Preview
+                                                    </h6>
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="kit-preview">
+                                                            <div class="kit-jersey" id="thirdJerseyPreview"
+                                                                 style="background-color: {{ team.third_jersey_color|default:'#6c757d' }}; color: white; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Jersey
+                                                            </div>
+                                                            <div class="kit-shorts" id="thirdShortsPreview"
+                                                                 style="background-color: {{ team.third_shorts_color|default:'#6c757d' }}; color: white; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Shorts
+                                                            </div>
+                                                            <div class="kit-socks" id="thirdSocksPreview"
+                                                                 style="background-color: {{ team.third_socks_color|default:'#6c757d' }}; color: white; padding: 5px; border-radius: 5px;">
+                                                                Socks
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Goalkeeper Kits -->
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header bg-danger text-white">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-user-shield me-2"></i>Goalkeeper Kits
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-4">
+                                    <!-- GK Home Kit -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0">GK Home Kit</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Colors Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-tshirt me-2"></i>Jersey Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_home_jersey_color" 
+                                                               value="{{ team.gk_home_jersey_color|default:'#28a745' }}"
+                                                               required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-running me-2"></i>Shorts Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_home_shorts_color" 
+                                                               value="{{ team.gk_home_shorts_color|default:'#28a745' }}"
+                                                               required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-socks me-2"></i>Socks Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_home_socks_color" 
+                                                               value="{{ team.gk_home_socks_color|default:'#28a745' }}"
+                                                               required>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Image Upload Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2">
+                                                        <i class="fas fa-image me-2"></i>Kit Image *
+                                                        <span class="badge bg-danger ms-2">Required</span>
+                                                    </h6>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-upload me-2"></i>Upload GK Home Kit Image *
+                                                        </label>
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="gk_home_kit_image" 
+                                                               accept="image/*"
+                                                               id="gkHomeKitImage"
+                                                               {% if not team.gk_home_kit_image %}required{% endif %}>
+                                                        <div class="form-text">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Required: PNG or JPG. Max 5MB. Shows your GK kit design.
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Current Image Preview -->
+                                                    {% if team.gk_home_kit_image %}
+                                                    <div class="current-image mt-3 border rounded p-3 bg-light">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Current GK Home Kit Image
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img src="{{ team.gk_home_kit_image.url }}" 
+                                                                 alt="Current GK Home Kit" 
+                                                                 class="img-fluid rounded border mb-2" 
+                                                                 style="max-height: 120px;">
+                                                            <div>
+                                                                <a href="{{ team.gk_home_kit_image.url }}" target="_blank" 
+                                                                   class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="removeCurrentImage('gkHomeKitImage')">
+                                                                    <i class="fas fa-times me-1"></i>Change Image
+                                                                </button>
+                                                            </div>
+                                                            <div class="small text-muted mt-1">
+                                                                Current image will be kept unless you upload a new one
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Image Preview (for new upload) -->
+                                                    <div id="gkHomeKitPreview" class="mt-3 border rounded p-3 bg-light d-none">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-eye me-2"></i>
+                                                            New Image Preview
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img id="gkHomeKitPreviewImg" src="" alt="Preview" class="img-fluid rounded border mb-2" style="max-height: 120px;">
+                                                            <div class="small text-muted">Preview of new image</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Color Preview -->
+                                                <div class="mt-3 p-3 border rounded">
+                                                    <h6 class="mb-2 fw-bold">
+                                                        <i class="fas fa-palette me-2"></i>Color Preview
+                                                    </h6>
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="kit-preview">
+                                                            <div class="kit-jersey" id="gkHomeJerseyPreview"
+                                                                 style="background-color: {{ team.gk_home_jersey_color|default:'#28a745' }}; color: white; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Jersey
+                                                            </div>
+                                                            <div class="kit-shorts" id="gkHomeShortsPreview"
+                                                                 style="background-color: {{ team.gk_home_shorts_color|default:'#28a745' }}; color: white; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Shorts
+                                                            </div>
+                                                            <div class="kit-socks" id="gkHomeSocksPreview"
+                                                                 style="background-color: {{ team.gk_home_socks_color|default:'#28a745' }}; color: white; padding: 5px; border-radius: 5px;">
+                                                                Socks
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- GK Away Kit -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border">
+                                            <div class="card-header bg-info text-white">
+                                                <h5 class="mb-0">GK Away Kit</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Colors Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-tshirt me-2"></i>Jersey Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_away_jersey_color" 
+                                                               value="{{ team.gk_away_jersey_color|default:'#ffc107' }}"
+                                                               required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-running me-2"></i>Shorts Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_away_shorts_color" 
+                                                               value="{{ team.gk_away_shorts_color|default:'#ffc107' }}"
+                                                               required>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-socks me-2"></i>Socks Color *
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_away_socks_color" 
+                                                               value="{{ team.gk_away_socks_color|default:'#ffc107' }}"
+                                                               required>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Image Upload Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2">
+                                                        <i class="fas fa-image me-2"></i>Kit Image *
+                                                        <span class="badge bg-danger ms-2">Required</span>
+                                                    </h6>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-upload me-2"></i>Upload GK Away Kit Image *
+                                                        </label>
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="gk_away_kit_image" 
+                                                               accept="image/*"
+                                                               id="gkAwayKitImage"
+                                                               {% if not team.gk_away_kit_image %}required{% endif %}>
+                                                        <div class="form-text">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Required: PNG or JPG. Max 5MB. Shows your GK kit design.
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Current Image Preview -->
+                                                    {% if team.gk_away_kit_image %}
+                                                    <div class="current-image mt-3 border rounded p-3 bg-light">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Current GK Away Kit Image
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img src="{{ team.gk_away_kit_image.url }}" 
+                                                                 alt="Current GK Away Kit" 
+                                                                 class="img-fluid rounded border mb-2" 
+                                                                 style="max-height: 120px;">
+                                                            <div>
+                                                                <a href="{{ team.gk_away_kit_image.url }}" target="_blank" 
+                                                                   class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="removeCurrentImage('gkAwayKitImage')">
+                                                                    <i class="fas fa-times me-1"></i>Change Image
+                                                                </button>
+                                                            </div>
+                                                            <div class="small text-muted mt-1">
+                                                                Current image will be kept unless you upload a new one
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Image Preview (for new upload) -->
+                                                    <div id="gkAwayKitPreview" class="mt-3 border rounded p-3 bg-light d-none">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-eye me-2"></i>
+                                                            New Image Preview
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img id="gkAwayKitPreviewImg" src="" alt="Preview" class="img-fluid rounded border mb-2" style="max-height: 120px;">
+                                                            <div class="small text-muted">Preview of new image</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Color Preview -->
+                                                <div class="mt-3 p-3 border rounded">
+                                                    <h6 class="mb-2 fw-bold">
+                                                        <i class="fas fa-palette me-2"></i>Color Preview
+                                                    </h6>
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="kit-preview">
+                                                            <div class="kit-jersey" id="gkAwayJerseyPreview"
+                                                                 style="background-color: {{ team.gk_away_jersey_color|default:'#ffc107' }}; color: black; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Jersey
+                                                            </div>
+                                                            <div class="kit-shorts" id="gkAwayShortsPreview"
+                                                                 style="background-color: {{ team.gk_away_shorts_color|default:'#ffc107' }}; color: black; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Shorts
+                                                            </div>
+                                                            <div class="kit-socks" id="gkAwaySocksPreview"
+                                                                 style="background-color: {{ team.gk_away_socks_color|default:'#ffc107' }}; color: black; padding: 5px; border-radius: 5px;">
+                                                                Socks
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- GK Third Kit (Optional) -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border">
+                                            <div class="card-header bg-warning text-dark">
+                                                <h5 class="mb-0">GK Third Kit (Optional)</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Colors Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-tshirt me-2"></i>Jersey Color
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_third_jersey_color" 
+                                                               value="{{ team.gk_third_jersey_color|default:'#17a2b8' }}">
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-running me-2"></i>Shorts Color
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_third_shorts_color" 
+                                                               value="{{ team.gk_third_shorts_color|default:'#17a2b8' }}">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">
+                                                            <i class="fas fa-socks me-2"></i>Socks Color
+                                                        </label>
+                                                        <input type="color" 
+                                                               class="form-control form-control-color" 
+                                                               name="gk_third_socks_color" 
+                                                               value="{{ team.gk_third_socks_color|default:'#17a2b8' }}">
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Image Upload Section -->
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold mb-2">
+                                                        <i class="fas fa-image me-2"></i>Kit Image
+                                                        <span class="badge bg-secondary ms-2">Optional</span>
+                                                    </h6>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">
+                                                            <i class="fas fa-upload me-2"></i>Upload GK Third Kit Image
+                                                        </label>
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="gk_third_kit_image" 
+                                                               accept="image/*"
+                                                               id="gkThirdKitImage">
+                                                        <div class="form-text">
+                                                            Optional: Upload if you have a third GK kit
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Current Image Preview -->
+                                                    {% if team.gk_third_kit_image %}
+                                                    <div class="current-image mt-3 border rounded p-3 bg-light">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Current GK Third Kit Image
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img src="{{ team.gk_third_kit_image.url }}" 
+                                                                 alt="Current GK Third Kit" 
+                                                                 class="img-fluid rounded border mb-2" 
+                                                                 style="max-height: 120px;">
+                                                            <div>
+                                                                <a href="{{ team.gk_third_kit_image.url }}" target="_blank" 
+                                                                   class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="removeCurrentImage('gkThirdKitImage')">
+                                                                    <i class="fas fa-times me-1"></i>Remove Image
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Image Preview (for new upload) -->
+                                                    <div id="gkThirdKitPreview" class="mt-3 border rounded p-3 bg-light d-none">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-eye me-2"></i>
+                                                            New Image Preview
+                                                        </h6>
+                                                        <div class="text-center">
+                                                            <img id="gkThirdKitPreviewImg" src="" alt="Preview" class="img-fluid rounded border mb-2" style="max-height: 120px;">
+                                                            <div class="small text-muted">Preview of new image</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Color Preview -->
+                                                <div class="mt-3 p-3 border rounded">
+                                                    <h6 class="mb-2 fw-bold">
+                                                        <i class="fas fa-palette me-2"></i>Color Preview
+                                                    </h6>
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="kit-preview">
+                                                            <div class="kit-jersey" id="gkThirdJerseyPreview"
+                                                                 style="background-color: {{ team.gk_third_jersey_color|default:'#17a2b8' }}; color: white; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Jersey
+                                                            </div>
+                                                            <div class="kit-shorts" id="gkThirdShortsPreview"
+                                                                 style="background-color: {{ team.gk_third_shorts_color|default:'#17a2b8' }}; color: white; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+                                                                Shorts
+                                                            </div>
+                                                            <div class="kit-socks" id="gkThirdSocksPreview"
+                                                                 style="background-color: {{ team.gk_third_socks_color|default:'#17a2b8' }}; color: white; padding: 5px; border-radius: 5px;">
+                                                                Socks
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="col-12 mt-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="/dashboard/" class="btn btn-outline-secondary btn-lg">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                    </a>
+                                    <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtn">
+                                        <i class="fas fa-save me-2"></i>Save All Kit Colors & Images
+                                    </button>
+                                </div>
+                                
+                                <!-- Requirements Summary -->
+                                <div class="mt-4 p-3 border rounded bg-light">
+                                    <h6 class="fw-bold mb-2">
+                                        <i class="fas fa-list-check text-primary me-2"></i>Requirements Summary
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled mb-0">
+                                                <li>
+                                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                                    <strong>Required:</strong> Home kit colors & image
+                                                </li>
+                                                <li>
+                                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                                    <strong>Required:</strong> Away kit colors & image
+                                                </li>
+                                                <li>
+                                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                                    <strong>Required:</strong> GK Home kit colors & image
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled mb-0">
+                                                <li>
+                                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                                    <strong>Required:</strong> GK Away kit colors & image
+                                                </li>
+                                                <li>
+                                                    <i class="fas fa-info-circle text-secondary me-2"></i>
+                                                    <strong>Optional:</strong> Third kits (colors & images)
+                                                </li>
+                                                <li>
+                                                    <i class="fas fa-info-circle text-secondary me-2"></i>
+                                                    <strong>Image format:</strong> PNG, JPG (max 5MB)
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Validation Status -->
+                                <div class="mt-3">
+                                    <div class="alert alert-warning mb-0" id="validationAlert" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <span id="validationMessage"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Live Preview & Validation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all color previews
+    updateAllPreviews();
+    
+    // Add event listeners to all color inputs
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    colorInputs.forEach(input => {
+        input.addEventListener('input', updateAllPreviews);
+    });
+    
+    // Setup image previews for all kit images
+    setupImagePreview('homeKitImage', 'homeKitPreview', 'homeKitPreviewImg');
+    setupImagePreview('awayKitImage', 'awayKitPreview', 'awayKitPreviewImg');
+    setupImagePreview('thirdKitImage', 'thirdKitPreview', 'thirdKitPreviewImg');
+    setupImagePreview('gkHomeKitImage', 'gkHomeKitPreview', 'gkHomeKitPreviewImg');
+    setupImagePreview('gkAwayKitImage', 'gkAwayKitPreview', 'gkAwayKitPreviewImg');
+    setupImagePreview('gkThirdKitImage', 'gkThirdKitPreview', 'gkThirdKitPreviewImg');
+    
+    // Form validation on submit
+    const form = document.getElementById('kitForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const validationAlert = document.getElementById('validationAlert');
+    const validationMessage = document.getElementById('validationMessage');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const errors = [];
+            
+            // Check if Home kit image is provided (or already exists)
+            const homeKitImageInput = document.getElementById('homeKitImage');
+            const homeKitImageExists = {% if team.home_kit_image %}true{% else %}false{% endif %};
+            
+            if (!homeKitImageExists && (!homeKitImageInput.files || homeKitImageInput.files.length === 0)) {
+                errors.push('Home kit image is required');
+            }
+            
+            // Check if Away kit image is provided (or already exists)
+            const awayKitImageInput = document.getElementById('awayKitImage');
+            const awayKitImageExists = {% if team.away_kit_image %}true{% else %}false{% endif %};
+            
+            if (!awayKitImageExists && (!awayKitImageInput.files || awayKitImageInput.files.length === 0)) {
+                errors.push('Away kit image is required');
+            }
+            
+            // Check if GK Home kit image is provided (or already exists)
+            const gkHomeKitImageInput = document.getElementById('gkHomeKitImage');
+            const gkHomeKitImageExists = {% if team.gk_home_kit_image %}true{% else %}false{% endif %};
+            
+            if (!gkHomeKitImageExists && (!gkHomeKitImageInput.files || gkHomeKitImageInput.files.length === 0)) {
+                errors.push('GK Home kit image is required');
+            }
+            
+            // Check if GK Away kit image is provided (or already exists)
+            const gkAwayKitImageInput = document.getElementById('gkAwayKitImage');
+            const gkAwayKitImageExists = {% if team.gk_away_kit_image %}true{% else %}false{% endif %};
+            
+            if (!gkAwayKitImageExists && (!gkAwayKitImageInput.files || gkAwayKitImageInput.files.length === 0)) {
+                errors.push('GK Away kit image is required');
+            }
+            
+            // If there are errors, prevent form submission
+            if (errors.length > 0) {
+                e.preventDefault();
+                validationMessage.textContent = 'Please upload all required images: ' + errors.join(', ');
+                validationAlert.style.display = 'block';
+                validationAlert.scrollIntoView({ behavior: 'smooth' });
+                
+                // Focus on first missing image input
+                if (!homeKitImageExists && (!homeKitImageInput.files || homeKitImageInput.files.length === 0)) {
+                    homeKitImageInput.focus();
+                } else if (!awayKitImageExists && (!awayKitImageInput.files || awayKitImageInput.files.length === 0)) {
+                    awayKitImageInput.focus();
+                } else if (!gkHomeKitImageExists && (!gkHomeKitImageInput.files || gkHomeKitImageInput.files.length === 0)) {
+                    gkHomeKitImageInput.focus();
+                } else if (!gkAwayKitImageExists && (!gkAwayKitImageInput.files || gkAwayKitImageInput.files.length === 0)) {
+                    gkAwayKitImageInput.focus();
+                }
+                
+                return false;
+            }
+            
+            // Disable submit button to prevent double submission
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            }
+            
+            return true;
+        });
+    }
+    
+    // Hide validation alert when user starts fixing issues
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            validationAlert.style.display = 'none';
+        });
+    });
+});
+
+function updateAllPreviews() {
+    // Outfield kits
+    updatePreview('homeJerseyPreview', document.querySelector('input[name="home_jersey_color"]').value);
+    updatePreview('homeShortsPreview', document.querySelector('input[name="home_shorts_color"]').value);
+    updatePreview('homeSocksPreview', document.querySelector('input[name="home_socks_color"]').value);
+    
+    updatePreview('awayJerseyPreview', document.querySelector('input[name="away_jersey_color"]').value);
+    updatePreview('awayShortsPreview', document.querySelector('input[name="away_shorts_color"]').value);
+    updatePreview('awaySocksPreview', document.querySelector('input[name="away_socks_color"]').value);
+    
+    updatePreview('thirdJerseyPreview', document.querySelector('input[name="third_jersey_color"]').value);
+    updatePreview('thirdShortsPreview', document.querySelector('input[name="third_shorts_color"]').value);
+    updatePreview('thirdSocksPreview', document.querySelector('input[name="third_socks_color"]').value);
+    
+    // Goalkeeper kits
+    updatePreview('gkHomeJerseyPreview', document.querySelector('input[name="gk_home_jersey_color"]').value);
+    updatePreview('gkHomeShortsPreview', document.querySelector('input[name="gk_home_shorts_color"]').value);
+    updatePreview('gkHomeSocksPreview', document.querySelector('input[name="gk_home_socks_color"]').value);
+    
+    updatePreview('gkAwayJerseyPreview', document.querySelector('input[name="gk_away_jersey_color"]').value);
+    updatePreview('gkAwayShortsPreview', document.querySelector('input[name="gk_away_shorts_color"]').value);
+    updatePreview('gkAwaySocksPreview', document.querySelector('input[name="gk_away_socks_color"]').value);
+    
+    updatePreview('gkThirdJerseyPreview', document.querySelector('input[name="gk_third_jersey_color"]').value);
+    updatePreview('gkThirdShortsPreview', document.querySelector('input[name="gk_third_shorts_color"]').value);
+    updatePreview('gkThirdSocksPreview', document.querySelector('input[name="gk_third_socks_color"]').value);
+}
+
+function updatePreview(elementId, color) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.style.backgroundColor = color;
+        // Determine text color based on background brightness
+        const brightness = getColorBrightness(color);
+        element.style.color = brightness > 128 ? 'black' : 'white';
+    }
+}
+
+function getColorBrightness(hexColor) {
+    // Convert hex to RGB
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    // Calculate brightness (perceived brightness formula)
+    return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+// Image upload preview functionality
+function setupImagePreview(inputId, previewId, previewImgId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const previewImg = document.getElementById(previewImgId);
+    
+    if (input && preview && previewImg) {
+        input.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                // Check file size (max 5MB)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (this.files[0].size > maxSize) {
+                    alert('File size too large! Maximum size is 5MB.');
+                    this.value = ''; // Clear the input
+                    preview.classList.add('d-none');
+                    return;
+                }
+                
+                // Check file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(this.files[0].type.toLowerCase())) {
+                    alert('Invalid file type! Please upload JPEG, JPG, PNG, GIF, or WebP images.');
+                    this.value = ''; // Clear the input
+                    preview.classList.add('d-none');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.classList.remove('d-none');
+                }
+                
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                preview.classList.add('d-none');
+            }
+        });
+    }
+}
+
+// Function to handle "Change Image" button
+function removeCurrentImage(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        input.value = ''; // Clear the file input
+        input.required = true; // Make it required again
+        input.closest('.card-body').querySelector('.current-image').style.display = 'none';
+        
+        // Show a message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-info mt-2';
+        alertDiv.innerHTML = '<i class="fas fa-info-circle me-2"></i>Please upload a new image for this kit.';
+        input.parentNode.appendChild(alertDiv);
+        
+        // Scroll to the input
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input.focus();
+    }
+}
+</script>
+
+<style>
+.form-control-color {
+    width: 100%;
+    height: 50px;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    padding: 3px;
+}
+
+.form-control-color:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.kit-preview {
+    width: 120px;
+}
+
+.kit-jersey, .kit-shorts, .kit-socks {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+.current-image img,
+#homeKitPreviewImg,
+#awayKitPreviewImg,
+#thirdKitPreviewImg,
+#gkHomeKitPreviewImg,
+#gkAwayKitPreviewImg,
+#gkThirdKitPreviewImg {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.badge.bg-danger {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.badge.bg-secondary {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.form-label fw-bold {
+    display: flex;
+    align-items: center;
+}
+</style>
+{% endblock %}

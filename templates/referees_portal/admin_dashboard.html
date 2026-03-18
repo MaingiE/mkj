@@ -1,0 +1,455 @@
+<!-- templates/referees/admin_dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Referee Management Dashboard - FKF Meru League{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-success"><i class="fas fa-whistle"></i> Referee Management Dashboard</h2>
+            <p class="lead">Manage referee registrations, approvals, and match reports</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50 mb-1">Pending Approvals</h6>
+                            <h2 class="mb-0">{{ pending_count }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-clock fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50 mb-1">Approved Referees</h6>
+                            <h2 class="mb-0">{{ approved_count }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-check fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50 mb-1">Total Referees</h6>
+                            <h2 class="mb-0">{{ total_count }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-dark shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Rejected Applications</h6>
+                            <h2 class="mb-0">{{ rejected_count }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-times fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Pending Referees -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-clock me-2"></i>Pending Referee Approvals
+                    </h5>
+                    <div class="btn-group">
+                        <a href="{% url 'referees:all_referees' %}" class="btn btn-sm btn-light">
+                            <i class="fas fa-list me-1"></i> All Referees
+                        </a>
+                        <a href="/admin/referees/referee/" class="btn btn-sm btn-light">
+                            <i class="fas fa-cog me-1"></i> Admin Panel
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if pending_referees %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>ID Number</th>
+                                    <th>Email</th>
+                                    <th>County</th>
+                                    <th>Applied Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for referee in pending_referees %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ referee.full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ referee.get_grade_display }}</small>
+                                    </td>
+                                    <td><code>{{ referee.id_number }}</code></td>
+                                    <td>{{ referee.email }}</td>
+                                    <td>{{ referee.county|default:"-" }}</td>
+                                    <td>{{ referee.date_joined|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'referees:approve_referee' referee.id %}" 
+                                               class="btn btn-sm btn-success">
+                                                <i class="fas fa-check"></i> Approve
+                                            </a>
+                                            <a href="{% url 'referees:reject_referee' referee.id %}" 
+                                               class="btn btn-sm btn-danger">
+                                                <i class="fas fa-times"></i> Reject
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-info" 
+                                                    data-toggle="modal" data-target="#viewModal{{ referee.id }}">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="text-success">No Pending Approvals</h5>
+                        <p class="text-muted">All referee applications have been processed.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions & Statistics -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt me-1"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'referees:pending_referees' %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-user-clock me-1"></i> View Pending Approvals
+                        </a>
+                        <a href="{% url 'referees:all_referees' %}" class="btn btn-info btn-block">
+                            <i class="fas fa-list me-1"></i> View All Referees
+                        </a>
+                        <a href="/admin/referees/referee/" class="btn btn-secondary btn-block">
+                            <i class="fas fa-cog me-1"></i> Django Admin Panel
+                        </a>bg-success text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'referees:pending_referees' %}" class="btn btn-danger btn-lg">
+                            <i class="fas fa-user-clock me-2"></i> Pending Approvals
+                            {% if pending_count > 0 %}
+                            <span class="badge bg-white text-danger">{{ pending_count }}</span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'referees:all_referees' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-list me-2"></i> All Referees
+                        </a>
+                        <a href="{% url 'referees:pending_reports' %}" class="btn btn-info btn-lg">
+                            <i class="fas fa-check-circle me-2"></i> Approve Reports
+                        </a>
+                        <a href="/admin/referees/matchreport/" class="btn btn-warning btn-lg">
+                            <i class="fas fa-file-alt me-2"></i> Match Reports
+                        </a>
+                        <a href="/admin/referees/referee/" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-cog me-2"></i> Admin Panel
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Distribution -->
+            <div class="card shadow">
+                <div class="card-header bg-info text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Status Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="100%" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Match Reports -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-check me-2"></i>Pending Match Reports
+                        <span class="badge bg-white text-info ms-2">{{ pending_report_count }}</span>
+                    </h5>
+                    <a href="{% url 'referees:pending_reports' %}" class="btn btn-sm btn-light">
+                        <i class="fas fa-arrow-right me-1"></i> View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if pending_report_list %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Match</th>
+                                    <th>Referee</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in pending_report_list %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ report.match.home_team }} vs {{ report.match.away_team }}</strong><br>
+                                        <small class="text-muted">{{ report.match.match_date|date:"M d, Y" }}</small>
+                                    </td>
+                                    <td>{{ report.referee.full_name }}</td>
+                                    <td>{{ report.submitted_at|date:"M d, H:i"|default:"Not submitted" }}</td>
+                                    <td>
+                                        <a href="{% url 'referees:report_detail_view' report.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'referees:approve_report' report.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        <a href="{% url 'referees:reject_report' report.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="text-success">No Pending Reports</h5>
+                        <p class="text-muted">All match reports have been approved!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Stats -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-chart-bar me-1"></i>Report Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-warning">Pending Approval</span>
+                            <span class="font-weight-bold">{{ pending_report_count }}</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-warning" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-success">Approved</span>
+                            <span class="font-weight-bold">{{ approved_reports_count }}</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" style="width: {% if pending_report_count > 0 %}{{ approved_reports_count|add:pending_report_count|add:5 }}{% else %}100{% endif %}%"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <a href="{% url 'referees:pending_reports' %}" class="btn btn-block btn-info">
+                        <i class="fas fa-file-check me-1"></i> Manage Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Stats Row Below Referees -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <!-- Stats Cards for Reports -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Reports Pending
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_report_count }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-hourglass-half fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Reports Approved
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ approved_reports_count }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+{% for referee in pending_referees %}
+<div class="modal fade" id="viewModal{{ referee.id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Referee Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {% if referee.photo %}
+                        <img src="{{ referee.photo.url }}" class="img-fluid rounded mb-3" alt="Photo">
+                        {% else %}
+                        <div class="text-center py-4 bg-light rounded">
+                            <i class="fas fa-user fa-4x text-muted"></i>
+                            <p class="mt-2 text-muted">No photo uploaded</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <h5>{{ referee.full_name }}</h5>
+                        <table class="table table-sm">
+                            <tr><th>ID Number:</th><td>{{ referee.id_number }}</td></tr>
+                            <tr><th>Email:</th><td>{{ referee.email }}</td></tr>
+                            <tr><th>Phone:</th><td>{{ referee.phone_number }}</td></tr>
+                            <tr><th>County:</th><td>{{ referee.county|default:"Not specified" }}</td></tr>
+                            <tr><th>FKF Number:</th><td>{{ referee.fkf_number|default:"Not provided" }}</td></tr>
+                            <tr><th>License Number:</th><td>{{ referee.license_number }}</td></tr>
+                            <tr><th>Grade:</th><td>{{ referee.get_grade_display }}</td></tr>
+                            <tr><th>Applied:</th><td>{{ referee.date_joined|date:"F j, Y, g:i a" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'referees:approve_referee' referee.id %}" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i> Approve
+                </a>
+                <a href="{% url 'referees:reject_referee' referee.id %}" class="btn btn-danger">
+                    <i class="fas fa-times me-1"></i> Reject
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Chart.js for statistics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Status Distribution Chart
+    var ctx = document.getElementById('statusChart').getContext('2d');
+    var statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Approved', 'Rejected'],
+            datasets: [{
+                data: [{{ pending_count }}, {{ approved_count }}, {{ rejected_count }}],
+                backgroundColor: [
+                    '#f6c23e', // Pending - yellow
+                    '#1cc88a', // Approved - green
+                    '#e74a3b'  // Rejected - red
+                ],
+                hoverBackgroundColor: [
+                    '#f8d96c',
+                    '#36b9cc',
+                    '#f19690'
+                ],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: true,
+                position: 'bottom'
+            },
+            cutoutPercentage: 60,
+        },
+    });
+</script>
+{% endblock %}

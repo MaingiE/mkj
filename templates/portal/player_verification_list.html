@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Player Verification — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Player Verification</span>
+    </div>
+    <h1>Player Verification</h1>
+    <p>Review player documents (ID, Birth Certificate, Photo) and verify or reject registrations.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem">
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow">⏳</div>
+        <div class="stat-info"><h3>{{ stats.pending }}</h3><p>Pending</p></div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info"><h3>{{ stats.verified }}</h3><p>Verified</p></div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #C62828">
+        <div class="stat-icon" style="background:#fce4ec;color:#C62828">❌</div>
+        <div class="stat-info"><h3>{{ stats.rejected }}</h3><p>Rejected</p></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0">
+    <a href="?tab=pending" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'pending' %}#1B5E20{% else %}transparent{% endif %};color:{% if tab == 'pending' %}#1B5E20{% else %}#888{% endif %};margin-bottom:-2px">
+        ⏳ Pending ({{ stats.pending }})
+    </a>
+    <a href="?tab=verified" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#1B5E20{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#1B5E20{% else %}#888{% endif %};margin-bottom:-2px">
+        ✅ Verified ({{ stats.verified }})
+    </a>
+    <a href="?tab=rejected" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px">
+        ❌ Rejected ({{ stats.rejected }})
+    </a>
+</div>
+
+<!-- Tab Content -->
+<div class="card" style="border-top-left-radius:0;border-top-right-radius:0">
+    <div class="card-body">
+
+        {% if tab == 'pending' %}
+        <!-- ─── PENDING TAB ─── -->
+        {% if pending_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Age</th>
+                        <th>National ID #</th>
+                        <th>Birth Cert #</th>
+                        <th>Photo</th>
+                        <th>ID Doc</th>
+                        <th>Birth Cert</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pending_players %}
+                    <tr{% if not p.is_age_eligible %} style="background:#fce4ec"{% endif %}>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong><br><small style="color:#888">#{{ p.shirt_number }} · {{ p.get_position_display }}</small></td>
+                        <td>{{ p.team.name }}<br><small style="color:#888">{{ p.team.county }}</small></td>
+                        <td>
+                            {% if p.is_age_eligible %}
+                            <span style="color:#1B5E20;font-weight:600">{{ p.age }}</span>
+                            {% else %}
+                            <span style="color:#C62828;font-weight:700">{{ p.age }} ⛔</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td>{{ p.birth_cert_number|default:"—" }}</td>
+                        <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#1B5E20">📸 View</a>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</td>
+                        <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#1B5E20">🪪 View</a>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</td>
+                        <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#1B5E20">📜 View</a>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</td>
+                        <td>
+                            <a href="{% url 'verify_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">🎉</div>
+            <h3>No pending verifications</h3>
+            <p style="color:#888">All player registrations have been reviewed.</p>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'verified' %}
+        <!-- ─── VERIFIED TAB ─── -->
+        {% if verified_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Age</th>
+                        <th>National ID #</th>
+                        <th>Birth Cert #</th>
+                        <th>Verified By</th>
+                        <th>Verified At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in verified_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong><br><small style="color:#888">#{{ p.shirt_number }} · {{ p.get_position_display }}</small></td>
+                        <td>{{ p.team.name }}</td>
+                        <td><span style="color:#1B5E20;font-weight:600">{{ p.age }}</span></td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td>{{ p.birth_cert_number|default:"—" }}</td>
+                        <td>{{ p.verified_by.get_full_name|default:"—" }}</td>
+                        <td>{{ p.verified_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>
+                            <a href="{% url 'verify_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">📋</div>
+            <h3>No verified players yet</h3>
+            <p style="color:#888">Verified players will appear here once reviewed.</p>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'rejected' %}
+        <!-- ─── REJECTED TAB ─── -->
+        {% if rejected_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Age</th>
+                        <th>Reason</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in rejected_players %}
+                    <tr style="background:#fce4ec">
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong><br><small style="color:#888">#{{ p.shirt_number }}</small></td>
+                        <td>{{ p.team.name }}</td>
+                        <td>
+                            {% if p.is_age_eligible %}
+                            {{ p.age }}
+                            {% else %}
+                            <span style="color:#C62828;font-weight:700">{{ p.age }} ⛔</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-danger">{{ p.get_rejection_reason_display|default:"—" }}</span>
+                        </td>
+                        <td><small>{{ p.rejection_notes|default:"—"|truncatewords:15 }}</small></td>
+                        <td>
+                            <a href="{% url 'verify_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">✅</div>
+            <h3>No rejected players</h3>
+            <p style="color:#888">Players rejected by admins or auto-rejected by age will appear here.</p>
+        </div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

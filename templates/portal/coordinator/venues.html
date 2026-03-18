@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Venues &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .venue-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .venue-card h4 { font-size: .95rem; font-weight: 600; margin: 0; }
+    .venue-card .meta { font-size: .8rem; color: #757575; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-geo-alt"></i> Venues ({{ total_venues }})</h2>
+</div>
+
+<!-- Create -->
+<div class="card mb-3">
+    <div class="card-header"><h3 style="margin:0;font-size:.95rem;">Add Venue</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="row g-2 mb-2">
+                <div class="col-md-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="Venue Name" required></div>
+                <div class="col-md-3">
+                    <select name="county" class="form-select form-select-sm" required>
+                        <option value="">County…</option>
+                        {% for val, lbl in county_choices %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3"><input type="text" name="city" class="form-control form-control-sm" placeholder="City/Town"></div>
+                <div class="col-md-2"><input type="number" name="capacity" class="form-control form-control-sm" placeholder="Capacity"></div>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-md-3"><input type="text" name="surface" class="form-control form-control-sm" placeholder="Surface" value="Natural Grass"></div>
+                <div class="col-md-5"><input type="text" name="address" class="form-control form-control-sm" placeholder="Address"></div>
+                <div class="col-md-4"><input type="text" name="facilities" class="form-control form-control-sm" placeholder="Facilities (e.g. floodlights)"></div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Add Venue</button>
+        </form>
+    </div>
+</div>
+
+<!-- Active -->
+<h3 style="font-size:1rem;font-weight:600;margin-bottom:.75rem;">Active Venues ({{ active_venues|length }})</h3>
+{% for v in active_venues %}
+<div class="venue-card">
+    <div>
+        <h4>{{ v.name }}</h4>
+        <div class="meta">{{ v.county }} &middot; {{ v.city|default:"—" }} &middot; Capacity: {{ v.capacity|default:"—" }} &middot; {{ v.surface|default:"—" }}</div>
+    </div>
+    <div style="display:flex;gap:.35rem;">
+        <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="venue_id" value="{{ v.pk }}"><button class="btn btn-sm btn-outline-warning">Deactivate</button></form>
+    </div>
+</div>
+{% empty %}
+<div style="text-align:center;padding:2rem;color:#999;">No active venues.</div>
+{% endfor %}
+
+{% if inactive_venues %}
+<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 .75rem;">Inactive Venues ({{ inactive_venues|length }})</h3>
+{% for v in inactive_venues %}
+<div class="venue-card" style="opacity:.7;">
+    <div>
+        <h4>{{ v.name }}</h4>
+        <div class="meta">{{ v.county }} &middot; {{ v.city|default:"—" }}</div>
+    </div>
+    <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="venue_id" value="{{ v.pk }}"><button class="btn btn-sm btn-outline-success">Activate</button></form>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

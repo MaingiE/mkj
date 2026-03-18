@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Secretary General Dashboard &mdash; KYISA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sg-hero {
+        background: linear-gradient(135deg, #0D3B1E 0%, #1B5E20 40%, #2E7D32 100%);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .sg-hero::before {
+        content: "";
+        position: absolute;
+        top: -60%;
+        right: -8%;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .sg-hero::after {
+        content: "";
+        position: absolute;
+        bottom: -40%;
+        left: 10%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(76,175,80,.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .sg-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+    .sg-hero p  { opacity: .85; font-size: .92rem; position: relative; margin: 0; }
+    .sg-hero .hero-badge {
+        display: inline-block;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.22);
+        padding: .2rem .8rem;
+        border-radius: 20px;
+        font-size: .72rem;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        margin-bottom: .6rem;
+        position: relative;
+    }
+    .sg-hero .hero-date {
+        position: relative;
+        font-size: .8rem;
+        opacity: .7;
+        margin-top: .35rem;
+    }
+
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .sg-stat {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        border-left: 4px solid transparent;
+        transition: all .25s ease;
+    }
+    .sg-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .sg-stat .num  { font-size: 1.55rem; font-weight: 800; line-height: 1.1; }
+    .sg-stat .lbl  { font-size: .76rem; color: #757575; font-weight: 500; margin-top: .15rem; }
+    .sg-stat.green   { border-left-color: #1B5E20; }
+    .sg-stat.green .num  { color: #1B5E20; }
+    .sg-stat.blue    { border-left-color: #1565C0; }
+    .sg-stat.blue .num   { color: #1565C0; }
+    .sg-stat.teal    { border-left-color: #00897B; }
+    .sg-stat.teal .num   { color: #00897B; }
+    .sg-stat.amber   { border-left-color: #E65100; }
+    .sg-stat.amber .num  { color: #E65100; }
+    .sg-stat.red     { border-left-color: #C62828; }
+    .sg-stat.red .num    { color: #C62828; }
+    .sg-stat.purple  { border-left-color: #6A1B9A; }
+    .sg-stat.purple .num { color: #6A1B9A; }
+    .sg-stat.grey    { border-left-color: #546E7A; }
+    .sg-stat.grey .num   { color: #546E7A; }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .action-tile {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        text-decoration: none;
+        color: #212121;
+        transition: all .25s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        border: 1px solid transparent;
+    }
+    .action-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,.1);
+        border-color: #2E7D32;
+        color: #1B5E20;
+    }
+    .action-tile .tile-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .action-tile .tile-text h4 { font-size: .88rem; font-weight: 600; margin-bottom: .15rem; }
+    .action-tile .tile-text p  { font-size: .77rem; color: #757575; margin: 0; line-height: 1.35; }
+    .action-tile .tile-count {
+        font-size: .7rem;
+        font-weight: 700;
+        padding: .1rem .45rem;
+        border-radius: 10px;
+        margin-left: .3rem;
+    }
+
+    .section-title {
+        font-size: .82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: #9E9E9E;
+        margin-bottom: .85rem;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+    .panel {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        overflow: hidden;
+    }
+    .panel-head {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .panel-head h3 { font-size: .92rem; font-weight: 700; margin: 0; color: #1B5E20; }
+    .panel-head a   { font-size: .78rem; text-decoration: none; color: #2E7D32; font-weight: 600; }
+    .panel-head a:hover { text-decoration: underline; }
+    .panel-body { padding: 1rem 1.25rem; }
+
+    .sport-bar-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        margin-bottom: .85rem;
+    }
+    .sport-bar-row:last-child { margin-bottom: 0; }
+    .sport-bar-label { width: 140px; font-size: .82rem; font-weight: 600; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sport-bar-track { flex: 1; height: 22px; background: #f5f5f5; border-radius: 6px; overflow: hidden; position: relative; }
+    .sport-bar-fill  { height: 100%; border-radius: 6px; transition: width .5s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: .5rem; }
+    .sport-bar-fill span { font-size: .68rem; font-weight: 700; color: #fff; }
+    .sport-bar-total { width: 48px; font-size: .78rem; font-weight: 600; text-align: right; color: #616161; }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        padding: .7rem 0;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        margin-top: .35rem; flex-shrink: 0;
+    }
+    .activity-item .ai-main { font-size: .84rem; font-weight: 500; line-height: 1.35; }
+    .activity-item .ai-meta { font-size: .72rem; color: #999; margin-top: .1rem; }
+
+    @media (max-width: 768px) {
+        .two-col { grid-template-columns: 1fr; }
+        .actions-grid { grid-template-columns: 1fr; }
+        .sg-hero { padding: 1.5rem; }
+        .sport-bar-label { width: 100px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="sg-hero">
+    <span class="hero-badge"><i class="bi bi-shield-lock-fill"></i> Secretary General</span>
+    <h1><i class="bi bi-speedometer2"></i> Oversight &amp; Audit Portal</h1>
+    <p>KYISA 11th Edition &mdash; Read-only system oversight across all operations</p>
+    <div class="hero-date"><i class="bi bi-calendar3"></i> 10th &ndash; 20th April 2026 &bull; Laikipia County</div>
+</div>
+
+<!-- Key Metrics -->
+<div class="section-title"><i class="bi bi-graph-up"></i> Key Metrics</div>
+<div class="stat-row">
+    <div class="sg-stat green">
+        <div class="num">{{ total_counties }}</div>
+        <div class="lbl">Counties Registered</div>
+    </div>
+    <div class="sg-stat blue">
+        <div class="num">{{ total_players }}</div>
+        <div class="lbl">Total Players</div>
+    </div>
+    <div class="sg-stat teal">
+        <div class="num">{{ verified_players }}</div>
+        <div class="lbl">Verified</div>
+    </div>
+    <div class="sg-stat amber">
+        <div class="num">{{ pending_players }}</div>
+        <div class="lbl">Pending</div>
+    </div>
+    <div class="sg-stat red">
+        <div class="num">{{ rejected_players }}</div>
+        <div class="lbl">Rejected</div>
+    </div>
+    <div class="sg-stat purple">
+        <div class="num">{{ total_appeals }}</div>
+        <div class="lbl">Appeals Filed</div>
+    </div>
+    <div class="sg-stat grey">
+        <div class="num">{{ decided_appeals }}</div>
+        <div class="lbl">Appeals Decided</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="section-title"><i class="bi bi-lightning-charge"></i> Quick Actions</div>
+<div class="actions-grid">
+    <a href="{% url 'sg_verifications' %}" class="action-tile">
+        <div class="tile-icon" style="background:#E8F5E9;color:#1B5E20;">
+            <i class="bi bi-person-vcard"></i>
+        </div>
+        <div class="tile-text">
+            <h4>Player Verifications</h4>
+            <p>View all verification statuses across every discipline</p>
+        </div>
+    </a>
+    <a href="{% url 'sg_appeals' %}" class="action-tile">
+        <div class="tile-icon" style="background:#F3E5F5;color:#6A1B9A;">
+            <i class="bi bi-briefcase"></i>
+        </div>
+        <div class="tile-text">
+            <h4>Appeals &amp; Decisions
+                {% if pending_appeals %}<span class="tile-count" style="background:#C62828;color:#fff;">{{ pending_appeals }}</span>{% endif %}
+            </h4>
+            <p>All appeals, jury responses, and hearing outcomes</p>
+        </div>
+    </a>
+    <a href="{% url 'sg_verified_players' %}" class="action-tile">
+        <div class="tile-icon" style="background:#E0F2F1;color:#00695C;">
+            <i class="bi bi-patch-check-fill"></i>
+        </div>
+        <div class="tile-text">
+            <h4>Verified Players</h4>
+            <p>Who was verified, when, and by which official</p>
+        </div>
+    </a>
+    <a href="{% url 'sg_treasurer_actions' %}" class="action-tile">
+        <div class="tile-icon" style="background:#FFF3E0;color:#E65100;">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="tile-text">
+            <h4>Treasurer Actions</h4>
+            <p>All financial operations and payment approvals</p>
+        </div>
+    </a>
+    <a href="{% url 'sg_user_actions' %}" class="action-tile">
+        <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;">
+            <i class="bi bi-journal-text"></i>
+        </div>
+        <div class="tile-text">
+            <h4>User Activity Log</h4>
+            <p>Complete log of all system user actions</p>
+        </div>
+    </a>
+    <a href="{% url 'sg_exceptional_overrides' %}" class="action-tile">
+        <div class="tile-icon" style="background:#FFF8E1;color:#E65100;">
+            <i class="bi bi-shield-exclamation"></i>
+        </div>
+        <div class="tile-text">
+            <h4>Exceptional Overrides</h4>
+            <p>Coordinator result and standings overrides submitted to SG tracking</p>
+        </div>
+    </a>
+    <a href="{% url 'audit_report' %}" class="action-tile">
+        <div class="tile-icon" style="background:#ECEFF1;color:#37474F;">
+            <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="tile-text">
+            <h4>Full Audit Report</h4>
+            <p>Comprehensive system audit with PDF/Excel export</p>
+        </div>
+    </a>
+</div>
+
+<!-- Two-Column: Sport Breakdown + Recent Activity -->
+<div class="two-col">
+    <!-- Sport Breakdown -->
+    <div class="panel">
+        <div class="panel-head">
+            <h3><i class="bi bi-bar-chart-line"></i> Players by Discipline</h3>
+            <a href="{% url 'sg_verifications' %}">View all &rarr;</a>
+        </div>
+        <div class="panel-body">
+            {% if sport_breakdown %}
+                {% for sport, data in sport_breakdown.items %}
+                <div class="sport-bar-row">
+                    <div class="sport-bar-label">{{ sport }}</div>
+                    <div class="sport-bar-track">
+                        {% if data.total > 0 %}
+                        <div class="sport-bar-fill" style="width:{% widthratio data.verified data.total 100 %}%;background:linear-gradient(90deg,#2E7D32,#66BB6A);">
+                            <span>{{ data.verified }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="sport-bar-total">{{ data.total }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted" style="font-size:.85rem;">No discipline data yet</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="panel">
+        <div class="panel-head">
+            <h3><i class="bi bi-clock-history"></i> Recent Activity</h3>
+            <a href="{% url 'sg_user_actions' %}">View all &rarr;</a>
+        </div>
+        <div class="panel-body" style="max-height:380px;overflow-y:auto;">
+            {% for log in recent_activity %}
+            <div class="activity-item">
+                <div class="activity-dot" style="background:{% cycle '#2E7D32' '#1565C0' '#E65100' '#6A1B9A' '#C62828' '#00695C' %}"></div>
+                <div>
+                    <div class="ai-main">{{ log.description|truncatechars:70 }}</div>
+                    <div class="ai-meta">
+                        {{ log.user.get_full_name|default:"System" }}
+                        &bull; {{ log.timestamp|timesince }} ago
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted" style="font-size:.85rem;">No recent activity</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

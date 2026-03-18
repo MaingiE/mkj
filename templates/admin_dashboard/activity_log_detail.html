@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Log Detail - KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'activity_logs' %}">Activity Logs</a></li>
+                    <li class="breadcrumb-item active">Log #{{ log.id }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-{{ log.action_icon }}"></i> Activity Log Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Log ID:</strong></div>
+                        <div class="col-md-8">#{{ log.id }}</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Action Type:</strong></div>
+                        <div class="col-md-8">
+                            <span class="badge bg-{{ log.action_class }} rounded-pill">
+                                <i class="fas fa-{{ log.action_icon }}"></i> {{ log.get_action_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>User:</strong></div>
+                        <div class="col-md-8">
+                            {% if log.user %}
+                            {{ log.user.email }} ({{ log.user.email }})
+                            {% else %}
+                            <span class="text-muted">System</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Timestamp:</strong></div>
+                        <div class="col-md-8">
+                            {{ log.timestamp|date:"F d, Y" }} at {{ log.timestamp|time:"h:i:s A" }}
+                            <br><small class="text-muted">({{ log.timestamp|timesince }} ago)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Description:</strong></div>
+                        <div class="col-md-8">{{ log.description }}</div>
+                    </div>
+                    
+                    {% if log.object_repr %}
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Related Object:</strong></div>
+                        <div class="col-md-8">
+                            {{ log.object_repr }}
+                            {% if log.content_type %}
+                            <br><small class="text-muted">Type: {{ log.content_type }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>IP Address:</strong></div>
+                        <div class="col-md-8">{{ log.ip_address|default:"Not recorded" }}</div>
+                    </div>
+                    
+                    {% if log.user_agent %}
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>User Agent:</strong></div>
+                        <div class="col-md-8"><small class="text-muted">{{ log.user_agent }}</small></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if log.extra_data %}
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Additional Data:</strong></div>
+                        <div class="col-md-8">
+                            <pre class="bg-light p-2 rounded"><code>{{ log.extra_data|pprint }}</code></pre>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'activity_logs' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

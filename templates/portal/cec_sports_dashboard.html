@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}CEC Sports Caucus Portal — KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>CEC Sports Caucus</span>
+    </div>
+    <h1><i class="bi bi-people-fill"></i> CEC Sports Caucus Portal</h1>
+    <p>View-only access for CEC Members and Chief Officers Caucus.</p>
+</div>
+
+<div style="margin-bottom:1rem;padding:1rem 1.2rem;border-radius:10px;background:#e3f2fd;border-left:4px solid #1565c0;">
+    <strong style="color:#0d47a1;">Read-only mode:</strong>
+    <span style="color:#555;">this portal is for oversight and monitoring only.</span>
+</div>
+
+<div class="stats-grid" style="margin-bottom:1.25rem">
+    <div class="stat-card green">
+        <div class="stat-icon green">🏁</div>
+        <div class="stat-info"><h3>{{ competitions|length }}</h3><p>Recent Competitions</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue">🏛️</div>
+        <div class="stat-info"><h3>{{ counties_registered }}</h3><p>Approved Counties</p></div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow">⏳</div>
+        <div class="stat-info"><h3>{{ pending_players }}</h3><p>Pending Player Checks</p></div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info"><h3>{{ verified_players }}</h3><p>Verified County Players</p></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 style="margin:0">Competition Snapshot</h3>
+    </div>
+    <div class="card-body">
+        {% if competitions %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Competition</th>
+                        <th>Discipline</th>
+                        <th>Status</th>
+                        <th>Window</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in competitions %}
+                    <tr>
+                        <td><strong>{{ comp.name }}</strong></td>
+                        <td>{{ comp.get_sport_type_display }}</td>
+                        <td>{{ comp.get_status_display }}</td>
+                        <td>{{ comp.start_date|date:"d M Y" }} - {{ comp.end_date|date:"d M Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#777;margin:0">No competitions available yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

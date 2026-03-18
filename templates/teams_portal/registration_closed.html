@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <!-- Closed Icon -->
+                    <div class="mb-4">
+                        <i class="fas fa-lock fa-5x text-danger"></i>
+                    </div>
+                    
+                    <!-- Title -->
+                    <h1 class="display-5 fw-bold text-danger mb-3">
+                        {{ title|default:"Registration Closed" }}
+                    </h1>
+                    
+                    <!-- Message -->
+                    <p class="lead text-muted mb-4">
+                        {{ message|default:"Registration is currently closed. Please check back later." }}
+                    </p>
+
+                    {% if deadline %}
+                    <div class="alert alert-secondary" role="alert">
+                        <i class="fas fa-hourglass-half"></i>
+                        <strong>Deadline:</strong> {{ deadline|date:"M d, Y H:i" }}
+                        <div class="mt-2">
+                            <span id="countdown" class="fw-bold text-danger"></span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Additional Info -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Need Help?</strong><br>
+                        Contact the FKF Meru League Administrator for more information about when registration will reopen.
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                        {% if back_url %}
+                        <a href="{{ back_url }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </a>
+                        {% else %}
+                        <a href="{% url 'frontend:home' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-home"></i> Return Home
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'frontend:contact' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-envelope"></i> Contact Us
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Registration Status Card -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-calendar-check text-primary"></i> Registration Status
+                    </h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-circle-notch fa-spin text-muted"></i>
+                            Registration windows are controlled by league administrators
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-bell text-warning"></i>
+                            You will be notified when registration reopens
+                        </li>
+                        <li>
+                            <i class="fas fa-phone-alt text-success"></i>
+                            For urgent matters, contact the league office directly
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    
+    .fa-lock {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+</style>
+{% if deadline %}
+<script>
+    (function() {
+        const countdownEl = document.getElementById('countdown');
+        if (!countdownEl) return;
+        const target = Date.parse("{{ deadline|date:'c' }}");
+        if (Number.isNaN(target)) return;
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const diff = target - now;
+
+            if (diff <= 0) {
+                countdownEl.textContent = 'Window closed';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    })();
+</script>
+{% endif %}
+{% endblock %}

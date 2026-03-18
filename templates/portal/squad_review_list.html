@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Squad Review — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Squad Review</span>
+    </div>
+    <h1>📋 Squad Submissions</h1>
+    <p>Review and approve team squad sheets before kick-off</p>
+</div>
+
+<!-- Pending Squads -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>🔶 Pending Approval ({{ pending_squads|length }})</h3>
+    </div>
+    <div class="card-body">
+        {% if pending_squads %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fixture</th>
+                        <th>Team</th>
+                        <th>Submitted</th>
+                        <th>Players</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sq in pending_squads %}
+                    <tr>
+                        <td>{{ sq.fixture.home_team }} vs {{ sq.fixture.away_team }}<br>
+                            <small style="color:#666">{{ sq.fixture.match_date|date:"d M Y" }} {{ sq.fixture.kickoff_time|time:"H:i" }}</small>
+                        </td>
+                        <td><strong>{{ sq.team.name }}</strong></td>
+                        <td>{{ sq.submitted_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ sq.squad_players.count }}</td>
+                        <td>
+                            <a href="{% url 'squad_review' squad_pk=sq.pk %}"
+                               style="background:#1B5E20;color:#fff;padding:.4rem 1rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">✅</div>
+            <h3>No squads pending</h3>
+            <p>All submitted squads have been reviewed.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Squads -->
+<div class="card">
+    <div class="card-header"><h3>📜 Recent Submissions</h3></div>
+    <div class="card-body">
+        {% if all_squads %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fixture</th>
+                        <th>Team</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sq in all_squads %}
+                    <tr>
+                        <td>{{ sq.fixture.home_team }} vs {{ sq.fixture.away_team }}</td>
+                        <td>{{ sq.team.name }}</td>
+                        <td>
+                            {% if sq.status == 'approved' %}
+                            <span class="badge badge-success">Approved</span>
+                            {% elif sq.status == 'rejected' %}
+                            <span class="badge badge-danger">Rejected</span>
+                            {% elif sq.status == 'submitted' %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ sq.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ sq.submitted_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>
+                            <a href="{% url 'squad_review' squad_pk=sq.pk %}"
+                               style="color:#1B5E20;text-decoration:underline;">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📋</div>
+            <h3>No submissions yet</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

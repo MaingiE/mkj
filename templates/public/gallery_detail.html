@@ -1,0 +1,192 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}{{ album.title }} — Gallery{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════
+   GALLERY DETAIL PAGE (Lightbox album)
+═══════════════════════════════════════ */
+.gd-hero {
+    padding: 10rem 0 3rem;
+    background: linear-gradient(135deg, #0a1a0d 0%, #1B5E20 50%, #0d2810 100%);
+    position: relative; overflow: hidden;
+    text-align: center; color: #fff;
+}
+.gd-hero .container { position: relative; z-index: 2; }
+.gd-breadcrumb {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .8rem; color: rgba(255,255,255,.6); margin-bottom: 1.5rem;
+}
+.gd-breadcrumb a { color: rgba(255,255,255,.7); transition: color .2s; }
+.gd-breadcrumb a:hover { color: #fff; }
+.gd-hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.4rem; font-weight: 800; margin-bottom: .75rem;
+    letter-spacing: -1px;
+}
+.gd-hero-meta {
+    font-size: .88rem; color: rgba(255,255,255,.6);
+    display: flex; justify-content: center; gap: 1.5rem;
+}
+.gd-hero-meta i { margin-right: .3rem; }
+
+/* ── Photo grid ── */
+.gd-grid-section {
+    max-width: 1200px; margin: -2rem auto 4rem; padding: 0 1.5rem;
+    position: relative; z-index: 5;
+}
+.gd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.gd-photo {
+    border-radius: 12px; overflow: hidden; cursor: pointer;
+    position: relative; aspect-ratio: 4/3;
+    background: #e8f5e9;
+}
+.gd-photo img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform .4s;
+}
+.gd-photo:hover img { transform: scale(1.05); }
+.gd-photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,.5) 100%);
+    opacity: 0; transition: opacity .3s;
+    display: flex; align-items: flex-end; padding: 1rem;
+}
+.gd-photo:hover .gd-photo-overlay { opacity: 1; }
+.gd-photo-overlay span { color: #fff; font-size: .82rem; font-weight: 500; }
+
+/* ── Lightbox ── */
+.gd-lightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.92); z-index: 99999;
+    align-items: center; justify-content: center;
+    padding: 2rem;
+}
+.gd-lightbox.active { display: flex; }
+.gd-lightbox-img {
+    max-width: 90%; max-height: 85vh;
+    border-radius: 8px; object-fit: contain;
+}
+.gd-lightbox-close {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    background: rgba(255,255,255,.15); border: none; color: #fff;
+    width: 44px; height: 44px; border-radius: 50%;
+    font-size: 1.4rem; cursor: pointer; transition: background .2s;
+    display: flex; align-items: center; justify-content: center;
+}
+.gd-lightbox-close:hover { background: rgba(255,255,255,.3); }
+.gd-lightbox-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,.15); border: none; color: #fff;
+    width: 48px; height: 48px; border-radius: 50%;
+    font-size: 1.3rem; cursor: pointer; transition: background .2s;
+    display: flex; align-items: center; justify-content: center;
+}
+.gd-lightbox-nav:hover { background: rgba(255,255,255,.3); }
+.gd-lightbox-prev { left: 1.5rem; }
+.gd-lightbox-next { right: 1.5rem; }
+.gd-lightbox-caption {
+    position: absolute; bottom: 1.5rem; left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,.8); font-size: .88rem;
+    text-align: center; max-width: 600px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── HERO ── -->
+<section class="gd-hero">
+    <div class="container">
+        <div class="gd-breadcrumb">
+            <a href="{% url 'home' %}">Home</a> <i class="bi bi-chevron-right"></i>
+            <a href="{% url 'news_media:gallery_list' %}">Gallery</a> <i class="bi bi-chevron-right"></i>
+            <span>{{ album.title|truncatewords:5 }}</span>
+        </div>
+        <h1>{{ album.title }}</h1>
+        <div class="gd-hero-meta">
+            {% if album.event_date %}<span><i class="bi bi-calendar3"></i> {{ album.event_date|date:"F d, Y" }}</span>{% endif %}
+            <span><i class="bi bi-images"></i> {{ images|length }} photos</span>
+        </div>
+    </div>
+</section>
+
+{% if album.description %}
+<div style="max-width:800px;margin:2rem auto 0;padding:0 1.5rem;text-align:center;">
+    <p style="color:#666;font-size:.95rem;line-height:1.7;">{{ album.description }}</p>
+</div>
+{% endif %}
+
+<!-- ── PHOTO GRID ── -->
+<div class="gd-grid-section">
+    <div class="gd-grid">
+        {% for img in images %}
+        <div class="gd-photo" onclick="openLightbox({{ forloop.counter0 }})">
+            <img src="{{ img.image.url }}" alt="{{ img.caption|default:album.title }}" loading="lazy">
+            {% if img.caption %}
+            <div class="gd-photo-overlay"><span>{{ img.caption }}</span></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── LIGHTBOX ── -->
+<div class="gd-lightbox" id="lightbox">
+    <button class="gd-lightbox-close" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
+    <button class="gd-lightbox-nav gd-lightbox-prev" onclick="navLightbox(-1)"><i class="bi bi-chevron-left"></i></button>
+    <button class="gd-lightbox-nav gd-lightbox-next" onclick="navLightbox(1)"><i class="bi bi-chevron-right"></i></button>
+    <img class="gd-lightbox-img" id="lightboxImg" src="" alt="">
+    <div class="gd-lightbox-caption" id="lightboxCaption"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const photos = [
+        {% for img in images %}
+        { src: "{{ img.image.url }}", caption: "{{ img.caption|escapejs }}" },
+        {% endfor %}
+    ];
+    let current = 0;
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightboxImg');
+    const lbCap = document.getElementById('lightboxCaption');
+
+    window.openLightbox = function(i) {
+        current = i;
+        show();
+        lb.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeLightbox = function() {
+        lb.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+    window.navLightbox = function(dir) {
+        current = (current + dir + photos.length) % photos.length;
+        show();
+    };
+    function show() {
+        lbImg.src = photos[current].src;
+        lbCap.textContent = photos[current].caption || ((current + 1) + ' / ' + photos.length);
+    }
+    lb.addEventListener('click', function(e) {
+        if (e.target === lb) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (!lb.classList.contains('active')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') navLightbox(-1);
+        if (e.key === 'ArrowRight') navLightbox(1);
+    });
+})();
+</script>
+{% endblock %}

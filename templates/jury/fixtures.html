@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Fixtures — Jury | KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1><i class="bi bi-calendar-event"></i> Fixtures</h1>
+        <p class="text-muted">All scheduled and completed fixtures</p>
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+        <a href="{% url 'jury_export_fixtures_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+        <a href="{% url 'jury_export_fixtures_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger btn-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        <a href="{% url 'jury_dashboard' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="padding:1rem; margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:end;">
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Competition</label>
+            <select name="competition" class="form-control">
+                <option value="">All Competitions</option>
+                {% for c in competitions %}
+                <option value="{{ c.pk }}" {% if filters.competition == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex:1; min-width:140px;">
+            <label style="font-size:.8rem; font-weight:600;">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All</option>
+                <option value="pending" {% if filters.status == "pending" %}selected{% endif %}>Pending</option>
+                <option value="confirmed" {% if filters.status == "confirmed" %}selected{% endif %}>Confirmed</option>
+                <option value="live" {% if filters.status == "live" %}selected{% endif %}>Live</option>
+                <option value="completed" {% if filters.status == "completed" %}selected{% endif %}>Completed</option>
+                <option value="postponed" {% if filters.status == "postponed" %}selected{% endif %}>Postponed</option>
+                <option value="cancelled" {% if filters.status == "cancelled" %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label style="font-size:.8rem; font-weight:600;">Search</label>
+            <input type="text" name="search" value="{{ filters.search }}" class="form-control" placeholder="Team name…">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="height:38px;">Filter</button>
+        <a href="{% url 'jury_fixtures' %}" class="btn btn-outline btn-sm" style="height:38px; line-height:24px;">Clear</a>
+    </form>
+</div>
+
+<!-- Fixtures Table -->
+<div class="card" style="padding:1rem;">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Competition</th>
+                    <th>Home Team</th>
+                    <th>Away Team</th>
+                    <th>Date</th>
+                    <th>Kickoff</th>
+                    <th>Venue</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fixtures %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ f.competition.name|default:"-" }}</td>
+                    <td><strong>{{ f.home_team.name|default:"TBD" }}</strong></td>
+                    <td><strong>{{ f.away_team.name|default:"TBD" }}</strong></td>
+                    <td>{{ f.match_date|date:"d M Y"|default:"-" }}</td>
+                    <td>{{ f.kickoff_time|time:"H:i"|default:"-" }}</td>
+                    <td>{{ f.venue.name|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if f.status == 'completed' %}bg-success{% elif f.status == 'live' %}bg-danger{% elif f.status == 'confirmed' %}bg-primary{% elif f.status == 'postponed' %}bg-warning{% elif f.status == 'cancelled' %}bg-dark{% else %}bg-secondary{% endif %}" style="padding:3px 8px; border-radius:4px; color:#fff; font-size:.75rem;">
+                            {{ f.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if f.status == "completed" %}
+                            <strong>{{ f.home_score }} - {{ f.away_score }}</strong>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" style="text-align:center; color:#888; padding:2rem;">No fixtures found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="font-size:.8rem; color:#888; margin:.5rem 0 0;">Showing {{ fixtures|length }} fixture{{ fixtures|length|pluralize }}.</p>
+</div>
+{% endblock %}

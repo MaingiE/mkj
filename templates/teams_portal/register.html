@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Registration - FKF Meru County League{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header card-header-custom">
+                    <h4 class="mb-0"><i class="fas fa-user-plus"></i> Team Registration</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message|safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" enctype="multipart/form-data" id="teamForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <h5 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Team Information</h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_team_name" class="form-label">Team Name *</label>
+                            {{ form.team_name }}
+                            {% if form.team_name.errors %}
+                            <div class="text-danger small">{{ form.team_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_location" class="form-label">Location *</label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                <div class="text-danger small">{{ form.location.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_home_ground" class="form-label">Home Ground *</label>
+                                {{ form.home_ground }}
+                                {% if form.home_ground.errors %}
+                                <div class="text-danger small">{{ form.home_ground.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Zone</label>
+                            <select class="form-control" disabled>
+                                <option>Will be assigned by admin after approval</option>
+                            </select>
+                            <small class="text-muted">Zone allocation is done by administrators</small>
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-user-tie"></i> Team Officials</h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_contact_person" class="form-label">Contact Person (Manager) *</label>
+                            {{ form.contact_person }}
+                            {% if form.contact_person.errors %}
+                            <div class="text-danger small">{{ form.contact_person.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_phone_digits" class="form-label">Phone Number *</label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold bg-primary text-white">+254</span>
+                                {{ form.phone_digits }}
+                            </div>
+                            <div class="form-text">{{ form.phone_digits.help_text }}</div>
+                            {% if form.phone_digits.errors %}
+                            <div class="text-danger small mt-2">{{ form.phone_digits.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_email" class="form-label">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_captain_name" class="form-label">Captain Name (Optional)</label>
+                                {{ form.captain_name }}
+                                {% if form.captain_name.errors %}
+                                <div class="text-danger small">{{ form.captain_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-map-marker-alt"></i> Location Details</h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_map_location" class="form-label">Google Maps URL (Optional)</label>
+                            {{ form.map_location }}
+                            {% if form.map_location.errors %}
+                            <div class="text-danger small">{{ form.map_location.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_coordinates" class="form-label">Ground Coordinates (Optional)</label>
+                            {{ form.coordinates }}
+                            {% if form.coordinates.errors %}
+                            <div class="text-danger small">{{ form.coordinates.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-camera"></i> Team Logo</h5>
+                        
+                        <div class="mb-4">
+                            <label for="id_logo" class="form-label">Team Logo (Optional)</label>
+                            {{ form.logo }}
+                            {% if form.logo.errors %}
+                            <div class="text-danger small">{{ form.logo.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <h6><i class="fas fa-money-bill-wave"></i> Registration Fee: KSh 5,000</h6>
+                            <p class="mb-0">Payment via MPesa will be available after registration.</p>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Important</h6>
+                            <p class="mb-0">• Each manager can register only ONE team<br>
+                            • Zone will be assigned by admin after review<br>
+                            • Duplicate registrations will be rejected</p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="reset" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-redo"></i> Clear
+                            </button>
+                            <button type="submit" class="btn btn-primary-custom" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i> Register Team
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6><i class="fas fa-question-circle text-primary me-2"></i>Need Help?</h6>
+                    <p class="mb-0">Contact: <strong>+254 700 000 000</strong> | Email: <strong>info@fkfmeruleague.co.ke</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('teamForm');
+    const phoneInput = document.getElementById('id_phone_digits');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Phone number formatting - ensure only 9 digits (without +254)
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Ensure starts with 0, 1, or 7
+            if (value && !['0', '1', '7'].includes(value[0])) {
+                value = '';
+            }
+            
+            // Limit to 9 digits
+            if (value.length > 9) {
+                value = value.substring(0, 9);
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Validate phone on blur
+        phoneInput.addEventListener('blur', function() {
+            const value = this.value;
+            const phoneRegex = /^[017][0-9]{8}$/;
+            
+            if (value && !phoneRegex.test(value)) {
+                this.classList.add('is-invalid');
+                this.nextElementSibling?.classList?.add('text-danger');
+            } else {
+                this.classList.remove('is-invalid');
+                this.nextElementSibling?.classList?.remove('text-danger');
+            }
+        });
+        
+        // Format phone on focus
+        phoneInput.addEventListener('focus', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length === 9 && ['0', '1', '7'].includes(value[0])) {
+                // Display as 712345678 (user sees 9 digits)
+                this.value = value;
+            }
+        });
+    }
+    
+    // Form submission
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Validate phone
+            if (phoneInput) {
+                const value = phoneInput.value;
+                const phoneRegex = /^[017][0-9]{8}$/;
+                
+                if (!phoneRegex.test(value)) {
+                    phoneInput.classList.add('is-invalid');
+                    alert('Please enter a valid phone number (9 digits starting with 0, 1, or 7)');
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            
+            // Disable button to prevent double click
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+            }
+            
+            return true;
+        });
+    }
+    
+    // Remove error class when typing
+    const inputs = form.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            const errorDiv = this.parentElement.querySelector('.text-danger');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.form-control:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+.card-header-custom {
+    background-color: #dc3545;
+    color: white;
+}
+.btn-primary-custom {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+.btn-primary-custom:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: white;
+}
+.input-group-text {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

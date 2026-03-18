@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-plus-circle"></i> Create New Match</h2>
+            <p class="text-muted">Schedule a new match between two teams</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-futbol"></i> Match Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="createMatchForm">
+                        {% csrf_token %}
+                        
+                        <!-- Zone Selection -->
+                        <div class="form-group">
+                            <label for="zone"><i class="fas fa-map-marker-alt"></i> Zone *</label>
+                            <select name="zone" id="zone" class="form-control" required>
+                                <option value="">Select Zone</option>
+                                {% for zone in zones %}
+                                <option value="{{ zone.id }}">{{ zone.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Teams Selection -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="home_team"><i class="fas fa-home"></i> Home Team *</label>
+                                    <select name="home_team" id="home_team" class="form-control" required>
+                                        <option value="">Select Home Team</option>
+                                        {% for team in teams %}
+                                        <option value="{{ team.id }}" data-zone="{{ team.zone.id }}">
+                                            {{ team.team_name }} ({{ team.zone.name }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="away_team"><i class="fas fa-plane"></i> Away Team *</label>
+                                    <select name="away_team" id="away_team" class="form-control" required>
+                                        <option value="">Select Away Team</option>
+                                        {% for team in teams %}
+                                        <option value="{{ team.id }}" data-zone="{{ team.zone.id }}">
+                                            {{ team.team_name }} ({{ team.zone.name }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="match_date"><i class="fas fa-calendar"></i> Match Date *</label>
+                                    <input type="date" name="match_date" id="match_date" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="kickoff_time"><i class="fas fa-clock"></i> Kickoff Time</label>
+                                    <input type="time" name="kickoff_time" id="kickoff_time" class="form-control" placeholder="HH:MM">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Venue -->
+                        <div class="form-group">
+                            <label for="venue"><i class="fas fa-map-marker"></i> Venue *</label>
+                            <input type="text" name="venue" id="venue" class="form-control" placeholder="Enter venue name" required>
+                        </div>
+
+                        <!-- Round Number and Status -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="round_number"><i class="fas fa-redo"></i> Round Number *</label>
+                                    <input type="number" name="round_number" id="round_number" class="form-control" value="1" min="1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="status"><i class="fas fa-info-circle"></i> Status *</label>
+                                    <select name="status" id="status" class="form-control" required>
+                                        {% for status_code, status_name in status_choices %}
+                                        <option value="{{ status_code }}" {% if status_code == 'scheduled' %}selected{% endif %}>
+                                            {{ status_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Create Match
+                            </button>
+                            <a href="{% url 'matches:manage_matches' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter teams by zone when zone is selected
+    document.getElementById('zone').addEventListener('change', function() {
+        const selectedZone = this.value;
+        const homeTeamSelect = document.getElementById('home_team');
+        const awayTeamSelect = document.getElementById('away_team');
+        
+        // Filter home team options
+        filterTeamsByZone(homeTeamSelect, selectedZone);
+        filterTeamsByZone(awayTeamSelect, selectedZone);
+    });
+    
+    function filterTeamsByZone(selectElement, zoneId) {
+        const options = selectElement.options;
+        
+        for (let i = 1; i < options.length; i++) {
+            const option = options[i];
+            const teamZone = option.getAttribute('data-zone');
+            
+            if (!zoneId || teamZone === zoneId) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        }
+        
+        // Reset selection if current selection is hidden
+        if (selectElement.selectedIndex > 0) {
+            const selectedOption = options[selectElement.selectedIndex];
+            if (selectedOption.style.display === 'none') {
+                selectElement.selectedIndex = 0;
+            }
+        }
+    }
+    
+    // Validate teams are different before submission
+    document.getElementById('createMatchForm').addEventListener('submit', function(e) {
+        const homeTeam = document.getElementById('home_team').value;
+        const awayTeam = document.getElementById('away_team').value;
+        
+        if (homeTeam === awayTeam) {
+            e.preventDefault();
+            alert('Home team and away team cannot be the same!');
+            return false;
+        }
+    });
+</script>
+
+<style>
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .btn-lg {
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}County Delegation Members - KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'county_admin_dashboard' %}">County Admin</a>
+        <span>Delegation Members</span>
+    </div>
+    <h1><i class="bi bi-person-badge"></i> County Delegation Members</h1>
+    <p>Add officials accompanying {{ reg.county }} county: full names, phone number, ID number, and role.</p>
+</div>
+
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-left:4px solid #00838f;">
+    <h2 style="margin:0 0 .75rem;font-size:1.05rem;color:#1b5e20">Add Delegation Member</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;">
+            <div>
+                <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem">{{ form.role.label }}</label>
+                {{ form.role }}
+                {% if form.role.errors %}<div style="color:#c62828;font-size:.8rem">{{ form.role.errors|striptags }}</div>{% endif %}
+            </div>
+            <div>
+                <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem">{{ form.full_name.label }}</label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}<div style="color:#c62828;font-size:.8rem">{{ form.full_name.errors|striptags }}</div>{% endif %}
+            </div>
+            <div>
+                <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div style="color:#c62828;font-size:.8rem">{{ form.phone.errors|striptags }}</div>{% endif %}
+            </div>
+            <div>
+                <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem">{{ form.national_id_number.label }}</label>
+                {{ form.national_id_number }}
+                {% if form.national_id_number.errors %}<div style="color:#c62828;font-size:.8rem">{{ form.national_id_number.errors|striptags }}</div>{% endif %}
+            </div>
+            <div>
+                <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem">{{ form.email.label }}</label>
+                {{ form.email }}
+                <small style="display:block;color:#666;font-size:.78rem">Required only for CECM Sports account setup.</small>
+                {% if form.email.errors %}<div style="color:#c62828;font-size:.8rem">{{ form.email.errors|striptags }}</div>{% endif %}
+            </div>
+        </div>
+        {% if form.non_field_errors %}<div style="margin-top:.5rem;color:#c62828;font-size:.85rem">{{ form.non_field_errors|striptags }}</div>{% endif %}
+        <div style="margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+            <button type="submit" class="btn btn--primary" style="padding:.5rem 1rem;font-size:.88rem">
+                <i class="bi bi-plus-circle"></i> Add Member
+            </button>
+            {% if cecm_exists %}
+            <span style="font-size:.82rem;color:#666;">CECM Sports account already exists for this county.</span>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div class="card" style="padding:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem;">
+        <h2 style="margin:0;font-size:1.05rem;color:#333"><i class="bi bi-list-ul"></i> Current Delegation</h2>
+        <span style="font-size:.85rem;color:#666">{{ members|length }} member{{ members|length|pluralize }}</span>
+    </div>
+
+    {% if members %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Full Names</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>ID Number</th>
+                    <th>Email</th>
+                    <th>Account</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in members %}
+                <tr>
+                    <td><strong>{{ m.full_name }}</strong></td>
+                    <td>{{ m.get_role_display }}</td>
+                    <td>{{ m.phone }}</td>
+                    <td>{{ m.national_id_number }}</td>
+                    <td>{{ m.email|default:'-' }}</td>
+                    <td>{% if m.user %}<span style="color:#1B5E20;font-weight:600">Active</span>{% else %}<span style="color:#757575">-</span>{% endif %}</td>
+                    <td>
+                        <form method="post" action="{% url 'county_admin_delete_delegation_member' member_pk=m.pk %}" onsubmit="return confirm('Remove {{ m.full_name }} from county delegation?')" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2rem;color:#888;">
+        <i class="bi bi-person-badge" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+        No county delegation officials added yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

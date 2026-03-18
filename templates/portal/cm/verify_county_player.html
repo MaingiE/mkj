@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% block title %}Verify: {{ player.first_name }} {{ player.last_name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'county_player_verification_list' %}">Player Verification</a>
+        <span>{{ player.first_name }} {{ player.last_name }}</span>
+    </div>
+    <h1>Verify: {{ player.first_name }} {{ player.last_name }}</h1>
+    <p>Review uploaded documents and verify or reject this county player.</p>
+</div>
+
+<!-- Player Info Summary -->
+<div class="stats-grid" style="margin-bottom:1.5rem">
+    <div class="stat-card green">
+        <div class="stat-icon green">🏅</div>
+        <div class="stat-info"><h3>{{ player.discipline.get_sport_type_display }}</h3><p>{{ player.discipline.registration.get_county_display }}</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue">#{{ player.jersey_number|default:"—" }}</div>
+        <div class="stat-info"><h3>{{ player.position|default:"N/A" }}</h3><p>Position</p></div>
+    </div>
+    <div class="stat-card {% if player.age >= 18 and player.age <= 23 %}green{% else %}yellow{% endif %}">
+        <div class="stat-icon {% if player.age >= 18 and player.age <= 23 %}green{% else %}yellow{% endif %}">
+            {% if player.age >= 18 and player.age <= 23 %}✅{% else %}⛔{% endif %}
+        </div>
+        <div class="stat-info">
+            <h3>{{ player.age }} years</h3>
+            <p>DOB: {{ player.date_of_birth|date:"d M Y" }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:{% if player.verification_status == 'verified' %}#e8f5e9{% elif player.verification_status == 'rejected' %}#fce4ec{% elif player.verification_status == 'resubmit' %}#FFF3E0{% else %}#fff3e0{% endif %};color:{% if player.verification_status == 'verified' %}#1B5E20{% elif player.verification_status == 'rejected' %}#C62828{% elif player.verification_status == 'resubmit' %}#E65100{% else %}#e65100{% endif %}">
+            {% if player.verification_status == 'verified' %}✅{% elif player.verification_status == 'rejected' %}❌{% elif player.verification_status == 'resubmit' %}🔄{% else %}⏳{% endif %}
+        </div>
+        <div class="stat-info"><h3>{{ player.get_verification_status_display }}</h3><p>Verification</p></div>
+    </div>
+</div>
+
+{% if player.age < 18 or player.age > 23 %}
+<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;border-radius:10px;background:#fce4ec;border-left:4px solid #C62828;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.5rem">⛔</span>
+    <div>
+        <strong style="color:#C62828">Age Restriction Warning</strong>
+        <p style="margin:0;color:#555;font-size:.9rem">This player is <strong>{{ player.age }} years old</strong>. The allowed age bracket is <strong>18 to 23</strong>.</p>
+    </div>
+</div>
+{% endif %}
+
+{% if player.verification_status == 'rejected' and player.rejection_reason %}
+<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;border-radius:10px;background:#fce4ec;border-left:4px solid #C62828;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.5rem">❌</span>
+    <div>
+        <strong style="color:#C62828">Rejected</strong>
+        <p style="margin:.25rem 0 0;color:#555;font-size:.9rem">{{ player.rejection_reason }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if player.verification_status == 'resubmit' and player.rejection_reason %}
+<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;border-radius:10px;background:#FFF3E0;border-left:4px solid #E65100;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.5rem">🔄</span>
+    <div>
+        <strong style="color:#E65100">Requires Resubmission</strong>
+        <p style="margin:.25rem 0 0;color:#555;font-size:.9rem">{{ player.rejection_reason }}</p>
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+    <!-- Documents Column -->
+    <div class="card">
+        <div class="card-header"><h3>📄 Uploaded Documents</h3></div>
+        <div class="card-body">
+
+            <!-- Passport Photo -->
+            <div style="margin-bottom:1.5rem;padding:1rem;background:#f5f7f5;border-radius:10px">
+                <h4 style="margin:0 0 .75rem;color:#1B5E20">📸 Passport-Size Photo</h4>
+                {% if player.photo %}
+                <div style="text-align:center">
+                    <img src="{{ player.photo.url }}" alt="Player Photo" style="max-width:200px;max-height:250px;border-radius:8px;border:2px solid #e0e0e0;object-fit:cover">
+                    <br><a href="{{ player.photo.url }}" target="_blank" style="color:#1B5E20;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:2rem;color:#C62828;background:#fce4ec;border-radius:8px">
+                    <strong>⚠️ Not Uploaded</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- National ID -->
+            <div style="margin-bottom:1.5rem;padding:1rem;background:#f5f7f5;border-radius:10px">
+                <h4 style="margin:0 0 .75rem;color:#1B5E20">🪪 National ID ({{ player.national_id_number|default:"Not provided" }})</h4>
+                {% if player.id_document %}
+                <div style="text-align:center">
+                    <img src="{{ player.id_document.url }}" alt="ID Document" style="max-width:100%;max-height:300px;border-radius:8px;border:2px solid #e0e0e0;object-fit:contain">
+                    <br><a href="{{ player.id_document.url }}" target="_blank" style="color:#1B5E20;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:2rem;color:#C62828;background:#fce4ec;border-radius:8px">
+                    <strong>⚠️ Not Uploaded</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Birth Certificate -->
+            <div style="padding:1rem;background:#f5f7f5;border-radius:10px">
+                <h4 style="margin:0 0 .75rem;color:#1B5E20">📜 Birth Certificate</h4>
+                {% if player.birth_certificate %}
+                <div style="text-align:center">
+                    <img src="{{ player.birth_certificate.url }}" alt="Birth Certificate" style="max-width:100%;max-height:300px;border-radius:8px;border:2px solid #e0e0e0;object-fit:contain">
+                    <br><a href="{{ player.birth_certificate.url }}" target="_blank" style="color:#1B5E20;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:2rem;color:#C62828;background:#fce4ec;border-radius:8px">
+                    <strong>⚠️ Not Uploaded</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Actions Column -->
+    <div>
+        <!-- Player Details -->
+        <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-header"><h3>Player Details</h3></div>
+            <div class="card-body">
+                <table>
+                    <tr><td style="font-weight:600;width:40%">Full Name</td><td>{{ player.first_name }} {{ player.last_name }}</td></tr>
+                    <tr><td style="font-weight:600">Date of Birth</td><td>{{ player.date_of_birth|date:"d M Y" }}</td></tr>
+                    <tr><td style="font-weight:600">Age</td><td>{{ player.age }} years {% if player.age < 18 or player.age > 23 %}<span style="color:#C62828;font-weight:700">⛔ CHECK AGE</span>{% else %}<span style="color:#1B5E20">✅ Eligible</span>{% endif %}</td></tr>
+                    <tr><td style="font-weight:600">National ID #</td><td>{{ player.national_id_number|default:"—" }}</td></tr>
+                    <tr><td style="font-weight:600">Huduma #</td><td>{{ player.huduma_number|default:"—" }}</td></tr>
+                    <tr><td style="font-weight:600">Phone</td><td>{{ player.phone|default:"—" }}</td></tr>
+                    <tr><td style="font-weight:600">Position</td><td>{{ player.position|default:"—" }}</td></tr>
+                    <tr><td style="font-weight:600">Jersey #</td><td>{{ player.jersey_number|default:"—" }}</td></tr>
+                    <tr><td style="font-weight:600">Discipline</td><td>{{ player.discipline.get_sport_type_display }}</td></tr>
+                    <tr><td style="font-weight:600">County</td><td>{{ player.discipline.registration.get_county_display }}</td></tr>
+                    <tr><td style="font-weight:600">Registered</td><td>{{ player.registered_at|date:"d M Y H:i" }}</td></tr>
+                    <tr>
+                        <td style="font-weight:600">Documents</td>
+                        <td>
+                            {% if player.photo and player.id_document and player.birth_certificate %}
+                            <span style="color:#1B5E20;font-weight:600">✅ All uploaded</span>
+                            {% else %}
+                            <span style="color:#C62828;font-weight:600">⚠️ Incomplete</span>
+                            <ul style="margin:.25rem 0 0;padding-left:1.25rem;font-size:.85rem;color:#888">
+                                {% if not player.photo %}<li>Missing passport photo</li>{% endif %}
+                                {% if not player.id_document %}<li>Missing ID copy</li>{% endif %}
+                                {% if not player.birth_certificate %}<li>Missing birth certificate</li>{% endif %}
+                            </ul>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td style="font-weight:600">Huduma Status</td><td>{{ player.get_huduma_status_display }}{% if player.huduma_verified_at %}<br><small style="color:#666">Checked: {{ player.huduma_verified_at|date:"d M Y H:i" }}</small>{% endif %}</td></tr>
+                    <tr><td style="font-weight:600">{{ clearance_check_label }} Status</td><td>{{ player.get_higher_league_status_display }}{% if player.higher_league_details %}<br><small style="color:#C62828">{{ player.higher_league_details }}</small>{% endif %}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-header"><h3>Eligibility Checks</h3></div>
+            <div class="card-body">
+                <div style="margin-bottom:1rem;padding:.85rem;border-radius:10px;background:#f6f8fb;border:1px solid #e2e8f0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                        <div>
+                            <strong>Age Verification (Huduma)</strong>
+                            <div style="font-size:.85rem;color:#666">Current: {{ player.get_huduma_status_display }}</div>
+                        </div>
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                            <form method="post" style="display:inline">{% csrf_token %}<button type="submit" name="action" value="huduma_verify" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20">Mark Verified</button></form>
+                            <form method="post" style="display:inline">{% csrf_token %}<button type="submit" name="action" value="huduma_fail" class="btn btn-outline btn-sm" style="background:#C62828;color:#fff;border-color:#C62828">Mark Failed</button></form>
+                            <form method="post" style="display:inline">{% csrf_token %}<button type="submit" name="action" value="huduma_reset" class="btn btn-outline btn-sm">Reset</button></form>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding:.85rem;border-radius:10px;background:#f6f8fb;border:1px solid #e2e8f0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                        <div>
+                            <strong>{% if is_football %}FIFA Connect Check{% else %}Higher League Check{% endif %}</strong>
+                            <div style="font-size:.85rem;color:#666">Current: {{ player.get_higher_league_status_display }}</div>
+                        </div>
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                            <form method="post" style="display:inline">{% csrf_token %}<button type="submit" name="action" value="clearance_clear" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20">Mark Clear</button></form>
+                            <form method="post" style="display:inline">{% csrf_token %}<button type="submit" name="action" value="clearance_reset" class="btn btn-outline btn-sm">Reset</button></form>
+                        </div>
+                    </div>
+                    <form method="post" style="margin-top:.75rem;display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="clearance_flag">
+                        <div style="flex:1;min-width:240px;">
+                            <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem;">Flag details</label>
+                            <input type="text" name="higher_league_details" class="form-control" placeholder="Reason for flag (club/league/national team detail)">
+                        </div>
+                        <button type="submit" class="btn btn-outline btn-sm" style="background:#C62828;color:#fff;border-color:#C62828;padding:.55rem .85rem;">Flag</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Actions -->
+        <div class="card">
+            <div class="card-header"><h3>🔍 Verification Decision</h3></div>
+            <div class="card-body">
+                {% if messages %}
+                {% for message in messages %}
+                <div style="margin-bottom:1rem;padding:.75rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e3f2fd{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1B5E20{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#1565c0{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if player.verification_status == 'verified' %}
+                <div style="text-align:center;padding:2rem;background:#e8f5e9;border-radius:10px;margin-bottom:1rem">
+                    <div style="font-size:3rem">✅</div>
+                    <h3 style="color:#1B5E20;margin:.5rem 0">Verified</h3>
+                    <p style="color:#555;font-size:.9rem">This player has been verified and cleared.</p>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="reset" style="width:100%;padding:.6rem;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:.9rem">
+                        🔄 Reset to Pending
+                    </button>
+                </form>
+
+                {% elif player.verification_status == 'rejected' %}
+                <div style="text-align:center;padding:2rem;background:#fce4ec;border-radius:10px;margin-bottom:1rem">
+                    <div style="font-size:3rem">❌</div>
+                    <h3 style="color:#C62828;margin:.5rem 0">Rejected</h3>
+                    {% if player.rejection_reason %}
+                    <p style="color:#555;font-size:.9rem">{{ player.rejection_reason }}</p>
+                    {% endif %}
+                </div>
+                <form method="post" style="display:flex;gap:.5rem">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="verify" style="flex:1;padding:.6rem;background:#1B5E20;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+                        ✅ Override &amp; Verify
+                    </button>
+                    <button type="submit" name="action" value="reset" style="flex:1;padding:.6rem;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;cursor:pointer">
+                        🔄 Reset to Pending
+                    </button>
+                </form>
+
+                {% elif player.verification_status == 'resubmit' %}
+                <div style="text-align:center;padding:2rem;background:#FFF3E0;border-radius:10px;margin-bottom:1rem">
+                    <div style="font-size:3rem">🔄</div>
+                    <h3 style="color:#E65100;margin:.5rem 0">Awaiting Resubmission</h3>
+                    {% if player.rejection_reason %}
+                    <p style="color:#555;font-size:.9rem">{{ player.rejection_reason }}</p>
+                    {% endif %}
+                </div>
+                <form method="post" style="display:flex;gap:.5rem">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="verify" style="flex:1;padding:.6rem;background:#1B5E20;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+                        ✅ Verify
+                    </button>
+                    <button type="submit" name="action" value="reset" style="flex:1;padding:.6rem;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;cursor:pointer">
+                        🔄 Reset to Pending
+                    </button>
+                </form>
+
+                {% else %}
+                <!-- PENDING — show approve/reject/resubmit -->
+                {% if not can_verify %}
+                <div style="margin-bottom:1rem;padding:.75rem;border-radius:8px;background:#FFF3E0;border-left:4px solid #E65100;">
+                    <strong style="color:#E65100">Complete required checks before final verification:</strong>
+                    <ul style="margin:.5rem 0 0 1rem;color:#555;font-size:.9rem;">
+                        {% for reason in blocking_reasons %}
+                        <li>{{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Approve Button -->
+                    <button type="submit" name="action" value="verify" {% if not can_verify %}disabled{% endif %} style="width:100%;padding:.75rem;background:{% if can_verify %}#1B5E20{% else %}#9E9E9E{% endif %};color:#fff;border:none;border-radius:8px;cursor:{% if can_verify %}pointer{% else %}not-allowed{% endif %};font-weight:700;font-size:1rem;margin-bottom:1rem">
+                        ✅ Verify Player
+                    </button>
+
+                    <!-- Reject with reason -->
+                    <div style="border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:1rem">
+                        <h4 style="margin:0 0 .75rem;color:#C62828">❌ Reject Player</h4>
+                        <div style="margin-bottom:.75rem">
+                            <label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.3rem">Rejection Reason</label>
+                            <textarea name="rejection_reason" class="form-control" rows="3" placeholder="Describe the issue — fake ID, age mismatch, blurry documents..." style="width:100%"></textarea>
+                        </div>
+                        <button type="submit" name="action" value="reject" style="width:100%;padding:.6rem;background:#C62828;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600" onclick="return confirm('Are you sure you want to reject this player?')">
+                            ❌ Reject
+                        </button>
+                    </div>
+
+                    <!-- Resubmit -->
+                    <div style="border:1px solid #e0e0e0;border-radius:10px;padding:1rem">
+                        <h4 style="margin:0 0 .75rem;color:#E65100">🔄 Request Resubmission</h4>
+                        <p style="font-size:.85rem;color:#757575;margin:0 0 .75rem;">Send back to the County Sports Director for corrections.</p>
+                        <div style="margin-bottom:.75rem">
+                            <label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.3rem">What needs fixing?</label>
+                            <textarea name="rejection_reason" class="form-control" rows="2" placeholder="E.g. blurry photo, wrong birth cert..." style="width:100%"></textarea>
+                        </div>
+                        <button type="submit" name="action" value="resubmit" style="width:100%;padding:.6rem;background:#E65100;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+                            🔄 Request Resubmission
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'county_player_verification_list' %}" style="color:#1B5E20;font-weight:600;text-decoration:none">← Back to Player Verification</a>
+</div>
+{% endblock %}

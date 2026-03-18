@@ -1,0 +1,693 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Set Availability{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">📅 Set Availability</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Set Availability</li>
+                </ol>
+            </nav>
+            <p class="text-muted mb-0">Mark dates when you're unavailable for match assignments</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="row mb-4">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Column: Calendar & Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <!-- Calendar Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar me-2"></i>Quick Calendar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Month Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <button class="btn btn-sm btn-outline-primary" id="prevMonth">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h5 class="mb-0" id="currentMonth">{% now "F Y" %}</h5>
+                        <button class="btn btn-sm btn-outline-primary" id="nextMonth">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="calendar-grid mb-4">
+                        <div class="row text-center mb-2">
+                            <div class="col p-1"><small class="text-muted">Mon</small></div>
+                            <div class="col p-1"><small class="text-muted">Tue</small></div>
+                            <div class="col p-1"><small class="text-muted">Wed</small></div>
+                            <div class="col p-1"><small class="text-muted">Thu</small></div>
+                            <div class="col p-1"><small class="text-muted">Fri</small></div>
+                            <div class="col p-1"><small class="text-muted">Sat</small></div>
+                            <div class="col p-1"><small class="text-muted">Sun</small></div>
+                        </div>
+                        <div id="calendarDays" class="row">
+                            <!-- Calendar will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Set Buttons -->
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success" id="setAvailableWeek">
+                            <i class="fas fa-check-circle me-2"></i>Set Next Week Available
+                        </button>
+                        <button type="button" class="btn btn-danger" id="setUnavailableWeek">
+                            <i class="fas fa-times-circle me-2"></i>Set Next Week Unavailable
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="clearAll">
+                            <i class="fas fa-broom me-2"></i>Clear All Selections
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Availability Stats
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h3 class="text-success mb-0" id="availableCount">
+                                    {{ available_count }}
+                                </h3>
+                                <small class="text-muted">Available Days</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h3 class="text-danger mb-0" id="unavailableCount">
+                                    {{ unavailable_count }}
+                                </h3>
+                                <small class="text-muted">Unavailable Days</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6 class="text-primary">Next 30 Days:</h6>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar bg-success" id="availableProgress" style="width: 70%"></div>
+                            <div class="progress-bar bg-danger" id="unavailableProgress" style="width: 30%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-success">70% Available</span>
+                            <span class="text-danger">30% Unavailable</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Availability List & Form -->
+        <div class="col-lg-8">
+            <!-- Set Availability Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit me-2"></i>Set Specific Date Availability
+                    </h6>
+                    <span class="badge bg-info">Today: {{ today|date:"d/m/Y" }}</span>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="availabilityForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Date Selection -->
+                            <div class="col-md-5 mb-3">
+                                <label for="date" class="form-label fw-bold">Select Date *</label>
+                                <input type="date" class="form-control" id="date" name="date" 
+                                       min="{{ today|date:'Y-m-d' }}" 
+                                       max="{{ today|add:'30 days'|date:'Y-m-d' }}"
+                                       required>
+                                <small class="form-text text-muted">Select a date within the next 30 days</small>
+                            </div>
+                            
+                            <!-- Availability Status -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold d-block">Availability Status *</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="is_available" id="available" value="true" checked>
+                                    <label class="btn btn-outline-success" for="available">
+                                        <i class="fas fa-check me-2"></i>Available
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="is_available" id="unavailable" value="false">
+                                    <label class="btn btn-outline-danger" for="unavailable">
+                                        <i class="fas fa-times me-2"></i>Unavailable
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="col-md-3 mb-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-save me-2"></i>Save
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Reason (for unavailable) -->
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <div id="reasonContainer" style="display: none;">
+                                    <label for="reason" class="form-label fw-bold">Reason for Unavailability</label>
+                                    <textarea class="form-control" id="reason" name="reason" 
+                                              rows="2" placeholder="e.g., Personal commitment, Travel, Other assignment..."></textarea>
+                                    <small class="form-text text-muted">Optional: Provide reason for being unavailable</small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Quick Date Picker -->
+                    <div class="mt-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-bolt me-2"></i>Quick Select Next 7 Days
+                        </h6>
+                        <div class="row g-2" id="quickDates">
+                            {% for i in "1234567" %}
+                            {% with date=today|add:forloop.counter0|stringformat:"s" %}
+                            <div class="col">
+                                <button type="button" class="btn btn-outline-secondary w-100 quick-date" 
+                                        data-date="{{ date|date:'Y-m-d' }}">
+                                    {{ date|date:"D d" }}
+                                </button>
+                            </div>
+                            {% endwith %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Availability List -->
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>Current Availability ({{ availabilities|length }})
+                    </h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            Filter
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-filter="all">Show All</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="available">Available Only</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="unavailable">Unavailable Only</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-filter="future">Future Dates</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if availabilities %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="availabilityTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="120">Date</th>
+                                    <th>Day</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                    <th>Updated</th>
+                                    <th width="100">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for availability in availabilities %}
+                                <tr class="{% if availability.is_available %}table-success{% else %}table-danger{% endif %}"
+                                    data-date="{{ availability.date|date:'Y-m-d' }}"
+                                    data-status="{{ availability.is_available|yesno:'true,false' }}"
+                                    data-reason="{{ availability.reason }}">
+                                    <td class="fw-bold">{{ availability.date|date:"d/m/Y" }}</td>
+                                    <td>{{ availability.date|date:"l" }}</td>
+                                    <td>
+                                        {% if availability.is_available %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Available
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Unavailable
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if availability.reason %}
+                                        <small>{{ availability.reason|truncatechars:50 }}</small>
+                                        {% else %}
+                                        <em class="text-muted">No reason provided</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ availability.updated_at|timesince }} ago</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-primary edit-availability" 
+                                                    data-date="{{ availability.date|date:'Y-m-d' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger delete-availability"
+                                                    data-date="{{ availability.date|date:'Y-m-d' }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Availability Set</h5>
+                        <p class="text-muted">You haven't set any availability dates yet.</p>
+                        <p class="text-muted">Use the form above to set your availability.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i>How Availability Works
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>✅ Available:</h6>
+                            <ul class="mb-0">
+                                <li>You can be assigned to matches on these dates</li>
+                                <li>Referees Manager will see you as available</li>
+                                <li>You'll receive appointment notifications</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>❌ Unavailable:</h6>
+                            <ul class="mb-0">
+                                <li>You will NOT be assigned to matches</li>
+                                <li>System will automatically exclude you</li>
+                                <li>Provide reason for transparency</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Set your availability at least 2 weeks in advance to help with match planning.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Availability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove availability for <strong id="deleteDate"></strong>?</p>
+                <p class="text-muted small">This date will return to default (available) status.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" id="deleteForm" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="date" id="deleteDateInput">
+                    <input type="hidden" name="remove" value="true">
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.calendar-grid .col {
+    padding: 5px !important;
+}
+.calendar-day {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.calendar-day:hover {
+    transform: scale(1.05);
+}
+.calendar-day.available {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+.calendar-day.unavailable {
+    background-color: #f8d7da;
+    color: #842029;
+}
+.calendar-day.today {
+    border: 2px solid #0d6efd;
+    font-weight: bold;
+}
+.calendar-day.other-month {
+    color: #6c757d;
+    background-color: #f8f9fa;
+}
+.calendar-day.selected {
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5);
+}
+.btn-group .btn-check:checked + .btn {
+    font-weight: bold;
+}
+.table-success {
+    --bs-table-bg: rgba(25, 135, 84, 0.05);
+}
+.table-danger {
+    --bs-table-bg: rgba(220, 53, 69, 0.05);
+}
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 0;
+}
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date('{{ today|date:"Y-m-d" }}');
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+    
+    // Toggle reason field based on availability
+    const unavailableRadio = document.getElementById('unavailable');
+    const reasonContainer = document.getElementById('reasonContainer');
+    
+    unavailableRadio.addEventListener('change', function() {
+        if (this.checked) {
+            reasonContainer.style.display = 'block';
+        }
+    });
+    
+    document.getElementById('available').addEventListener('change', function() {
+        if (this.checked) {
+            reasonContainer.style.display = 'none';
+        }
+    });
+    
+    // Quick date buttons
+    document.querySelectorAll('.quick-date').forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.dataset.date;
+            document.getElementById('date').value = date;
+            this.classList.add('btn-primary');
+            this.classList.remove('btn-outline-secondary');
+            
+            // Remove highlight from other buttons
+            document.querySelectorAll('.quick-date').forEach(btn => {
+                if (btn !== this) {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-secondary');
+                }
+            });
+        });
+    });
+    
+    // Edit availability
+    document.querySelectorAll('.edit-availability').forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.dataset.date;
+            const row = this.closest('tr');
+            const status = row.dataset.status === 'true';
+            const reason = row.dataset.reason;
+            
+            // Fill the form
+            document.getElementById('date').value = date;
+            
+            if (status) {
+                document.getElementById('available').checked = true;
+                document.getElementById('reason').value = '';
+                reasonContainer.style.display = 'none';
+            } else {
+                document.getElementById('unavailable').checked = true;
+                document.getElementById('reason').value = reason;
+                reasonContainer.style.display = 'block';
+            }
+            
+            // Scroll to form
+            document.getElementById('date').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+    
+    // Delete availability
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    document.querySelectorAll('.delete-availability').forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.dataset.date;
+            const formattedDate = new Date(date).toLocaleDateString('en-GB', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            document.getElementById('deleteDate').textContent = formattedDate;
+            document.getElementById('deleteDateInput').value = date;
+            deleteModal.show();
+        });
+    });
+    
+    // Calendar navigation
+    function renderCalendar() {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        document.getElementById('currentMonth').textContent = 
+            `${monthNames[currentMonth]} ${currentYear}`;
+        
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDay = firstDay.getDay();
+        
+        let calendarHTML = '';
+        let dayCount = 0;
+        
+        // Previous month days
+        for (let i = 0; i < startingDay; i++) {
+            calendarHTML += `<div class="col p-1"><div class="calendar-day other-month"></div></div>`;
+            dayCount++;
+        }
+        
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+            const dateStr = date.toISOString().split('T')[0];
+            const isToday = date.toDateString() === today.toDateString();
+            const isPast = date < today;
+            
+            let dayClass = 'calendar-day';
+            if (isToday) dayClass += ' today';
+            if (isPast) dayClass += ' past-day';
+            
+            // Check if date has availability set
+            const availabilityRow = document.querySelector(`tr[data-date="${dateStr}"]`);
+            if (availabilityRow) {
+                const isAvailable = availabilityRow.dataset.status === 'true';
+                dayClass += isAvailable ? ' available' : ' unavailable';
+            }
+            
+            calendarHTML += `
+                <div class="col p-1">
+                    <div class="${dayClass}" data-date="${dateStr}" ${isPast ? '' : 'onclick="selectDate(this)"'}>
+                        ${day}
+                    </div>
+                </div>
+            `;
+            dayCount++;
+            
+            if (dayCount % 7 === 0 && day < daysInMonth) {
+                calendarHTML += '</div><div class="row">';
+            }
+        }
+        
+        // Next month days
+        while (dayCount % 7 !== 0) {
+            calendarHTML += `<div class="col p-1"><div class="calendar-day other-month"></div></div>`;
+            dayCount++;
+        }
+        
+        document.getElementById('calendarDays').innerHTML = calendarHTML;
+    }
+    
+    // Select date from calendar
+    window.selectDate = function(element) {
+        const date = element.dataset.date;
+        document.getElementById('date').value = date;
+        
+        // Remove selection from other days
+        document.querySelectorAll('.calendar-day').forEach(day => {
+            day.classList.remove('selected');
+        });
+        
+        // Add selection to clicked day
+        element.classList.add('selected');
+    };
+    
+    // Month navigation
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar();
+    });
+    
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar();
+    });
+    
+    // Quick set buttons
+    document.getElementById('setAvailableWeek').addEventListener('click', async function() {
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        
+        // This would typically make an AJAX call to set multiple dates
+        alert('This feature would set all dates in the next week as available');
+    });
+    
+    document.getElementById('setUnavailableWeek').addEventListener('click', function() {
+        alert('This feature would set all dates in the next week as unavailable');
+    });
+    
+    document.getElementById('clearAll').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all availability settings?')) {
+            // This would typically make an AJAX call
+            alert('All availability settings would be cleared');
+        }
+    });
+    
+    // Table filtering
+    document.querySelectorAll('[data-filter]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const filter = this.dataset.filter;
+            const rows = document.querySelectorAll('#availabilityTable tbody tr');
+            
+            rows.forEach(row => {
+                const date = new Date(row.dataset.date);
+                const isAvailable = row.dataset.status === 'true';
+                const isFuture = date >= today;
+                
+                let show = true;
+                switch(filter) {
+                    case 'available':
+                        show = isAvailable;
+                        break;
+                    case 'unavailable':
+                        show = !isAvailable;
+                        break;
+                    case 'future':
+                        show = isFuture;
+                        break;
+                    case 'all':
+                    default:
+                        show = true;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+    
+    // Initial render
+    renderCalendar();
+    
+    // Update stats
+    function updateStats() {
+        const availableRows = document.querySelectorAll('tr.table-success').length;
+        const unavailableRows = document.querySelectorAll('tr.table-danger').length;
+        const total = availableRows + unavailableRows;
+        
+        document.getElementById('availableCount').textContent = availableRows;
+        document.getElementById('unavailableCount').textContent = unavailableRows;
+        
+        if (total > 0) {
+            const availablePercent = Math.round((availableRows / total) * 100);
+            const unavailablePercent = 100 - availablePercent;
+            
+            document.getElementById('availableProgress').style.width = `${availablePercent}%`;
+            document.getElementById('unavailableProgress').style.width = `${unavailablePercent}%`;
+            
+            document.querySelector('.text-success').textContent = `${availablePercent}% Available`;
+            document.querySelector('.text-danger').textContent = `${unavailablePercent}% Unavailable`;
+        }
+    }
+    
+    updateStats();
+});
+</script>
+{% endblock %}

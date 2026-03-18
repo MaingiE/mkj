@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Cancel Hearing — Appeal #{{ appeal.pk }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem;">
+    <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline" style="font-size:.85rem;">← Back to Appeal #{{ appeal.pk }}</a>
+</div>
+
+<div class="card" style="padding:1.5rem;">
+    <h1 style="margin:0 0 1rem;">❌ Cancel Hearing</h1>
+    <p>Are you sure you want to cancel this hearing?</p>
+
+    <div style="background:#fff3cd; padding:1rem; border-radius:4px; margin:1rem 0; border-left:4px solid #ffc107;">
+        <p style="margin:0;"><strong>Appeal:</strong> #{{ appeal.pk }} — {{ appeal.subject }}</p>
+        <p style="margin:.25rem 0;"><strong>Hearing Date:</strong> {{ hearing.hearing_date|date:"d M Y" }}</p>
+        <p style="margin:.25rem 0;"><strong>Hearing Time:</strong> {{ hearing.hearing_time|time:"H:i" }}</p>
+        <p style="margin:0;"><strong>Location:</strong> {{ hearing.location|default:"TBC" }}</p>
+    </div>
+
+    <form method="post" style="margin-top:1.5rem;">
+        {% csrf_token %}
+        <div style="display:flex; gap:.5rem;">
+            <button type="submit" class="btn btn-danger">Yes, Cancel Hearing</button>
+            <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline">No, Go Back</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

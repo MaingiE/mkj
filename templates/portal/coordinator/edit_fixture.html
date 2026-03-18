@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Edit Fixture &mdash; KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-pencil-square"></i> Edit Fixture</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 style="margin:0;font-size:1rem;">{{ fixture.home_team.name|default:"TBA" }} vs {{ fixture.away_team.name|default:"TBA" }}</h3></div>
+    <div class="card-body">
+        <div class="alert alert-warning" style="font-size:.86rem;">
+            Result or status changes are exceptional edits only. Provide a reason and confirm; this update is logged for SG tracking.
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Match Date</label>
+                    <input type="date" name="match_date" class="form-control" value="{{ fixture.match_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Kickoff Time</label>
+                    <input type="time" name="kickoff_time" class="form-control" value="{{ fixture.kickoff_time|time:'H:i' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        {% for val, lbl in status_choices %}<option value="{{ val }}" {% if fixture.status == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Venue</label>
+                    <select name="venue_id" class="form-select">
+                        <option value="">— None —</option>
+                        {% for v in venues %}<option value="{{ v.pk }}" {% if fixture.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Home Score</label>
+                    <input type="number" name="home_score" class="form-control" value="{{ fixture.home_score|default_if_none:'' }}" min="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Away Score</label>
+                    <input type="number" name="away_score" class="form-control" value="{{ fixture.away_score|default_if_none:'' }}" min="0">
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label class="form-label">Exceptional Case Reason (required for result/status changes)</label>
+                    <input type="text" name="exceptional_reason" class="form-control" placeholder="Explain why this result/table edit is exceptional" minlength="12">
+                </div>
+                <div class="col-md-4" style="display:flex;align-items:end;">
+                    <label class="form-label" style="margin:0;display:flex;gap:.4rem;align-items:center;">
+                        <input type="checkbox" name="confirm_exceptional" value="1">
+                        Confirm exceptional case
+                    </label>
+                </div>
+            </div>
+            {% if fixture.is_knockout %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Home Team</label>
+                    <select name="home_team_id" class="form-select">
+                        <option value="">— TBA —</option>
+                        {% for t in teams %}<option value="{{ t.pk }}" {% if fixture.home_team_id == t.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Away Team</label>
+                    <select name="away_team_id" class="form-select">
+                        <option value="">— TBA —</option>
+                        {% for t in teams %}<option value="{{ t.pk }}" {% if fixture.away_team_id == t.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Save Changes</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

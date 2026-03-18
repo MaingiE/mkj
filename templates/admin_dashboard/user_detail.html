@@ -1,0 +1,641 @@
+{% extends "base.html" %}
+{% block title %}User: {{ detail_user.get_full_name }} - KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ud-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .profile-field { margin-bottom: .75rem; }
+    .profile-field .label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: #757575;
+        margin-bottom: .15rem;
+    }
+    .profile-field .value { font-weight: 600; font-size: .95rem; color: #212121; }
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem 1.5rem; }
+    .flag-pill {
+        display: inline-block;
+        padding: .15rem .5rem;
+        border-radius: 4px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+    }
+    .action-link {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        padding: .65rem 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: .88rem;
+        transition: all .2s ease;
+        border: 1px solid transparent;
+    }
+    .action-link:hover { transform: translateX(4px); }
+    .action-link .al-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .pw-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto auto;
+        gap: .75rem;
+        align-items: end;
+    }
+    .pw-form label {
+        display: block;
+        font-size: .82rem;
+        font-weight: 600;
+        margin-bottom: .3rem;
+        color: #333;
+    }
+    .section-table { width: 100%; border-collapse: collapse; }
+    .section-table thead th {
+        background: #F5F5F5;
+        padding: .55rem .8rem;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: #757575;
+        text-align: left;
+        border-bottom: 2px solid #E0E0E0;
+    }
+    .section-table tbody td {
+        padding: .55rem .8rem;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: .88rem;
+        vertical-align: middle;
+    }
+    .section-table tbody tr:hover { background: #FAFAFA; }
+
+    /* Activity log section styles */
+    .log-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: .6rem;
+        margin-bottom: 1.25rem;
+    }
+    .log-stat {
+        background: #fff;
+        border-radius: 8px;
+        padding: .6rem .75rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        border-top: 3px solid #E0E0E0;
+    }
+    .log-stat .ls-num { font-size: 1.3rem; font-weight: 800; line-height: 1.2; }
+    .log-stat .ls-lbl { font-size: .68rem; color: #757575; text-transform: uppercase; letter-spacing: .4px; }
+    .log-stat.s-total { border-top-color: #1B5E20; }
+    .log-stat.s-total .ls-num { color: #1B5E20; }
+    .log-stat.s-team { border-top-color: #1565C0; }
+    .log-stat.s-team .ls-num { color: #1565C0; }
+    .log-stat.s-player { border-top-color: #6A1B9A; }
+    .log-stat.s-player .ls-num { color: #6A1B9A; }
+    .log-stat.s-match { border-top-color: #E65100; }
+    .log-stat.s-match .ls-num { color: #E65100; }
+    .log-stat.s-user { border-top-color: #00695C; }
+    .log-stat.s-user .ls-num { color: #00695C; }
+    .log-stat.s-ref { border-top-color: #AD1457; }
+    .log-stat.s-ref .ls-num { color: #AD1457; }
+    .log-stat.s-pay { border-top-color: #F57F17; }
+    .log-stat.s-pay .ls-num { color: #F57F17; }
+    .log-stat.s-other { border-top-color: #455A64; }
+    .log-stat.s-other .ls-num { color: #455A64; }
+
+    .log-filter-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 2fr;
+        gap: .6rem;
+        align-items: end;
+        margin-bottom: 1rem;
+    }
+    .log-filter-bar label {
+        display: block;
+        font-size: .75rem;
+        font-weight: 600;
+        margin-bottom: .2rem;
+        color: #555;
+    }
+    .log-filter-bar .search-row {
+        display: flex;
+        gap: .35rem;
+    }
+    .log-filter-bar .search-row input { flex: 1; }
+
+    .export-bar {
+        display: flex;
+        gap: .5rem;
+        align-items: center;
+    }
+    .export-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .4rem .85rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: .82rem;
+        font-weight: 600;
+        transition: all .2s;
+        border: 1px solid;
+    }
+    .export-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .export-btn.excel { background: #E8F5E9; color: #1B5E20; border-color: #C8E6C9; }
+    .export-btn.excel:hover { background: #C8E6C9; }
+    .export-btn.pdf { background: #FFEBEE; color: #C62828; border-color: #FFCDD2; }
+    .export-btn.pdf:hover { background: #FFCDD2; }
+
+    .action-badge {
+        display: inline-block;
+        padding: .15rem .5rem;
+        border-radius: 5px;
+        font-size: .72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .action-badge.ab-success { background: #E8F5E9; color: #1B5E20; }
+    .action-badge.ab-warning { background: #FFF8E1; color: #F57F17; }
+    .action-badge.ab-danger  { background: #FFEBEE; color: #C62828; }
+    .action-badge.ab-info    { background: #E3F2FD; color: #1565C0; }
+    .action-badge.ab-default { background: #ECEFF1; color: #455A64; }
+
+    .pagination-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: .35rem;
+        padding: 1rem;
+    }
+    .pg-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 .5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: .82rem;
+        font-weight: 600;
+        border: 1px solid #E0E0E0;
+        background: #fff;
+        color: #333;
+        transition: all .15s;
+    }
+    .pg-btn:hover { background: #E8F5E9; border-color: #1B5E20; color: #1B5E20; }
+    .pg-btn.active { background: #1B5E20; color: #fff; border-color: #1B5E20; }
+    .pg-btn.disabled { opacity: .4; pointer-events: none; }
+
+    @media (max-width: 768px) {
+        .ud-grid { grid-template-columns: 1fr; }
+        .profile-grid { grid-template-columns: 1fr; }
+        .pw-form { grid-template-columns: 1fr; }
+        .log-filter-bar { grid-template-columns: 1fr 1fr; }
+        .log-stats { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .log-filter-bar { grid-template-columns: 1fr; }
+        .log-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'manage_league_admins' %}">User Management</a>
+        <span>{{ detail_user.get_full_name }}</span>
+    </div>
+    <h1>User Details</h1>
+</div>
+
+<!-- Status Banners -->
+{% if detail_user.is_suspended %}
+<div class="alert alert-danger" style="margin-bottom:1rem;">
+    <strong>This account is SUSPENDED.</strong> The user cannot log in until unsuspended.
+</div>
+{% endif %}
+{% if not detail_user.is_active %}
+<div class="alert alert-warning" style="margin-bottom:1rem;">
+    <strong>This account is INACTIVE.</strong> The user cannot log in.
+</div>
+{% endif %}
+{% if detail_user.must_change_password %}
+<div class="alert alert-info" style="margin-bottom:1rem;">
+    User must change their password on next login.
+</div>
+{% endif %}
+
+<!-- Profile + Actions -->
+<div class="ud-grid">
+    <!-- Profile Info -->
+    <div class="card">
+        <div class="card-header" style="background:#E8F5E9;">
+            <h3>Profile Information</h3>
+            <a href="{% url 'user_edit_profile' user_id=detail_user.id %}" class="btn btn-primary btn-sm">Edit</a>
+        </div>
+        <div class="card-body">
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <div class="label">Full Name</div>
+                    <div class="value">{{ detail_user.get_full_name }}</div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">Email</div>
+                    <div class="value">{{ detail_user.email }}</div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">Phone</div>
+                    <div class="value">{{ detail_user.phone|default:"Not set" }}</div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">County</div>
+                    <div class="value">{{ detail_user.county|default:"Not set" }}</div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">Role</div>
+                    <div class="value">
+                        <span style="display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.82rem;font-weight:600;
+                            {% if detail_user.role == 'admin' %}background:#E3F2FD;color:#1565C0;
+                            {% elif detail_user.role == 'competition_manager' %}background:#F3E5F5;color:#6A1B9A;
+                            {% elif detail_user.role == 'coordinator' %}background:#FFF3E0;color:#E65100;
+                            {% elif detail_user.role == 'referee' %}background:#E8F5E9;color:#1B5E20;
+                            {% elif detail_user.role == 'team_manager' %}background:#FCE4EC;color:#AD1457;
+                            {% elif detail_user.role == 'treasurer' %}background:#FFF8E1;color:#F57F17;
+                            {% else %}background:#ECEFF1;color:#455A64;{% endif %}">
+                            {{ detail_user.get_role_display }}
+                        </span>
+                        <a href="{% url 'edit_user_roles' user_id=detail_user.id %}" style="margin-left:.4rem;font-size:.78rem;color:#1B5E20;">[Change]</a>
+                    </div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">Date Joined</div>
+                    <div class="value">{{ detail_user.date_joined|date:"d M Y, H:i" }}</div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">Last Login</div>
+                    <div class="value">
+                        {% if detail_user.last_login %}{{ detail_user.last_login|date:"d M Y, H:i" }}{% else %}<span style="color:#bbb;">Never</span>{% endif %}
+                    </div>
+                </div>
+                <div class="profile-field">
+                    <div class="label">Flags</div>
+                    <div class="value" style="display:flex;gap:.3rem;flex-wrap:wrap;">
+                        {% if detail_user.is_superuser %}<span class="flag-pill" style="background:#C62828;color:#fff;">Superuser</span>{% endif %}
+                        {% if detail_user.is_staff %}<span class="flag-pill" style="background:#FF8F00;color:#fff;">Staff</span>{% endif %}
+                        {% if detail_user.is_active %}<span class="flag-pill" style="background:#1B5E20;color:#fff;">Active</span>{% else %}<span class="flag-pill" style="background:#C62828;color:#fff;">Inactive</span>{% endif %}
+                        {% if detail_user.is_suspended %}<span class="flag-pill" style="background:#212121;color:#fff;">Suspended</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Actions</h3>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.5rem;">
+            <a href="{% url 'user_edit_profile' user_id=detail_user.id %}" class="action-link" style="background:#E8F5E9;color:#1B5E20;">
+                <span class="al-icon" style="background:#C8E6C9;"><i class="bi bi-pencil"></i></span> Edit Profile
+            </a>
+            <a href="{% url 'edit_user_roles' user_id=detail_user.id %}" class="action-link" style="background:#E3F2FD;color:#1565C0;">
+                <span class="al-icon" style="background:#BBDEFB;"><i class="bi bi-gear"></i></span> Change Role
+            </a>
+            <a href="{% url 'reset_league_admin_password' user_id=detail_user.id %}"
+               onclick="return confirm('Generate a new random password for {{ detail_user.email }}?')"
+               class="action-link" style="background:#FFF3E0;color:#E65100;">
+                <span class="al-icon" style="background:#FFCC80;"><i class="bi bi-key"></i></span> Reset Password
+            </a>
+            <a href="{% url 'toggle_league_admin_status' user_id=detail_user.id %}"
+               onclick="return confirm('{% if detail_user.is_active %}Deactivate{% else %}Activate{% endif %} {{ detail_user.email }}?')"
+               class="action-link" style="background:#FFF8E1;color:#F57F17;">
+                <span class="al-icon" style="background:#FFE082;">{% if detail_user.is_active %}<i class="bi bi-pause-fill"></i>{% else %}<i class="bi bi-play-fill"></i>{% endif %}</span>
+                {% if detail_user.is_active %}Deactivate Account{% else %}Activate Account{% endif %}
+            </a>
+            {% if not detail_user.is_superuser and detail_user != request.user %}
+            <a href="{% url 'user_suspend_toggle' user_id=detail_user.id %}"
+               onclick="return confirm('{% if detail_user.is_suspended %}Unsuspend{% else %}Suspend{% endif %} {{ detail_user.email }}?')"
+               class="action-link" style="{% if detail_user.is_suspended %}background:#E8F5E9;color:#1B5E20;{% else %}background:#FFEBEE;color:#C62828;{% endif %}">
+                <span class="al-icon" style="{% if detail_user.is_suspended %}background:#C8E6C9;{% else %}background:#FFCDD2;{% endif %}">
+                    {% if detail_user.is_suspended %}<i class="bi bi-check-lg"></i>{% else %}<i class="bi bi-x-lg"></i>{% endif %}
+                </span>
+                {% if detail_user.is_suspended %}Unsuspend{% else %}Suspend Account{% endif %}
+            </a>
+            <a href="{% url 'user_toggle_staff' user_id=detail_user.id %}"
+               onclick="return confirm('{% if detail_user.is_staff %}Revoke{% else %}Grant{% endif %} staff access?')"
+               class="action-link" style="background:#ECEFF1;color:#455A64;">
+                <span class="al-icon" style="background:#CFD8DC;">{% if detail_user.is_staff %}<i class="bi bi-lock"></i>{% else %}<i class="bi bi-unlock"></i>{% endif %}</span>
+                {% if detail_user.is_staff %}Revoke Staff{% else %}Grant Staff{% endif %}
+            </a>
+            <a href="{% url 'delete_user' user_id=detail_user.id %}"
+               onclick="return confirm('WARNING: PERMANENTLY DELETE {{ detail_user.email }}? This cannot be undone!')"
+               class="action-link" style="background:#C62828;color:#fff;margin-top:.5rem;">
+                <span class="al-icon" style="background:rgba(255,255,255,.2);"><i class="bi bi-trash"></i></span> Delete User
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Set Password -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#FFF3E0;">
+        <h3>Set Password Manually</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'user_force_password' user_id=detail_user.id %}" class="pw-form">
+            {% csrf_token %}
+            <div>
+                <label>New Password</label>
+                <input type="password" name="new_password" class="form-control" required minlength="6" placeholder="Min 6 characters">
+            </div>
+            <div>
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" class="form-control" required minlength="6" placeholder="Repeat password">
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem;padding-bottom:.2rem;">
+                <input type="checkbox" name="force_change" id="fc" checked>
+                <label for="fc" style="white-space:nowrap;margin:0;font-size:.82rem;font-weight:500;">Force change</label>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-accent btn-sm" style="height:38px;"
+                        onclick="return confirm('Set this password for {{ detail_user.email }}?')">
+                    Set Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Managed Teams -->
+{% if managed_teams %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>Managed Teams ({{ managed_teams.count }})</h3>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="section-table">
+            <thead>
+                <tr><th>Team</th><th>County</th><th>Status</th><th>Payment</th></tr>
+            </thead>
+            <tbody>
+                {% for team in managed_teams %}
+                <tr>
+                    <td style="font-weight:600;">{{ team.name }}</td>
+                    <td>{{ team.county }}</td>
+                    <td>
+                        {% if team.status == 'registered' %}<span class="badge badge-success">Registered</span>
+                        {% elif team.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+                        {% else %}<span class="badge badge-gray">{{ team.status|title }}</span>{% endif %}
+                    </td>
+                    <td>{% if team.payment_confirmed %}<i class="bi bi-check-circle" style="color:#1B5E20;"></i> Confirmed{% else %}<i class="bi bi-x-circle" style="color:#C62828;"></i> Unconfirmed{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Referee Profile -->
+{% if referee_profile %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E8F5E9;">
+        <h3>Referee Profile</h3>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+            <div class="profile-field">
+                <div class="label">License</div>
+                <div class="value">{{ referee_profile.license_number|default:"N/A" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="label">Level</div>
+                <div class="value">{{ referee_profile.get_level_display }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="label">Status</div>
+                <div class="value">{% if referee_profile.is_approved %}<span class="badge badge-success">Approved</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</div>
+            </div>
+            <div class="profile-field">
+                <div class="label">Total Matches</div>
+                <div class="value">{{ referee_profile.total_matches }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="label">Avg Rating</div>
+                <div class="value">{{ referee_profile.avg_rating }}/10</div>
+            </div>
+            <div class="profile-field">
+                <div class="label">Experience</div>
+                <div class="value">{{ referee_profile.years_experience }} yrs</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointments -->
+{% if appointments %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>Recent Appointments</h3>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="section-table">
+            <thead>
+                <tr><th>Date</th><th>Match</th><th>Role</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td>{{ appt.fixture.match_date|date:"d M Y" }}</td>
+                    <td style="font-weight:600;">{{ appt.fixture.home_team }} vs {{ appt.fixture.away_team }}</td>
+                    <td>{{ appt.get_role_display }}</td>
+                    <td>
+                        {% if appt.status == 'confirmed' %}<span class="badge badge-success">Confirmed</span>
+                        {% elif appt.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+                        {% elif appt.status == 'declined' %}<span class="badge badge-danger">Declined</span>
+                        {% else %}<span class="badge badge-gray">{{ appt.status|title }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  FULL ACTIVITY LOG                                                    -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+
+<!-- Activity Summary Stats -->
+<div class="log-stats">
+    <div class="log-stat s-total">
+        <div class="ls-num">{{ activity_summary.total }}</div>
+        <div class="ls-lbl">Total Actions</div>
+    </div>
+    <div class="log-stat s-team">
+        <div class="ls-num">{{ activity_summary.team }}</div>
+        <div class="ls-lbl">Team</div>
+    </div>
+    <div class="log-stat s-player">
+        <div class="ls-num">{{ activity_summary.player }}</div>
+        <div class="ls-lbl">Player</div>
+    </div>
+    <div class="log-stat s-match">
+        <div class="ls-num">{{ activity_summary.match }}</div>
+        <div class="ls-lbl">Match/Fix</div>
+    </div>
+    <div class="log-stat s-user">
+        <div class="ls-num">{{ activity_summary.user_mgmt }}</div>
+        <div class="ls-lbl">User/Auth</div>
+    </div>
+    <div class="log-stat s-ref">
+        <div class="ls-num">{{ activity_summary.referee }}</div>
+        <div class="ls-lbl">Referee</div>
+    </div>
+    <div class="log-stat s-pay">
+        <div class="ls-num">{{ activity_summary.payment }}</div>
+        <div class="ls-lbl">Payment</div>
+    </div>
+    <div class="log-stat s-other">
+        <div class="ls-num">{{ activity_summary.other }}</div>
+        <div class="ls-lbl">Other</div>
+    </div>
+</div>
+
+<!-- Activity Log Card -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;">
+        <h3>Activity Log ({{ total_log_count }} record{{ total_log_count|pluralize }})</h3>
+        <div class="export-bar">
+            <a href="{% url 'export_user_logs_excel' user_id=detail_user.id %}?action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}"
+               class="export-btn excel" title="Download as Excel">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <a href="{% url 'export_user_logs_pdf' user_id=detail_user.id %}?action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}"
+               class="export-btn pdf" title="Download as PDF">
+                <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+        </div>
+    </div>
+    <div class="card-body" style="padding-bottom:0;">
+        <!-- Filters -->
+        <form method="get" class="log-filter-bar">
+            <div>
+                <label>Action Type</label>
+                <select name="action" class="form-control" onchange="this.form.submit()">
+                    <option value="">All Actions</option>
+                    {% for val, lbl in action_choices %}
+                    <option value="{{ val }}" {% if action_filter == val %}selected{% endif %}>{{ lbl }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>From Date</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div>
+                <label>To Date</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div>
+                <label>Search Description</label>
+                <div class="search-row">
+                    <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search_q }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                    {% if action_filter or date_from or date_to or search_q %}
+                    <a href="{% url 'user_detail' user_id=detail_user.id %}" class="btn btn-outline btn-sm" title="Clear filters">&times;</a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Log Table -->
+    <div style="overflow-x:auto;">
+        {% if activity_page %}
+        <table class="section-table">
+            <thead>
+                <tr>
+                    <th style="width:140px;">Date &amp; Time</th>
+                    <th style="width:160px;">Action</th>
+                    <th>Description</th>
+                    <th style="width:160px;">Related Object</th>
+                    <th style="width:110px;">IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in activity_page %}
+                <tr>
+                    <td style="white-space:nowrap;font-size:.82rem;">{{ log.timestamp|date:"d M Y H:i" }}</td>
+                    <td>
+                        <span class="action-badge {% if 'DELETE' in log.action or 'REJECT' in log.action or 'SUSPEND' in log.action %}ab-danger{% elif 'APPROVE' in log.action or 'CREATE' in log.action or 'GENERATE' in log.action %}ab-success{% elif 'UPDATE' in log.action or 'RESCHEDULE' in log.action or 'TRANSFER' in log.action %}ab-warning{% elif 'LOGIN' in log.action or 'LOGOUT' in log.action %}ab-info{% else %}ab-default{% endif %}">
+                            {{ log.get_action_display }}
+                        </span>
+                    </td>
+                    <td style="font-size:.84rem;line-height:1.4;">{{ log.description|truncatewords:30 }}</td>
+                    <td style="font-size:.82rem;color:#555;">{{ log.object_repr|default:"-" }}</td>
+                    <td style="font-size:.8rem;color:#999;">{{ log.ip_address|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if activity_page.has_other_pages %}
+        <div class="pagination-bar">
+            {% if activity_page.has_previous %}
+            <a href="?page=1&action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}" class="pg-btn" title="First">&laquo;</a>
+            <a href="?page={{ activity_page.previous_page_number }}&action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}" class="pg-btn">&lsaquo;</a>
+            {% else %}
+            <span class="pg-btn disabled">&laquo;</span>
+            <span class="pg-btn disabled">&lsaquo;</span>
+            {% endif %}
+
+            {% for num in activity_page.paginator.page_range %}
+                {% if activity_page.number == num %}
+                <span class="pg-btn active">{{ num }}</span>
+                {% elif num > activity_page.number|add:"-3" and num < activity_page.number|add:"4" %}
+                <a href="?page={{ num }}&action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}" class="pg-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if activity_page.has_next %}
+            <a href="?page={{ activity_page.next_page_number }}&action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}" class="pg-btn">&rsaquo;</a>
+            <a href="?page={{ activity_page.paginator.num_pages }}&action={{ action_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&search={{ search_q }}" class="pg-btn">&raquo;</a>
+            {% else %}
+            <span class="pg-btn disabled">&rsaquo;</span>
+            <span class="pg-btn disabled">&raquo;</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div style="text-align:center;padding:2.5rem 1rem;color:#999;">
+            <div style="font-size:2rem;margin-bottom:.5rem;opacity:.4;"><i class="bi bi-journal-text"></i></div>
+            <p style="font-size:.9rem;">No activity logs found{% if action_filter or date_from or date_to or search_q %} matching your filters{% endif %}.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-bottom:2rem;">
+    <a href="{% url 'manage_league_admins' %}" class="btn btn-outline" style="border-radius:8px;">&larr; Back to User Management</a>
+</div>
+{% endblock %}

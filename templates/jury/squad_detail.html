@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Squad Detail — Jury | KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1><i class="bi bi-list-check"></i> Squad Detail</h1>
+        <p class="text-muted">{{ squad.team.name }} — {{ squad.fixture.home_team.name }} vs {{ squad.fixture.away_team.name }} ({{ squad.fixture.match_date|date:"d M Y" }})</p>
+    </div>
+    <div style="display:flex; gap:.5rem;">
+        <a href="{% url 'jury_squads' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Back to Squads</a>
+    </div>
+</div>
+
+<!-- Match Info -->
+<div class="card" style="padding:1.25rem; margin-bottom:1.5rem;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:1rem;">
+        <div>
+            <div style="font-size:.8rem; color:#888;">Competition</div>
+            <strong>{{ squad.fixture.competition.name|default:"-" }}</strong>
+        </div>
+        <div>
+            <div style="font-size:.8rem; color:#888;">Match</div>
+            <strong>{{ squad.fixture.home_team.name }} vs {{ squad.fixture.away_team.name }}</strong>
+        </div>
+        <div>
+            <div style="font-size:.8rem; color:#888;">Team</div>
+            <strong>{{ squad.team.name }}</strong>
+        </div>
+        <div>
+            <div style="font-size:.8rem; color:#888;">Status</div>
+            <span class="badge {% if squad.status == 'approved' %}bg-success{% elif squad.status == 'submitted' %}bg-primary{% elif squad.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}" style="padding:4px 10px; border-radius:4px; color:#fff;">
+                {{ squad.get_status_display }}
+            </span>
+        </div>
+        <div>
+            <div style="font-size:.8rem; color:#888;">Submitted</div>
+            <strong>{{ squad.submitted_at|date:"d M Y H:i"|default:"Not yet" }}</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Starting Eleven -->
+<div class="card" style="padding:1.25rem; margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem;"><i class="bi bi-star-fill" style="color:#f9a825;"></i> Starting Eleven ({{ starters|length }})</h3>
+    {% if starters %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Shirt #</th>
+                    <th>Player Name</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in starters %}
+                <tr>
+                    <td><strong>{{ sp.shirt_number }}</strong></td>
+                    <td>{{ sp.player.first_name }} {{ sp.player.last_name }}</td>
+                    <td>{{ sp.player.get_position_display }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:#888;">No starters selected.</p>
+    {% endif %}
+</div>
+
+<!-- Substitutes -->
+<div class="card" style="padding:1.25rem;">
+    <h3 style="margin:0 0 1rem;"><i class="bi bi-arrow-left-right"></i> Substitutes ({{ subs|length }})</h3>
+    {% if subs %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Shirt #</th>
+                    <th>Player Name</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in subs %}
+                <tr>
+                    <td><strong>{{ sp.shirt_number }}</strong></td>
+                    <td>{{ sp.player.first_name }} {{ sp.player.last_name }}</td>
+                    <td>{{ sp.player.get_position_display }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:#888;">No substitutes selected.</p>
+    {% endif %}
+</div>
+{% endblock %}

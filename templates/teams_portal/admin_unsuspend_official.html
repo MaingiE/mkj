@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Unsuspend Official - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h4><i class="fas fa-check"></i> Unsuspend Team Official</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> You are about to lift the suspension for this official. They will be able to perform their duties again.
+                    </div>
+
+                    <!-- Official Info -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5>Official Details</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="30%">Name:</th>
+                                    <td><strong>{{ official.full_name }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Team:</th>
+                                    <td>{{ official.team.team_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Position:</th>
+                                    <td><span class="badge badge-info">{{ official.get_position_display }}</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ official.phone_number }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Current Suspension Details -->
+                    <div class="card mb-4 border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">Current Suspension</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="30%">Matches Remaining:</th>
+                                    <td><span class="badge badge-danger">{{ official.suspension_matches }} matches</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Suspension Reason:</th>
+                                    <td>{{ official.suspension_reason|linebreaks }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'teams:admin_manage_officials' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check"></i> Unsuspend Official
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Add Technical Bench Member &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'county_admin_dashboard' %}">County Admin</a>
+        <a href="{% url 'county_admin_discipline_players' discipline_pk=discipline.pk %}">{{ discipline.get_sport_type_display }}</a>
+        <span>Add Bench Member</span>
+    </div>
+    <h1><i class="bi bi-person-badge"></i> Add Technical Bench Member</h1>
+    <p>{{ reg.county }} County &mdash; {{ discipline.get_sport_type_display }}</p>
+</div>
+
+<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:.6rem;align-items:flex-start;">
+    <span style="font-size:1.1rem;color:#1565c0"><i class="bi bi-info-circle"></i></span>
+    <div style="font-size:.86rem;color:#334;line-height:1.45;">
+        When role is <strong>Team Manager</strong>, an account is created automatically and assigned the Team Manager role.
+        Provide a valid email address for credential delivery.
+    </div>
+</div>
+
+{% if existing_bench %}
+<div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
+    <h3 style="font-size:1rem;margin-bottom:.8rem;color:#333"><i class="bi bi-people"></i> Current Technical Bench</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+        <thead>
+            <tr style="background:#f5f5f5;text-align:left">
+                <th style="padding:.5rem .8rem">Role</th>
+                <th style="padding:.5rem .8rem">Name</th>
+                <th style="padding:.5rem .8rem">Phone</th>
+                <th style="padding:.5rem .8rem"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in existing_bench %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem .8rem;font-weight:600">{{ m.get_role_display }}</td>
+                <td style="padding:.5rem .8rem">{{ m.get_full_name }}</td>
+                <td style="padding:.5rem .8rem">{{ m.phone|default:"—" }}</td>
+                <td style="padding:.5rem .8rem">
+                    <form method="post" action="{% url 'county_admin_delete_bench_member' member_pk=m.pk %}" style="margin:0"
+                          onsubmit="return confirm('Remove {{ m.get_full_name }}?')">
+                        {% csrf_token %}
+                        <button type="submit" style="background:none;border:none;color:#C62828;cursor:pointer;font-size:.85rem" title="Remove">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if available_roles %}
+<div class="card" style="padding:1.5rem">
+    <h3 style="font-size:1rem;margin-bottom:1rem;color:#333"><i class="bi bi-plus-circle"></i> Add New Member</h3>
+    <form method="post" enctype="multipart/form-data" style="max-width:600px">
+        {% csrf_token %}
+        {% for field in form %}
+        <div style="margin-bottom:1rem">
+            <label style="display:block;font-weight:600;font-size:.88rem;color:#333;margin-bottom:.3rem">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color:#C62828;font-size:.82rem;margin-top:.2rem">{{ field.errors.0 }}</div>
+            {% endif %}
+            {% if field.help_text %}
+            <div style="color:#888;font-size:.8rem;margin-top:.2rem">{{ field.help_text }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <div style="display:flex;gap:.8rem;margin-top:1.2rem">
+            <button type="submit" class="btn btn--primary" style="padding:.5rem 1.5rem;font-size:.9rem">
+                <i class="bi bi-person-plus"></i> Add Member
+            </button>
+            <a href="{% url 'county_admin_discipline_players' discipline_pk=discipline.pk %}" class="btn" style="padding:.5rem 1.2rem;font-size:.9rem;background:#e0e0e0;color:#333;border-radius:8px;text-decoration:none;font-weight:600">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="card" style="padding:2rem;text-align:center;color:#888">
+    <i class="bi bi-check-circle" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#2e7d32"></i>
+    All technical bench roles are filled for this discipline.
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'county_admin_discipline_players' discipline_pk=discipline.pk %}" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to {{ discipline.get_sport_type_display }}</a>
+</div>
+{% endblock %}

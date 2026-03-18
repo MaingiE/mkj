@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Submit Appeal — KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem;">
+    <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline" style="font-size:.85rem;">← Back to Appeal #{{ appeal.pk }}</a>
+</div>
+
+<div class="card" style="padding:2rem; max-width:600px;">
+    <h1 style="margin:0 0 1rem;">🚀 Confirm Appeal Submission</h1>
+
+    <div style="background:#f8f9fa; padding:1rem; border-radius:4px; margin-bottom:1rem;">
+        <p><strong>Appeal:</strong> {{ appeal.subject }}</p>
+        <p><strong>Against:</strong> {{ appeal.respondent_team }}</p>
+        <p><strong>Evidence Files:</strong> {{ appeal.evidence_files.count }}</p>
+        <p><strong>Fee Status:</strong> {{ appeal.get_fee_status_display }}</p>
+    </div>
+
+    <div style="background:#fff3cd; padding:1rem; border-radius:4px; margin-bottom:1.5rem;">
+        <p style="margin:0;"><strong>⚠️ Once submitted:</strong></p>
+        <ul style="margin:.5rem 0 0; padding-left:1.25rem;">
+            <li>The respondent team will be notified and has <strong>5 days</strong> to respond</li>
+            <li>You cannot edit the appeal details or evidence after submission</li>
+            <li>The Chair of the Jury will review once a response is received</li>
+        </ul>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:flex; gap:.5rem;">
+            <button type="submit" class="btn btn-success">✅ Submit Appeal</button>
+            <a href="{% url 'appeal_detail' pk=appeal.pk %}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

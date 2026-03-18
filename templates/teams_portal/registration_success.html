@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Successful - FKF Meru County League{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card text-center border-success">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> Registration Complete!</h4>
+                </div>
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    
+                    <h2 class="text-success mb-3">✅ Team Registration Successful</h2>
+                    
+                    <!-- Show team information -->
+                    <div class="alert alert-success text-center">
+                        <h5><i class="fas fa-info-circle"></i> Your Team Details</h5>
+                        <p class="mb-0" style="font-size: 1.2rem;">
+                            <strong>Team Name:</strong> {{ team_name }}<br>
+                            <strong>Team Code:</strong> <span class="badge bg-primary fs-5">{{ team_code }}</span><br>
+                            <strong>Status:</strong> <span class="badge bg-warning fs-6">Pending Approval</span>
+                        </p>
+                    </div>
+                    
+                    <!-- Show any Django messages -->
+                    {% if messages %}
+                    <div class="messages mb-3">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message|safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card mt-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-info-circle"></i> What Happens Next?</h5>
+                        </div>
+                        <div class="card-body text-start">
+                            <ol class="mb-0">
+                                <li><strong>Team Review:</strong> Your team is now under review by administrators</li>
+                                <li><strong>Zone Assignment:</strong> Admin will assign your team to a zone</li>
+                                <li><strong>Approval:</strong> You will receive login credentials via email</li>
+                                <li><strong>Payment:</strong> After approval, complete registration fee payment</li>
+                                <li><strong>Fixtures:</strong> Once all teams are approved, fixtures will be generated</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Important</h6>
+                        <p class="mb-0" style="font-size: 1.1rem;">
+                            ✅ Save your <strong>Team Code: {{ team_code }}</strong><br>
+                            ✅ You will need it to check registration status<br>
+                            ✅ Admin will contact you with login details after approval
+                        </p>
+                    </div>
+                    
+                    <div class="mt-5">
+                        <a href="{% url 'frontend:home' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-home"></i> Return to Homepage
+                        </a>
+                        <a href="{% url 'teams:team_registration' %}" class="btn btn-outline-primary btn-lg ms-3">
+                            <i class="fas fa-plus"></i> Register Another Team
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    Need help? Contact: +254 700 000 000 | info@kyisa.org
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll to top
+    window.scrollTo(0, 0);
+    
+    // Auto-hide messages after 10 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 10000);
+    
+    // Copy team code functionality
+    const teamCode = "{{ team_code }}";
+    if (teamCode) {
+        // Add copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn btn-sm btn-outline-secondary ms-2';
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Code';
+        copyBtn.onclick = function() {
+            navigator.clipboard.writeText(teamCode).then(function() {
+                alert('Team code copied to clipboard: ' + teamCode);
+            });
+        };
+        
+        const teamCodeElement = document.querySelector('.badge.bg-primary');
+        if (teamCodeElement) {
+            teamCodeElement.parentNode.appendChild(copyBtn);
+        }
+    }
+});
+</script>
+{% endblock %}

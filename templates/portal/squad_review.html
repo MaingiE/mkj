@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Review Squad — {{ squad.team.name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'squad_review_list' %}">Squad Review</a>
+        <span>{{ squad.team.name }}</span>
+    </div>
+    <h1>📋 Review Squad Sheet</h1>
+    <p>{{ squad.team.name }} — {{ squad.fixture.home_team }} vs {{ squad.fixture.away_team }}</p>
+</div>
+
+<!-- Fixture & Submission Info -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-label">Match Date</div>
+        <div class="stat-value" style="font-size:1.1rem;">{{ squad.fixture.match_date|date:"d M Y" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Kick-off</div>
+        <div class="stat-value" style="font-size:1.1rem;">{{ squad.fixture.kickoff_time|time:"H:i" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Submitted</div>
+        <div class="stat-value" style="font-size:1.1rem;">{{ squad.submitted_at|date:"d M Y H:i"|default:"—" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" style="font-size:1.1rem;">
+            {% if squad.status == 'approved' %}
+            <span style="color:#2E7D32">✅ Approved</span>
+            {% elif squad.status == 'rejected' %}
+            <span style="color:#c62828">❌ Rejected</span>
+            {% elif squad.status == 'submitted' %}
+            <span style="color:#FF8F00">🔶 Pending</span>
+            {% else %}
+            {{ squad.get_status_display }}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Formation & Kit Info -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E8F5E9;"><h3>⚙️ Playing Units &amp; Kit</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div>
+                <div style="font-size:.85rem;color:#666;">Formation / Playing Units</div>
+                <div style="font-size:1.2rem;font-weight:700;color:#1B5E20;">{{ formation|default:"Not specified" }}</div>
+            </div>
+            <div>
+                <div style="font-size:.85rem;color:#666;">Kit Selection</div>
+                <div style="font-size:1.2rem;font-weight:700;color:#1565C0;">{{ kit_choice }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Starters -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>🟢 Starting XI ({{ starters|length }})</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Name</th><th>Position</th><th>Age</th></tr>
+                </thead>
+                <tbody>
+                    {% for sp in starters %}
+                    <tr>
+                        <td><strong>{{ sp.shirt_number }}</strong></td>
+                        <td>{{ sp.player.get_full_name }}</td>
+                        <td>{{ sp.player.get_position_display }}</td>
+                        <td>{{ sp.player.age }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" style="text-align:center;color:#999">No starters listed</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Substitutes -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>🔵 Substitutes ({{ subs|length }})</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Name</th><th>Position</th><th>Age</th></tr>
+                </thead>
+                <tbody>
+                    {% for sp in subs %}
+                    <tr>
+                        <td><strong>{{ sp.shirt_number }}</strong></td>
+                        <td>{{ sp.player.get_full_name }}</td>
+                        <td>{{ sp.player.get_position_display }}</td>
+                        <td>{{ sp.player.age }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" style="text-align:center;color:#999">No substitutes listed</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if squad.rejection_reason %}
+<div class="alert alert-danger" style="margin-bottom:1.5rem;">
+    <strong>Previous Rejection Reason:</strong> {{ squad.rejection_reason }}
+</div>
+{% endif %}
+
+<!-- Approve / Reject Actions -->
+{% if squad.status == 'submitted' %}
+<div class="card">
+    <div class="card-header"><h3>⚖️ Decision</h3></div>
+    <div class="card-body">
+        <form method="post" style="display:flex;flex-direction:column;gap:1rem;">
+            {% csrf_token %}
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Rejection Reason (if rejecting):</label>
+                <textarea name="rejection_reason" rows="3"
+                          style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;font-size:.95rem;"
+                          placeholder="e.g., Ineligible player included, missing players, shirt number mismatch..."></textarea>
+            </div>
+            <div style="display:flex;gap:1rem;justify-content:flex-end;">
+                <a href="{% url 'squad_review_list' %}"
+                   style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+                    Back
+                </a>
+                <button type="submit" name="action" value="reject"
+                        style="background:#c62828;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
+                        onclick="return confirm('Reject this squad?')">
+                    ❌ Reject
+                </button>
+                <button type="submit" name="action" value="approve"
+                        style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;">
+                    ✅ Approve
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% else %}
+<div style="display:flex;justify-content:flex-end;">
+    <a href="{% url 'squad_review_list' %}"
+       style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+        ← Back to List
+    </a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}Matches & Fixtures — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Matches</span>
+    </div>
+    <h1><i class="bi bi-clipboard-data"></i> Matches & Fixtures</h1>
+    <p>Scheduled fixtures, results and match reports</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>All Fixtures</h3>
+        <span class="toolbar-count" id="matchCount"></span>
+    </div>
+    <div class="card-body">
+        {% if fixture_data %}
+        <div class="toolbar">
+            <div class="toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="matchSearch" placeholder="Search team, venue..." oninput="filterMatches()">
+            </div>
+            <select class="toolbar-select" id="matchStatusFilter" onchange="filterMatches()">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="live">Live</option>
+                <option value="postponed">Postponed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <div class="toolbar-spacer"></div>
+        </div>
+        <div class="table-responsive">
+            <table id="matchesTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Competition</th>
+                        <th>Home</th>
+                        <th></th>
+                        <th>Away</th>
+                        <th>Venue</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fd in fixture_data %}
+                    {% with f=fd.fixture %}
+                    <tr data-status="{{ f.status }}">
+                        <td>{{ f.match_date|date:"d M Y" }}</td>
+                        <td>{{ f.kickoff_time|time:"H:i" }}</td>
+                        <td>{{ f.competition.name }}</td>
+                        <td><strong>{{ f.home_team.name }}</strong></td>
+                        <td class="text-center">
+                            {% if f.home_score is not None %}
+                            <strong>{{ f.home_score }} - {{ f.away_score }}</strong>
+                            {% else %}
+                            vs
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ f.away_team.name }}</strong></td>
+                        <td>{{ f.venue|default:"TBD" }}</td>
+                        <td>
+                            {% if f.status == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                            {% elif f.status == 'live' %}
+                            <span class="badge badge-danger">Live</span>
+                            {% elif f.status == 'confirmed' %}
+                            <span class="badge badge-info">Confirmed</span>
+                            {% elif f.status == 'postponed' %}
+                            <span class="badge badge-warning">Postponed</span>
+                            {% elif f.status == 'cancelled' %}
+                            <span class="badge badge-danger">Cancelled</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ f.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-nowrap">
+                            {% comment %} TEAM MANAGER — Squad Selection {% endcomment %}
+                            {% if user.role == 'team_manager' %}
+                                {% if fd.squad %}
+                                    {% if fd.squad.status == 'approved' %}
+                                    <span class="badge badge-success">Squad ✅</span>
+                                    {% elif fd.squad.status == 'submitted' %}
+                                    <span class="badge badge-info">Squad Pending</span>
+                                    {% elif fd.squad.status == 'rejected' %}
+                                    <a href="{% url 'squad_select' fixture_pk=f.pk %}" class="btn-action btn-action-danger">
+                                        Resubmit Squad
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'squad_select' fixture_pk=f.pk %}" class="btn-action btn-action-primary">
+                                        Select Squad
+                                    </a>
+                                    {% endif %}
+                                {% elif not fd.deadline_passed and f.status != 'completed' %}
+                                <a href="{% url 'squad_select' fixture_pk=f.pk %}" class="btn-action btn-action-primary">
+                                    Select Squad
+                                </a>
+                                {% elif f.status != 'completed' %}
+                                <span class="text-muted">Deadline passed</span>
+                                {% endif %}
+                            {% endif %}
+
+                            {% comment %} REFEREE — Submit Report {% endcomment %}
+                            {% if user.role == 'referee' %}
+                                {% if fd.report %}
+                                <a href="{% url 'match_report_detail' report_pk=fd.report.pk %}" class="btn-action btn-action-link">
+                                    View Report
+                                </a>
+                                {% elif f.status == 'completed' or f.status == 'live' or f.status == 'confirmed' %}
+                                <a href="{% url 'match_report_form' fixture_pk=f.pk %}" class="btn-action btn-action-primary">
+                                    Submit Report
+                                </a>
+                                {% endif %}
+                            {% endif %}
+
+                            {% comment %} ADMIN / CM — View Report {% endcomment %}
+                            {% if user.role == 'admin' or user.role == 'competition_manager' %}
+                                {% if fd.report %}
+                                <a href="{% url 'match_report_detail' report_pk=fd.report.pk %}" class="btn-action btn-action-link" style="margin-right:.5rem;">
+                                    Report
+                                </a>
+                                {% endif %}
+                            {% endif %}
+
+                            {% comment %} REFEREE MANAGER — Review Report {% endcomment %}
+                            {% if user.role == 'coordinator' or user.role == 'admin' %}
+                                {% if fd.report and fd.report.status == 'submitted' %}
+                                <a href="{% url 'match_report_review' report_pk=fd.report.pk %}" class="btn-action btn-action-warning">
+                                    Review Report
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><i class="bi bi-calendar-event"></i></div>
+            <h3>No fixtures scheduled</h3>
+            <p>Fixtures will appear here once they are created.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pending Reports (Referee Manager / Admin) -->
+{% if pending_reports %}
+<div class="card mt-1">
+    <div class="card-header"><h3><i class="bi bi-exclamation-triangle" style="color:#FF8F00"></i> Reports Pending Review</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>Fixture</th><th>Score</th><th>Referee</th><th>Submitted</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for report in pending_reports %}
+                    <tr>
+                        <td>{{ report.fixture.home_team }} vs {{ report.fixture.away_team }}</td>
+                        <td><strong>{{ report.home_score }} - {{ report.away_score }}</strong></td>
+                        <td>{{ report.referee.user.get_full_name|default:"—" }}</td>
+                        <td>{{ report.submitted_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>
+                            <a href="{% url 'match_report_review' report_pk=report.pk %}" class="btn-action btn-action-warning">
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- All Match Reports -->
+{% if match_reports %}
+<div class="card mt-1">
+    <div class="card-header"><h3>Match Reports</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>Fixture</th><th>Score</th><th>Referee</th><th>Status</th><th>Submitted</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for report in match_reports %}
+                    <tr>
+                        <td>{{ report.fixture.home_team }} vs {{ report.fixture.away_team }}</td>
+                        <td><strong>{{ report.home_score }} - {{ report.away_score }}</strong></td>
+                        <td>{{ report.referee.user.get_full_name|default:"—" }}</td>
+                        <td>
+                            {% if report.status == 'approved' %}
+                            <span class="badge badge-success">Approved</span>
+                            {% elif report.status == 'submitted' %}
+                            <span class="badge badge-info">Submitted</span>
+                            {% elif report.status == 'returned' %}
+                            <span class="badge badge-warning">Returned</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ report.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ report.submitted_at|date:"d M Y"|default:"—" }}</td>
+                        <td>
+                            <a href="{% url 'match_report_detail' report_pk=report.pk %}" class="btn-action btn-action-link">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% block extra_js_content %}
+<script>
+function filterMatches() {
+    const q = document.getElementById('matchSearch').value.toLowerCase();
+    const status = document.getElementById('matchStatusFilter').value;
+    const rows = document.querySelectorAll('#matchesTable tbody tr');
+    let visible = 0;
+    rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        const show = (!q || text.includes(q)) && (!status || r.dataset.status === status);
+        r.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('matchCount').textContent = visible + ' of ' + rows.length;
+}
+document.addEventListener('DOMContentLoaded', function() { filterMatches(); });
+</script>
+{% endblock %}
+{% endblock %}

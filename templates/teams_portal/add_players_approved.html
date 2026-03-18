@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Players - {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if is_admin %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'teams:add_players_approved' %}">Select Team</a></li>
+            <li class="breadcrumb-item active">{{ team.team_name }}</li>
+        </ol>
+    </nav>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header card-header-custom">
+                    <h4 class="mb-0"><i class="fas fa-user-plus"></i> Add Players - {{ team.team_name }}</h4>
+                    <p class="mb-0 small">Team Status: <span class="badge bg-success">Approved</span></p>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages mb-3">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- FORM 1: Add Player -->
+                    <form method="POST" action="/teams/add-player-action/{% if is_admin %}?team_id={{ team.id }}{% endif %}" enctype="multipart/form-data" id="addPlayerForm">
+                        {% csrf_token %}
+                        {% if is_admin %}
+                        <input type="hidden" name="team_id" value="{{ team.id }}">
+                        {% endif %}
+                        
+                        <h5 class="text-primary mb-3"><i class="fas fa-id-card"></i> Player Information</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth *</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                                <small class="text-muted">Player must be 16-45 years old</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_number" class="form-label">ID/Passport Number *</label>
+                                <input type="text" class="form-control" id="id_number" name="id_number" required>
+                                <small class="text-muted">National ID or Passport</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nationality" class="form-label">Nationality</label>
+                                <input type="text" class="form-control" id="nationality" name="nationality" value="Kenyan">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="photo" class="form-label">Player Photo (Optional)</label>
+                                <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                                <small class="text-muted">Max 2MB. Recommended: Passport size</small>
+                            </div>
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-file-certificate"></i> FKF License Details</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fkf_license_number" class="form-label">FKF License Number</label>
+                                <input type="text" class="form-control" id="fkf_license_number" name="fkf_license_number">
+                                <small class="text-muted">(Optional) Player's FKF license number</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="license_expiry_date" class="form-label">License Expiry Date</label>
+                                <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date">
+                                <small class="text-muted">(Optional) When license expires</small>
+                            </div>
+                        </div>
+                        
+                        <h5 class="text-primary mt-4 mb-3"><i class="fas fa-futbol"></i> Team Details</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="position" class="form-label">Position *</label>
+                                <select class="form-select" id="position" name="position" required>
+                                    <option value="">Select Position</option>
+                                    <option value="GK">Goalkeeper</option>
+                                    <option value="DF">Defender</option>
+                                    <option value="MF">Midfielder</option>
+                                    <option value="FW">Forward</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="jersey_number" class="form-label">Jersey Number *</label>
+                                <input type="number" class="form-control" id="jersey_number" name="jersey_number" min="1" max="99" required>
+                                <small class="text-muted">Between 1-99, unique per team</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            <input type="checkbox" class="form-check-input" id="is_captain" name="is_captain">
+                            <label class="form-check-label" for="is_captain">
+                                This player is the team captain
+                            </label>
+                            <small class="text-muted d-block">Note: If you select this, it will replace the current captain</small>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <!-- BUTTON 1: Add Player -->
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-plus"></i> Add Player & Continue
+                            </button>
+                            
+                            <!-- BUTTON 2: Finish (in separate form) -->
+                            <a href="{% url 'teams:team_manager_dashboard' %}" class="btn btn-success">
+                                <i class="fas fa-check"></i> Finish & Return to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Team Summary</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ team.team_name }}</h6>
+                    <p class="mb-1"><strong>Team Code:</strong> {{ team.team_code }}</p>
+                    <p class="mb-1"><strong>Location:</strong> {{ team.location }}</p>
+                    <p class="mb-1"><strong>Status:</strong> 
+                        <span class="badge bg-success">Approved</span>
+                    </p>
+                    <p class="mb-1"><strong>Zone:</strong> {{ team.zone.name|default:"Not assigned" }}</p>
+                    <p class="mb-0"><strong>Players Added:</strong> {{ player_count }}</p>
+                    <p class="mb-0"><strong>Kit Setup:</strong> 
+                        <span class="badge bg-success">Complete</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Current Players ({{ player_count }})</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if players %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                        <th>Age</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in players %}
+                                    <tr {% if player.is_suspended %}class="table-danger"{% endif %}>
+                                        <td>
+                                            {{ player.jersey_number }}
+                                            {% if player.is_captain %}
+                                            <span class="badge bg-warning">C</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ player.full_name }}</td>
+                                        <td>{{ player.get_position_display }}</td>
+                                        <td>{{ player.age }}</td>
+                                        <td>
+                                            {% if player.is_suspended %}
+                                                <span class="badge bg-danger" title="{{ player.suspension_reason }}">
+                                                    <i class="fas fa-ban"></i> Suspended ({{ player.suspension_matches }} matches)
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-success"><i class="fas fa-check"></i> Active</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Suspended Players Alert -->
+                        {% regroup players by is_suspended as player_groups %}
+                        {% for group in player_groups %}
+                            {% if group.grouper %}
+                                <div class="alert alert-danger mt-3">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Suspended Players:</h6>
+                                    <ul class="mb-0">
+                                        {% for player in group.list %}
+                                            <li>
+                                                <strong>{{ player.full_name }}</strong> - 
+                                                Suspended for {{ player.suspension_matches }} match(es)
+                                                <br><small>Reason: {{ player.suspension_reason }}</small>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No players added yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6><i class="fas fa-info-circle text-primary"></i> Notes for Approved Teams</h6>
+                    <ul class="small">
+                        <li><strong>Team is approved</strong> - You can now add players</li>
+                        <li><strong>Kit colors are set</strong> - Players will use selected kits</li>
+                        <li>Add at least 11 players (minimum squad)</li>
+                        <li>Maximum squad size: 30 players</li>
+                        <li>Each player needs valid ID number</li>
+                        <li>FKF license is optional but recommended</li>
+                        <li>Click "Finish" when done adding players</li>
+                        <li>You can return later to add more players</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+.card-header-custom {
+    background-color: var(--primary-green, #28a745);
+    color: white;
+}
+</style>
+{% endblock %}

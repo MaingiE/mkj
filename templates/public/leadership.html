@@ -1,0 +1,345 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Leadership{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════
+   LEADERSHIP PAGE
+═══════════════════════════════════════ */
+
+/* ── Secretary General Feature Section ── */
+.sg-section {
+    padding: 5rem 0 4rem;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+}
+.sg-section::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 280px;
+    background: linear-gradient(180deg, #f5f7f5 0%, transparent 100%);
+    pointer-events: none;
+}
+.sg-inner {
+    position: relative; z-index: 2;
+    max-width: 1040px; margin: 0 auto;
+}
+.sg-card {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 8px 48px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
+    overflow: hidden;
+    border: 1px solid rgba(27,94,32,.06);
+}
+.sg-card-top {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+}
+@media (max-width: 768px) {
+    .sg-card-top { grid-template-columns: 1fr; }
+}
+
+/* Photo side */
+.sg-photo-wrap {
+    position: relative;
+    background: #0a1a0d;
+    overflow: hidden;
+    min-height: 400px;
+}
+.sg-photo-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center top;
+    display: block;
+    transition: transform .6s ease;
+}
+.sg-card:hover .sg-photo-wrap img {
+    transform: scale(1.03);
+}
+.sg-photo-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(10,26,13,.85) 0%, transparent 100%);
+    padding: 2rem 1.5rem 1.5rem;
+}
+.sg-photo-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem; font-weight: 800;
+    color: #fff; line-height: 1.2;
+}
+.sg-photo-title {
+    font-size: .7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: #F9A825; margin-top: .3rem;
+}
+
+/* Placeholder photo */
+.sg-photo-placeholder {
+    width: 100%; height: 100%; min-height: 400px;
+    background: linear-gradient(135deg, #0a1a0d 0%, #1B5E20 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: .5rem;
+}
+.sg-photo-placeholder svg {
+    width: 80px; height: 80px; opacity: .15;
+    color: #fff;
+}
+
+/* Message side */
+.sg-message-wrap {
+    padding: 2.5rem 2.5rem 2rem;
+    display: flex; flex-direction: column;
+}
+@media (max-width: 768px) {
+    .sg-message-wrap { padding: 2rem 1.5rem 1.5rem; }
+}
+.sg-message-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .3rem .8rem; border-radius: 50px;
+    border: 1px solid rgba(27,94,32,.15);
+    background: rgba(27,94,32,.04);
+    font-size: .6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: #1B5E20;
+    width: fit-content; margin-bottom: 1rem;
+}
+.sg-message-badge svg {
+    width: 14px; height: 14px; color: #F9A825;
+}
+.sg-quote-icon {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3.5rem; font-weight: 900; line-height: 1;
+    color: #1B5E20; opacity: .12;
+    margin-bottom: -.5rem;
+}
+.sg-message-text {
+    font-size: 1rem; line-height: 1.9;
+    color: #444; flex: 1;
+}
+.sg-message-text p {
+    margin-bottom: 1rem;
+}
+.sg-message-text p:last-child { margin-bottom: 0; }
+.sg-signature {
+    margin-top: 1.5rem; padding-top: 1.2rem;
+    border-top: 1px solid rgba(0,0,0,.06);
+    display: flex; align-items: center; gap: 1rem;
+}
+.sg-sig-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #1B5E20, #4CAF50);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; font-size: .9rem; font-weight: 800;
+    color: #fff;
+}
+.sg-sig-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: .95rem; font-weight: 700; color: #111;
+}
+.sg-sig-title {
+    font-size: .72rem; color: #888;
+    text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+}
+
+/* ── Other Leaders Grid ─────────────── */
+.leaders-section {
+    padding: 4rem 0 5rem;
+    background: #f5f7f5;
+}
+.leaders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 960px; margin: 0 auto;
+}
+.leader-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+    border: 1px solid rgba(0,0,0,.04);
+    transition: transform .3s, box-shadow .3s;
+}
+.leader-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.08);
+}
+.leader-card__photo {
+    height: 240px;
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+    position: relative; overflow: hidden;
+}
+.leader-card__photo img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+.leader-card__placeholder {
+    height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: .3rem;
+    background: linear-gradient(135deg, #e8f5e9 0%, #fff 100%);
+}
+.leader-card__placeholder svg {
+    width: 56px; height: 56px; color: #c8e6c9; opacity: .6;
+}
+.leader-card__placeholder span {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: #a5d6a7;
+}
+.leader-card__body {
+    padding: 1.2rem 1.4rem 1.5rem;
+    text-align: center;
+}
+.leader-card__name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem; font-weight: 700;
+    color: #111; margin-bottom: .2rem;
+}
+.leader-card__title-badge {
+    display: inline-block;
+    padding: .2rem .65rem; border-radius: 50px;
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #F9A825; background: rgba(249,168,37,.08);
+    border: 1px solid rgba(249,168,37,.2);
+}
+.leader-card__message {
+    font-size: .85rem; color: #666; line-height: 1.7;
+    margin-top: .8rem;
+}
+.leader-card__coming {
+    font-size: .75rem; color: #999;
+    font-style: italic; margin-top: .6rem;
+}
+
+/* CTA Banner */
+.leadership-cta {
+    padding: 3.5rem 0;
+    background: #0a1a0d;
+    text-align: center;
+}
+.leadership-cta__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem; font-weight: 800;
+    color: #fff; margin-bottom: .5rem;
+}
+.leadership-cta__sub {
+    font-size: .9rem; color: rgba(255,255,255,.45);
+    margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE HERO
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">Officials</span>
+        <h1 class="page-hero__title reveal">Our <span class="text-gold">Leadership</span></h1>
+        <p class="page-hero__sub reveal">Meet the dedicated officials guiding KYISA's mission to nurture Kenya's youth sporting talent.</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>Leadership</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     LEADERSHIP STRUCTURE
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="leaders-section">
+    <div class="container">
+        <div class="sec-head">
+            <span class="badge">Executive Leadership</span>
+            
+            <div class="sec-line"></div>
+        </div>
+
+        <div class="leaders-grid">
+            {% for leader in leaders %}
+            <div class="leader-card reveal" style="--delay:{{ forloop.counter0|add:1 }}0ms">
+                <div class="leader-card__photo">
+                    {% if leader.image %}
+                    <img src="{% static leader.image %}" alt="{{ leader.name }}" loading="lazy">
+                    {% else %}
+                    <div class="leader-card__placeholder">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        <span>Photo Coming Soon</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="leader-card__body">
+                    <h3 class="leader-card__name">{{ leader.name }}</h3>
+                    <span class="leader-card__title-badge">{{ leader.title }}</span>
+                    {% if leader.message %}
+                    <p class="leader-card__message">{{ leader.message }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CTA BANNER
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="leadership-cta">
+    <div class="container">
+        <h2 class="leadership-cta__title">Join Us in Building Kenya's <span class="text-gold">Sporting Future</span></h2>
+        <p class="leadership-cta__sub">KYISA is committed to developing youth talent across all 47 counties. Get involved today.</p>
+        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+            <a href="{% url 'about' %}" class="btn btn--primary btn--lg">Learn About KYISA</a>
+            <a href="{% url 'contact' %}" class="btn btn--outline btn--lg">Contact Us</a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* Scroll reveals */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* Canvas particles */
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++){
+            particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        }
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+})();
+</script>
+{% endblock %}

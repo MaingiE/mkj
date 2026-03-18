@@ -1,0 +1,288 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Results & Statistics{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE HERO — DARK CINEMATIC
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">Live Scores</span>
+        <h1 class="page-hero__title reveal">Results & <span class="text-gold">Statistics</span></h1>
+        <p class="page-hero__sub reveal">Live scores, standings, and player leaderboards from KYISA competitions</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>Results</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     NAVIGATION TABS
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec" style="padding-bottom:0;">
+    <div class="container">
+        <div class="results-tabs">
+            <a href="{% url 'public_results' %}{% if sport_filter %}?sport={{ sport_filter }}{% endif %}" class="results-tab results-tab--active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/><circle cx="12" cy="12" r="10"/></svg>
+                Results
+            </a>
+            <a href="{% url 'public_statistics' %}" class="results-tab">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                Statistics
+            </a>
+        </div>
+        {% if sport_filter %}
+        <div class="sport-filter-bar">
+            <span class="sport-filter-bar__label">Filtered by:</span>
+            <span class="sport-filter-bar__value">{{ sport_display }}</span>
+            <a href="{% url 'public_results' %}" class="sport-filter-bar__clear" title="Clear filter">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Show All
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     ACTIVE COMPETITIONS HUB
+     ══════════════════════════════════════════════════════════════════════════ -->
+{% if active_competitions %}
+<section class="sec" style="padding-top:1.5rem;">
+    <div class="container">
+        <div class="sec-head">
+            <span class="badge badge--green">Live</span>
+            <h2 class="sec-title">Active Competitions</h2>
+            <p class="sec-sub">View standings, fixtures, and stats for ongoing competitions</p>
+            <div class="sec-line"></div>
+        </div>
+        <div class="comp-hub-grid">
+            {% for comp in active_competitions %}
+            <a href="{% url 'public_competition_standings' pk=comp.pk %}" class="comp-hub-card reveal" style="--delay:{{ forloop.counter0 }}0ms">
+                <div class="comp-hub-card__accent"></div>
+                <h4 class="comp-hub-card__title">{{ comp.name }}</h4>
+                <div class="comp-hub-card__meta">
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+                        {{ comp.get_sport_type_display }}
+                    </span>
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                        {{ comp.start_date|date:"d M Y" }}
+                    </span>
+                    <span class="comp-hub-card__status">{{ comp.get_status_display }}</span>
+                </div>
+                <div class="comp-hub-card__actions">
+                    <span class="comp-hub-btn">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 3v18"/></svg>
+                        Standings
+                    </span>
+                    <span class="comp-hub-btn comp-hub-btn--blue">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                        Stats
+                    </span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     COMPLETED MATCHES
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec sec--dark">
+    <div class="container">
+        {% if completed_fixtures %}
+        <div class="sec-head">
+            <span class="badge">Full Time</span>
+            <h2 class="sec-title">Completed Matches</h2>
+            <div class="sec-line"></div>
+        </div>
+        <div class="card-grid card-grid--3">
+            {% for fixture in completed_fixtures %}
+            <div class="match-card reveal" style="--delay:{{ forloop.counter0 }}0ms">
+                <div class="match-card__comp">{{ fixture.competition.name|truncatechars:30 }}</div>
+                <div class="match-card__body">
+                    <div class="match-card__team">
+                        <div class="team-badge">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <span>{{ fixture.home_team.name }}</span>
+                    </div>
+                    <div class="match-card__vs">
+                        <strong>{{ fixture.home_score|default:"0" }} - {{ fixture.away_score|default:"0" }}</strong>
+                        <small>{{ fixture.match_date|date:"d M" }}</small>
+                    </div>
+                    <div class="match-card__team">
+                        <div class="team-badge">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <span>{{ fixture.away_team.name }}</span>
+                    </div>
+                </div>
+                <div class="match-card__foot">
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {{ fixture.venue.name|default:"—" }}
+                    </span>
+                    <span class="match-card__ft">FT</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(27,94,32,.2)" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            <h3>No Results Available</h3>
+            <p>Match results will appear here once competitions are underway.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     UPCOMING FIXTURES
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec">
+    <div class="container">
+        <div class="sec-head">
+            <span class="badge badge--gold">Scheduled</span>
+            <h2 class="sec-title">Upcoming Fixtures</h2>
+            <p class="sec-sub">Matches yet to be played</p>
+            <div class="sec-line"></div>
+        </div>
+
+        {% if upcoming_fixtures %}
+        <div class="card-grid card-grid--3">
+            {% for fixture in upcoming_fixtures %}
+            <div class="match-card reveal" style="--delay:{{ forloop.counter0 }}0ms">
+                <div class="match-card__comp">{{ fixture.competition.name|truncatechars:30 }}</div>
+                <div class="match-card__body">
+                    <div class="match-card__team">
+                        <div class="team-badge">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <span>{{ fixture.home_team.name|default:"TBD" }}</span>
+                    </div>
+                    <div class="match-card__vs">
+                        <strong>VS</strong>
+                        <small>{{ fixture.match_date|date:"d M · H:i" }}</small>
+                    </div>
+                    <div class="match-card__team">
+                        <div class="team-badge">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <span>{{ fixture.away_team.name|default:"TBD" }}</span>
+                    </div>
+                </div>
+                <div class="match-card__foot">
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {{ fixture.venue.name|default:"TBD" }}
+                    </span>
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {{ fixture.kickoff_time|time:"H:i"|default:"TBD" }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(249,168,37,.25)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <h3>No Upcoming Fixtures</h3>
+            <p>Check back soon for scheduled matches.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAST COMPETITIONS
+     ══════════════════════════════════════════════════════════════════════════ -->
+{% if completed_competitions %}
+<section class="sec sec--dark">
+    <div class="container">
+        <div class="sec-head">
+            <span class="badge badge--muted">Archive</span>
+            <h2 class="sec-title">Past Competitions</h2>
+            <p class="sec-sub">View final standings and statistics from completed tournaments</p>
+            <div class="sec-line"></div>
+        </div>
+        <div class="comp-hub-grid">
+            {% for comp in completed_competitions %}
+            <a href="{% url 'public_competition_standings' pk=comp.pk %}" class="comp-hub-card comp-hub-card--muted reveal" style="--delay:{{ forloop.counter0 }}0ms">
+                <div class="comp-hub-card__accent comp-hub-card__accent--muted"></div>
+                <h4 class="comp-hub-card__title">{{ comp.name }}</h4>
+                <div class="comp-hub-card__meta">
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+                        {{ comp.get_sport_type_display }}
+                    </span>
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                        {{ comp.end_date|date:"d M Y" }}
+                    </span>
+                    <span class="comp-hub-card__status comp-hub-card__status--muted">Completed</span>
+                </div>
+                <div class="comp-hub-card__actions">
+                    <span class="comp-hub-btn">Final Standings</span>
+                    <span class="comp-hub-btn comp-hub-btn--blue">Stats</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* Scroll reveals */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* Canvas particles */
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++){
+            particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        }
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+})();
+</script>
+{% endblock %}

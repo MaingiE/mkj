@@ -1,0 +1,34 @@
+{% extends 'public/base.html' %}
+{% block title %}County Registration Submitted — KYISA 11th Edition{% endblock %}
+{% block content %}
+<section style="padding:120px 0 60px;background:linear-gradient(135deg,#f5f7f5 0%,#e8f5e9 100%);min-height:100vh">
+<div class="container" style="max-width:620px;text-align:center">
+    <div style="background:#fff;border-radius:16px;padding:3rem;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+        <div style="font-size:4rem">&#10004;&#65039;</div>
+        <h1 style="color:#1B5E20;margin:1rem 0">County Registration Submitted!</h1>
+        <p style="color:#2E7D32;font-weight:600;margin-bottom:.5rem">KYISA 11th Edition — 11 Apr – 17 Apr 2026</p>
+        <p style="color:#555;margin-bottom:1.5rem">Your county registration is now <strong>pending payment</strong>.</p>
+
+        <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:12px;padding:1.2rem;text-align:left;margin-bottom:1.5rem">
+            <h3 style="color:#6d4c00;margin:0 0 .5rem;font-size:1rem"><i class="bi bi-key"></i> Check Your Email</h3>
+            <p style="margin:0;font-size:.9rem;color:#555">Your temporary password has been sent to your registration email. If it does not arrive, check spam or contact KYISA admin for a resend.</p>
+        </div>
+
+        <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:12px;padding:1.4rem;text-align:left;margin-bottom:2rem">
+            <h3 style="color:#1b5e20;margin:0 0 1rem;font-size:1.05rem">Next Steps</h3>
+            <ol style="margin:0 0 0 1.2rem;color:#444;line-height:2;font-size:.92rem">
+                <li><strong>Log in</strong> to the KYISA Portal with your email and temporary password from email</li>
+                <li><strong>Change your password</strong> when prompted on first login</li>
+                <li><strong>Submit payment proof</strong> (M-Pesa reference or bank slip upload)</li>
+                <li>Wait for the <strong>KYISA Treasurer</strong> to review and approve your payment</li>
+                <li>Once approved, <strong>add disciplines first</strong>, then add your <strong>county delegation players</strong></li>
+            </ol>
+        </div>
+
+        <a href="{% url 'web_login' %}" style="display:inline-block;padding:.8rem 2rem;background:#1B5E20;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:1rem">
+            <i class="bi bi-box-arrow-in-right"></i> Log In Now
+        </a>
+    </div>
+</div>
+</section>
+{% endblock %}

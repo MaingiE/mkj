@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% block title %}Appeal #{{ appeal.pk }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem;">
+    <a href="{% url 'appeals_list' %}" class="btn btn-outline" style="font-size:.85rem;">← Back to Appeals</a>
+</div>
+
+<!-- Appeal Header -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; padding:1.5rem;">
+        <div>
+            <h1 style="margin:0 0 .5rem;">
+                ⚖️ Appeal #{{ appeal.pk }}
+                {% if appeal.is_reappeal %}
+                <span class="badge" style="background:#ff9800; color:#fff; font-size:.8rem; vertical-align:middle;">RE-APPEAL</span>
+                {% endif %}
+            </h1>
+            <h3 style="margin:0 0 .5rem; color:#555;">{{ appeal.subject }}</h3>
+        </div>
+        <div style="text-align:right;">
+            <span class="badge {% if appeal.status == 'draft' %}bg-secondary{% elif appeal.status == 'submitted' %}bg-warning{% elif appeal.status == 'response_received' %}bg-info{% elif appeal.status == 'under_review' %}bg-primary{% elif appeal.status == 'decided' %}bg-success{% else %}bg-dark{% endif %}" style="padding:6px 12px; border-radius:4px; color:#fff; font-size:.9rem;">
+                {{ appeal.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div style="padding:0 1.5rem 1.5rem; display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1rem;">
+        <div>
+            <strong>Appellant Team:</strong><br>
+            {{ appeal.appellant_team }}
+        </div>
+        <div>
+            <strong>Filed By:</strong><br>
+            {{ appeal.appellant_user.get_full_name }}
+        </div>
+        <div>
+            <strong>Respondent Team:</strong><br>
+            {{ appeal.respondent_team }}
+        </div>
+        {% if appeal.competition %}
+        <div>
+            <strong>Competition:</strong><br>
+            {{ appeal.competition }}
+        </div>
+        {% endif %}
+        {% if appeal.match %}
+        <div>
+            <strong>Related Match:</strong><br>
+            {{ appeal.match }}
+        </div>
+        {% endif %}
+        <div>
+            <strong>Filed:</strong><br>
+            {{ appeal.created_at|date:"d M Y H:i" }}
+        </div>
+        {% if appeal.submitted_at %}
+        <div>
+            <strong>Submitted:</strong><br>
+            {{ appeal.submitted_at|date:"d M Y H:i" }}
+        </div>
+        {% endif %}
+        {% if appeal.response_deadline %}
+        <div>
+            <strong>Response Deadline:</strong><br>
+            <span {% if appeal.response_overdue %}style="color:red; font-weight:bold;"{% endif %}>
+                {{ appeal.response_deadline|date:"d M Y H:i" }}
+                {% if appeal.response_overdue %} (OVERDUE){% endif %}
+            </span>
+        </div>
+        {% endif %}
+        {% if appeal.is_reappeal and appeal.original_appeal %}
+        <div>
+            <strong>Original Appeal:</strong><br>
+            <a href="{% url 'appeal_detail' pk=appeal.original_appeal.pk %}">#{{ appeal.original_appeal.pk }}</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Appeal Details -->
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem;">
+    <h3 style="margin:0 0 1rem;">📄 Appeal Details</h3>
+    <div style="white-space:pre-wrap; line-height:1.6;">{{ appeal.details }}</div>
+</div>
+
+<!-- Fee Status -->
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem;">
+    <h3 style="margin:0 0 1rem;">💰 Appeal Fee</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <p style="margin:0;">Amount: <strong>KES {{ appeal.fee_amount|floatformat:0 }}</strong></p>
+            <p style="margin:.25rem 0;">Status:
+                <span class="badge {% if appeal.fee_status == 'verified' %}bg-success{% elif appeal.fee_status == 'pending' %}bg-warning{% elif appeal.fee_status == 'refunded' %}bg-info{% else %}bg-danger{% endif %}" style="padding:4px 8px; border-radius:4px; color:#fff;">
+                    {{ appeal.get_fee_status_display }}
+                </span>
+            </p>
+            {% if appeal.fee_reference %}
+            <p style="margin:.25rem 0;">Reference: <code>{{ appeal.fee_reference }}</code></p>
+            {% endif %}
+            {% if appeal.fee_verified_by %}
+            <p style="margin:.25rem 0; font-size:.85rem; color:#666;">
+                Verified by {{ appeal.fee_verified_by.get_full_name }} on {{ appeal.fee_verified_at|date:"d M Y H:i" }}
+            </p>
+            {% endif %}
+        </div>
+        <div style="display:flex; gap:.5rem;">
+            {% if is_appellant and appeal.fee_status == 'unpaid' and appeal.status == 'draft' %}
+            <a href="{% url 'pay_appeal_fee' pk=appeal.pk %}" class="btn btn-primary">💳 Pay Fee</a>
+            {% endif %}
+            {% if is_admin or is_treasurer %}
+                {% if appeal.fee_status == 'pending' %}
+                <a href="{% url 'verify_appeal_fee' pk=appeal.pk %}" class="btn btn-success">✅ Verify Fee</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Evidence Files -->
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">📎 Appellant Evidence</h3>
+        {% if is_appellant and appeal.status == 'draft' %}
+        <a href="{% url 'upload_appeal_evidence' pk=appeal.pk %}" class="btn btn-sm btn-primary">+ Add Evidence</a>
+        {% endif %}
+    </div>
+    {% if evidence %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>File</th>
+                    <th>Uploaded</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in evidence %}
+                <tr>
+                    <td>{{ e.title }}</td>
+                    <td>{{ e.get_evidence_type_display }}</td>
+                    <td><a href="{{ e.file.url }}" target="_blank" class="btn btn-sm btn-outline">📥 Download</a></td>
+                    <td>{{ e.uploaded_at|date:"d M Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:#888;">No evidence uploaded yet.</p>
+    {% endif %}
+</div>
+
+<!-- Submit Appeal Button (for draft) -->
+{% if is_appellant and appeal.status == 'draft' %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; background:#fff3cd; border-left:4px solid #ffc107;">
+    <h3 style="margin:0 0 .5rem;">🚀 Ready to Submit?</h3>
+    <p>Before submitting, ensure you have:</p>
+    <ul style="margin:.5rem 0;">
+        <li>{% if appeal.has_evidence %}✅{% else %}❌{% endif %} At least one evidence file uploaded</li>
+        <li>{% if appeal.fee_status == 'verified' %}✅{% else %}❌{% endif %} Fee payment verified (KES {{ APPEAL_FEE }})</li>
+    </ul>
+    {% if appeal.can_submit %}
+    <a href="{% url 'finalize_appeal' pk=appeal.pk %}" class="btn btn-success">Submit Appeal</a>
+    {% else %}
+    <p style="color:#dc3545; font-weight:600;">Complete the requirements above before submitting.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Response Section -->
+{% if response %}
+
+<!-- Hearing Schedule Section -->
+{% if hearings %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; border-left:4px solid #673ab7;">
+    <h3 style="margin:0 0 1rem;">📅 Scheduled Hearings</h3>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Scheduled By</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in hearings %}
+                <tr>
+                    <td>{{ h.hearing_date|date:"d M Y" }}</td>
+                    <td>{{ h.hearing_time|time:"H:i" }}</td>
+                    <td>{{ h.location|default:"TBC" }}</td>
+                    <td>{{ h.scheduled_by.get_full_name }}</td>
+                    <td>
+                        {% if h.is_upcoming %}
+                        <span class="badge bg-primary" style="padding:4px 8px; border-radius:4px; color:#fff;">Upcoming</span>
+                        {% else %}
+                        <span class="badge bg-secondary" style="padding:4px 8px; border-radius:4px; color:#fff;">Past</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if h.notes %}
+                <tr>
+                    <td colspan="5" style="padding-left:2rem; color:#666; font-size:.9rem;">
+                        <em>Notes:</em> {{ h.notes }}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if can_schedule_hearing %}
+    <a href="{% url 'schedule_hearing' pk=appeal.pk %}" class="btn btn-sm btn-primary" style="margin-top:.5rem;">+ Schedule Another Hearing</a>
+    {% endif %}
+</div>
+{% elif can_schedule_hearing %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; background:#ede7f6; border-left:4px solid #673ab7;">
+    <h3 style="margin:0 0 .5rem;">📅 Schedule Hearing</h3>
+    <p>No hearing has been scheduled yet for this appeal.</p>
+    <a href="{% url 'schedule_hearing' pk=appeal.pk %}" class="btn btn-primary">Schedule Hearing</a>
+</div>
+{% endif %}
+
+{% if response %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; border-left:4px solid #17a2b8;">
+    <h3 style="margin:0 0 1rem;">📨 Respondent's Response</h3>
+    <p><strong>By:</strong> {{ response.respondent_user.get_full_name }} ({{ appeal.respondent_team }})</p>
+    <p><strong>Submitted:</strong> {{ response.submitted_at|date:"d M Y H:i" }}</p>
+    <div style="white-space:pre-wrap; line-height:1.6; margin:1rem 0; padding:1rem; background:#f8f9fa; border-radius:4px;">{{ response.statement }}</div>
+
+    {% if response_evidence %}
+    <h4 style="margin:1rem 0 .5rem;">📎 Response Evidence</h4>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>File</th>
+                    <th>Uploaded</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in response_evidence %}
+                <tr>
+                    <td>{{ e.title }}</td>
+                    <td>{{ e.get_evidence_type_display }}</td>
+                    <td><a href="{{ e.file.url }}" target="_blank" class="btn btn-sm btn-outline">📥 Download</a></td>
+                    <td>{{ e.uploaded_at|date:"d M Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% elif can_respond %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; background:#e3f2fd; border-left:4px solid #2196f3;">
+    <h3 style="margin:0 0 .5rem;">📨 Response Required</h3>
+    <p>Your team is required to respond to this appeal.</p>
+    {% if appeal.response_deadline %}
+    <p><strong>Deadline:</strong>
+        <span {% if appeal.response_overdue %}style="color:red;"{% endif %}>
+            {{ appeal.response_deadline|date:"d M Y H:i" }}
+        </span>
+    </p>
+    {% endif %}
+    <a href="{% url 'submit_appeal_response' pk=appeal.pk %}" class="btn btn-primary">Submit Response</a>
+</div>
+{% endif %}
+
+<!-- Jury Decisions -->
+{% if decisions %}
+{% for decision in decisions %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; border-left:4px solid {% if decision.outcome == 'successful' %}#28a745{% elif decision.outcome == 'rejected' %}#dc3545{% else %}#ffc107{% endif %};">
+    <h3 style="margin:0 0 1rem;">
+        🏛️ Jury Decision
+        {% if not decision.is_published %}
+        <span class="badge bg-secondary" style="font-size:.75rem;">UNPUBLISHED</span>
+        {% endif %}
+    </h3>
+    {% if decision.is_published or is_jury or is_admin %}
+    <p><strong>Outcome:</strong>
+        <span class="badge {% if decision.outcome == 'successful' %}bg-success{% elif decision.outcome == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}" style="padding:4px 8px; border-radius:4px; color:#fff;">
+            {{ decision.get_outcome_display }}
+        </span>
+    </p>
+    <p><strong>Decided By:</strong> {{ decision.decided_by.get_full_name }}</p>
+    <p><strong>Date:</strong> {{ decision.created_at|date:"d M Y H:i" }}</p>
+
+    <div style="margin:1rem 0;">
+        <h4>Reasoning:</h4>
+        <div style="white-space:pre-wrap; line-height:1.6; padding:1rem; background:#f8f9fa; border-radius:4px;">{{ decision.reasoning }}</div>
+    </div>
+
+    {% if decision.sanctions %}
+    <div style="margin:1rem 0;">
+        <h4>Sanctions / Remedies:</h4>
+        <div style="white-space:pre-wrap; line-height:1.6; padding:1rem; background:#fff3cd; border-radius:4px;">{{ decision.sanctions }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Decision Evidence -->
+    {% with d_evidence=decision.evidence_files.all %}
+    {% if d_evidence %}
+    <h4 style="margin:1rem 0 .5rem;">📎 Decision Evidence</h4>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>File</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in d_evidence %}
+                <tr>
+                    <td>{{ e.title }}</td>
+                    <td>{{ e.get_evidence_type_display }}</td>
+                    <td><a href="{{ e.file.url }}" target="_blank" class="btn btn-sm btn-outline">📥 Download</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% if is_published %}
+    <p style="font-size:.85rem; color:#666; margin:.5rem 0 0;">Published: {{ decision.published_at|date:"d M Y H:i" }}</p>
+    {% endif %}
+
+    {% else %}
+    <p style="color:#888; font-style:italic;">Decision pending publication.</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Jury Action Buttons -->
+{% if can_decide %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; background:#e8eaf6; border-left:4px solid #3f51b5;">
+    <h3 style="margin:0 0 .5rem;">🏛️ Jury Action Required</h3>
+    <p>This appeal is ready for your decision.</p>
+    <a href="{% url 'jury_decision' pk=appeal.pk %}" class="btn btn-primary">Make Decision</a>
+</div>
+{% endif %}
+
+<!-- Publish Button (for unpublished decisions) -->
+{% if is_jury or is_admin %}
+{% for decision in decisions %}
+{% if not decision.is_published %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; background:#e0f2f1; border-left:4px solid #009688;">
+    <h3 style="margin:0 0 .5rem;">📢 Publish Decision</h3>
+    <p>Decision is ready. Publishing will notify both teams.</p>
+    <a href="{% url 'publish_decision' pk=appeal.pk decision_pk=decision.pk %}" class="btn btn-success">Publish Decision</a>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+<!-- Re-appeal Button -->
+{% if can_reappeal %}
+<div class="card" style="margin-bottom:1.5rem; padding:1.5rem; background:#fce4ec; border-left:4px solid #e91e63;">
+    <h3 style="margin:0 0 .5rem;">🔄 Re-Appeal</h3>
+    <p>Your appeal was rejected. You have the right to file one re-appeal with new evidence.</p>
+    <a href="{% url 'reappeal' pk=appeal.pk %}" class="btn btn-warning">File Re-Appeal</a>
+</div>
+{% endif %}
+
+{% endblock %}

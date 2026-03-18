@@ -1,0 +1,260 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Competitions{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE HERO — DARK CINEMATIC
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">11th Edition</span>
+        <h1 class="page-hero__title reveal">Our <span class="text-gold">Competitions</span></h1>
+        <p class="page-hero__sub reveal">Browse KYISA intercounty sporting competitions across Kenya's 47 counties</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>Competitions</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     SPORTS CATALOGUE — Grouped disciplines with dropdown
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec">
+    <div class="container">
+        <div class="sec-head">
+            <span class="badge">Disciplines</span>
+            <h2 class="sec-title">Our Sports</h2>
+            <p class="sec-sub">KYISA organises competitive intercounty tournaments across these disciplines</p>
+            <div class="sec-line"></div>
+        </div>
+        <div class="disc-grid">
+            {% for disc in disciplines %}
+            <div class="disc-tile reveal {% if disc.exhibition %}disc-tile--exh{% endif %}">
+                <div class="disc-tile__icon">{{ disc.icon }}</div>
+                <div class="disc-tile__name">{{ disc.name }}</div>
+                {% if disc.exhibition %}
+                <span class="disc-tile__badge disc-tile__badge--muted">Exhibition</span>
+                {% endif %}
+                <div class="disc-tile__links">
+                    {% for v in disc.variants %}
+                    <a href="{% url 'public_results' %}?sport={{ v.key }}" class="disc-tile__link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        {{ v.label }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     COMPETITIONS BY SPORT
+     ══════════════════════════════════════════════════════════════════════════ -->
+{% for sport in sport_catalogue %}
+<section class="sec {% if forloop.even %}sec--dark{% endif %}" id="sport-{{ sport.key }}">
+    <div class="container">
+        <div class="sec-head">
+            <h2 class="sec-title">{{ sport.icon }} {{ sport.label }}
+                {% if sport.exhibition %}
+                <span class="comp-chip comp-chip--outline" style="font-size:.7rem;vertical-align:middle;margin-left:.5rem;">Exhibition Sport</span>
+                {% endif %}
+            </h2>
+            {% if sport.key == "soccer" %}
+            <p class="sec-sub">Register your team and compete in intercounty soccer tournaments</p>
+            {% elif sport.exhibition %}
+            <p class="sec-sub">Exhibition matches — showcase events only</p>
+            {% else %}
+            <p class="sec-sub">Intercounty {{ sport.label }} competitions across Kenya's 47 counties</p>
+            {% endif %}
+            <div class="sec-line"></div>
+        </div>
+
+        <!-- ── Active ── -->
+        {% for comp in active_competitions %}{% if comp.sport_type == sport.key %}
+        <div class="comp-card comp-card--active reveal">
+            <div class="comp-card__accent"></div>
+            <div class="comp-card__inner">
+                <div class="comp-card__header">
+                    <div class="comp-card__icon comp-card__icon--green">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+                    </div>
+                    <div class="comp-card__title-group">
+                        <h3 class="comp-card__name">{{ comp.name }}</h3>
+                        <div class="comp-card__chips">
+                            <span class="comp-chip comp-chip--green"><span class="comp-chip__dot"></span> Active</span>
+                            {% if comp.is_exhibition %}<span class="comp-chip comp-chip--muted">Exhibition</span>{% endif %}
+                            <span class="comp-chip">{{ comp.get_age_group_display }}</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="comp-card__desc">{{ comp.description|default:"An intercounty competition organised by KYISA." }}</p>
+                <div class="comp-card__meta">
+                    <span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{ comp.start_date|date:"d M Y" }} — {{ comp.end_date|date:"d M Y"|default:"Ongoing" }}
+                    </span>
+                    <span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                        {{ comp.teams.count }} / {{ comp.max_teams }} Teams
+                    </span>
+                </div>
+                <div class="comp-card__actions">
+                    <a href="{% url 'public_competition_detail' comp.pk %}" class="btn btn--primary btn--sm">View Details →</a>
+                    {% if sport.key == "soccer" %}
+                    <a href="{% url 'county_admin_register' %}" class="btn btn--gold btn--sm">Register County</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}{% endfor %}
+
+        <!-- ── Upcoming / Registration ── -->
+        {% for comp in upcoming_competitions %}{% if comp.sport_type == sport.key %}
+        <div class="comp-card comp-card--upcoming reveal">
+            <div class="comp-card__accent"></div>
+            <div class="comp-card__inner">
+                <div class="comp-card__header">
+                    <div class="comp-card__icon comp-card__icon--gold">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="comp-card__title-group">
+                        <h3 class="comp-card__name">{{ comp.name }}</h3>
+                        <div class="comp-card__chips">
+                            {% if comp.status == "registration" %}
+                            <span class="comp-chip comp-chip--gold"><span class="comp-chip__dot"></span> Registration Open</span>
+                            {% else %}
+                            <span class="comp-chip comp-chip--blue"><span class="comp-chip__dot"></span> Upcoming</span>
+                            {% endif %}
+                            {% if comp.is_exhibition %}<span class="comp-chip comp-chip--muted">Exhibition</span>{% endif %}
+                            <span class="comp-chip">{{ comp.get_age_group_display }}</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="comp-card__desc">{{ comp.description|default:"An upcoming intercounty competition organised by KYISA." }}</p>
+                <div class="comp-card__meta">
+                    <span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Starts {{ comp.start_date|date:"d M Y" }}
+                    </span>
+                </div>
+                <div class="comp-card__actions">
+                    {% if sport.key == "soccer" and comp.status == "registration" %}
+                    <a href="{% url 'county_admin_register' %}" class="btn btn--gold btn--sm">Register County</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}{% endfor %}
+
+        <!-- ── Completed ── -->
+        {% for comp in completed_competitions %}{% if comp.sport_type == sport.key %}
+        <div class="comp-card comp-card--completed reveal">
+            <div class="comp-card__accent"></div>
+            <div class="comp-card__inner">
+                <div class="comp-card__header">
+                    <div class="comp-card__icon comp-card__icon--muted">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="comp-card__title-group">
+                        <h3 class="comp-card__name">{{ comp.name }}</h3>
+                        <div class="comp-card__chips">
+                            <span class="comp-chip comp-chip--muted">Completed</span>
+                            {% if comp.is_exhibition %}<span class="comp-chip comp-chip--muted">Exhibition</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <p class="comp-card__desc">{{ comp.description|default:"This competition has been completed." }}</p>
+                <div class="comp-card__meta">
+                    <span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{ comp.start_date|date:"d M Y" }} — {{ comp.end_date|date:"d M Y" }}
+                    </span>
+                </div>
+                <div class="comp-card__actions">
+                    <a href="{% url 'public_competition_detail' comp.pk %}" class="btn btn--outline btn--sm">View Results →</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}{% endfor %}
+
+        <!-- ── Empty state ── -->
+        <div class="sport-empty-check" data-sport="{{ sport.key }}">
+            <div class="comp-card comp-card--empty" style="text-align:center;justify-content:center;">
+                <div class="comp-card__inner" style="padding:2.5rem 1.5rem;text-align:center;">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(27,94,32,.18)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    {% if sport.exhibition %}
+                    <h3 style="margin:.75rem 0 .25rem;font-size:1rem;color:#888;">Exhibition Matches Coming Soon</h3>
+                    <p style="font-size:.85rem;color:#aaa;margin:0;">Stay tuned for upcoming exhibition events</p>
+                    {% else %}
+                    <h3 style="margin:.75rem 0 .25rem;font-size:1rem;color:#888;">No {{ sport.label }} Competitions Yet</h3>
+                    <p style="font-size:.85rem;color:#aaa;margin:0;">Check back soon for new tournaments</p>
+                    {% endif %}
+                    {% if sport.key == "soccer" %}
+                    <a href="{% url 'county_admin_register' %}" class="btn btn--primary btn--sm" style="margin-top:1rem;">Register Your County</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* Hide empty sport sections */
+    document.querySelectorAll(".sport-empty-check").forEach(function(el){
+        var sport = el.getAttribute("data-sport");
+        var section = document.getElementById("sport-" + sport);
+        if(section){
+            var cards = section.querySelectorAll(".comp-card:not(.comp-card--empty)");
+            if(cards.length > 0) el.style.display = "none";
+        }
+    });
+
+    /* Scroll reveals */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* Canvas particles */
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++){
+            particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        }
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+})();
+</script>
+{% endblock %}

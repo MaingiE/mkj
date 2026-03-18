@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Verification Status &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'county_admin_dashboard' %}">County Admin</a>
+        <span>Verification Status</span>
+    </div>
+    <h1><i class="bi bi-shield-check"></i> Player Verification Status</h1>
+    <p>{{ reg.county }} County &mdash; Overview of all player verification statuses</p>
+</div>
+
+<!-- Summary Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem">
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #2e7d32">
+        <div style="font-size:2rem;font-weight:800;color:#2e7d32">{{ approved_players|length }}</div>
+        <div style="color:#888;font-size:.82rem">Verified</div>
+    </div>
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #f57c00">
+        <div style="font-size:2rem;font-weight:800;color:#f57c00">{{ pending_players|length }}</div>
+        <div style="color:#888;font-size:.82rem">Pending</div>
+    </div>
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #1565c0">
+        <div style="font-size:2rem;font-weight:800;color:#1565c0">{{ resubmit_players|length }}</div>
+        <div style="color:#888;font-size:.82rem">Resubmit</div>
+    </div>
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #C62828">
+        <div style="font-size:2rem;font-weight:800;color:#C62828">{{ rejected_players|length }}</div>
+        <div style="color:#888;font-size:.82rem">Rejected</div>
+    </div>
+</div>
+
+{% if rejected_players %}
+<div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
+    <h3 style="font-size:1rem;color:#C62828;margin-bottom:.8rem"><i class="bi bi-x-circle"></i> Rejected Players</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead><tr style="background:#fce4ec;text-align:left">
+            <th style="padding:.5rem .8rem">Name</th>
+            <th style="padding:.5rem .8rem">Discipline</th>
+            <th style="padding:.5rem .8rem">Reason</th>
+        </tr></thead>
+        <tbody>
+            {% for entry in rejected_players %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
+                <td style="padding:.5rem .8rem;color:#C62828">{{ entry.player.rejection_reason|default:"No reason provided" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if resubmit_players %}
+<div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
+    <h3 style="font-size:1rem;color:#1565c0;margin-bottom:.8rem"><i class="bi bi-arrow-repeat"></i> Resubmission Required</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead><tr style="background:#e3f2fd;text-align:left">
+            <th style="padding:.5rem .8rem">Name</th>
+            <th style="padding:.5rem .8rem">Discipline</th>
+            <th style="padding:.5rem .8rem">Reason</th>
+        </tr></thead>
+        <tbody>
+            {% for entry in resubmit_players %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
+                <td style="padding:.5rem .8rem;color:#1565c0">{{ entry.player.rejection_reason|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if pending_players %}
+<div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
+    <h3 style="font-size:1rem;color:#f57c00;margin-bottom:.8rem"><i class="bi bi-hourglass-split"></i> Pending Verification</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead><tr style="background:#fff3e0;text-align:left">
+            <th style="padding:.5rem .8rem">Name</th>
+            <th style="padding:.5rem .8rem">Discipline</th>
+            <th style="padding:.5rem .8rem">Registered</th>
+        </tr></thead>
+        <tbody>
+            {% for entry in pending_players %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
+                <td style="padding:.5rem .8rem;color:#888">{{ entry.player.registered_at|date:"d M Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if approved_players %}
+<div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
+    <h3 style="font-size:1rem;color:#2e7d32;margin-bottom:.8rem"><i class="bi bi-check-circle"></i> Verified Players</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead><tr style="background:#e8f5e9;text-align:left">
+            <th style="padding:.5rem .8rem">Name</th>
+            <th style="padding:.5rem .8rem">Discipline</th>
+            <th style="padding:.5rem .8rem">Position</th>
+            <th style="padding:.5rem .8rem">Jersey</th>
+        </tr></thead>
+        <tbody>
+            {% for entry in approved_players %}
+            <tr style="border-bottom:1px solid #eee">
+                <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.player.position|default:"—" }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.player.jersey_number|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'county_admin_dashboard' %}" style="color:#1B5E20;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

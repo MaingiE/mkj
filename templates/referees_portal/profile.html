@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}My Profile - {{ referee.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">👤 My Profile</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'referees:referee_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">My Profile</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'referees:referee_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <a href="{% url 'referees:referee_availability' %}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar me-2"></i>Set Availability
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="row mb-4">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Column: Profile Info -->
+        <div class="col-lg-4 mb-4">
+            <!-- Profile Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Profile Overview</h6>
+                    <span class="badge {% if referee.status == 'approved' %}bg-success{% elif referee.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ referee.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Profile Photo -->
+                    <div class="mb-4">
+                        {% if referee.photo %}
+                        <img src="{{ referee.photo.url }}" alt="{{ referee.full_name }}" 
+                             class="img-thumbnail rounded-circle" 
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 150px; height: 150px;">
+                            <span class="text-white display-4">{{ referee.first_name|first }}{{ referee.last_name|first }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="mt-3">
+                            <h4 class="font-weight-bold">{{ referee.full_name }}</h4>
+                            <p class="text-muted mb-1">{{ referee.unique_id }}</p>
+                            <p class="text-muted mb-0">{{ referee.get_level_display|default:"Level not set" }}</p>
+                            {% if referee.specialization %}
+                            <p class="text-muted mb-0">
+                                <span class="badge bg-info">{{ referee.get_specialization_display }}</span>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h3 class="text-primary mb-0">{{ referee.reports.count }}</h3>
+                                <small class="text-muted">Reports</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h3 class="text-success mb-0">{{ referee.appointed_as_main.count|add:referee.appointed_as_assistant1.count|add:referee.appointed_as_assistant2.count }}</h3>
+                                <small class="text-muted">Assignments</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="text-start mt-4">
+                        <h6 class="text-primary mb-3">Contact Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="100"><strong>Email:</strong></td>
+                                <td>{{ referee.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>{{ referee.phone_number|default:"Not provided" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>County:</strong></td>
+                                <td>{{ referee.county|default:"Not set" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>FKF No:</strong></td>
+                                <td>{{ referee.fkf_number }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ID No:</strong></td>
+                                <td>{{ referee.id_number|default:"Not provided" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Specialization:</strong></td>
+                                <td>
+                                    {% if referee.specialization %}
+                                        <span class="badge bg-info">{{ referee.get_specialization_display }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Account Info -->
+                    <div class="text-start mt-4">
+                        <h6 class="text-primary mb-3">Account Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="120"><strong>Joined:</strong></td>
+                                <td>{{ referee.date_joined|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% if referee.approved_at %}
+                            <tr>
+                                <td><strong>Approved:</strong></td>
+                                <td>{{ referee.approved_at|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    <span class="badge {% if referee.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if referee.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Actions Card -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Account Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </a>
+                        <a href="{% url 'referees:referee_availability' %}" class="btn btn-outline-info">
+                            <i class="fas fa-calendar-alt me-2"></i>Set Availability
+                        </a>
+                        <a href="{% url 'logout' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Edit Form -->
+        <div class="col-lg-8">
+            <!-- Edit Profile Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Edit Profile Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="profileForm">
+                        {% csrf_token %}
+                        
+                        <!-- Personal Information -->
+                        <h5 class="border-bottom pb-2 mb-4 text-primary">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.first_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.last_name|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <h5 class="border-bottom pb-2 mb-4 mt-4 text-primary">
+                            <i class="fas fa-address-card me-2"></i>Contact Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_phone_digits" class="form-label fw-bold">Phone Number *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text fw-bold bg-primary text-white">+254</span>
+                                    {{ form.phone_digits }}
+                                </div>
+                                <small class="form-text text-muted">Enter 9 digits only (e.g., 712345678)</small>
+                                {% if form.phone_digits.errors %}
+                                    <div class="text-danger small mt-2">{{ form.phone_digits.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.county|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.id_number|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Professional Information -->
+                        <h5 class="border-bottom pb-2 mb-4 mt-4 text-primary">
+                            <i class="fas fa-award me-2"></i>Professional Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.fkf_number|as_crispy_field }}
+                                <small class="form-text text-muted">Your official FKF License Number</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.level|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.specialization|as_crispy_field }}
+                                <small class="form-text text-muted">Your primary role specialization (determines appointment eligibility)</small>
+                            </div>
+                        </div>
+
+                        <!-- Profile Photo -->
+                        <h5 class="border-bottom pb-2 mb-4 mt-4 text-primary">
+                            <i class="fas fa-camera me-2"></i>Profile Photo
+                        </h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.photo|as_crispy_field }}
+                                    <small class="form-text text-muted">
+                                        Recommended: Square image, max 2MB, JPG or PNG format
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-center">
+                                    <div class="border rounded p-3">
+                                        <h6>Current Photo</h6>
+                                        {% if referee.photo %}
+                                        <img src="{{ referee.photo.url }}" alt="Current photo" 
+                                             class="img-fluid rounded" style="max-height: 150px;">
+                                        {% else %}
+                                        <div class="text-muted">
+                                            <i class="fas fa-user-circle fa-4x mb-2"></i>
+                                            <p>No photo uploaded</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Read-only Fields -->
+                        <h5 class="border-bottom pb-2 mb-4 mt-4 text-secondary">
+                            <i class="fas fa-info-circle me-2"></i>System Information (Read Only)
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Referee ID</label>
+                                <input type="text" class="form-control" value="{{ referee.unique_id }}" readonly>
+                                <small class="form-text text-muted">Your unique identifier in the system</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ referee.get_status_display }}" readonly>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date Joined</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ referee.date_joined|date:'d/m/Y H:i' }}" readonly>
+                            </div>
+                            {% if referee.approved_at %}
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Approved On</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ referee.approved_at|date:'d/m/Y H:i' }}" readonly>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+                            <div>
+                                <button type="reset" class="btn btn-outline-secondary">
+                                    <i class="fas fa-undo me-2"></i>Reset Changes
+                                </button>
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h6>
+                    <small class="text-muted">Last 30 days</small>
+                </div>
+                <div class="card-body">
+                    {% if referee.reports.all or referee.appointed_as_main.all or referee.appointed_as_assistant1.all or referee.appointed_as_assistant2.all %}
+                    <div class="timeline">
+                        <!-- Recent Reports -->
+                        {% for report in referee.reports.all|slice:":3" %}
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-badge bg-success">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h6 class="timeline-title">Match Report Submitted</h6>
+                                    <small class="text-muted">{{ report.created_at|timesince }} ago</small>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="mb-1">{{ report.match.home_team }} vs {{ report.match.away_team }}</p>
+                                    <span class="badge bg-{% if report.status == 'submitted' %}success{% elif report.status == 'approved' %}info{% else %}warning{% endif %}">
+                                        {{ report.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Recent Appointments -->
+                        {% with appointments=referee.appointed_as_main.all|add:referee.appointed_as_assistant1.all|add:referee.appointed_as_assistant2.all|dictsortreversed:"match.match_date"|slice:":3" %}
+                        {% for appointment in appointments %}
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-badge bg-primary">
+                                <i class="fas fa-whistle"></i>
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h6 class="timeline-title">Match Assignment</h6>
+                                    <small class="text-muted">{{ appointment.match.match_date|date:"d/m/Y" }}</small>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="mb-1">{{ appointment.match.home_team }} vs {{ appointment.match.away_team }}</p>
+                                    <span class="badge bg-info">{{ appointment.match.zone.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endwith %}
+
+                        <!-- Profile Updates -->
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-warning">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h6 class="timeline-title">Profile Last Updated</h6>
+                                    <small class="text-muted">{{ referee.updated_at|timesince }} ago</small>
+                                </div>
+                                <div class="timeline-body">
+                                    <p>You last updated your profile information</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Recent Activity</h5>
+                        <p class="text-muted">Your activity will appear here once you start using the system.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-item {
+    position: relative;
+}
+.timeline-badge {
+    position: absolute;
+    left: -40px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 2;
+}
+.timeline-panel {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 3px solid #dee2e6;
+}
+.timeline-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+.timeline-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+.timeline-body p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 0;
+}
+.img-thumbnail {
+    border: 3px solid #dee2e6;
+    padding: 5px;
+}
+.table-sm td, .table-sm th {
+    padding: 0.3rem;
+}
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('profileForm');
+    if (form) {
+        // Form validation
+        form.addEventListener('submit', function(e) {
+            const fkfNumber = document.querySelector('#id_fkf_number').value;
+            const email = document.querySelector('#id_email').value;
+            const phoneDigits = document.querySelector('[name="phone_digits"]');
+            const phoneValue = phoneDigits ? phoneDigits.value : '';
+            
+            if (!fkfNumber || !email) {
+                e.preventDefault();
+                alert('FKF Number and Email are required fields.');
+                return false;
+            }
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                alert('Please enter a valid email address.');
+                return false;
+            }
+            
+            // Phone validation (required, 9 digits)
+            if (!phoneValue || !/^[0-9]{9}$/.test(phoneValue)) {
+                e.preventDefault();
+                alert('Phone number is required. Enter exactly 9 digits (e.g., 712345678).');
+                if (phoneDigits) phoneDigits.focus();
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // Show preview of selected photo
+        const photoInput = document.querySelector('#id_photo');
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // You could show a preview here
+                        console.log('New photo selected:', file.name);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    }
+    
+    // Reset form confirmation
+    const resetBtn = document.querySelector('button[type="reset"]');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to reset all changes?')) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% block title %}{{ competition.name }} &#8212; Standings &#38; Statistics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'competitions_list' %}">Competitions</a>
+        <a href="{% url 'competition_detail' competition.pk %}">{{ competition.name }}</a>
+        <span>Standings</span>
+    </div>
+    <h1><i class="bi bi-trophy"></i> {{ competition.name }}</h1>
+    <p>{{ competition.get_sport_type_display }} &#8226; {{ competition.get_gender_display }} &#8226; {{ competition.get_age_group_display }} &#8226; Season {{ competition.season }}</p>
+</div>
+
+<!-- Competition Info Bar -->
+<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem">
+    <span class="badge badge--primary" style="font-size:.85rem;padding:.4rem .8rem">{{ competition.get_format_type_display }}</span>
+    <span class="badge badge--info" style="font-size:.85rem;padding:.4rem .8rem">{{ competition.get_status_display }}</span>
+    <span style="color:#888;font-size:.85rem">{{ competition.start_date|date:"d M" }} &#8212; {{ competition.end_date|date:"d M Y" }}</span>
+</div>
+
+<!-- TAB NAVIGATION -->
+<div style="display:flex;gap:0;border-bottom:2px solid #e0e0e0;margin-bottom:1.5rem">
+    <button class="tab-btn active" onclick="showTab('groups')" id="tab-groups" style="padding:.6rem 1.2rem;border:none;background:none;cursor:pointer;font-weight:700;border-bottom:3px solid #1b5e20;color:#1b5e20">Group Standings</button>
+    <button class="tab-btn" onclick="showTab('knockout')" id="tab-knockout" style="padding:.6rem 1.2rem;border:none;background:none;cursor:pointer;font-weight:600;color:#888">Knockout</button>
+    <button class="tab-btn" onclick="showTab('scorers')" id="tab-scorers" style="padding:.6rem 1.2rem;border:none;background:none;cursor:pointer;font-weight:600;color:#888">Top Scorers</button>
+    <button class="tab-btn" onclick="showTab('assists')" id="tab-assists" style="padding:.6rem 1.2rem;border:none;background:none;cursor:pointer;font-weight:600;color:#888">Top Assists</button>
+    <button class="tab-btn" onclick="showTab('discipline')" id="tab-discipline" style="padding:.6rem 1.2rem;border:none;background:none;cursor:pointer;font-weight:600;color:#888">Discipline</button>
+</div>
+
+<!-- GROUP STANDINGS TAB -->
+<div id="panel-groups">
+{% if pool_standings %}
+    {% for ps in pool_standings %}
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header">
+            <h3>{{ ps.pool.name }}</h3>
+        </div>
+        <div class="card-body" style="overflow-x:auto;padding:0">
+            <table style="margin:0">
+                <thead>
+                    <tr>
+                        <th style="width:30px">#</th>
+                        <th>Team</th>
+                        <th style="text-align:center">P</th>
+                        <th style="text-align:center">W</th>
+                        <th style="text-align:center">D</th>
+                        <th style="text-align:center">L</th>
+                        <th style="text-align:center">GF</th>
+                        <th style="text-align:center">GA</th>
+                        <th style="text-align:center">GD</th>
+                        <th style="text-align:center;font-weight:800">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pt in ps.teams %}
+                    <tr{% if forloop.counter <= competition.qualify_from_group %} style="background:#e8f5e9"{% endif %}>
+                        <td style="text-align:center;font-weight:700;color:#888">{{ forloop.counter }}</td>
+                        <td><strong>{{ pt.team.name }}</strong> <span style="color:#aaa;font-size:.78rem">({{ pt.team.county }})</span></td>
+                        <td style="text-align:center">{{ pt.played }}</td>
+                        <td style="text-align:center">{{ pt.won }}</td>
+                        <td style="text-align:center">{{ pt.drawn }}</td>
+                        <td style="text-align:center">{{ pt.lost }}</td>
+                        <td style="text-align:center">{{ pt.goals_for }}</td>
+                        <td style="text-align:center">{{ pt.goals_against }}</td>
+                        <td style="text-align:center;font-weight:600">{{ pt.goal_difference }}</td>
+                        <td style="text-align:center;font-weight:800;font-size:1.1rem">{{ pt.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+    <p style="font-size:.82rem;color:#888">
+        <span style="display:inline-block;width:12px;height:12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:2px;vertical-align:middle;margin-right:.3rem"></span>
+        Qualify for knockout stage (top {{ competition.qualify_from_group }} per group)
+    </p>
+{% else %}
+    <div class="card" style="padding:2rem;text-align:center;color:#888">
+        <p>No groups/pools set up yet for this competition.</p>
+    </div>
+{% endif %}
+</div>
+
+<!-- KNOCKOUT TAB -->
+<div id="panel-knockout" style="display:none">
+{% if knockout_rounds %}
+    {% for round_name, fixtures in knockout_rounds.items %}
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header">
+            <h3>{{ round_name }}</h3>
+        </div>
+        <div class="card-body" style="overflow-x:auto;padding:0">
+            <table style="margin:0">
+                <thead>
+                    <tr>
+                        <th>Home</th>
+                        <th style="text-align:center">Score</th>
+                        <th>Away</th>
+                        <th>Venue</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in fixtures %}
+                    <tr>
+                        <td{% if f.winner == f.home_team %} style="font-weight:800"{% endif %}>{{ f.home_team.name }}</td>
+                        <td style="text-align:center;font-weight:700;font-family:monospace;font-size:1.1rem">
+                            {% if f.home_score is not None %}
+                                {{ f.home_score }} &#8212; {{ f.away_score }}
+                                {% if f.home_penalties is not None %}
+                                <br><span style="font-size:.75rem;color:#888">(Pens: {{ f.home_penalties }}-{{ f.away_penalties }})</span>
+                                {% elif f.home_score_et is not None %}
+                                <br><span style="font-size:.75rem;color:#888">(AET: {{ f.home_score_et }}-{{ f.away_score_et }})</span>
+                                {% endif %}
+                            {% else %}
+                                vs
+                            {% endif %}
+                        </td>
+                        <td{% if f.winner == f.away_team %} style="font-weight:800"{% endif %}>{{ f.away_team.name }}</td>
+                        <td style="font-size:.82rem">{{ f.venue.name|default:"TBD" }}</td>
+                        <td style="font-size:.82rem">{{ f.match_date|date:"d M" }} {{ f.kickoff_time|time:"H:i" }}</td>
+                        <td>
+                            {% if f.status == 'completed' %}
+                            <span class="badge badge--success">Completed</span>
+                            {% elif f.status == 'live' %}
+                            <span class="badge badge--danger">LIVE</span>
+                            {% else %}
+                            <span class="badge badge--light">{{ f.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="padding:2rem;text-align:center;color:#888">
+        <p>No knockout matches scheduled yet.</p>
+    </div>
+{% endif %}
+</div>
+
+<!-- TOP SCORERS TAB -->
+<div id="panel-scorers" style="display:none">
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-bullseye"></i> Top Scorers</h3></div>
+    <div class="card-body" style="overflow-x:auto;padding:0">
+        {% if top_scorers %}
+        <table style="margin:0">
+            <thead>
+                <tr>
+                    <th style="width:30px">#</th>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th style="text-align:center">Goals</th>
+                    <th style="text-align:center">Assists</th>
+                    <th style="text-align:center">Penalties</th>
+                    <th style="text-align:center">Matches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in top_scorers %}
+                <tr>
+                    <td style="text-align:center;font-weight:700;color:#888">{{ forloop.counter }}</td>
+                    <td><strong>{{ s.player.get_full_name }}</strong></td>
+                    <td>{{ s.team.name }}</td>
+                    <td style="text-align:center;font-weight:800;font-size:1.1rem">{{ s.goals }}</td>
+                    <td style="text-align:center">{{ s.assists }}</td>
+                    <td style="text-align:center">{{ s.penalties_scored }}</td>
+                    <td style="text-align:center">{{ s.matches_played }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No goals recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- TOP ASSISTS TAB -->
+<div id="panel-assists" style="display:none">
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-hand-thumbs-up"></i> Top Assist Providers</h3></div>
+    <div class="card-body" style="overflow-x:auto;padding:0">
+        {% if top_assisters %}
+        <table style="margin:0">
+            <thead>
+                <tr>
+                    <th style="width:30px">#</th>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th style="text-align:center">Assists</th>
+                    <th style="text-align:center">Goals</th>
+                    <th style="text-align:center">Matches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in top_assisters %}
+                <tr>
+                    <td style="text-align:center;font-weight:700;color:#888">{{ forloop.counter }}</td>
+                    <td><strong>{{ s.player.get_full_name }}</strong></td>
+                    <td>{{ s.team.name }}</td>
+                    <td style="text-align:center;font-weight:800;font-size:1.1rem">{{ s.assists }}</td>
+                    <td style="text-align:center">{{ s.goals }}</td>
+                    <td style="text-align:center">{{ s.matches_played }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No assists recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- DISCIPLINE TAB -->
+<div id="panel-discipline" style="display:none">
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><h3><i class="bi bi-card-list"></i> Disciplinary Record</h3></div>
+    <div class="card-body" style="overflow-x:auto;padding:0">
+        {% if disciplinary %}
+        <table style="margin:0">
+            <thead>
+                <tr>
+                    <th style="width:30px">#</th>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th style="text-align:center"><i class="bi bi-square-fill" style="color:#f9a825"></i> Yellows</th>
+                    <th style="text-align:center"><i class="bi bi-square-fill" style="color:#c62828"></i> Reds</th>
+                    <th style="text-align:center">Matches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in disciplinary %}
+                <tr>
+                    <td style="text-align:center;font-weight:700;color:#888">{{ forloop.counter }}</td>
+                    <td><strong>{{ s.player.get_full_name }}</strong></td>
+                    <td>{{ s.team.name }}</td>
+                    <td style="text-align:center;font-weight:700;color:#f9a825">{{ s.yellow_cards }}</td>
+                    <td style="text-align:center;font-weight:700;color:#c62828">{{ s.red_cards }}</td>
+                    <td style="text-align:center">{{ s.matches_played }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No cards recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if clean_sheets %}
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-award"></i> Clean Sheet Leaders (Goalkeepers)</h3></div>
+    <div class="card-body" style="overflow-x:auto;padding:0">
+        <table style="margin:0">
+            <thead>
+                <tr>
+                    <th style="width:30px">#</th>
+                    <th>Goalkeeper</th>
+                    <th>Team</th>
+                    <th style="text-align:center">Clean Sheets</th>
+                    <th style="text-align:center">Goals Conceded</th>
+                    <th style="text-align:center">Matches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in clean_sheets %}
+                <tr>
+                    <td style="text-align:center;font-weight:700;color:#888">{{ forloop.counter }}</td>
+                    <td><strong>{{ s.player.get_full_name }}</strong></td>
+                    <td>{{ s.team.name }}</td>
+                    <td style="text-align:center;font-weight:800;color:#2e7d32;font-size:1.1rem">{{ s.clean_sheets }}</td>
+                    <td style="text-align:center">{{ s.goals_conceded }}</td>
+                    <td style="text-align:center">{{ s.matches_played }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name) {
+    var panels = ['groups','knockout','scorers','assists','discipline'];
+    for (var i = 0; i < panels.length; i++) {
+        document.getElementById('panel-' + panels[i]).style.display = 'none';
+        var btn = document.getElementById('tab-' + panels[i]);
+        btn.style.borderBottom = 'none';
+        btn.style.color = '#888';
+    }
+    document.getElementById('panel-' + name).style.display = 'block';
+    var activeBtn = document.getElementById('tab-' + name);
+    activeBtn.style.borderBottom = '3px solid #1b5e20';
+    activeBtn.style.color = '#1b5e20';
+}
+</script>
+{% endblock %}

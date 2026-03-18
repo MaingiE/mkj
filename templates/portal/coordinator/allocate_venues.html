@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Allocate Venues &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-geo-alt"></i> Allocate Venues</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card">
+        <div class="card-body" style="overflow-x:auto;">
+            <table class="table table-sm" style="font-size:.85rem;">
+                <thead><tr><th>Date</th><th>Home</th><th>Away</th><th>Current Venue</th><th>Assign Venue</th></tr></thead>
+                <tbody>
+                    {% for fx in fixtures %}
+                    <tr>
+                        <td>{{ fx.match_date|date:"d M" }}{% if fx.kickoff_time %} {{ fx.kickoff_time|time:"H:i" }}{% endif %}</td>
+                        <td>{{ fx.home_team.name }}</td>
+                        <td>{{ fx.away_team.name }}</td>
+                        <td>{{ fx.venue.name|default:"—" }}</td>
+                        <td>
+                            <select name="venue_{{ fx.pk }}" class="form-select form-select-sm">
+                                <option value="">— None —</option>
+                                {% for v in venues %}<option value="{{ v.pk }}" {% if fx.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>{% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check-circle"></i> Save Venue Allocations</button>
+</form>
+{% endblock %}

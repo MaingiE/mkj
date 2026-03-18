@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Statistics &mdash; {{ competition.name }} &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); overflow: hidden; }
+    .stat-card .card-header { padding: .75rem 1rem; border-bottom: 1px solid #eee; }
+    .stat-card .card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+    .stat-card .card-body { padding: 1rem; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .tbl th { background: #f5f5f5; padding: .5rem .75rem; font-weight: 600; text-align: left; }
+    .tbl td { padding: .5rem .75rem; border-bottom: 1px solid #f0f0f0; }
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-bar-chart-line"></i> Competition Statistics</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<div class="stats-grid">
+    <!-- Top Scorers -->
+    <div class="stat-card">
+        <div class="card-header"><h3><i class="bi bi-bullseye"></i> Top Scorers</h3></div>
+        <div class="card-body">
+            {% if top_scorers %}
+            <table class="tbl">
+                <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th></tr></thead>
+                <tbody>
+                    {% for s in top_scorers %}
+                    <tr><td>{{ forloop.counter }}</td><td>{{ s.player_name }}</td><td>{{ s.team_name }}</td><td><strong>{{ s.goals }}</strong></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align:center;padding:1rem;color:#999;">No goals recorded yet.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Assisters -->
+    <div class="stat-card">
+        <div class="card-header"><h3><i class="bi bi-arrow-right-circle"></i> Top Assists</h3></div>
+        <div class="card-body">
+            {% if top_assisters %}
+            <table class="tbl">
+                <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th></tr></thead>
+                <tbody>
+                    {% for a in top_assisters %}
+                    <tr><td>{{ forloop.counter }}</td><td>{{ a.player_name }}</td><td>{{ a.team_name }}</td><td><strong>{{ a.assists }}</strong></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align:center;padding:1rem;color:#999;">No assists recorded yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Disciplinary -->
+<div class="stat-card mb-3">
+    <div class="card-header"><h3><i class="bi bi-exclamation-triangle"></i> Disciplinary Record</h3></div>
+    <div class="card-body">
+        {% if disciplinary %}
+        <table class="tbl">
+            <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Yellows</th><th>Reds</th></tr></thead>
+            <tbody>
+                {% for d in disciplinary %}
+                <tr><td>{{ forloop.counter }}</td><td>{{ d.player_name }}</td><td>{{ d.team_name }}</td><td>{{ d.yellow_cards }}</td><td>{{ d.red_cards }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:1rem;color:#999;">No disciplinary records yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Fair Play -->
+<div class="stat-card mb-3">
+    <div class="card-header"><h3><i class="bi bi-award"></i> Fair Play Table (Lower is Better)</h3></div>
+    <div class="card-body">
+        {% if fair_play_table %}
+        <table class="tbl">
+            <thead><tr><th>#</th><th>Team</th><th>Yellow</th><th>Red</th><th>Fair Play Points</th></tr></thead>
+            <tbody>
+                {% for row in fair_play_table %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.team__name }}</td>
+                    <td>{{ row.yellow_total }}</td>
+                    <td>{{ row.red_total }}</td>
+                    <td><strong>{{ row.fair_play_points }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:1rem;color:#999;">No fair play entries yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pool Standings -->
+{% if pool_data %}
+<h3 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Pool Standings</h3>
+{% for pd in pool_data %}
+<div class="stat-card mb-3">
+    <div class="card-header"><h3>{{ pd.pool.name }}</h3></div>
+    <div class="card-body" style="overflow-x:auto;">
+        <table class="tbl">
+            <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>
+                {% for pt in pd.teams %}
+                <tr>
+                    <td>{{ forloop.counter }}</td><td>{{ pt.team.name }}</td>
+                    <td>{{ pt.played }}</td><td>{{ pt.won }}</td><td>{{ pt.drawn }}</td><td>{{ pt.lost }}</td>
+                    <td>{{ pt.goals_for }}</td><td>{{ pt.goals_against }}</td><td>{{ pt.goal_difference }}</td>
+                    <td><strong>{{ pt.points }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

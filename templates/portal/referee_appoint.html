@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% block title %}Appoint Officials — {{ fixture }} — KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        transition: border-color .2s;
+    }
+    .role-card.filled { border-color: #A5D6A7; background: #F1F8E9; }
+    .role-card.pending-role { border-color: #FFCC80; background: #FFF8E1; }
+    .role-card.declined-role { border-color: #EF9A9A; background: #FFEBEE; }
+    .role-card.empty { border-color: #e0e0e0; background: #fafafa; }
+    .ref-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .6rem .8rem;
+        border-bottom: 1px solid #eee;
+        transition: background .15s;
+    }
+    .ref-row:hover { background: #f5f5f5; }
+    .ref-row:last-child { border-bottom: none; }
+    .avail-badge {
+        display: inline-block;
+        padding: .15rem .5rem;
+        border-radius: 10px;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .avail-available { background: #E8F5E9; color: #1B5E20; }
+    .avail-unavailable { background: #FFEBEE; color: #c62828; }
+    .avail-notset { background: #f5f5f5; color: #999; }
+    .busy-badge { background: #FFF3E0; color: #E65100; }
+    .appoint-form { display: inline; }
+    .appoint-btn {
+        background: #1B5E20; color: #fff; border: none; padding: .35rem .8rem;
+        border-radius: 6px; cursor: pointer; font-size: .85rem;
+    }
+    .appoint-btn:hover { background: #2E7D32; }
+    .remove-btn {
+        background: #c62828; color: #fff; border: none; padding: .3rem .7rem;
+        border-radius: 6px; cursor: pointer; font-size: .8rem;
+    }
+    .remove-btn:hover { background: #E53935; }
+    .filter-input {
+        width: 100%; padding: .5rem .8rem; border: 1px solid #ddd;
+        border-radius: 8px; margin-bottom: .8rem; font-size: .9rem;
+    }
+    .ref-table-wrapper { max-height: 400px; overflow-y: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'referee_appointments' %}">Appointments</a>
+        <span>Appoint Officials</span>
+    </div>
+    <h1>⚽ Appoint Officials</h1>
+</div>
+
+<!-- ═══ FIXTURE INFO ═══ -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E8F5E9;">
+        <h3>Match Details</h3>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+            <div>
+                <div style="font-size:.8rem;color:#666;text-transform:uppercase;">Match</div>
+                <div style="font-size:1.1rem;font-weight:700;">
+                    {{ fixture.home_team }} <span style="color:#999;">vs</span> {{ fixture.away_team }}
+                </div>
+            </div>
+            <div>
+                <div style="font-size:.8rem;color:#666;text-transform:uppercase;">Competition</div>
+                <div style="font-weight:600;">{{ fixture.competition.name }}</div>
+            </div>
+            <div>
+                <div style="font-size:.8rem;color:#666;text-transform:uppercase;">Date & Time</div>
+                <div style="font-weight:600;">{{ fixture.match_date|date:"l, d M Y" }} · {{ fixture.kickoff_time|time:"H:i" }}</div>
+            </div>
+            <div>
+                <div style="font-size:.8rem;color:#666;text-transform:uppercase;">Venue</div>
+                <div style="font-weight:600;">{{ fixture.venue|default:"TBD" }}</div>
+            </div>
+            <div>
+                <div style="font-size:.8rem;color:#666;text-transform:uppercase;">Fixture Status</div>
+                <div>
+                    <span class="badge {% if fixture.status == 'confirmed' %}badge-info{% elif fixture.status == 'completed' %}badge-success{% elif fixture.status == 'postponed' %}badge-warning{% else %}badge-gray{% endif %}">
+                        {{ fixture.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ CURRENT APPOINTMENTS ═══ -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>📋 Current Appointments</h3>
+    </div>
+    <div class="card-body" style="padding:.5rem 1rem;">
+        {% for role in roles_data %}
+        <div class="role-card {% if role.status == 'confirmed' %}filled{% elif role.status == 'pending' %}pending-role{% elif role.status == 'declined' %}declined-role{% else %}empty{% endif %}">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;">
+                <div>
+                    <span style="font-weight:700;font-size:.95rem;">{{ role.role_label }}</span>
+                    {% if role.appointment %}
+                        <span style="margin-left:.5rem;">→
+                            <strong>{{ role.referee_name }}</strong>
+                        </span>
+                        <span class="avail-badge {% if role.status == 'confirmed' %}avail-available{% elif role.status == 'pending' %}busy-badge{% elif role.status == 'declined' %}avail-unavailable{% endif %}"
+                              style="margin-left:.5rem;">
+                            {{ role.status_display }}
+                        </span>
+                    {% else %}
+                        <span style="color:#999;margin-left:.5rem;">— Not appointed</span>
+                    {% endif %}
+                </div>
+                <div style="display:flex;gap:.5rem;align-items:center;">
+                    {% if role.appointment %}
+                    <form method="post" class="appoint-form" onsubmit="return confirm('Remove this appointment?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove">
+                        <input type="hidden" name="appointment_id" value="{{ role.appointment.pk }}">
+                        <button type="submit" class="remove-btn">✕ Remove</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ═══ APPOINT A REFEREE ═══ -->
+<div class="card" style="margin-bottom:2rem;">
+    <div class="card-header" style="background:#E3F2FD;">
+        <h3>👤 Appoint a Referee</h3>
+        <p style="font-size:.85rem;color:#666;margin:0;">Select a role then pick a referee. Green = available, red = unavailable, orange = busy on this date.</p>
+    </div>
+    <div class="card-body">
+        <!-- Role selector -->
+        <div style="margin-bottom:1rem;">
+            <label style="font-weight:600;display:block;margin-bottom:.4rem;">Select Role to Fill:</label>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;" id="role-selector">
+                {% for role in roles_data %}
+                <button type="button"
+                        class="role-select-btn"
+                        data-role="{{ role.role_key }}"
+                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid #1B5E20;cursor:pointer;font-size:.9rem;
+                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:#1B5E20;{% endif %}"
+                        onclick="selectRole('{{ role.role_key }}', this)">
+                    {{ role.role_label }}
+                    {% if role.appointment %}<span style="font-size:.75rem;">(filled)</span>{% endif %}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Search -->
+        <input type="text" class="filter-input" id="referee-search"
+               placeholder="🔍 Search referees by name, county, or level..."
+               oninput="filterReferees(this.value)">
+
+        <!-- Referees Table -->
+        <div class="ref-table-wrapper">
+            <table style="width:100%;" id="referees-table">
+                <thead>
+                    <tr style="background:#f5f5f5;">
+                        <th style="padding:.5rem .8rem;">Referee</th>
+                        <th style="padding:.5rem .8rem;">Level</th>
+                        <th style="padding:.5rem .8rem;">County</th>
+                        <th style="padding:.5rem .8rem;">Matches</th>
+                        <th style="padding:.5rem .8rem;">Rating</th>
+                        <th style="padding:.5rem .8rem;">Availability</th>
+                        <th style="padding:.5rem .8rem;">Status</th>
+                        <th style="padding:.5rem .8rem;text-align:right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ref in referees_list %}
+                    <tr class="ref-row"
+                        data-name="{{ ref.full_name|lower }}"
+                        data-county="{{ ref.county|lower }}"
+                        data-level="{{ ref.level|lower }}">
+                        <td style="padding:.5rem .8rem;">
+                            <strong>{{ ref.full_name }}</strong>
+                            {% if ref.is_appointed_here %}
+                            <span style="font-size:.7rem;background:#E8F5E9;color:#1B5E20;padding:.1rem .4rem;border-radius:4px;margin-left:.3rem;">
+                                On this match
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem;font-size:.85rem;">{{ ref.level }}</td>
+                        <td style="padding:.5rem .8rem;font-size:.85rem;">{{ ref.county }}</td>
+                        <td style="padding:.5rem .8rem;text-align:center;">{{ ref.total_matches }}</td>
+                        <td style="padding:.5rem .8rem;text-align:center;">
+                            {% if ref.avg_rating > 0 %}
+                            <span style="font-weight:600;{% if ref.avg_rating >= 7 %}color:#1B5E20;{% elif ref.avg_rating >= 5 %}color:#FF8F00;{% else %}color:#c62828;{% endif %}">
+                                {{ ref.avg_rating }}
+                            </span>
+                            {% else %}
+                            <span style="color:#999;">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem;">
+                            <span class="avail-badge {% if ref.availability == 'available' %}avail-available{% elif ref.availability == 'unavailable' %}avail-unavailable{% else %}avail-notset{% endif %}">
+                                {{ ref.availability_label }}
+                            </span>
+                        </td>
+                        <td style="padding:.5rem .8rem;">
+                            {% if ref.is_busy %}
+                            <span class="avail-badge busy-badge">Busy</span>
+                            {% elif ref.is_appointed_here %}
+                            <span class="avail-badge avail-available">Assigned</span>
+                            {% else %}
+                            <span style="color:#1B5E20;font-size:.85rem;">Free</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem;text-align:right;">
+                            <form method="post" class="appoint-form appoint-referee-form" data-ref-id="{{ ref.profile.pk }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="appoint">
+                                <input type="hidden" name="role" value="" class="role-input">
+                                <input type="hidden" name="referee_id" value="{{ ref.profile.pk }}">
+                                <input type="hidden" name="notes" value="">
+                                <button type="submit" class="appoint-btn" disabled>
+                                    Appoint
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not referees_list %}
+        <div style="text-align:center;padding:2rem;color:#999;">
+            <p>No approved referees found. <a href="{% url 'pending_referees' %}">Approve pending referees</a> first.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-bottom:2rem;">
+    <a href="{% url 'referee_appointments' %}"
+       style="display:inline-block;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;background:#f0f0f0;color:#333;">
+        ← Back to All Appointments
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRole = null;
+
+function selectRole(roleKey, btn) {
+    // Toggle selection
+    document.querySelectorAll('.role-select-btn').forEach(b => {
+        b.style.background = '#fff';
+        b.style.color = '#1B5E20';
+        b.style.fontWeight = 'normal';
+    });
+    btn.style.background = '#1B5E20';
+    btn.style.color = '#fff';
+    btn.style.fontWeight = '700';
+    selectedRole = roleKey;
+
+    // Enable appoint buttons and set role
+    document.querySelectorAll('.appoint-referee-form').forEach(form => {
+        form.querySelector('.role-input').value = roleKey;
+        form.querySelector('button').disabled = false;
+    });
+}
+
+function filterReferees(query) {
+    const q = query.toLowerCase().trim();
+    document.querySelectorAll('#referees-table tbody .ref-row').forEach(row => {
+        const name = row.dataset.name || '';
+        const county = row.dataset.county || '';
+        const level = row.dataset.level || '';
+        const match = name.includes(q) || county.includes(q) || level.includes(q);
+        row.style.display = match ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

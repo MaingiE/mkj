@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}County Registrations &mdash; Treasurer &mdash; KYISA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'treasurer_dashboard' %}">Treasurer</a>
+        <span>County Registrations</span>
+    </div>
+    <h1><i class="bi bi-person-badge"></i> County Registrations</h1>
+    <p>Review county sports director registrations and approve or reject payments.</p>
+</div>
+
+<!-- Fee reminder -->
+<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:.9rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
+    <span style="font-size:1.3rem"><i class="bi bi-credit-card"></i></span>
+    <span style="font-size:.92rem"><strong style="color:#1b5e20">Standard county registration fee: KSh {{ registration_fee|floatformat:0 }}</strong></span>
+</div>
+
+<!-- Pending Review -->
+{% if pending %}
+<div class="card" style="padding:1.5rem;margin-bottom:2rem">
+    <h2 style="font-size:1.1rem;color:#f57c00;margin-bottom:1rem">
+        <i class="bi bi-hourglass-split"></i> Awaiting Review ({{ pending|length }})
+    </h2>
+    {% for r in pending %}
+    <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:1.2rem;margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem">
+            <div>
+                <strong style="font-size:1.05rem;color:#333">{{ r.county }}</strong>
+                <div style="font-size:.85rem;color:#888">{{ r.user.first_name }} {{ r.user.last_name }} &mdash; {{ r.user.email }}</div>
+            </div>
+            <div style="font-size:.82rem;color:#888">Submitted {{ r.payment_submitted_at|date:"d M Y, H:i" }}</div>
+        </div>
+        <div style="font-size:.9rem;color:#444;margin-bottom:.8rem">
+            {% if r.mpesa_reference %}<strong>M-Pesa Ref:</strong> <code>{{ r.mpesa_reference }}</code> &nbsp;{% endif %}
+            {% if r.payment_amount %}<strong>Amount:</strong> KSh {{ r.payment_amount|floatformat:0 }} &nbsp;{% endif %}
+            {% if r.bank_slip %}<a href="{{ r.bank_slip.url }}" target="_blank" style="color:#1565c0"><i class="bi bi-file-earmark"></i> View Bank Slip</a>{% endif %}
+        </div>
+        <form method="post" style="display:flex;gap:.5rem;flex-wrap:wrap">
+            {% csrf_token %}
+            <input type="hidden" name="registration_id" value="{{ r.pk }}">
+            <button type="submit" name="action" value="approve" style="padding:.4rem 1rem;background:#1B5E20;color:#fff;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer">
+                <i class="bi bi-check-circle"></i> Approve
+            </button>
+            <button type="submit" name="action" value="reject" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer"
+                    onclick="var r=prompt('Reason for rejection (optional):');if(r!==null){var inp=document.createElement('input');inp.type='hidden';inp.name='rejection_reason';inp.value=r;this.form.appendChild(inp);return true;}return false;">
+                <i class="bi bi-x-circle"></i> Reject
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- All Registrations -->
+<div class="card" style="padding:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-list-check"></i> All County Registrations ({{ all_regs|length }})</h2>
+
+    {% if all_regs %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+            <thead>
+                <tr style="background:#f5f5f5;text-align:left">
+                    <th style="padding:.7rem 1rem">County</th>
+                    <th style="padding:.7rem 1rem">Admin</th>
+                    <th style="padding:.7rem 1rem">Email</th>
+                    <th style="padding:.7rem 1rem">Status</th>
+                    <th style="padding:.7rem 1rem">Payment</th>
+                    <th style="padding:.7rem 1rem">Registered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in all_regs %}
+                <tr style="border-bottom:1px solid #eee">
+                    <td style="padding:.6rem 1rem;font-weight:600">{{ r.county }}</td>
+                    <td style="padding:.6rem 1rem">{{ r.user.first_name }} {{ r.user.last_name }}</td>
+                    <td style="padding:.6rem 1rem;font-size:.85rem">{{ r.user.email }}</td>
+                    <td style="padding:.6rem 1rem">
+                        <span style="padding:.2rem .6rem;border-radius:20px;font-size:.78rem;font-weight:600;
+                            {% if r.status == 'approved' %}background:#e8f5e9;color:#1B5E20
+                            {% elif r.status == 'payment_submitted' %}background:#e3f2fd;color:#1565c0
+                            {% elif r.status == 'rejected' %}background:#fce4ec;color:#C62828
+                            {% else %}background:#fff3e0;color:#e65100{% endif %}">
+                            {{ r.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="padding:.6rem 1rem;font-size:.85rem">
+                        {% if r.payment_amount %}KSh {{ r.payment_amount|floatformat:0 }}{% else %}&mdash;{% endif %}
+                    </td>
+                    <td style="padding:.6rem 1rem;font-size:.82rem;color:#888">{{ r.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2rem;color:#888">No county admin registrations yet.</div>
+    {% endif %}
+</div>
+{% endblock %}

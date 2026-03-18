@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}{{ competition.name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span><a href="{% url 'competitions_list' %}">Competitions</a></span>
+        <span>{{ competition.name }}</span>
+    </div>
+    <h1>{{ competition.name }}</h1>
+    <p>{{ competition.get_age_group_display }} — Season {{ competition.season }}</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-people"></i></div>
+        <div class="stat-info">
+            <h3>{{ competition.teams.count }}</h3>
+            <p>Registered Teams</p>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-calendar-event"></i></div>
+        <div class="stat-info">
+            <h3>{{ competition.fixtures.count }}</h3>
+            <p>Fixtures</p>
+        </div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-grid-3x3"></i></div>
+        <div class="stat-info">
+            <h3>{{ competition.pools.count }}</h3>
+            <p>Pools / Groups</p>
+        </div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="bi bi-bar-chart-line"></i></div>
+        <div class="stat-info">
+            <h3>
+                {% if competition.status == 'active' %}Active
+                {% elif competition.status == 'completed' %}Done
+                {% else %}{{ competition.get_status_display }}
+                {% endif %}
+            </h3>
+            <p>Status</p>
+        </div>
+    </div>
+</div>
+
+{% if user.role == 'competition_manager' or user.role == 'admin' or user.is_superuser %}
+<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <a href="{% url 'competition_standings' competition.pk %}" class="btn btn--primary" style="padding:.6rem 1.5rem">
+        <i class="bi bi-bar-chart-line"></i> Standings &amp; Statistics
+    </a>
+    <a href="{% url 'competition_reports' competition.pk %}" class="btn btn--primary" style="padding:.6rem 1.5rem;background:#1565c0">
+        <i class="bi bi-clipboard-data"></i> Match Reports
+    </a>
+</div>
+{% endif %}
+
+<div class="grid-2">
+    <!-- Competition Details -->
+    <div class="card">
+        <div class="card-header"><h3>Details</h3></div>
+        <div class="card-body">
+            <table>
+                <tr><td><strong>Start Date</strong></td><td>{{ competition.start_date|date:"d M Y" }}</td></tr>
+                <tr><td><strong>End Date</strong></td><td>{{ competition.end_date|date:"d M Y" }}</td></tr>
+                <tr><td><strong>Max Teams</strong></td><td>{{ competition.max_teams }}</td></tr>
+                <tr><td><strong>Created By</strong></td><td>{{ competition.created_by }}</td></tr>
+                {% if competition.description %}
+                <tr><td><strong>Description</strong></td><td>{{ competition.description }}</td></tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Teams in Competition -->
+    <div class="card">
+        <div class="card-header"><h3>Teams</h3></div>
+        <div class="card-body">
+            {% if teams %}
+            <table>
+                <thead><tr><th>Team</th><th>County</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr>
+                        <td><a href="{% url 'team_detail' team.pk %}">{{ team.name }}</a></td>
+                        <td>{{ team.county }}</td>
+                        <td>
+                            {% if team.status == 'registered' %}
+                            <span class="badge badge-success">Registered</span>
+                            {% else %}
+                            <span class="badge badge-warning">{{ team.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color:#757575;">No teams registered yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Fixtures -->
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h3>Fixtures</h3></div>
+    <div class="card-body">
+        {% if fixtures %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Time</th><th>Home</th><th>Away</th><th>Venue</th><th>Status</th><th>Score</th></tr>
+                </thead>
+                <tbody>
+                    {% for f in fixtures %}
+                    <tr>
+                        <td>{{ f.match_date|date:"d M Y" }}</td>
+                        <td>{{ f.kickoff_time|time:"H:i" }}</td>
+                        <td><strong>{{ f.home_team.name }}</strong></td>
+                        <td><strong>{{ f.away_team.name }}</strong></td>
+                        <td>{{ f.venue|default:"TBD" }}</td>
+                        <td><span class="badge badge-{% if f.status == 'completed' %}success{% elif f.status == 'live' %}danger{% elif f.status == 'confirmed' %}info{% else %}gray{% endif %}">{{ f.get_status_display }}</span></td>
+                        <td>{% if f.home_score is not None %}<strong>{{ f.home_score }} - {{ f.away_score }}</strong>{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#757575;">No fixtures scheduled yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

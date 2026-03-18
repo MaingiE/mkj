@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Teams — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>Teams</span>
+    </div>
+    <h1><i class="bi bi-people"></i> Teams</h1>
+    <p>{% if user.role == 'team_manager' %}Your team and players{% else %}All registered teams{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>{% if user.role == 'team_manager' %}My Teams{% else %}All Teams{% endif %}</h3>
+        <span class="toolbar-count" id="teamCount"></span>
+    </div>
+    <div class="card-body">
+        {% if teams %}
+        <div class="toolbar">
+            <div class="toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="teamSearch" placeholder="Search teams..." oninput="filterTeams()">
+            </div>
+            <select class="toolbar-select" id="countyFilter" onchange="filterTeams()">
+                <option value="">All Counties</option>
+            </select>
+            <select class="toolbar-select" id="statusFilter" onchange="filterTeams()">
+                <option value="">All Status</option>
+                <option value="registered">Registered</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+            </select>
+            <div class="toolbar-spacer"></div>
+        </div>
+        <div class="table-responsive">
+            <table id="teamsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>County</th>
+                        <th>Competition</th>
+                        <th>Manager</th>
+                        <th>Players</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr data-county="{{ team.county }}" data-status="{{ team.status }}">
+                        <td><strong>{{ team.name }}</strong></td>
+                        <td>{{ team.county }}</td>
+                        <td>{{ team.competition|default:"—" }}</td>
+                        <td>{{ team.manager|default:"—" }}</td>
+                        <td>{{ team.players.count }}</td>
+                        <td>
+                            {% if team.status == 'registered' %}
+                            <span class="badge badge-success">Registered</span>
+                            {% elif team.status == 'pending' %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% else %}
+                            <span class="badge badge-danger">{{ team.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'team_detail' team.pk %}" class="btn btn-outline btn-xs">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><i class="bi bi-people"></i></div>
+            <h3>No teams found</h3>
+            <p>Teams will appear here once registered.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js_content %}
+<script>
+function filterTeams() {
+    const q = document.getElementById('teamSearch').value.toLowerCase();
+    const county = document.getElementById('countyFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('#teamsTable tbody tr');
+    let visible = 0;
+    rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        const matchSearch = !q || text.includes(q);
+        const matchCounty = !county || r.dataset.county === county;
+        const matchStatus = !status || r.dataset.status === status;
+        const show = matchSearch && matchCounty && matchStatus;
+        r.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('teamCount').textContent = visible + ' of ' + rows.length;
+}
+// Populate county filter
+document.addEventListener('DOMContentLoaded', function() {
+    const counties = new Set();
+    document.querySelectorAll('#teamsTable tbody tr').forEach(r => {
+        if (r.dataset.county) counties.add(r.dataset.county);
+    });
+    const sel = document.getElementById('countyFilter');
+    [...counties].sort().forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        sel.appendChild(o);
+    });
+    filterTeams();
+});
+</script>
+{% endblock %}
+{% endblock %}

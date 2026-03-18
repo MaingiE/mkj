@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% block title %}Player Clearance — {{ player.get_full_name }} — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'player_clearance_dashboard' %}">Player Clearance</a>
+        <span>{{ player.get_full_name }}</span>
+    </div>
+    <h1>🛡️ Clearance: {{ player.get_full_name }}</h1>
+    <p>Complete all three verification steps to clear this player for competition.</p>
+</div>
+
+<!-- Player Info Summary -->
+<div class="stats-grid" style="margin-bottom:1.5rem">
+    <div class="stat-card green">
+        <div class="stat-icon green">⚽</div>
+        <div class="stat-info"><h3>{{ player.team.name }}</h3><p>{{ player.team.county }}</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue">#{{ player.shirt_number }}</div>
+        <div class="stat-info"><h3>{{ player.get_position_display }}</h3><p>Position</p></div>
+    </div>
+    <div class="stat-card {% if player.is_age_eligible %}green{% else %}yellow{% endif %}">
+        <div class="stat-icon {% if player.is_age_eligible %}green{% else %}yellow{% endif %}">
+            {% if player.is_age_eligible %}✅{% else %}⛔{% endif %}
+        </div>
+        <div class="stat-info">
+            <h3>{{ player.age }} years</h3>
+            <p>DOB: {{ player.date_of_birth|date:"d M Y" }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:{% if player.is_fully_cleared and player.status == 'eligible' %}#e8f5e9{% elif player.status == 'ineligible' %}#fce4ec{% else %}#fff3e0{% endif %};color:{% if player.is_fully_cleared and player.status == 'eligible' %}#1B5E20{% elif player.status == 'ineligible' %}#C62828{% else %}#e65100{% endif %}">
+            {% if player.is_fully_cleared and player.status == 'eligible' %}🛡️{% elif player.status == 'ineligible' %}⛔{% else %}⏳{% endif %}
+        </div>
+        <div class="stat-info">
+            <h3>{% if player.is_fully_cleared and player.status == 'eligible' %}CLEARED{% elif player.status == 'ineligible' %}INELIGIBLE{% else %}PENDING{% endif %}</h3>
+            <p>Overall Status</p>
+        </div>
+    </div>
+</div>
+
+{% if player.fifa_connect_id %}
+<div style="margin-bottom:1rem;padding:.5rem 1rem;background:#e3f2fd;border-radius:8px;font-size:.9rem">
+    <strong>FIFA Connect ID:</strong> {{ player.fifa_connect_id }}
+    {% if player.national_id_number %} &nbsp;|&nbsp; <strong>National ID:</strong> {{ player.national_id_number }}{% endif %}
+</div>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<!--   THREE-STEP VERIFICATION WORKFLOW                                           -->
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+
+<div style="display:grid;grid-template-columns:1fr;gap:1.5rem">
+
+    <!-- ── STEP 1: Document Verification ── -->
+    <div class="card" style="border-left:4px solid {% if clearance.documents.passed %}#4CAF50{% elif player.verification_status == 'rejected' %}#C62828{% else %}#FF9800{% endif %}">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>
+                {% if clearance.documents.passed %}✅{% elif player.verification_status == 'rejected' %}❌{% else %}⏳{% endif %}
+                Step 1: Document Verification
+            </h3>
+            <span style="padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:600;background:{% if clearance.documents.passed %}#e8f5e9;color:#1B5E20{% elif player.verification_status == 'rejected' %}#fce4ec;color:#C62828{% else %}#fff3e0;color:#e65100{% endif %}">
+                {{ clearance.documents.display }}
+            </span>
+        </div>
+        <div class="card-body">
+            <p style="color:#666;font-size:.9rem;margin-bottom:1rem">Admin reviews player photo, National ID, and Birth Certificate for authenticity.</p>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+                <span style="font-size:.85rem">📸 Photo: {% if player.photo %}<span style="color:#1B5E20">Uploaded</span>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</span>
+                <span style="font-size:.85rem">🪪 ID Doc: {% if player.id_document %}<span style="color:#1B5E20">Uploaded</span>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</span>
+                <span style="font-size:.85rem">📜 Birth Cert: {% if player.birth_certificate %}<span style="color:#1B5E20">Uploaded</span>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</span>
+            </div>
+            {% if player.verified_by %}
+            <p style="font-size:.85rem;color:#888">Reviewed by {{ player.verified_by.get_full_name }} on {{ player.verified_at|date:"d M Y H:i" }}</p>
+            {% endif %}
+            <a href="{% url 'verify_player' player_pk=player.pk %}" style="display:inline-block;padding:.4rem 1rem;background:#FF9800;color:#fff;border-radius:6px;text-decoration:none;font-size:.85rem;font-weight:600">📄 Review Documents</a>
+        </div>
+    </div>
+
+    <!-- ── STEP 2: Huduma Kenya Age Verification ── -->
+    <div class="card" style="border-left:4px solid {% if clearance.huduma.passed %}#4CAF50{% elif player.huduma_status == 'failed' %}#C62828{% else %}#1565C0{% endif %}">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>
+                {% if clearance.huduma.passed %}✅{% elif player.huduma_status == 'failed' %}❌{% else %}🏛️{% endif %}
+                Step 2: Huduma Kenya — Age Verification
+            </h3>
+            <span style="padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:600;background:{% if clearance.huduma.passed %}#e8f5e9;color:#1B5E20{% elif player.huduma_status == 'failed' %}#fce4ec;color:#C62828{% else %}#e3f2fd;color:#1565C0{% endif %}">
+                {{ clearance.huduma.display }}
+            </span>
+        </div>
+        <div class="card-body">
+            <p style="color:#666;font-size:.9rem;margin-bottom:1rem">Verify player's age through Huduma Kenya / IPRS using National ID or Birth Certificate number.</p>
+
+            <!-- IPRS Photo vs Uploaded Photo comparison -->
+            {% if player.iprs_photo or player.photo %}
+            <div style="display:flex;gap:1.5rem;margin-bottom:1rem;flex-wrap:wrap">
+                {% if player.photo %}
+                <div style="text-align:center">
+                    <p style="font-weight:600;font-size:.85rem;color:#1B5E20;margin-bottom:.35rem">📸 Uploaded Photo</p>
+                    <img src="{{ player.photo.url }}" alt="Uploaded Photo" style="width:110px;height:140px;object-fit:cover;border-radius:8px;border:2px solid #4CAF50;background:#f5f7f5">
+                </div>
+                {% endif %}
+                {% if player.iprs_photo %}
+                <div style="text-align:center">
+                    <p style="font-weight:600;font-size:.85rem;color:#1565C0;margin-bottom:.35rem">🏛️ IPRS Photo</p>
+                    <img src="{{ player.iprs_photo.url }}" alt="IPRS Photo" style="width:110px;height:140px;object-fit:cover;border-radius:8px;border:2px solid #1565C0;background:#f5f7f5">
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if player.huduma_reference %}
+            <div style="margin-bottom:1rem;padding:.5rem 1rem;background:#f5f7f5;border-radius:6px;font-size:.85rem">
+                <strong>Reference:</strong> {{ player.huduma_reference }}
+                {% if player.huduma_notes %}<br><strong>Notes:</strong> {{ player.huduma_notes }}{% endif %}
+            </div>
+            {% endif %}
+
+            {% if player.huduma_verified_by %}
+            <p style="font-size:.85rem;color:#888;margin-bottom:1rem">Checked by {{ player.huduma_verified_by.get_full_name }} on {{ player.huduma_verified_at|date:"d M Y H:i" }}</p>
+            {% endif %}
+
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+                <!-- Auto Check via API -->
+                <form method="post" action="{% url 'huduma_verify_player' player_pk=player.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="auto_check">
+                    <button type="submit" style="padding:.4rem 1rem;background:#1565C0;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">🏛️ Run Huduma Check</button>
+                </form>
+
+                <!-- Manual Verify -->
+                {% if player.huduma_status != 'verified' %}
+                <button onclick="document.getElementById('huduma-manual-form').style.display='block'" style="padding:.4rem 1rem;background:#4CAF50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">✅ Manual Verify</button>
+                {% endif %}
+
+                <!-- Manual Fail -->
+                {% if player.huduma_status != 'failed' %}
+                <button onclick="document.getElementById('huduma-fail-form').style.display='block'" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">❌ Manual Fail</button>
+                {% endif %}
+
+                <!-- Reset -->
+                {% if player.huduma_status != 'not_checked' %}
+                <form method="post" action="{% url 'huduma_verify_player' player_pk=player.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reset">
+                    <button type="submit" style="padding:.4rem 1rem;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">🔄 Reset</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Manual Verify Form (hidden) -->
+            <form id="huduma-manual-form" method="post" action="{% url 'huduma_verify_player' player_pk=player.pk %}" style="display:none;margin-top:1rem;padding:1rem;background:#f5f7f5;border-radius:8px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual_verify">
+                <h4 style="margin:0 0 .75rem;color:#1B5E20">Manual Huduma Verification</h4>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">Huduma Reference Number</label>
+                    <input type="text" name="reference" placeholder="e.g. HK-12345" style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem">
+                </div>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">Notes</label>
+                    <textarea name="notes" rows="2" placeholder="Verification notes..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
+                </div>
+                <button type="submit" style="padding:.4rem 1rem;background:#4CAF50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Confirm Verification</button>
+            </form>
+
+            <!-- Manual Fail Form (hidden) -->
+            <form id="huduma-fail-form" method="post" action="{% url 'huduma_verify_player' player_pk=player.pk %}" style="display:none;margin-top:1rem;padding:1rem;background:#fce4ec;border-radius:8px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual_fail">
+                <h4 style="margin:0 0 .75rem;color:#C62828">Fail Huduma Verification</h4>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">Reason / Notes</label>
+                    <textarea name="notes" rows="2" required placeholder="Reason for failure..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
+                </div>
+                <button type="submit" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Mark as Failed</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── STEP 3: FIFA Connect Higher-League Check ── -->
+    <div class="card" style="border-left:4px solid {% if clearance.fifa_connect.passed %}#4CAF50{% elif player.fifa_connect_status == 'flagged' %}#C62828{% else %}#1B5E20{% endif %}">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>
+                {% if clearance.fifa_connect.passed %}✅{% elif player.fifa_connect_status == 'flagged' %}🚩{% else %}⚽{% endif %}
+                Step 3: FIFA Connect — Higher League Check
+            </h3>
+            <span style="padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:600;background:{% if clearance.fifa_connect.passed %}#e8f5e9;color:#1B5E20{% elif player.fifa_connect_status == 'flagged' %}#fce4ec;color:#C62828{% else %}#f5f7f5;color:#555{% endif %}">
+                {{ clearance.fifa_connect.display }}
+            </span>
+        </div>
+        <div class="card-body">
+            <p style="color:#666;font-size:.9rem;margin-bottom:.75rem">
+                Checks FIFA Connect registry for registration in higher-level leagues:
+                <strong>Regional League, Division Two, Division One, National Super League, Kenya FKF Premier League</strong>.
+                Players found (current or former) in these leagues <strong>cannot participate</strong> in county competition.
+            </p>
+
+            {% if player.fifa_connect_status == 'flagged' and player.fifa_connect_leagues %}
+            <div style="margin-bottom:1rem;padding:1rem;background:#fce4ec;border-radius:8px;border-left:4px solid #C62828">
+                <h4 style="margin:0 0 .5rem;color:#C62828">🚩 Higher League Registration(s) Found:</h4>
+                {% for league in player.fifa_connect_leagues %}
+                <div style="margin-bottom:.25rem;font-size:.9rem">
+                    <strong>{{ league.league }}</strong>
+                    {% if league.season %} — Season {{ league.season }}{% endif %}
+                    {% if league.club %} ({{ league.club }}){% endif %}
+                    {% if league.status %}<span style="color:#888"> [{{ league.status }}]</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if player.fifa_connect_notes %}
+            <div style="margin-bottom:1rem;padding:.5rem 1rem;background:#f5f7f5;border-radius:6px;font-size:.85rem">
+                <strong>Notes:</strong> {{ player.fifa_connect_notes }}
+            </div>
+            {% endif %}
+
+            {% if player.fifa_connect_checked_by %}
+            <p style="font-size:.85rem;color:#888;margin-bottom:1rem">Checked by {{ player.fifa_connect_checked_by.get_full_name }} on {{ player.fifa_connect_checked_at|date:"d M Y H:i" }}</p>
+            {% endif %}
+
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
+                <!-- Auto Check via API -->
+                <form method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:flex;gap:.5rem;align-items:end">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="auto_check">
+                    <input type="text" name="fifa_connect_id" value="{{ player.fifa_connect_id }}" placeholder="FIFA Connect ID (optional)" style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;width:200px;font-size:.85rem">
+                    <button type="submit" style="padding:.4rem 1rem;background:#1B5E20;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">⚽ Run FIFA Check</button>
+                </form>
+
+                <!-- Manual Clear -->
+                {% if player.fifa_connect_status != 'clear' %}
+                <button onclick="document.getElementById('fifa-clear-form').style.display='block'" style="padding:.4rem 1rem;background:#4CAF50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">✅ Manual Clear</button>
+                {% endif %}
+
+                <!-- Manual Flag -->
+                {% if player.fifa_connect_status != 'flagged' %}
+                <button onclick="document.getElementById('fifa-flag-form').style.display='block'" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">🚩 Manual Flag</button>
+                {% endif %}
+
+                <!-- Reset -->
+                {% if player.fifa_connect_status != 'not_checked' %}
+                <form method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reset">
+                    <button type="submit" style="padding:.4rem 1rem;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">🔄 Reset</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Manual Clear Form (hidden) -->
+            <form id="fifa-clear-form" method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:none;margin-top:1rem;padding:1rem;background:#f5f7f5;border-radius:8px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual_clear">
+                <h4 style="margin:0 0 .75rem;color:#1B5E20">Manual FIFA Connect Clearance</h4>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">FIFA Connect ID</label>
+                    <input type="text" name="fifa_connect_id" value="{{ player.fifa_connect_id }}" style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem">
+                </div>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">Notes</label>
+                    <textarea name="notes" rows="2" placeholder="Reason for manual clearance..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
+                </div>
+                <button type="submit" style="padding:.4rem 1rem;background:#4CAF50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Confirm Clear</button>
+            </form>
+
+            <!-- Manual Flag Form (hidden) -->
+            <form id="fifa-flag-form" method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:none;margin-top:1rem;padding:1rem;background:#fce4ec;border-radius:8px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual_flag">
+                <h4 style="margin:0 0 .75rem;color:#C62828">Flag Player — Higher League</h4>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">Select League(s)</label>
+                    <div style="display:flex;flex-direction:column;gap:.25rem;margin-top:.25rem">
+                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Regional League"> Regional League</label>
+                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Division Two"> Division Two</label>
+                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Division One"> Division One</label>
+                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="National Super League"> National Super League</label>
+                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Kenya FKF Premier League"> Kenya FKF Premier League</label>
+                    </div>
+                </div>
+                <div style="margin-bottom:.75rem">
+                    <label style="font-size:.85rem;font-weight:600">Notes</label>
+                    <textarea name="notes" rows="2" required placeholder="Evidence / reason for flagging..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
+                </div>
+                <button type="submit" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Flag Player</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── STEP 4: Final Clearance ── -->
+    <div class="card" style="border-left:4px solid {% if player.is_fully_cleared and player.status == 'eligible' %}#1B5E20{% elif player.is_fully_cleared %}#FF9800{% else %}#9E9E9E{% endif %}">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>
+                {% if player.is_fully_cleared and player.status == 'eligible' %}🛡️{% elif player.is_fully_cleared %}⏳{% else %}🔒{% endif %}
+                Final Clearance
+            </h3>
+            {% if player.is_fully_cleared and player.status == 'eligible' %}
+            <span style="background:#1B5E20;color:#fff;padding:.3rem .75rem;border-radius:20px;font-size:.85rem;font-weight:700">🛡️ FULLY CLEARED</span>
+            {% elif player.is_fully_cleared %}
+            <span style="background:#FF9800;color:#fff;padding:.3rem .75rem;border-radius:20px;font-size:.85rem;font-weight:600">Ready for Clearance</span>
+            {% else %}
+            <span style="background:#f5f5f5;color:#888;padding:.3rem .75rem;border-radius:20px;font-size:.85rem">Steps Incomplete</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <!-- Checklist -->
+            <div style="margin-bottom:1.5rem">
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+                    {% if clearance.documents.passed %}<span style="color:#1B5E20">✅</span>{% else %}<span style="color:#C62828">❌</span>{% endif %}
+                    <span style="font-size:.9rem">Document Verification — {{ clearance.documents.display }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+                    {% if clearance.huduma.passed %}<span style="color:#1B5E20">✅</span>{% else %}<span style="color:#C62828">❌</span>{% endif %}
+                    <span style="font-size:.9rem">Huduma Kenya Age Verification — {{ clearance.huduma.display }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+                    {% if clearance.fifa_connect.passed %}<span style="color:#1B5E20">✅</span>{% else %}<span style="color:#C62828">❌</span>{% endif %}
+                    <span style="font-size:.9rem">FIFA Connect League Check — {{ clearance.fifa_connect.display }}</span>
+                </div>
+            </div>
+
+            {% if player.is_fully_cleared %}
+                {% if player.status != 'eligible' %}
+                <form method="post" action="{% url 'player_final_clearance' player_pk=player.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="grant_clearance">
+                    <button type="submit" style="padding:.5rem 1.5rem;background:#1B5E20;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:700">🛡️ Grant Final Clearance</button>
+                </form>
+                {% else %}
+                <div style="display:flex;align-items:center;gap:1rem">
+                    <div style="padding:.75rem 1.5rem;background:#e8f5e9;border-radius:8px;color:#1B5E20;font-weight:700;font-size:1rem">🎉 Player is FULLY CLEARED to participate</div>
+                    <form method="post" action="{% url 'player_final_clearance' player_pk=player.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="revoke_clearance">
+                        <button type="submit" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600" onclick="return confirm('Are you sure you want to revoke clearance?')">⛔ Revoke</button>
+                    </form>
+                </div>
+                {% endif %}
+            {% else %}
+            <div style="padding:1rem;background:#fff3e0;border-radius:8px;color:#e65100;font-size:.9rem">
+                <strong>⚠️ Cannot grant clearance</strong> — complete all verification steps above first.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Verification Audit Log ── -->
+<div class="card" style="margin-top:1.5rem">
+    <div class="card-header"><h3>📋 Verification Audit Log</h3></div>
+    <div class="card-body">
+        {% if logs %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Step</th>
+                        <th>Action</th>
+                        <th>Result</th>
+                        <th>Performed By</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="font-size:.85rem;white-space:nowrap">{{ log.performed_at|date:"d M Y H:i" }}</td>
+                        <td>
+                            {% if log.step == 'document' %}📄{% elif log.step == 'huduma' %}🏛️{% elif log.step == 'fifa_connect' %}⚽{% else %}🛡️{% endif %}
+                            {{ log.get_step_display }}
+                        </td>
+                        <td style="font-weight:600">{{ log.action }}</td>
+                        <td>
+                            {% if log.result == 'verified' or log.result == 'clear' or log.result == 'eligible' or log.result == 'granted' %}
+                            <span style="color:#1B5E20">{{ log.result }}</span>
+                            {% elif log.result == 'flagged' or log.result == 'failed' or log.result == 'rejected' or log.result == 'ineligible' or log.result == 'revoked' %}
+                            <span style="color:#C62828">{{ log.result }}</span>
+                            {% else %}
+                            {{ log.result }}
+                            {% endif %}
+                        </td>
+                        <td style="font-size:.85rem">{% if log.performed_by %}{{ log.performed_by.get_full_name }}{% else %}System{% endif %}</td>
+                        <td style="font-size:.85rem;max-width:200px;overflow:hidden;text-overflow:ellipsis">{{ log.notes|truncatewords:15 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No verification actions recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

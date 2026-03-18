@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Unsuspend Player - {{ player.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-check-circle"></i> Unsuspend Player</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <h5>Confirm Unsuspension</h5>
+                        <p>This player will become available for selection immediately.</p>
+                    </div>
+                    
+                    <div class="player-info mb-4">
+                        <h5 class="text-center">{{ player.full_name }}</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Team</th>
+                                <td>{{ player.team.team_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Current Status</th>
+                                <td><span class="badge badge-danger">Suspended</span></td>
+                            </tr>
+                            <tr>
+                                <th>Suspension Reason</th>
+                                <td>{{ player.suspension_reason }}</td>
+                            </tr>
+                            <tr>
+                                <th>Matches Remaining</th>
+                                <td>{{ player.suspension_matches }} match(es)</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <form method="post" class="text-center">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Yes, Unsuspend Player
+                        </button>
+                        <a href="{% url 'teams:admin_manage_players' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

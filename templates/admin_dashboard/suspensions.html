@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Suspensions - Admin Dashboard{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Manage Suspensions</li>
+    </ol>
+</nav>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-primary">Player Suspensions</h2>
+        <p class="lead">Manage player suspensions and bans</p>
+    </div>
+</div>
+
+<!-- Red Card Suspensions -->
+<div class="card mb-4">
+    <div class="card-header card-header-custom">
+        <h5 class="mb-0">Direct Red Card Suspensions (3 Match Ban)</h5>
+    </div>
+    <div class="card-body">
+        {% if red_card_players %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Red Cards</th>
+                        <th>Suspension Reason</th>
+                        <th>Suspension End</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in red_card_players %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if player.photo %}
+                                <img src="{{ player.photo.url }}" alt="{{ player.full_name }}" 
+                                     class="player-photo me-2">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ player.full_name }}</strong><br>
+                                    <small>#{{ player.jersey_number }} • {{ player.position }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ player.team.team_name }}</td>
+                        <td><span class="badge bg-danger">{{ player.red_cards }}</span></td>
+                        <td>
+                            {% if player.suspension_reason %}
+                            {{ player.suspension_reason }}
+                            {% else %}
+                            <span class="text-muted">Direct red card</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if player.suspension_end %}
+                            {{ player.suspension_end|date:"M d, Y" }}
+                            {% else %}
+                            <span class="text-warning">Not set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'manage_suspension' player.id %}" 
+                               class="btn btn-sm btn-primary-custom">
+                                <i class="fas fa-edit"></i> Manage
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <p class="text-muted">No players suspended for direct red cards</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Two Yellow Cards Suspensions -->
+<div class="card mb-4">
+    <div class="card-header card-header-custom">
+        <h5 class="mb-0">Two Yellow Cards Suspensions (2 Match Ban)</h5>
+    </div>
+    <div class="card-body">
+        {% if two_yellow_players %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Yellow Cards</th>
+                        <th>Suspension Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in two_yellow_players %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if player.photo %}
+                                <img src="{{ player.photo.url }}" alt="{{ player.full_name }}" 
+                                     class="player-photo me-2">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ player.full_name }}</strong><br>
+                                    <small>#{{ player.jersey_number }} • {{ player.position }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ player.team.team_name }}</td>
+                        <td><span class="badge bg-warning text-dark">{{ player.yellow_cards }}</span></td>
+                        <td>
+                            {% if player.suspension_reason %}
+                            {{ player.suspension_reason }}
+                            {% else %}
+                            <span class="text-muted">Two yellow cards in one match</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'manage_suspension' player.id %}" 
+                               class="btn btn-sm btn-primary-custom">
+                                <i class="fas fa-edit"></i> Manage
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <p class="text-muted">No players suspended for two yellow cards</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Accumulated Yellow Cards Suspensions -->
+<div class="card">
+    <div class="card-header card-header-custom">
+        <h5 class="mb-0">Accumulated Yellow Cards (6 Cards = 1 Match Ban)</h5>
+    </div>
+    <div class="card-body">
+        {% if yellow_card_players %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Yellow Cards</th>
+                        <th>Suspension Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in yellow_card_players %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if player.photo %}
+                                <img src="{{ player.photo.url }}" alt="{{ player.full_name }}" 
+                                     class="player-photo me-2">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ player.full_name }}</strong><br>
+                                    <small>#{{ player.jersey_number }} • {{ player.position }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ player.team.team_name }}</td>
+                        <td><span class="badge bg-warning text-dark">{{ player.yellow_cards }}</span></td>
+                        <td>
+                            {% if player.suspension_reason %}
+                            {{ player.suspension_reason }}
+                            {% else %}
+                            <span class="text-muted">6 accumulated yellow cards</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'manage_suspension' player.id %}" 
+                               class="btn btn-sm btn-primary-custom">
+                                <i class="fas fa-edit"></i> Manage
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <p class="text-muted">No players suspended for accumulated yellow cards</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

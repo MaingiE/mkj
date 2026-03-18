@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}County Payments &#8212; KYISA Treasurer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'treasurer_dashboard' %}">Treasurer</a>
+        <span>County Payments</span>
+    </div>
+    <h1><i class="bi bi-building"></i> County Payments &#8212; Season {{ season }}</h1>
+    <p>Each county pays a single fee of <strong>KSh {{ registration_fee|floatformat:0 }}</strong> per season to cover ALL sport disciplines.</p>
+</div>
+
+<!-- Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem">
+    <div class="card" style="padding:1.4rem;text-align:center;border-top:4px solid #2e7d32">
+        <div style="font-size:2.2rem;font-weight:800;color:#2e7d32">{{ paid_count }}</div>
+        <div style="color:#888;font-size:.85rem;margin-top:.3rem">Counties Paid</div>
+    </div>
+    <div class="card" style="padding:1.4rem;text-align:center;border-top:4px solid #f57c00">
+        <div style="font-size:2.2rem;font-weight:800;color:#f57c00">{{ pending_count }}</div>
+        <div style="color:#888;font-size:.85rem;margin-top:.3rem">Pending Payment</div>
+    </div>
+    <div class="card" style="padding:1.4rem;text-align:center;border-top:4px solid #1565c0">
+        <div style="font-size:2.2rem;font-weight:800;color:#1565c0">KSh {{ total_collected|floatformat:0 }}</div>
+        <div style="color:#888;font-size:.85rem;margin-top:.3rem">Total Collected</div>
+    </div>
+</div>
+
+<!-- Add County Payment Record -->
+{% if available_counties %}
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+        <h3><i class="bi bi-plus-circle"></i> Register County for Season {{ season }}</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_county">
+            <div style="flex:1;min-width:200px">
+                <label class="form-label">County</label>
+                <select name="county" class="form-control" required>
+                    <option value="">&#8212; Select County &#8212;</option>
+                    {% for value, label in available_counties %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn--primary" style="padding:.55rem 1.5rem">Create Payment Record</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Pending Payments -->
+{% if pending_payments %}
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+        <h3><i class="bi bi-hourglass-split"></i> Pending County Payments</h3>
+        <span class="badge badge--warning">{{ pending_count }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>County</th>
+                    <th>Fee (KSh)</th>
+                    <th>Status</th>
+                    <th style="min-width:300px">Confirm Payment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cp in pending_payments %}
+                <tr>
+                    <td><strong>{{ cp.county }}</strong></td>
+                    <td>{{ cp.participation_fee|floatformat:0 }}</td>
+                    <td><span class="badge badge--warning">Pending</span></td>
+                    <td>
+                        <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="confirm_payment">
+                            <input type="hidden" name="payment_id" value="{{ cp.pk }}">
+                            <input type="text" name="payment_reference" class="form-control" placeholder="M-Pesa Ref" required style="width:140px;font-size:.85rem">
+                            <input type="date" name="payment_date" class="form-control" style="width:140px;font-size:.85rem">
+                            <input type="text" name="notes" class="form-control" placeholder="Notes" style="width:120px;font-size:.85rem">
+                            <button type="submit" class="btn btn--primary" style="padding:.35rem .8rem;font-size:.82rem"><i class="bi bi-check-lg"></i> Confirm</button>
+                            <button type="submit" name="action" value="waive_payment" class="btn btn--light" style="padding:.35rem .8rem;font-size:.82rem" title="Waive fee for this county">Waive</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Paid Counties -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-check-circle-fill"></i> Confirmed Payments</h3>
+        <span class="badge badge--success">{{ paid_count }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+        {% if paid_payments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>County</th>
+                    <th>Fee (KSh)</th>
+                    <th>Reference</th>
+                    <th>Payment Date</th>
+                    <th>Confirmed By</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cp in paid_payments %}
+                <tr>
+                    <td><strong>{{ cp.county }}</strong></td>
+                    <td>{{ cp.participation_fee|floatformat:0 }}</td>
+                    <td style="font-family:monospace;font-size:.85rem">{{ cp.payment_reference|default:"&#8212;" }}</td>
+                    <td>{{ cp.payment_date|date:"d M Y"|default:"&#8212;" }}</td>
+                    <td>{{ cp.confirmed_by.get_full_name|default:"&#8212;" }}</td>
+                    <td>
+                        {% if cp.payment_status == 'paid' %}
+                        <span class="badge badge--success">Paid</span>
+                        {% else %}
+                        <span class="badge badge--info">Waived</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem">No confirmed payments yet for season {{ season }}.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

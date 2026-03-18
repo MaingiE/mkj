@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Referees &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ref-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .ref-card h4 { font-size: .95rem; font-weight: 600; margin: 0; }
+    .ref-card .meta { font-size: .8rem; color: #757575; }
+    .status-badge { font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-flag"></i> Referees ({{ stats.total }})</h2>
+
+<!-- Pending Approvals -->
+{% if pending %}
+<div class="card mb-3">
+    <div class="card-header" style="background:#FFF3E0;">
+        <h3 style="margin:0;font-size:1rem;color:#E65100;"><i class="bi bi-exclamation-circle"></i> Pending Approval ({{ stats.pending }})</h3>
+    </div>
+    <div class="card-body">
+        {% for ref in pending %}
+        <div class="ref-card">
+            <div>
+                <h4>{{ ref.user.get_full_name }}</h4>
+                <div class="meta">
+                    {{ ref.user.email }} &middot;
+                    Level: {{ ref.get_level_display }} &middot;
+                    County: {{ ref.county }} &middot;
+                    License: {{ ref.license_number|default:"—" }}
+                </div>
+            </div>
+            <div style="display:flex;gap:.35rem;">
+                <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="profile_id" value="{{ ref.pk }}"><input type="hidden" name="action" value="approve"><button class="btn btn-sm btn-success">Approve</button></form>
+                <form method="post" style="margin:0;" onsubmit="return confirm('Reject and remove this referee?');">{% csrf_token %}<input type="hidden" name="profile_id" value="{{ ref.pk }}"><input type="hidden" name="action" value="reject"><button class="btn btn-sm btn-outline-danger">Reject</button></form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Approved -->
+<div class="card">
+    <div class="card-header">
+        <h3 style="margin:0;font-size:1rem;"><i class="bi bi-check-circle"></i> Approved Referees ({{ stats.approved }})</h3>
+    </div>
+    <div class="card-body">
+        {% for ref in approved %}
+        <div class="ref-card">
+            <div>
+                <h4>{{ ref.user.get_full_name }}</h4>
+                <div class="meta">
+                    {{ ref.user.email }} &middot;
+                    Level: {{ ref.get_level_display }} &middot;
+                    County: {{ ref.county }} &middot;
+                    Matches: {{ ref.total_matches }} &middot;
+                    Rating: {{ ref.avg_rating|floatformat:1 }}
+                </div>
+            </div>
+            <span class="status-badge" style="background:#E8F5E9;color:#1B5E20;">Approved</span>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:2rem;color:#999;">No approved referees.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

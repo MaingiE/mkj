@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Pending Teams — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'teams_list' %}">Teams</a>
+        <span>Pending Approvals</span>
+    </div>
+    <h1>⚽ Pending Team Registrations</h1>
+    <p>Review and approve or reject team registration requests.</p>
+</div>
+
+<!-- Stats Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem">
+    <div class="card" style="padding:1.25rem;text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:#f57c00">{{ stats.pending }}</div>
+        <div style="color:#888;font-size:.85rem">Pending</div>
+    </div>
+    <div class="card" style="padding:1.25rem;text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:#1B5E20">{{ stats.registered }}</div>
+        <div style="color:#888;font-size:.85rem">Approved</div>
+    </div>
+    <div class="card" style="padding:1.25rem;text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:#333">{{ stats.total }}</div>
+        <div style="color:#888;font-size:.85rem">Total</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Pending Registrations ({{ stats.pending }})</h3>
+    </div>
+    <div class="card-body">
+        {% if pending_teams %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>County</th>
+                        <th>Contact Email</th>
+                        <th>Contact Phone</th>
+                        <th>Kit Colours</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in pending_teams %}
+                    <tr>
+                        <td>
+                            <strong>{{ team.name }}</strong>
+                            {% if team.badge %}
+                            <br><img src="{{ team.badge.url }}" alt="" style="width:30px;height:30px;border-radius:4px;margin-top:4px">
+                            {% endif %}
+                        </td>
+                        <td>{{ team.county }}</td>
+                        <td>{{ team.contact_email|default:"—" }}</td>
+                        <td>{{ team.contact_phone|default:"—" }}</td>
+                        <td>
+                            {% if team.home_colour %}
+                            <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:{{ team.home_colour }};border:1px solid #ddd;vertical-align:middle"></span>
+                            {{ team.home_colour }}
+                            {% else %}—{% endif %}
+                            {% if team.away_colour %}
+                            /
+                            <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:{{ team.away_colour }};border:1px solid #ddd;vertical-align:middle"></span>
+                            {{ team.away_colour }}
+                            {% endif %}
+                        </td>
+                        <td style="white-space:nowrap">{{ team.registered_at|date:"d M Y" }}</td>
+                        <td style="white-space:nowrap">
+                            <form method="post" style="display:inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="team_id" value="{{ team.pk }}">
+                                <button type="submit" name="action" value="approve" class="btn btn-outline btn-sm" style="background:#1B5E20;color:#fff;border-color:#1B5E20;margin-right:.25rem" onclick="return confirm('Approve {{ team.name }}?')">
+                                    ✅ Approve
+                                </button>
+                                <button type="submit" name="action" value="reject" class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828" onclick="return confirm('Reject {{ team.name }}? This cannot be undone.')">
+                                    ❌ Reject
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">✅</div>
+            <h3>No pending registrations</h3>
+            <p>All team registrations have been processed.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

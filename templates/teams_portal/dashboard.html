@@ -1,0 +1,510 @@
+<!-- templates/teams/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Team Dashboard - {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Team Header -->
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            {% if team.logo %}
+            <img src="{{ team.logo.url }}" alt="{{ team.team_name }}" 
+                 class="rounded-circle mb-3" width="120" height="120">
+            {% else %}
+            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" 
+                 style="width: 120px; height: 120px;">
+                <i class="fas fa-shield-alt fa-3x text-white"></i>
+            </div>
+            {% endif %}
+            
+            <h1>{{ team.team_name }}</h1>
+            <p class="text-muted">
+                <i class="fas fa-map-marker-alt"></i> {{ team.location }}
+            </p>
+            
+            <div class="d-flex justify-content-center gap-2">
+                <span class="badge bg-{% if team.status == 'approved' %}success{% else %}warning{% endif %}">
+                    {{ team.status|title }}
+                </span>
+                {% if team.zone %}
+                <span class="badge bg-info">{{ team.zone.name }}</span>
+                {% endif %}
+                {% if team.payment_status %}
+                <span class="badge bg-success">Paid</span>
+                {% else %}
+                <span class="badge bg-danger">Unpaid</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Information -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Team Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Home Ground:</strong><br>{{ team.home_ground }}</p>
+                    <p><strong>Contact Person:</strong><br>{{ team.contact_person }}</p>
+                    <p><strong>Phone:</strong><br>{{ team.phone_number }}</p>
+                    <p><strong>Email:</strong><br>{{ team.email|default:"Not provided" }}</p>
+                    <p><strong>Registered:</strong><br>{{ team.registration_date|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Quick Stats</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <h2 class="text-primary">{{ players.count }}</h2>
+                            <p class="text-muted">Total Players</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h2 class="text-success">
+                                <!-- Count captains manually -->
+                                {% with captain_count=0 %}
+                                    {% for player in players %}
+                                        {% if player.is_captain %}
+                                            {% with captain_count=captain_count|add:1 %}{% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ captain_count }}
+                                {% endwith %}
+                            </h2>
+                            <p class="text-muted">Captains</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tournaments Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-trophy"></i> Tournaments</h5>
+        </div>
+        <div class="card-body">
+            {% if team_tournament_regs or external_tournament_regs %}
+            <h6 class="text-muted mb-3"><i class="fas fa-check-circle me-1"></i>Registered Tournaments</h6>
+            <div class="table-responsive mb-3">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Tournament</th><th>Type</th><th>Status</th><th>Dates</th><th class="text-end">Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in team_tournament_regs %}
+                        <tr>
+                            <td class="fw-bold">{{ reg.tournament.name }}</td>
+                            <td><span class="badge bg-primary">League Team</span></td>
+                            <td>
+                                <span class="badge bg-{% if reg.status == 'approved' %}success{% elif reg.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                    {{ reg.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ reg.tournament.start_date|date:"d M" }} – {{ reg.tournament.end_date|date:"d M Y" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'tournaments:tournament_detail' reg.tournament.slug %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                                {% if reg.status == 'approved' %}
+                                <a href="{% url 'tournaments:register_players' reg.tournament.slug %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-users me-1"></i>Players
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for reg in external_tournament_regs %}
+                        <tr>
+                            <td class="fw-bold">{{ reg.tournament.name }} <small class="text-muted">({{ reg.external_team.team_name }})</small></td>
+                            <td><span class="badge bg-info">External Team</span></td>
+                            <td>
+                                <span class="badge bg-{% if reg.status == 'approved' %}success{% elif reg.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                    {{ reg.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ reg.tournament.start_date|date:"d M" }} – {{ reg.tournament.end_date|date:"d M Y" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'tournaments:tournament_detail' reg.tournament.slug %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                                {% if reg.status == 'approved' %}
+                                <a href="{% url 'tournaments:register_external_players' reg.tournament.slug reg.external_team.pk %}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-users me-1"></i>Players
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if open_tournaments %}
+            <h6 class="text-muted mb-3"><i class="fas fa-door-open me-1"></i>Open Tournaments – Register Now</h6>
+            <div class="row">
+                {% for t in open_tournaments %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-success h-100">
+                        <div class="card-body text-center">
+                            {% if t.logo %}
+                            <img src="{{ t.logo.url }}" alt="" class="mb-2" style="height:50px;">
+                            {% else %}
+                            <i class="fas fa-trophy fa-2x text-success mb-2"></i>
+                            {% endif %}
+                            <h6 class="card-title">{{ t.name }}</h6>
+                            <p class="small text-muted mb-1">{{ t.get_format_display }} &bull; {{ t.start_date|date:"d M Y" }}</p>
+                            <p class="small text-muted mb-2">
+                                <i class="fas fa-clock me-1"></i>Deadline: {{ t.registration_deadline|date:"d M Y" }}
+                            </p>
+                            <a href="{% url 'tournaments:register_team' t.slug %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-futbol me-1"></i>Register
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if team_tournament_regs or external_tournament_regs %}
+            <div class="text-center mt-3">
+                <a href="{% url 'tournaments:tournament_team_matches' %}" class="btn btn-outline-success">
+                    <i class="fas fa-calendar-alt me-1"></i>View My Tournament Matches &amp; Squads
+                </a>
+            </div>
+            {% endif %}
+
+            {% if not team_tournament_regs and not external_tournament_regs and not open_tournaments %}
+            <p class="text-muted text-center mb-0"><i class="fas fa-info-circle me-1"></i>No tournaments available at the moment.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Matchday Squad Selection -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Matchday Squad Selection - Upcoming Matches</h5>
+        </div>
+        <div class="card-body">
+            {% if upcoming_matches %}
+                {% if current_round %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Current Round:</strong> Round {{ current_round }}
+                    <br>
+                    <small>You can only submit squads for the most recent match in the current round. Complete previous rounds first.</small>
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Previous Round Incomplete:</strong> Please complete all matches from the previous round before submitting squads for upcoming matches.
+                </div>
+                {% endif %}
+
+                <div class="row">
+                    {% for match_data in upcoming_matches %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 {% if match_data.is_active_match %}border-success{% elif match_data.can_submit %}border-primary{% else %}border-secondary{% endif %}">
+                            <div class="card-header {% if match_data.is_active_match %}bg-success text-white{% elif match_data.can_submit %}bg-primary text-white{% else %}bg-secondary text-white{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-futbol me-2"></i>
+                                        Round {{ match_data.match.round_number|default:"N/A" }}
+                                    </h6>
+                                    {% if match_data.is_active_match %}
+                                    <span class="badge bg-light text-success">Active</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <h5 class="card-title">
+                                        <strong>{{ match_data.match.home_team.team_name }}</strong>
+                                        <span class="text-muted">vs</span>
+                                        <strong>{{ match_data.match.away_team.team_name }}</strong>
+                                    </h5>
+                                </div>
+                                
+                                <div class="row text-center mb-3">
+                                    <div class="col-6">
+                                        <i class="fas fa-calendar text-muted"></i>
+                                        <br>
+                                        <small>{{ match_data.match.match_date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <i class="fas fa-clock text-muted"></i>
+                                        <br>
+                                        <small>{{ match_data.match.kickoff_time|time:"H:i"|default:"TBD" }}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        {% if match_data.squad %}
+                                            {% if match_data.squad.status == 'pending' %}
+                                            <span class="badge bg-secondary">Not Submitted</span>
+                                            {% elif match_data.squad.status == 'submitted' %}
+                                            <span class="badge bg-warning">Awaiting Approval</span>
+                                            {% elif match_data.squad.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                            {% elif match_data.squad.status == 'locked' %}
+                                            <span class="badge bg-dark">Locked</span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not Submitted</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if match_data.can_submit %}
+                                        {% if match_data.squad and match_data.squad.status == 'locked' %}
+                                        <button class="btn btn-sm btn-secondary w-100" disabled>
+                                            <i class="fas fa-lock me-1"></i>Locked
+                                        </button>
+                                        {% elif match_data.squad and match_data.squad.status == 'approved' %}
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'referees:submit_matchday_squad' match_data.match.id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye me-1"></i>View Squad
+                                            </a>
+                                            {% if match_data.can_request_edit %}
+                                            <a href="{% url 'referees:team_request_squad_edit' match_data.match.id %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit me-1"></i>Request Edit
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <a href="{% url 'referees:submit_matchday_squad' match_data.match.id %}" class="btn btn-sm btn-primary w-100">
+                                            <i class="fas fa-edit me-1"></i>
+                                            {% if match_data.squad and match_data.squad.status != 'pending' %}Edit{% else %}Submit{% endif %} Squad
+                                        </a>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if not match_data.is_active_match %}
+                                        <button class="btn btn-sm btn-secondary w-100" disabled>
+                                            <i class="fas fa-ban me-1"></i>Not Available
+                                        </button>
+                                        <small class="text-muted d-block">Complete active round first</small>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-secondary w-100" disabled>
+                                            <i class="fas fa-clock me-1"></i>Opens 4h Before
+                                        </button>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="alert alert-light mt-3 mb-0">
+                    <h6><i class="fas fa-info-circle me-2"></i>Squad Submission Rules:</h6>
+                    <ul class="mb-0">
+                        <li><strong>Squad submission opens 4 hours before kick-off</strong></li>
+                        <li><strong>Squads cannot be edited after kick-off time</strong></li>
+                        <li>Submit exactly 11 starting players + 14 substitutes (25 total)</li>
+                        <li>Must include at least 1 goalkeeper in both starting XI and bench</li>
+                        <li>Only available for the most recent match in the current round</li>
+                        <li>Previous round must be completed before progressing</li>
+                    </ul>
+                </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h5>No Upcoming Matches</h5>
+                <p class="text-muted">Your team has no scheduled matches at this time.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Players -->
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-users"></i> Team Players ({{ players.count }})</h5>
+            <a href="{% url 'teams:add_players_approved' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Add Player
+            </a>
+        </div>
+        <div class="card-body">
+            {% if players %}
+            <div class="row">
+                {% for player in players %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                {% if player.photo %}
+                                <img src="{{ player.photo.url }}" alt="{{ player.first_name }}" 
+                                     class="rounded-circle me-3" width="60" height="60">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-1">{{ player.first_name }} {{ player.last_name }}</h6>
+                                    <small class="text-muted d-block">
+                                        #{{ player.jersey_number }} • {{ player.get_position_display }}
+                                    </small>
+                                    {% if player.is_captain %}
+                                    <span class="badge bg-warning mt-1">Captain</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    ID: {{ player.id_number|default:"Not provided" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4>No Players Yet</h4>
+                <p class="text-muted">Add your team players to get started.</p>
+                <a href="{% url 'teams:add_players_approved' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Add First Player
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="mb-3">Quick Actions</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/admin/teams/team/{{ team.id }}/change/" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Team
+                </a>
+                <a href="{% url 'teams:add_players_approved' %}" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> Add Players
+                </a>
+                <a href="{% url 'teams:all_teams' %}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> All Teams
+                </a>
+                <a href="/" class="btn btn-outline-secondary">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_content %}
+<div class="row mb-4">   
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pending Registrations</h6>
+                        <h2 class="mb-0">{{ pending_registrations }}</h2>           
+                    </div>
+                    <div class="align-self
+-center">
+                        <i class="fas fa-user-clock fa-3x opacity-50"></i>
+                    </div>
+                </div>  
+                <p class="mb-0 mt-2">
+                    <small>Teams Awaiting Approval</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title
+">Active Teams</h6>
+
+
+                        <h2 class="mb-0">{{ active_teams }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-3x opacity-50"></i>   
+                    </div>
+                </div>
+                <p class="mb-0 mt-2">
+                    <small>{{ total_teams }} Total Teams</small>
+                </p>
+            </div>      
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title
+
+">Total Players</h6>
+                        <h2 class="mb-0">{{ total_players }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-friends fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <p class="mb-0 mt-2">
+                    <small>{{ total_captains }} Captains</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title
+">Total Matches</h6>
+
+                        <h2 class="mb-0">{{ total_matches }}</h2>
+                    </div>
+                    <div class="align-self
+-center">
+                        <i class="fas fa-futbol fa-3x opacity-50"></i>      
+                    </div>
+                </div>
+                <p class="mb-0 mt-2">
+                    <small>{{ completed_matches }} Completed</small>
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+</div><div class="row mb-4">   
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>                   
+                        <h6 class="card-title">Pending Registrations</h6>
+                        <h2 class="mb-0">{{ pending_registrations }}</h2>
+                    </div>  
+                    <div class="align-self-center">
+                        <i class="fas fa-user-clock fa-3x opacity-50"></i>  
+                    </div>
+                    {% endblock %}
+
+        

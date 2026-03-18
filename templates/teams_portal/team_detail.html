@@ -1,0 +1,138 @@
+<!-- templates/teams/team_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ team.team_name }} - FKF Meru League{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        {% if team.logo %}
+                        <img src="{{ team.logo.url }}" alt="{{ team.team_name }}" 
+                             class="rounded-circle me-3" width="100" height="100">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" 
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-shield-alt fa-3x text-white"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h1 class="mb-1">{{ team.team_name }}</h1>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt"></i> {{ team.location }}
+                            </p>
+                            <div>
+                                <span class="badge bg-{% if team.status == 'approved' %}success{% elif team.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {{ team.get_status_display }}
+                                </span>
+                                {% if team.zone %}
+                                <span class="badge zone-{{ team.zone.zone_id|lower }} ms-1">{{ team.zone.name }}</span>
+                                {% endif %}
+                                {% if team.payment_status %}
+                                <span class="badge bg-success ms-1">Paid</span>
+                                {% else %}
+                                <span class="badge bg-danger ms-1">Unpaid</span>
+                                {% endif %}
+                    {% if request.user.is_staff or request.user.is_superuser or 'League Admin' in request.user.groups.all|join:' ' or 'League Manager' in request.user.groups.all|join:' ' %}
+                        <a href="{% url 'teams:edit_team_info' team.id %}" class="btn btn-warning mb-3">Edit Team Info</a>
+                    {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5>Team Information</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Home Ground:</strong> {{ team.home_ground }}</p>
+                            <p><strong>Contact Person:</strong> {{ team.contact_person }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Phone:</strong> {{ team.phone_number }}</p>
+                            <p><strong>Email:</strong> {{ team.email|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if team.coordinates %}
+                    <div class="alert alert-info">
+                        <strong><i class="fas fa-map-marker-alt"></i> Coordinates:</strong> {{ team.coordinates }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Players Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Team Players</h5>
+                </div>
+                <div class="card-body">
+                    {% if players %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Jersey</th>
+                                    <th>Name</th>
+                                    <th>Position</th>
+                                    <th>Captain</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in players %}
+                                <tr>
+                                    <td><strong>#{{ player.jersey_number }}</strong></td>
+                                    <td>{{ player.first_name }} {{ player.last_name }}</td>
+                                    <td>{{ player.get_position_display }}</td>
+                                    <td>
+                                        {% if player.is_captain %}
+                                        <span class="badge bg-warning">Captain</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No players registered for this team yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header card-header-custom">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/admin/teams/team/{{ team.id }}/change/" class="btn btn-primary-custom w-100 mb-2">
+                        <i class="fas fa-edit"></i> Edit in Admin
+                    </a>
+                    <a href="{% url 'teams:all_teams' %}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-arrow-left"></i> Back to All Teams
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-home"></i> Go to Home
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Registration Info -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6>Registration Details</h6>
+                    <p><strong>Registered:</strong> {{ team.registration_date|date:"F d, Y" }}</p>
+                    <p><strong>Team Code:</strong> {{ team.team_code }}</p>
+                    <p><strong>Status:</strong> {{ team.get_status_display }}</p>
+                    <p><strong>Payment:</strong> {% if team.payment_status %}Paid on {{ team.payment_date|date:"F d, Y" }}{% else %}Pending{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

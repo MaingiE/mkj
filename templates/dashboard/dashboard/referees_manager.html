@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Referees Manager Dashboard - FKF Meru League{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-success"><i class="fas fa-whistle"></i> Referees Manager Dashboard</h2>
+            <p class="lead">Manage referee appointments, approvals, and match officials</p>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'referees:matches_needing_officials' %}" class="btn btn-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Matches Needing Officials
+                </a>
+                <a href="{% url 'referees:pending_referees' %}" class="btn btn-danger">
+                    <i class="fas fa-user-clock me-2"></i>Pending Approvals
+                </a>
+                <a href="{% url 'referees:all_referees' %}" class="btn btn-success">
+                    <i class="fas fa-users me-2"></i>All Referees
+                </a>
+                <a href="{% url 'referees:weekly_report_display' %}" class="btn btn-primary">
+                    <i class="fas fa-chart-line me-2"></i>Weekly Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50 mb-1">Pending Approvals</h6>
+                            <h2 class="mb-0">{{ pending_referees_count|default:0 }}</h2>
+                            <p class="mb-0 mt-2">
+                                <small><a href="{% url 'referees:pending_referees' %}" class="text-white text-decoration-underline">View Pending →</a></small>
+                            </p>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-clock fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-dark shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Needs Officials</h6>
+                            <h2 class="mb-0" id="needsOfficialsCount">0</h2>
+                            <p class="mb-0 mt-2">
+                                <small><a href="{% url 'referees:matches_needing_officials' %}" class="text-dark text-decoration-underline">View All →</a></small>
+                            </p>
+                        </div>
+                        <div>
+                            <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50 mb-1">Pending Confirmation</h6>
+                            <h2 class="mb-0" id="pendingConfirmationCount">0</h2>
+                            <p class="mb-0 mt-2">
+                                <small><a href="{% url 'referees:matches_needing_officials' %}" class="text-white text-decoration-underline">View All →</a></small>
+                            </p>
+                        </div>
+                        <div>
+                            <i class="fas fa-clock fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50 mb-1">Available Referees</h6>
+                            <h2 class="mb-0" id="availableRefereesCount">0</h2>
+                            <p class="mb-0 mt-2">
+                                <small><a href="{% url 'referees:all_referees' %}" class="text-white text-decoration-underline">View All →</a></small>
+                            </p>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-check fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row">
+        <!-- Left Column: Main Content -->
+        <div class="col-lg-8">
+            <!-- Matches Needing Officials (URGENT) -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Urgent: Matches Needing Officials
+                    </h5>
+                    <span class="badge bg-white text-warning fs-6" id="urgentMatchesCount">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="urgentMatchesTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Match</th>
+                                    <th>Zone</th>
+                                    <th>Days Left</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="urgentMatchesBody">
+                                <!-- Will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <a href="{% url 'referees:matches_needing_officials' %}" class="btn btn-warning">
+                        <i class="fas fa-list me-2"></i>View All Matches Needing Officials
+                    </a>
+                </div>
+            </div>
+
+            <!-- All Appointed Matches -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users-cog me-2"></i>All Appointments
+                    </h5>
+                    <span class="badge bg-white text-primary fs-6" id="appointedMatchesCount">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="alert alert-info m-3 mb-2">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Matches with officials appointed. <strong>Appoint</strong> button is disabled - use <strong>View</strong>, <strong>Replace</strong>, or <strong>Cancel</strong>.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Match</th>
+                                    <th>Main Officials</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointedMatchesBody">
+                                <!-- Will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <a href="{% url 'referees:matches_needing_officials' %}" class="btn btn-primary">
+                        <i class="fas fa-list me-2"></i>View All Appointments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Quick Actions & Info -->
+        <div class="col-lg-4">
+            <!-- Quick Actions Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'referees:pending_referees' %}" class="btn btn-danger btn-lg">
+                            <i class="fas fa-user-check me-2"></i>Approve Referees
+                            {% if pending_referees_count > 0 %}
+                            <span class="badge bg-white text-danger ms-2">{{ pending_referees_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <a href="{% url 'referees:matches_needing_officials' %}" class="btn btn-warning btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Appoint Officials
+                        </a>
+                        
+                        <a href="{% url 'referees:all_referees' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-users me-2"></i>View All Referees
+                        </a>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" id="sendRemindersBtn">
+                            <i class="fas fa-bell me-2"></i>Send Reminders
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Referees Today -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-check me-2"></i>Available Today
+                    </h5>
+                    <span class="badge bg-white text-success fs-6" id="todayAvailableCount">0</span>
+                </div>
+                <div class="card-body">
+                    <div id="availableRefereesList">
+                        <!-- Will be loaded via AJAX -->
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'referees:all_referees' %}" class="text-success text-decoration-none">
+                        <i class="fas fa-arrow-right me-1"></i> View All Referees
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upcoming Deadlines -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Upcoming Deadlines
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-day me-2 text-danger"></i>Today</span>
+                            <span class="badge bg-danger rounded-pill" id="deadlineToday">0</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-day me-2 text-warning"></i>Tomorrow</span>
+                            <span class="badge bg-warning rounded-pill" id="deadlineTomorrow">0</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-week me-2 text-info"></i>This Week</span>
+                            <span class="badge bg-info rounded-pill" id="deadlineWeek">0</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AJAX Loading Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load urgent matches
+    loadUrgentMatches();
+    loadAppointedMatches();
+    loadAvailableReferees();
+    loadStats();
+    
+    // Auto-refresh every 2 minutes
+    setInterval(function() {
+        loadUrgentMatches();
+        loadAppointedMatches();
+        loadStats();
+    }, 120000);
+    
+    // Send reminders button
+    document.getElementById('sendRemindersBtn').addEventListener('click', function() {
+        if (confirm('Send confirmation reminders to all pending referees?')) {
+            fetch('/referees/api/send-reminders/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || 'Reminders sent successfully!');
+            })
+            .catch(error => {
+                alert('Error sending reminders');
+            });
+        }
+    });
+});
+
+function loadUrgentMatches() {
+    fetch('/referees/api/urgent-matches/')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('urgentMatchesBody');
+            const countBadge = document.getElementById('urgentMatchesCount');
+            
+            if (data.matches && data.matches.length > 0) {
+                let html = '';
+                data.matches.forEach(match => {
+                    const daysLeft = match.days_until_match;
+                    let badgeClass = 'badge bg-danger';
+                    if (daysLeft > 2) badgeClass = 'badge bg-warning';
+                    if (daysLeft > 3) badgeClass = 'badge bg-info';
+                    
+                    html += `
+                    <tr>
+                        <td>
+                            <div class="fw-bold">${match.date}</div>
+                            <small>${match.time}</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold">${match.home_team} vs ${match.away_team}</div>
+                            <small class="text-muted">${match.venue}</small>
+                        </td>
+                        <td>${match.zone}</td>
+                        <td>
+                            <span class="${badgeClass}">${daysLeft} days</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">${match.status}</span>
+                        </td>
+                        <td>
+                            <a href="/referees/match/${match.id}/appoint/" 
+                               class="btn btn-sm btn-warning w-100">
+                                <i class="fas fa-user-plus me-1"></i>Appoint
+                            </a>
+                        </td>
+                    </tr>
+                    `;
+                });
+                tableBody.innerHTML = html;
+                countBadge.textContent = data.matches.length;
+            } else {
+                tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-muted mb-0">No urgent matches needing officials.</p>
+                    </td>
+                </tr>
+                `;
+                countBadge.textContent = '0';
+            }
+        });
+}
+
+function loadRecentAppointments() {
+    fetch('/referees/api/recent-appointments/')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('recentAppointmentsBody');
+            
+            if (data.appointments && data.appointments.length > 0) {
+                let html = '';
+                data.appointments.forEach(appointment => {
+                    html += `
+                    <tr>
+                        <td>${appointment.date}</td>
+                        <td>${appointment.match}</td>
+                        <td>
+                            <small>Ref: ${appointment.referee}</small><br>
+                            <small>AR1: ${appointment.ar1}</small><br>
+                            <small>AR2: ${appointment.ar2}</small>
+                        </td>
+                        <td>
+                            <span class="badge ${appointment.status_class}">
+                                ${appointment.status}
+                            </span>
+                        </td>
+                        <td>${appointment.appointed_by}</td>
+                    </tr>
+                    `;
+                });
+                tableBody.innerHTML = html;
+            } else {
+                tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <p class="text-muted mb-0">No recent appointments</p>
+                    </td>
+                </tr>
+                `;
+            }
+        });
+}
+
+function loadAppointedMatches() {
+    fetch('/referees/api/appointed-matches/')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('appointedMatchesBody');
+            const countBadge = document.getElementById('appointedMatchesCount');
+            
+            if (data.matches && data.matches.length > 0) {
+                let html = '';
+                data.matches.forEach(match => {
+                    let statusClass = match.status === 'CONFIRMED' ? 'bg-success' : 'bg-warning text-dark';
+                    let statusIcon = match.status === 'CONFIRMED' ? 'check-circle' : 'clock';
+                    
+                    html += `
+                    <tr>
+                        <td>
+                            <div class="fw-bold">${match.date}</div>
+                            <small>${match.time}</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold">${match.home_team} vs ${match.away_team}</div>
+                            <small class="text-muted">
+                                <span class="badge bg-secondary">${match.zone}</span>
+                                <span class="badge bg-info">Round ${match.round}</span>
+                            </small>
+                        </td>
+                        <td>
+                            <small>
+                                <div><strong>Ref:</strong> ${match.referee || 'Not assigned'}</div>
+                                <div><strong>AR1:</strong> ${match.ar1 || 'Not assigned'}</div>
+                                <div><strong>AR2:</strong> ${match.ar2 || 'Not assigned'}</div>
+                            </small>
+                        </td>
+                        <td>
+                            <span class="badge ${statusClass}">
+                                <i class="fas fa-${statusIcon}"></i> ${match.status_display}
+                            </span>
+                            ${match.match_status === 'live' ? '<span class="badge bg-danger blink-live ms-1">● LIVE</span>' : ''}
+                            ${match.match_status === 'live' && match.start_time ? '<br><span class="badge bg-danger live-timer" data-start="' + match.start_time + '"></span>' : ''}
+                        </td>
+                        <td>
+                            <div class="d-grid gap-1">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary btn-sm" disabled title="Already appointed">
+                                        <i class="fas fa-ban"></i> Appoint
+                                    </button>
+                                    <a href="/matches/match/${match.id}/officials/" class="btn btn-info btn-sm" title="View Match Officials">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/referees/match/${match.id}/replace/main_referee/" 
+                                       class="btn btn-warning btn-sm"
+                                       title="Replace officials">
+                                        <i class="fas fa-exchange-alt"></i> Replace
+                                    </a>
+                                    <a href="/referees/match/${match.id}/cancel/" 
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Cancel all appointments for this match?')"
+                                       title="Cancel appointments">
+                                        <i class="fas fa-times-circle"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    `;
+                });
+                tableBody.innerHTML = html;
+                countBadge.textContent = data.matches.length;
+            } else {
+                tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No appointed matches yet.</p>
+                    </td>
+                </tr>
+                `;
+                countBadge.textContent = '0';
+            }
+        });
+}
+
+function loadAvailableReferees() {
+    fetch('/referees/api/available-referees-today/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('availableRefereesList');
+            const countBadge = document.getElementById('todayAvailableCount');
+            
+            if (data.referees && data.referees.length > 0) {
+                let html = '';
+                data.referees.slice(0, 5).forEach(referee => {
+                    html += `
+                    <div class="d-flex align-items-center mb-2 p-2 border rounded">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 32px; height: 32px;">
+                                <span class="text-white small">${referee.initials}</span>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fw-bold">${referee.name}</div>
+                            <small class="text-muted">${referee.level}</small>
+                        </div>
+                    </div>
+                    `;
+                });
+                container.innerHTML = html;
+                countBadge.textContent = data.referees.length;
+            } else {
+                container.innerHTML = `
+                <div class="text-center py-3">
+                    <i class="fas fa-user-times fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No referees available today</p>
+                </div>
+                `;
+                countBadge.textContent = '0';
+            }
+        });
+}
+
+function loadStats() {
+    fetch('/referees/api/manager-stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('needsOfficialsCount').textContent = data.needs_officials || 0;
+            document.getElementById('pendingConfirmationCount').textContent = data.pending_confirmation || 0;
+            document.getElementById('availableRefereesCount').textContent = data.available_referees || 0;
+            document.getElementById('todayMatchesCount').textContent = data.today_matches || 0;
+            document.getElementById('deadlineToday').textContent = data.deadline_today || 0;
+            document.getElementById('deadlineTomorrow').textContent = data.deadline_tomorrow || 0;
+            document.getElementById('deadlineWeek').textContent = data.deadline_week || 0;
+        });
+}
+
+// CSRF token helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+.card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+}
+.badge {
+    font-weight: 500;
+}
+.blink-live {
+    animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+    to { visibility: hidden; }
+}
+</style>
+
+<script>
+// Live timer updater (runs after DOM and after AJAX loads)
+function updateLiveTimers() {
+    document.querySelectorAll('.live-timer').forEach(el => {
+        const start = new Date(el.dataset.start);
+        const now = new Date();
+        const diff = Math.floor((now - start) / 1000);
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
+        el.textContent = mins + "'" + (secs < 10 ? '0' : '') + secs + '"';
+    });
+}
+setInterval(updateLiveTimers, 1000);
+</script>
+{% endblock %}

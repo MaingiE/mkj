@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Manage Transfers{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Manage Transfers</li>
+    </ol>
+</nav>
+
+<div class="container mt-4">
+    <h1><i class="fas fa-exchange-alt"></i> Transfer Management</h1>
+    <p class="lead">Review and manage all player transfer requests</p>
+    
+    <!-- Rejected Transfers (Admin Override) -->
+    {% if rejected_transfers %}
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-times-circle"></i> Rejected Transfers ({{ rejected_transfers.count }})</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">These transfers were rejected by parent clubs. You can override rejections if necessary.</p>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>From → To</th>
+                            <th>Rejected By</th>
+                            <th>Reason</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transfer in rejected_transfers %}
+                        <tr>
+                            <td><strong>{{ transfer.player.full_name }}</strong></td>
+                            <td>{{ transfer.from_team.team_name }} → {{ transfer.to_team.team_name }}</td>
+                            <td>{{ transfer.parent_decision_by.email }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#reasonModal{{ transfer.id }}">
+                                    View Reason
+                                </button>
+                                
+                                <!-- Modal -->
+                                <div class="modal fade" id="reasonModal{{ transfer.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Rejection Reason</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>{{ transfer.parent_decision_reason }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ transfer.parent_decision_date|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'override_transfer' transfer.id %}" 
+                                   class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Override & Approve
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Pending Transfers -->
+    {% if pending_transfers %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="fas fa-clock"></i> Pending Transfers ({{ pending_transfers.count }})</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Awaiting parent club decision. Admin can approve these transfers directly.</p>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>From → To</th>
+                            <th>Requested By</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transfer in pending_transfers %}
+                        <tr>
+                            <td><strong>{{ transfer.player.full_name }}</strong></td>
+                            <td>{{ transfer.from_team.team_name }} → {{ transfer.to_team.team_name }}</td>
+                            <td>{{ transfer.requested_by.email }}</td>
+                            <td>{{ transfer.request_date|date:"M d, Y" }}</td>
+                            <td><span class="badge bg-warning">⏳ Pending</span></td>
+                            <td>
+                                <a href="{% url 'override_transfer' transfer.id %}" 
+                                   class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Approve Now
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Approved Transfers -->
+    {% if approved_transfers %}
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-check-circle"></i> Recent Approved Transfers (Last 20)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>From → To</th>
+                            <th>Approved By</th>
+                            <th>Override?</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transfer in approved_transfers %}
+                        <tr>
+                            <td><strong>{{ transfer.player.full_name }}</strong></td>
+                            <td>{{ transfer.from_team.team_name }} → {{ transfer.to_team.team_name }}</td>
+                            <td>
+                                {% if transfer.admin_override %}
+                                {{ transfer.admin_override_by.email }} (Admin)
+                                {% else %}
+                                {{ transfer.parent_decision_by.email }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if transfer.admin_override %}
+                                <span class="badge bg-danger">Yes</span>
+                                {% else %}
+                                <span class="badge bg-success">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if transfer.admin_override %}
+                                {{ transfer.admin_override_date|date:"M d, Y" }}
+                                {% else %}
+                                {{ transfer.parent_decision_date|date:"M d, Y" }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if not pending_transfers and not rejected_transfers and not approved_transfers %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No transfer requests found.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

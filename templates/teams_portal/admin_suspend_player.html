@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Suspend Player - {{ player.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-white">
+                    <h5><i class="fas fa-ban"></i> Suspend Player</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5>Are you sure you want to suspend this player?</h5>
+                        <p>The player will not be available for selection during the suspension period.</p>
+                    </div>
+                    
+                    <div class="player-info mb-4">
+                        <h5 class="text-center">{{ player.full_name }}</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Team</th>
+                                <td>{{ player.team.team_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Position</th>
+                                <td>{{ player.get_position_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>Jersey Number</th>
+                                <td>#{{ player.jersey_number }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="suspension_matches" class="form-label">Number of Matches *</label>
+                            <input type="number" name="suspension_matches" id="suspension_matches" 
+                                   class="form-control" min="1" max="99" required 
+                                   placeholder="Enter number of matches">
+                            <small class="text-muted">How many matches should the player be suspended?</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="suspension_reason" class="form-label">Suspension Reason *</label>
+                            <textarea name="suspension_reason" id="suspension_reason" 
+                                      class="form-control" rows="4" required 
+                                      placeholder="Enter the reason for suspension"></textarea>
+                            <small class="text-muted">This will be visible to the team manager</small>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-ban"></i> Suspend Player
+                            </button>
+                            <a href="{% url 'teams:admin_manage_players' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

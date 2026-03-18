@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Edit League Table{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit League Table Entry</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label>Team: {{ table.team }}</label>
+        </div>
+        <div class="mb-3">
+            <label>Matches Played</label>
+            <input type="number" name="matches_played" value="{{ table.matches_played }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Wins</label>
+            <input type="number" name="wins" value="{{ table.wins }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Draws</label>
+            <input type="number" name="draws" value="{{ table.draws }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Losses</label>
+            <input type="number" name="losses" value="{{ table.losses }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Goals For</label>
+            <input type="number" name="goals_for" value="{{ table.goals_for }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Goals Against</label>
+            <input type="number" name="goals_against" value="{{ table.goals_against }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Goal Difference</label>
+            <input type="number" name="goal_difference" value="{{ table.goal_difference }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Points</label>
+            <input type="number" name="points" value="{{ table.points }}" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
+{% endblock %}

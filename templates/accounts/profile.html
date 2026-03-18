@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <span>My Profile</span>
+    </div>
+    <h1>👤 My Profile</h1>
+    <p>Your account information</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h3>Account Details</h3></div>
+        <div class="card-body">
+            <table>
+                <tr><td><strong>Name</strong></td><td>{{ user.get_full_name }}</td></tr>
+                <tr><td><strong>Email</strong></td><td>{{ user.email }}</td></tr>
+                <tr><td><strong>Phone</strong></td><td>{{ user.phone|default:"—" }}</td></tr>
+                <tr><td><strong>Role</strong></td><td><span class="badge badge-info">{{ user.get_role_display }}</span></td></tr>
+                <tr><td><strong>County</strong></td><td>{{ user.county|default:"—" }}</td></tr>
+                <tr><td><strong>Member Since</strong></td><td>{{ user.date_joined|date:"d M Y" }}</td></tr>
+                <tr><td><strong>Last Login</strong></td><td>{{ user.last_login|date:"d M Y H:i"|default:"—" }}</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Change Password</h3></div>
+        <div class="card-body">
+            <form method="post" action="{% url 'web_change_password' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="old_password">Current Password</label>
+                    <input type="password" id="old_password" name="old_password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

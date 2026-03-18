@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Remove Player — KYISA CMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'teams_list' %}">Teams</a>
+        <a href="{% url 'team_detail' pk=team.pk %}">{{ team.name }}</a>
+        <span>Remove Player</span>
+    </div>
+    <h1>Remove Player</h1>
+</div>
+
+<div class="card" style="max-width:500px">
+    <div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:3rem;margin-bottom:1rem">⚠️</div>
+        <h3 style="color:#C62828;margin-bottom:.5rem">Confirm Removal</h3>
+        <p style="color:#555;margin-bottom:1.5rem">
+            Are you sure you want to remove <strong>{{ player.get_full_name }}</strong>
+            (#{{ player.shirt_number }}) from <strong>{{ team.name }}</strong>?
+        </p>
+        <p style="color:#888;font-size:.85rem;margin-bottom:1.5rem">This action cannot be undone.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:flex;gap:.75rem;justify-content:center">
+                <button type="submit" class="btn btn-outline btn-sm" style="background:#C62828;color:#fff;border-color:#C62828;padding:.6rem 1.5rem">
+                    Yes, Remove Player
+                </button>
+                <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

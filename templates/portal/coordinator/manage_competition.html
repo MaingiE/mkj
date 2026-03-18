@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}{{ competition.name }} — Manage &mdash; KYISA CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comp-hero {
+        background: linear-gradient(135deg, #00695C 0%, #00897B 50%, #26A69A 100%);
+        border-radius: 16px; padding: 1.5rem 2rem; color: #fff; margin-bottom: 1.5rem;
+        display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;
+    }
+    .comp-hero h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: .2rem; }
+    .comp-hero .meta { font-size: .85rem; opacity: .85; display: flex; flex-wrap: wrap; gap: .75rem; }
+    .comp-hero .hero-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .comp-hero .hero-actions .btn { font-size: .8rem; padding: .35rem .8rem; }
+    .comp-badge { font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px; }
+    .mgmt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .mgmt-tile {
+        background: #fff; border-radius: 12px; padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06); text-decoration: none; color: #212121;
+        border: 1px solid transparent; transition: all .25s ease;
+    }
+    .mgmt-tile:hover { transform: translateY(-2px); border-color: #00695C; color: #00695C; box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+    .mgmt-tile h4 { font-size: .9rem; font-weight: 600; margin-bottom: .15rem; }
+    .mgmt-tile p { font-size: .78rem; color: #757575; margin: 0; }
+    .section-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 1.5rem; overflow: hidden; }
+    .section-card .card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #eee; }
+    .section-card .card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+    .section-card .card-body { padding: 1.25rem; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .tbl th { background: #f5f5f5; padding: .5rem .75rem; font-weight: 600; text-align: left; }
+    .tbl td { padding: .5rem .75rem; border-bottom: 1px solid #f0f0f0; }
+    .tbl tr:last-child td { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="comp-hero">
+    <div>
+        <h1><i class="bi bi-trophy"></i> {{ competition.name }}</h1>
+        <div class="meta">
+            <span>{{ competition.get_sport_type_display }}</span>
+            <span>{{ competition.get_age_group_display }}</span>
+            <span>{{ competition.start_date|date:"d M Y" }} — {{ competition.end_date|date:"d M Y" }}</span>
+            <span class="comp-badge" style="background:rgba(255,255,255,.2);color:#fff;">{{ competition.get_status_display }}</span>
+        </div>
+    </div>
+    <div class="hero-actions">
+        <a href="{% url 'coordinator_manage_pools' pk=competition.pk %}" class="btn btn-light btn-sm">Pools</a>
+        <a href="{% url 'coordinator_generate_fixtures' pk=competition.pk %}" class="btn btn-light btn-sm">Fixtures</a>
+        <a href="{% url 'coordinator_allocate_venues' pk=competition.pk %}" class="btn btn-light btn-sm">Venues</a>
+        <a href="{% url 'coordinator_edit_standings' pk=competition.pk %}" class="btn btn-light btn-sm">Standings</a>
+        <a href="{% url 'coordinator_statistics' pk=competition.pk %}" class="btn btn-light btn-sm">Stats</a>
+        <a href="{% url 'coordinator_competition_rules' pk=competition.pk %}" class="btn btn-light btn-sm">Rules</a>
+    </div>
+</div>
+
+<!-- Management tiles -->
+<div class="mgmt-grid">
+    <a href="{% url 'coordinator_manage_pools' pk=competition.pk %}" class="mgmt-tile">
+        <h4><i class="bi bi-grid-3x3-gap"></i> Manage Pools</h4>
+        <p>Create pools and assign teams</p>
+    </a>
+    <a href="{% url 'coordinator_generate_fixtures' pk=competition.pk %}" class="mgmt-tile">
+        <h4><i class="bi bi-calendar-plus"></i> Generate Fixtures</h4>
+        <p>Auto-generate group &amp; knockout fixtures</p>
+    </a>
+    <a href="{% url 'coordinator_allocate_venues' pk=competition.pk %}" class="mgmt-tile">
+        <h4><i class="bi bi-geo-alt"></i> Allocate Venues</h4>
+        <p>Assign venues to fixtures</p>
+    </a>
+    <a href="{% url 'coordinator_edit_standings' pk=competition.pk %}" class="mgmt-tile">
+        <h4><i class="bi bi-list-ol"></i> Edit Standings</h4>
+        <p>Manual overrides &amp; recalculate</p>
+    </a>
+    <a href="{% url 'coordinator_statistics' pk=competition.pk %}" class="mgmt-tile">
+        <h4><i class="bi bi-bar-chart-line"></i> Statistics</h4>
+        <p>Top scorers, assists, disciplinary</p>
+    </a>
+    <a href="{% url 'coordinator_competition_rules' pk=competition.pk %}" class="mgmt-tile">
+        <h4><i class="bi bi-file-earmark-text"></i> Competition Rules</h4>
+        <p>Define criteria &amp; competition rules</p>
+    </a>
+</div>
+
+<!-- Pools & Standings -->
+{% if pool_data %}
+<div class="section-card">
+    <div class="card-header"><h3><i class="bi bi-grid-3x3-gap"></i> Pools &amp; Standings ({{ pool_data|length }} pools, {{ teams_in_comp.count }} teams)</h3></div>
+    <div class="card-body">
+        {% for pd in pool_data %}
+        <h4 style="margin-top:{% if not forloop.first %}1.5rem{% else %}0{% endif %};font-weight:600;">{{ pd.pool.name }}</h4>
+        <table class="tbl">
+            <thead>
+                <tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr>
+            </thead>
+            <tbody>
+                {% for pt in pd.teams %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ pt.team.name }}</td>
+                    <td>{{ pt.played }}</td>
+                    <td>{{ pt.won }}</td>
+                    <td>{{ pt.drawn }}</td>
+                    <td>{{ pt.lost }}</td>
+                    <td>{{ pt.goals_for }}</td>
+                    <td>{{ pt.goals_against }}</td>
+                    <td>{{ pt.goal_difference }}</td>
+                    <td><strong>{{ pt.points }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Group Fixtures -->
+{% if group_fixtures %}
+<div class="section-card">
+    <div class="card-header"><h3><i class="bi bi-calendar-event"></i> Group Stage Fixtures ({{ group_fixtures|length }})</h3></div>
+    <div class="card-body">
+        <table class="tbl">
+            <thead><tr><th>Date</th><th>Home</th><th>Score</th><th>Away</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                {% for fx in group_fixtures %}
+                <tr>
+                    <td>{{ fx.match_date|date:"d M" }}{% if fx.kickoff_time %} {{ fx.kickoff_time|time:"H:i" }}{% endif %}</td>
+                    <td>{{ fx.home_team.name }}</td>
+                    <td>{% if fx.home_score is not None %}{{ fx.home_score }} - {{ fx.away_score }}{% else %}-{% endif %}</td>
+                    <td>{{ fx.away_team.name }}</td>
+                    <td>{{ fx.venue.name|default:"TBA" }}</td>
+                    <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>
+                    <td><a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Knockout Fixtures -->
+{% if knockout_fixtures %}
+<div class="section-card">
+    <div class="card-header"><h3><i class="bi bi-trophy"></i> Knockout Fixtures ({{ knockout_fixtures|length }})</h3></div>
+    <div class="card-body">
+        <table class="tbl">
+            <thead><tr><th>Round</th><th>Home</th><th>Score</th><th>Away</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                {% for fx in knockout_fixtures %}
+                <tr>
+                    <td>{{ fx.get_knockout_round_display }}</td>
+                    <td>{{ fx.home_team.name|default:"TBA" }}</td>
+                    <td>{% if fx.home_score is not None %}{{ fx.home_score }} - {{ fx.away_score }}{% else %}-{% endif %}</td>
+                    <td>{{ fx.away_team.name|default:"TBA" }}</td>
+                    <td>{{ fx.venue.name|default:"TBA" }}</td>
+                    <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>
+                    <td><a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Summary -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div class="section-card">
+        <div class="card-header"><h3>Match Reports</h3></div>
+        <div class="card-body" style="text-align:center;">
+            <div style="font-size:2rem;font-weight:800;color:#E65100;">{{ pending_reports }}</div>
+            <div style="font-size:.85rem;color:#757575;">Pending Approval</div>
+            <div style="font-size:1.4rem;font-weight:700;color:#1B5E20;margin-top:.5rem;">{{ approved_reports }}</div>
+            <div style="font-size:.85rem;color:#757575;">Approved</div>
+        </div>
+    </div>
+    <div class="section-card">
+        <div class="card-header"><h3>Eligible Unassigned Teams</h3></div>
+        <div class="card-body">
+            {% if eligible_teams %}
+                {% for team in eligible_teams|slice:":10" %}
+                <div style="padding:.35rem 0;font-size:.85rem;border-bottom:1px solid #f0f0f0;">{{ team.name }} <span style="color:#999;">{{ team.county }}</span></div>
+                {% endfor %}
+                {% if eligible_teams|length > 10 %}<div style="font-size:.8rem;color:#999;margin-top:.5rem;">+{{ eligible_teams.count|add:"-10" }} more…</div>{% endif %}
+            {% else %}
+                <div style="text-align:center;color:#999;padding:1rem;">All eligible teams assigned</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
