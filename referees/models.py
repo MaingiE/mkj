@@ -75,30 +75,42 @@ class RefereeCertification(models.Model):
 
 
 class AppointmentRole(models.TextChoices):
-    # ── Football / Soccer (FIFA) ──
+    # ── Football / Soccer (FIFA) ── Mandatory
     REFEREE    = "referee",    "Referee"
-    AR1        = "ar1",        "Assistant Referee 1"
-    AR2        = "ar2",        "Assistant Referee 2"
-    RESERVE    = "reserve",    "Reserve Referee"
+    AR1        = "ar1",        "Assistant Referee 1 (AR1)"
+    AR2        = "ar2",        "Assistant Referee 2 (AR2)"
+    RESERVE    = "reserve",    "Reserve Referee (RR)"
+    # Football optional
+    FOURTH_OFFICIAL    = "fourth_official",    "4th Official"
+    MATCH_COMMISSIONER = "match_commissioner", "Match Commissioner"
 
-    # ── Volleyball / Beach Volleyball (FIVB) ──
+    # ── Volleyball / Beach Volleyball (FIVB) ── Mandatory
     FIRST_REF    = "first_ref",    "1st Referee"
     SECOND_REF   = "second_ref",   "2nd Referee"
     SCORER       = "scorer",       "Scorer"
     LINE_JUDGE_1 = "line_judge_1", "Line Judge 1"
     LINE_JUDGE_2 = "line_judge_2", "Line Judge 2"
+    # Volleyball optional
+    ASSISTANT_SCORER = "assistant_scorer", "Assistant Scorer"
+    LINE_JUDGE_3     = "line_judge_3",     "Line Judge 3"
+    LINE_JUDGE_4     = "line_judge_4",     "Line Judge 4"
 
-    # ── Basketball 5×5 / 3×3 (FIBA) ──
+    # ── Basketball 5×5 / 3×3 (FIBA) ── Mandatory
     CREW_CHIEF   = "crew_chief",   "Crew Chief"
     UMPIRE_1     = "umpire_1",     "Umpire 1"
     UMPIRE_2     = "umpire_2",     "Umpire 2"
     COMMISSIONER = "commissioner", "Commissioner"
+    # Basketball optional
+    SHOT_CLOCK    = "shot_clock",    "Shot Clock Operator"
+    SCORER_BBALL  = "scorer_bball",  "Scorer"
 
-    # ── Handball / Beach Handball (IHF) ──
+    # ── Handball / Beach Handball (IHF) ── Mandatory
     REFEREE_1    = "referee_1",    "Referee 1"
     REFEREE_2    = "referee_2",    "Referee 2"
     TIMEKEEPER   = "timekeeper",   "Timekeeper"
     SCOREKEEPER  = "scorekeeper",  "Scorekeeper"
+    # Handball optional
+    DELEGATE     = "delegate",     "Delegate"
 
 
 # ── Sport → required official roles mapping ──
@@ -123,6 +135,30 @@ SPORT_REQUIRED_ROLES = {
     "handball_women": ["referee_1", "referee_2", "timekeeper", "scorekeeper"],
     "handball":       ["referee_1", "referee_2", "timekeeper", "scorekeeper"],
     "beach_handball": ["referee_1", "referee_2", "timekeeper", "scorekeeper"],
+}
+
+# ── Sport → optional official roles mapping (international standards) ──
+SPORT_OPTIONAL_ROLES = {
+    # Football
+    "football_men":     ["fourth_official", "match_commissioner"],
+    "football_women":   ["fourth_official", "match_commissioner"],
+    # Volleyball (FIVB)
+    "volleyball_men":   ["assistant_scorer", "line_judge_3", "line_judge_4"],
+    "volleyball_women": ["assistant_scorer", "line_judge_3", "line_judge_4"],
+    "beach_volleyball": ["assistant_scorer"],
+    # Basketball 5×5 (FIBA)
+    "basketball_men":   ["shot_clock", "scorer_bball"],
+    "basketball_women": ["shot_clock", "scorer_bball"],
+    "basketball":       ["shot_clock", "scorer_bball"],
+    # Basketball 3×3 (FIBA)
+    "basketball_3x3_men":   ["shot_clock"],
+    "basketball_3x3_women": ["shot_clock"],
+    "basketball_3x3":       ["shot_clock"],
+    # Handball (IHF)
+    "handball_men":   ["delegate"],
+    "handball_women": ["delegate"],
+    "handball":       ["delegate"],
+    "beach_handball": ["delegate"],
 }
 
 # Head official role per sport (the official who reviews squads / files reports)
@@ -151,6 +187,11 @@ def get_head_official_role(sport_type):
     return SPORT_HEAD_OFFICIAL.get(sport_type, "referee")
 
 
+def get_optional_roles(sport_type):
+    """Return the list of optional appointment role keys for a sport."""
+    return SPORT_OPTIONAL_ROLES.get(sport_type, [])
+
+
 class AppointmentStatus(models.TextChoices):
     PENDING   = "pending",   "Pending Confirmation"
     CONFIRMED = "confirmed", "Confirmed"
@@ -168,7 +209,7 @@ class RefereeAppointment(models.Model):
         RefereeProfile, on_delete=models.CASCADE,
         related_name="appointments"
     )
-    role      = models.CharField(max_length=20, choices=AppointmentRole.choices, default=AppointmentRole.REFEREE)
+    role      = models.CharField(max_length=30, choices=AppointmentRole.choices, default=AppointmentRole.REFEREE)
     status    = models.CharField(max_length=20, choices=AppointmentStatus.choices, default=AppointmentStatus.PENDING)
     appointed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,

@@ -12,37 +12,101 @@
     <p>{{ discipline.sub_county|default:reg.county }} — {{ discipline.player_count }} / {{ discipline.squad_limit }} players registered</p>
 </div>
 
-<!-- Progress bar -->
-<div style="background:#e0e0e0;border-radius:8px;height:10px;margin-bottom:1.5rem;max-width:600px">
-    <div style="background:{% if discipline.can_add_player %}#1565C0{% else %}#C62828{% endif %};border-radius:8px;height:10px;width:{% widthratio discipline.player_count discipline.squad_limit 100 %}%;transition:width .3s"></div>
+<!-- Squad capacity bar -->
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;max-width:600px">
+    <div style="flex:1;background:#e0e0e0;border-radius:8px;height:10px">
+        <div style="background:{% if discipline.can_add_player %}#1565C0{% else %}#C62828{% endif %};border-radius:8px;height:10px;width:{% widthratio discipline.player_count discipline.squad_limit 100 %}%;transition:width .3s"></div>
+    </div>
+    <span style="font-size:.82rem;font-weight:600;color:#555;white-space:nowrap">{{ discipline.player_count }}/{{ discipline.squad_limit }}</span>
 </div>
 
-{% if discipline.can_add_player %}
-<div style="display:flex;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap">
-    <a href="{% url 'subcounty_officer_add_player' discipline_pk=discipline.pk %}" class="btn btn--primary" style="display:inline-block;padding:.5rem 1.2rem;font-size:.9rem">
+<!-- Action bar -->
+<div style="display:flex;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+    {% if discipline.can_add_player %}
+    <a href="{% url 'subcounty_officer_add_player' discipline_pk=discipline.pk %}" class="btn btn--primary" style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;font-size:.9rem">
         <i class="bi bi-person-plus"></i> Add Player
     </a>
-    <a href="{% url 'county_admin_add_bench_member' discipline_pk=discipline.pk %}" style="display:inline-block;padding:.5rem 1.2rem;font-size:.9rem;background:#1565C0;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">
+    {% else %}
+    <span style="background:#fce4ec;border:1px solid #ef9a9a;border-radius:8px;padding:.5rem 1rem;font-size:.85rem;color:#C62828">
+        <i class="bi bi-exclamation-circle"></i> Squad limit reached
+    </span>
+    {% endif %}
+    <a href="{% url 'county_admin_add_bench_member' discipline_pk=discipline.pk %}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;font-size:.9rem;background:#1565C0;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">
         <i class="bi bi-person-badge"></i> Technical Bench
     </a>
+    {% if team %}
+    <span style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;font-size:.82rem;background:#E8F5E9;color:#2E7D32;border-radius:8px;font-weight:600">
+        <i class="bi bi-shield-check"></i> Team: {{ team.name }}
+    </span>
+    {% endif %}
 </div>
-{% else %}
-<div style="display:flex;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
-    <div style="background:#fce4ec;border:1px solid #ef9a9a;border-radius:8px;padding:.8rem 1.2rem;font-size:.9rem;color:#C62828;display:inline-block">
-        <i class="bi bi-exclamation-circle"></i> Squad limit reached ({{ discipline.squad_limit }}).
+
+<!-- Status summary cards -->
+<div class="stats-grid" style="margin-bottom:1.25rem">
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-hourglass-split" style="font-size:1.2rem"></i></div>
+        <div class="stat-info"><h3>{{ stats.pending }}</h3><p>Pending</p></div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-check-circle-fill" style="font-size:1.2rem"></i></div>
+        <div class="stat-info"><h3>{{ stats.verified }}</h3><p>Verified</p></div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #C62828">
+        <div class="stat-icon" style="background:#fce4ec;color:#C62828"><i class="bi bi-x-circle-fill" style="font-size:1.2rem"></i></div>
+        <div class="stat-info"><h3>{{ stats.rejected }}</h3><p>Rejected</p></div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #E65100">
+        <div class="stat-icon" style="background:#FFF3E0;color:#E65100"><i class="bi bi-arrow-repeat" style="font-size:1.2rem"></i></div>
+        <div class="stat-info"><h3>{{ stats.resubmit }}</h3><p>Resubmission</p></div>
     </div>
 </div>
-{% endif %}
 
-<div class="card" style="padding:1.2rem;margin-top:1rem;">
-    <h4 style="margin-top:0;">Technical Bench</h4>
+<!-- Status tabs -->
+<div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0;flex-wrap:wrap">
+    <a href="?tab=all" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'all' %}#1565C0{% else %}transparent{% endif %};color:{% if tab == 'all' %}#1565C0{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
+        All ({{ stats.total }})
+    </a>
+    <a href="?tab=pending" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'pending' %}#E65100{% else %}transparent{% endif %};color:{% if tab == 'pending' %}#E65100{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
+        <i class="bi bi-hourglass-split"></i> Pending ({{ stats.pending }})
+    </a>
+    <a href="?tab=verified" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#2E7D32{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#2E7D32{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
+        <i class="bi bi-check-circle"></i> Verified ({{ stats.verified }})
+    </a>
+    <a href="?tab=rejected" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
+        <i class="bi bi-x-circle"></i> Rejected ({{ stats.rejected }})
+    </a>
+    <a href="?tab=resubmit" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'resubmit' %}#E65100{% else %}transparent{% endif %};color:{% if tab == 'resubmit' %}#E65100{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
+        <i class="bi bi-arrow-repeat"></i> Resubmit ({{ stats.resubmit }})
+    </a>
+</div>
+
+<!-- Player card list -->
+<div class="card" style="border-top-left-radius:0;border-top-right-radius:0;padding:0">
+{% with show_players=players %}
+{% if tab == 'pending' %}{% with show_players=pending_players %}
+{% include "portal/subcounty_officer/_player_list.html" %}
+{% endwith %}{% elif tab == 'verified' %}{% with show_players=verified_players %}
+{% include "portal/subcounty_officer/_player_list.html" %}
+{% endwith %}{% elif tab == 'rejected' %}{% with show_players=rejected_players %}
+{% include "portal/subcounty_officer/_player_list.html" %}
+{% endwith %}{% elif tab == 'resubmit' %}{% with show_players=resubmit_players %}
+{% include "portal/subcounty_officer/_player_list.html" %}
+{% endwith %}{% else %}
+{% include "portal/subcounty_officer/_player_list.html" %}
+{% endif %}
+{% endwith %}
+</div>
+
+<!-- Technical Bench -->
+<div class="card" style="padding:1.2rem;margin-top:1.5rem;">
+    <h4 style="margin-top:0;display:flex;align-items:center;gap:.5rem"><i class="bi bi-person-badge" style="color:#1565C0"></i> Technical Bench</h4>
     {% if bench_members %}
     <div style="display:grid;gap:.75rem;">
         {% for member in bench_members %}
         <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;border:1px solid #e5e7eb;border-radius:10px;padding:.8rem 1rem;">
             <div>
                 <strong>{{ member.get_full_name }}</strong>
-                <div style="font-size:.84rem;color:#64748b;">{{ member.get_role_display }}{% if member.email %} • {{ member.email }}{% endif %}</div>
+                <div style="font-size:.84rem;color:#64748b;">{{ member.get_role_display }}{% if member.email %} &middot; {{ member.email }}{% endif %}</div>
             </div>
             <form method="post" action="{% url 'county_admin_delete_bench_member' member_pk=member.pk %}" onsubmit="return confirm('Remove {{ member.get_full_name }}?')">
                 {% csrf_token %}
@@ -55,50 +119,6 @@
     <p style="margin:0;color:#64748b;">No technical bench members added yet.</p>
     {% endif %}
 </div>
-
-{% if players %}
-<div class="card" style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:.9rem">
-        <thead>
-            <tr style="background:#f5f5f5;text-align:left">
-                <th style="padding:.7rem 1rem">#</th>
-                <th style="padding:.7rem 1rem">Name</th>
-                <th style="padding:.7rem 1rem">Date of Birth</th>
-                <th style="padding:.7rem 1rem">National ID</th>
-                <th style="padding:.7rem 1rem">Phone</th>
-                <th style="padding:.7rem 1rem">Registered</th>
-                <th style="padding:.7rem 1rem"></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in players %}
-            <tr style="border-bottom:1px solid #eee">
-                <td style="padding:.6rem 1rem;color:#888">{{ forloop.counter }}</td>
-                <td style="padding:.6rem 1rem;font-weight:600">{{ p.first_name }} {{ p.last_name }}</td>
-                <td style="padding:.6rem 1rem">{{ p.date_of_birth|date:"d M Y" }}</td>
-                <td style="padding:.6rem 1rem"><code>{{ p.national_id_number }}</code></td>
-                <td style="padding:.6rem 1rem">{{ p.phone|default:"—" }}</td>
-                <td style="padding:.6rem 1rem;font-size:.82rem;color:#888">{{ p.registered_at|date:"d M Y" }}</td>
-                <td style="padding:.6rem 1rem">
-                    <form method="post" action="{% url 'subcounty_officer_delete_player' player_pk=p.pk %}" style="margin:0"
-                          onsubmit="return confirm('Remove {{ p.first_name }} {{ p.last_name }}?')">
-                        {% csrf_token %}
-                        <button type="submit" style="background:none;border:none;color:#C62828;cursor:pointer;font-size:.85rem" title="Remove player">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% else %}
-<div class="card" style="padding:2rem;text-align:center;color:#888">
-    <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
-    No players registered yet. Click "Add Player" to get started.
-</div>
-{% endif %}
 
 <div style="margin-top:1.5rem">
     <a href="{% url 'subcounty_officer_disciplines' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Disciplines</a>

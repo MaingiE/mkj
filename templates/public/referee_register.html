@@ -41,7 +41,14 @@
                 <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.4rem;font-size:.9rem">
                     {{ field.label }}
                 </label>
+                {% if 'phone' in field.name %}
+                <div class="input-group">
+                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                    {{ field }}
+                </div>
+                {% else %}
                 {{ field }}
+                {% endif %}
                 {% if field.help_text %}
                 <small style="color:#888;font-size:.8rem">{{ field.help_text }}</small>
                 {% endif %}
@@ -67,9 +74,6 @@
         <div style="text-align:center;margin-top:1.5rem">
             <p style="color:#888;font-size:.85rem">
                 Already registered? <a href="{% url 'web_login' %}" style="color:#1A6FB5;font-weight:600">Staff Login</a>
-            </p>
-            <p style="color:#888;font-size:.85rem;margin-top:.5rem">
-                Want to register your county? <a href="{% url 'county_admin_register' %}" style="color:#1A6FB5;font-weight:600">County Registration</a>
             </p>
         </div>
     </div>

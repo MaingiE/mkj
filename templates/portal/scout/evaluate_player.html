@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}Evaluate {{ player.first_name }} {{ player.last_name }} — Scout — MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .criteria-row {
+        padding: .8rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .criteria-row:last-child { border-bottom: none; }
+    .criteria-label { font-weight: 600; font-size: .95rem; margin-bottom: .15rem; }
+    .criteria-desc { font-size: .8rem; color: #757575; margin-bottom: .4rem; }
+    .score-selector { display: flex; gap: .3rem; flex-wrap: wrap; }
+    .score-btn {
+        width: 36px; height: 36px; border-radius: 50%; border: 2px solid #e0e0e0;
+        background: #fff; cursor: pointer; font-size: .85rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; transition: all .15s;
+    }
+    .score-btn:hover { border-color: #1565C0; color: #1565C0; }
+    .score-btn.selected { background: #1565C0; color: #fff; border-color: #1565C0; }
+    .score-btn.selected.high { background: #2E7D32; border-color: #2E7D32; }
+    .score-btn.selected.mid { background: #F57F17; border-color: #F57F17; }
+    .score-btn.selected.low { background: #c62828; border-color: #c62828; }
+    .form-section { margin-bottom: 1.5rem; }
+    .form-section h3 { font-size: 1rem; margin-bottom: .8rem; }
+    textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: .6rem .8rem; font-size: .9rem; resize: vertical; min-height: 80px; }
+    select { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: .5rem .8rem; font-size: .9rem; }
+    input[type="number"] { border: 1px solid #ddd; border-radius: 8px; padding: .4rem .6rem; font-size: .9rem; width: 100px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'scout_dashboard' %}">Scout Dashboard</a>
+        <a href="{% url 'scout_live_matches' %}">Live Scouting</a>
+        <a href="{% url 'scout_match_squad' fixture_pk=fixture.pk %}">Match Squad</a>
+        <span>Evaluate Player</span>
+    </div>
+    <h1><i class="bi bi-clipboard-check"></i> {% if report %}Edit{% else %}New{% endif %} Evaluation</h1>
+</div>
+
+<!-- Player & Match Info -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;">
+            <div>
+                <div style="font-size:.75rem;color:#666;text-transform:uppercase;">Player</div>
+                <div style="font-size:1.1rem;font-weight:700;">{{ player.first_name }} {{ player.last_name }}</div>
+            </div>
+            <div>
+                <div style="font-size:.75rem;color:#666;text-transform:uppercase;">Team</div>
+                <div style="font-weight:600;">{{ player.team.name }}</div>
+            </div>
+            <div>
+                <div style="font-size:.75rem;color:#666;text-transform:uppercase;">Position</div>
+                <div style="font-weight:600;">{{ player.get_position_display|default:player.position }}</div>
+            </div>
+            <div>
+                <div style="font-size:.75rem;color:#666;text-transform:uppercase;">#</div>
+                <div style="font-weight:600;">{{ player.shirt_number }}</div>
+            </div>
+            <div>
+                <div style="font-size:.75rem;color:#666;text-transform:uppercase;">Match</div>
+                <div style="font-weight:600;">{{ fixture.home_team.name }} vs {{ fixture.away_team.name }}</div>
+            </div>
+            <div>
+                <div style="font-size:.75rem;color:#666;text-transform:uppercase;">Date</div>
+                <div style="font-weight:600;">{{ fixture.match_date|date:"d M Y" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Criteria Scores -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header" style="background:#E3F2FD;">
+            <h3><i class="bi bi-bar-chart-line"></i> {{ criteria_def.label }} — Evaluation Criteria</h3>
+            <p style="font-size:.8rem;color:#666;margin:0;">Rate each attribute from 1 (poor) to 10 (exceptional)</p>
+        </div>
+        <div class="card-body">
+            {% for c in criteria_list %}
+            <div class="criteria-row">
+                <div class="criteria-label">{{ c.label }}{% if is_gk and forloop.counter > criteria_list|length|add:"-4" %} <span style="font-size:.7rem;background:#FFF3E0;color:#E65100;padding:.1rem .3rem;border-radius:4px;">GK</span>{% endif %}</div>
+                <div class="criteria-desc">{{ c.description }}</div>
+                <div class="score-selector" data-key="{{ c.key }}">
+                    {% for i in "12345678910" %}
+                    {% with score=forloop.counter %}
+                    <button type="button"
+                            class="score-btn {% if report and score == report.criteria_scores|default_if_none:"{}"|dictsort:c.key %}selected{% endif %}"
+                            data-score="{{ score }}"
+                            onclick="selectScore('{{ c.key }}', {{ score }}, this)">
+                        {{ score }}
+                    </button>
+                    {% endwith %}
+                    {% endfor %}
+                    <input type="hidden" name="criteria_{{ c.key }}" id="criteria_{{ c.key }}"
+                           value="{% if report %}{{ report.criteria_scores|default_if_none:"" }}{% endif %}">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Overall Rating -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header"><h3><i class="bi bi-star-fill" style="color:#E65100;"></i> Overall Assessment</h3></div>
+        <div class="card-body">
+            <div class="form-section">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Overall Rating (1–10)</label>
+                <div class="score-selector" data-key="overall">
+                    {% for i in "12345678910" %}
+                    {% with score=forloop.counter %}
+                    <button type="button"
+                            class="score-btn {% if report and score == report.overall_rating %}selected{% endif %}"
+                            data-score="{{ score }}"
+                            onclick="selectScore('overall', {{ score }}, this)">
+                        {{ score }}
+                    </button>
+                    {% endwith %}
+                    {% endfor %}
+                    <input type="hidden" name="overall_rating" id="criteria_overall"
+                           value="{% if report %}{{ report.overall_rating }}{% else %}5{% endif %}">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Minutes Observed</label>
+                <input type="number" name="minutes_observed" min="0" max="200"
+                       value="{% if report %}{{ report.minutes_observed }}{% else %}0{% endif %}">
+            </div>
+
+            <div class="form-section">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Recommendation</label>
+                <select name="recommendation">
+                    <option value="highly_recommended" {% if report.recommendation == 'highly_recommended' %}selected{% endif %}>Highly Recommended</option>
+                    <option value="recommended" {% if report.recommendation == 'recommended' %}selected{% endif %}>Recommended</option>
+                    <option value="monitor" {% if report.recommendation == 'monitor' or not report %}selected{% endif %}>Continue Monitoring</option>
+                    <option value="not_recommended" {% if report.recommendation == 'not_recommended' %}selected{% endif %}>Not Recommended</option>
+                </select>
+            </div>
+
+            <div class="form-section">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Strengths</label>
+                <textarea name="strengths" placeholder="Key strengths observed...">{% if report %}{{ report.strengths }}{% endif %}</textarea>
+            </div>
+
+            <div class="form-section">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Weaknesses / Areas for Improvement</label>
+                <textarea name="weaknesses" placeholder="Areas needing improvement...">{% if report %}{{ report.weaknesses }}{% endif %}</textarea>
+            </div>
+
+            <div class="form-section">
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Additional Notes</label>
+                <textarea name="notes" placeholder="Any other observations...">{% if report %}{{ report.notes }}{% endif %}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;margin-bottom:2rem;">
+        <button type="submit" class="btn btn-primary" style="padding:.6rem 1.5rem;border-radius:8px;font-weight:600;">
+            <i class="bi bi-check-lg"></i> {% if report %}Update Evaluation{% else %}Save Evaluation{% endif %}
+        </button>
+        <a href="{% url 'scout_match_squad' fixture_pk=fixture.pk %}" class="btn btn-outline-secondary" style="padding:.6rem 1.2rem;border-radius:8px;">Cancel</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Pre-populate scores from existing report
+{% if report and report.criteria_scores %}
+const existingScores = {{ report.criteria_scores|safe }};
+document.addEventListener('DOMContentLoaded', function() {
+    for (const [key, score] of Object.entries(existingScores)) {
+        const input = document.getElementById('criteria_' + key);
+        if (input) input.value = score;
+        const container = document.querySelector(`.score-selector[data-key="${key}"]`);
+        if (container) {
+            container.querySelectorAll('.score-btn').forEach(btn => {
+                if (parseInt(btn.dataset.score) === score) {
+                    btn.classList.add('selected');
+                    applyScoreColor(btn, score);
+                }
+            });
+        }
+    }
+    // Overall
+    const overallVal = {{ report.overall_rating }};
+    const overallContainer = document.querySelector('.score-selector[data-key="overall"]');
+    if (overallContainer) {
+        overallContainer.querySelectorAll('.score-btn').forEach(btn => {
+            if (parseInt(btn.dataset.score) === overallVal) {
+                btn.classList.add('selected');
+                applyScoreColor(btn, overallVal);
+            }
+        });
+    }
+});
+{% endif %}
+
+function selectScore(key, score, btn) {
+    const container = btn.closest('.score-selector');
+    container.querySelectorAll('.score-btn').forEach(b => {
+        b.classList.remove('selected', 'high', 'mid', 'low');
+    });
+    btn.classList.add('selected');
+    applyScoreColor(btn, score);
+
+    const input = document.getElementById('criteria_' + key);
+    if (input) input.value = score;
+}
+
+function applyScoreColor(btn, score) {
+    if (score >= 7) btn.classList.add('high');
+    else if (score >= 4) btn.classList.add('mid');
+    else btn.classList.add('low');
+}
+</script>
+{% endblock %}

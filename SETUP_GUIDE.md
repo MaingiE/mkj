@@ -549,8 +549,8 @@ sudo apt update && sudo apt install python3.11 python3.11-venv postgresql postgr
 
 **2. Set up the project**
 ```bash
-git clone https://github.com/your-org/kyisa-cms.git
-cd kyisa-cms
+git clone https://github.com/your-org/mkj-supa-cup.git
+cd mkj-supa-cup
 python3.11 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
@@ -561,17 +561,17 @@ python manage.py migrate
 
 **3. Run with Gunicorn**
 ```bash
-gunicorn kyisa_cms.wsgi:application --bind 0.0.0.0:8000 --workers 4
+gunicorn mkj_cms.wsgi:application --bind 0.0.0.0:8000 --workers 4
 ```
 
-**4. Nginx config** (`/etc/nginx/sites-available/kyisa`)
+**4. Nginx config** (`/etc/nginx/sites-available/mkj-supa-cup`)
 ```nginx
 server {
     listen 80;
-    server_name api.kyisa.ke;
+    server_name api.mkjsupacup.ke;
 
-    location /static/ { root /home/ubuntu/kyisa-cms/staticfiles; }
-    location /media/  { root /home/ubuntu/kyisa-cms/media; }
+    location /static/ { root /home/ubuntu/mkj-supa-cup/staticfiles; }
+    location /media/  { root /home/ubuntu/mkj-supa-cup/media; }
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -584,20 +584,20 @@ server {
 **5. SSL with Certbot (free HTTPS)**
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d api.kyisa.ke
+sudo certbot --nginx -d api.mkjsupacup.ke
 ```
 
-**6. Systemd service** (`/etc/systemd/system/kyisa.service`)
+**6. Systemd service** (`/etc/systemd/system/mkj-supa-cup.service`)
 ```ini
 [Unit]
-Description=KYISA CMS Gunicorn
+Description=MKJ SUPA CUP Gunicorn
 After=network.target
 
 [Service]
 User=ubuntu
-WorkingDirectory=/home/ubuntu/kyisa-cms
-EnvironmentFile=/home/ubuntu/kyisa-cms/.env
-ExecStart=/home/ubuntu/kyisa-cms/venv/bin/gunicorn kyisa_cms.wsgi:application --bind 0.0.0.0:8000 --workers 4
+WorkingDirectory=/home/ubuntu/mkj-supa-cup
+EnvironmentFile=/home/ubuntu/mkj-supa-cup/.env
+ExecStart=/home/ubuntu/mkj-supa-cup/venv/bin/gunicorn mkj_cms.wsgi:application --bind 0.0.0.0:8000 --workers 4
 Restart=always
 
 [Install]
@@ -605,7 +605,7 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl enable kyisa && sudo systemctl start kyisa
+sudo systemctl enable mkj-supa-cup && sudo systemctl start mkj-supa-cup
 ```
 
 ---
@@ -636,7 +636,7 @@ python manage.py test
 python manage.py check
 
 # Start Celery worker (for background tasks like emails)
-celery -A kyisa_cms worker -l info
+celery -A mkj_cms worker -l info
 
 # Reset all data (CAUTION — deletes everything!)
 python manage.py flush
@@ -714,5 +714,5 @@ Browser/Mobile App (React)
 
 ---
 
-*Built for KYISA — Kenya Youth Intercounty Sports Association*
+*Built for MKJ SUPA CUP — Makueni County Youth Sports Tournament*
 *Framework: Django 5.0 · DRF 3.15 · PostgreSQL · JWT Authentication*

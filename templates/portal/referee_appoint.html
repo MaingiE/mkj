@@ -14,6 +14,9 @@
     .role-card.pending-role { border-color: #FFCC80; background: #FFF8E1; }
     .role-card.declined-role { border-color: #EF9A9A; background: #FFEBEE; }
     .role-card.empty { border-color: #e0e0e0; background: #fafafa; }
+    .role-card.empty.mandatory { border-color: #EF9A9A; background: #FFF8F8; }
+    .mandatory-badge { font-size: .65rem; font-weight: 700; color: #fff; background: #c62828; padding: .1rem .4rem; border-radius: 4px; margin-left: .5rem; }
+    .optional-badge { font-size: .65rem; font-weight: 600; color: #757575; background: #e0e0e0; padding: .1rem .4rem; border-radius: 4px; margin-left: .5rem; }
     .ref-row {
         display: flex;
         justify-content: space-between;
@@ -108,10 +111,11 @@
     </div>
     <div class="card-body" style="padding:.5rem 1rem;">
         {% for role in roles_data %}
-        <div class="role-card {% if role.status == 'confirmed' %}filled{% elif role.status == 'pending' %}pending-role{% elif role.status == 'declined' %}declined-role{% else %}empty{% endif %}">
+        <div class="role-card {% if role.status == 'confirmed' %}filled{% elif role.status == 'pending' %}pending-role{% elif role.status == 'declined' %}declined-role{% else %}empty{% if role.is_mandatory %} mandatory{% endif %}{% endif %}">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;">
                 <div>
                     <span style="font-weight:700;font-size:.95rem;">{{ role.role_label }}</span>
+                    {% if role.is_mandatory %}<span class="mandatory-badge">MANDATORY</span>{% else %}<span class="optional-badge">OPTIONAL</span>{% endif %}
                     {% if role.appointment %}
                         <span style="margin-left:.5rem;">→
                             <strong>{{ role.referee_name }}</strong>
@@ -155,11 +159,12 @@
                 <button type="button"
                         class="role-select-btn"
                         data-role="{{ role.role_key }}"
-                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid #1565C0;cursor:pointer;font-size:.9rem;
-                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:#1565C0;{% endif %}"
+                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid {% if role.is_mandatory %}#c62828{% else %}#1565C0{% endif %};cursor:pointer;font-size:.9rem;
+                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:{% if role.is_mandatory %}#c62828{% else %}#1565C0{% endif %};{% endif %}"
                         onclick="selectRole('{{ role.role_key }}', this)">
                     {{ role.role_label }}
                     {% if role.appointment %}<span style="font-size:.75rem;">(filled)</span>{% endif %}
+                    {% if role.is_mandatory %}<span style="font-size:.65rem;font-weight:700;"> ★</span>{% endif %}
                 </button>
                 {% endfor %}
             </div>

@@ -9,6 +9,9 @@
     </div>
     <div style="display:flex; gap:.5rem;">
         <a href="{% url 'jury_squads' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Back to Squads</a>
+        {% if squad.status == 'approved' %}
+        <a href="{% url 'match_squad_pdf' squad_pk=squad.pk %}" class="btn btn-sm" style="background:#1B5E20;color:#fff;"><i class="bi bi-download"></i> Download PDF</a>
+        {% endif %}
     </div>
 </div>
 

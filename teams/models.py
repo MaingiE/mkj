@@ -965,3 +965,161 @@ class ScoutShortlist(models.Model):
 
     def __str__(self):
         return f"{self.scout.get_full_name()} → {self.player.first_name} {self.player.last_name} ({self.rating}★)"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SCOUTING CRITERIA — INTERNATIONAL STANDARDS PER DISCIPLINE
+# ══════════════════════════════════════════════════════════════════════════════
+
+SCOUTING_CRITERIA = {
+    "football": {
+        "label": "Football (FIFA)",
+        "criteria": [
+            {"key": "technical", "label": "Technical Ability", "description": "Ball control, first touch, passing accuracy, dribbling, shooting technique"},
+            {"key": "tactical", "label": "Tactical Awareness", "description": "Positioning, decision making, reading of play, spatial awareness, game intelligence"},
+            {"key": "physical", "label": "Physical Attributes", "description": "Speed, stamina, strength, agility, balance, acceleration"},
+            {"key": "mental", "label": "Mental Attributes", "description": "Composure, leadership, work rate, concentration, resilience, communication"},
+            {"key": "attacking", "label": "Attacking Play", "description": "Movement off the ball, finishing, crossing, chance creation, link-up play"},
+            {"key": "defending", "label": "Defensive Play", "description": "Tackling, interceptions, aerial duels, marking, recovery runs"},
+        ],
+        "gk_criteria": [
+            {"key": "shot_stopping", "label": "Shot Stopping", "description": "Reflexes, diving, positioning, one-on-one saves"},
+            {"key": "distribution", "label": "Distribution", "description": "Goal kicks, throwing, passing accuracy under pressure"},
+            {"key": "command_of_area", "label": "Command of Area", "description": "Cross collection, communication, sweeping, set piece organisation"},
+            {"key": "footwork", "label": "Footwork", "description": "Ability with feet, composure on the ball, short passing"},
+        ],
+    },
+    "volleyball": {
+        "label": "Volleyball (FIVB)",
+        "criteria": [
+            {"key": "serving", "label": "Serving", "description": "Accuracy, power, float serve, jump serve, tactical serving"},
+            {"key": "passing", "label": "Passing / Reception", "description": "Serve receive quality, platform control, first ball accuracy"},
+            {"key": "setting", "label": "Setting", "description": "Hand setting technique, back setting, quick sets, decision making"},
+            {"key": "attacking", "label": "Attacking / Spiking", "description": "Hitting power, shot selection, timing, approach technique"},
+            {"key": "blocking", "label": "Blocking", "description": "Timing, footwork, read blocking, positioning, penetration"},
+            {"key": "digging", "label": "Digging / Defense", "description": "Floor defense, reaction time, platform control, court coverage"},
+        ],
+    },
+    "basketball": {
+        "label": "Basketball (FIBA)",
+        "criteria": [
+            {"key": "shooting", "label": "Shooting", "description": "Mid-range, 3-point, free throw, shooting form, shot selection"},
+            {"key": "ball_handling", "label": "Ball Handling", "description": "Dribbling, crossovers, change of pace, ball security, finishing at rim"},
+            {"key": "passing", "label": "Passing & Court Vision", "description": "Accuracy, creativity, decision making, fast break passing"},
+            {"key": "rebounding", "label": "Rebounding", "description": "Positioning, box out, timing, effort on offensive & defensive boards"},
+            {"key": "defense", "label": "Defense", "description": "On-ball defense, help defense, steals, shot blocking, rotations"},
+            {"key": "athleticism", "label": "Athleticism", "description": "Speed, vertical leap, lateral quickness, endurance, strength"},
+        ],
+    },
+    "basketball_5x5": {
+        "label": "Basketball 5×5 (FIBA)",
+        "criteria": [
+            {"key": "shooting", "label": "Shooting", "description": "Mid-range, 3-point, free throw, shooting form, shot selection"},
+            {"key": "ball_handling", "label": "Ball Handling", "description": "Dribbling, crossovers, change of pace, ball security, finishing at rim"},
+            {"key": "passing", "label": "Passing & Court Vision", "description": "Accuracy, creativity, decision making, fast break passing"},
+            {"key": "rebounding", "label": "Rebounding", "description": "Positioning, box out, timing, effort on offensive & defensive boards"},
+            {"key": "defense", "label": "Defense", "description": "On-ball defense, help defense, steals, shot blocking, rotations"},
+            {"key": "athleticism", "label": "Athleticism", "description": "Speed, vertical leap, lateral quickness, endurance, strength"},
+        ],
+    },
+    "basketball_3x3": {
+        "label": "Basketball 3×3 (FIBA)",
+        "criteria": [
+            {"key": "shooting", "label": "Shooting", "description": "Mid-range, 2-point (arc), free throw, catch-and-shoot"},
+            {"key": "ball_handling", "label": "Ball Handling", "description": "Dribbling, isolation moves, 1-on-1 ability, ball security"},
+            {"key": "passing", "label": "Passing & Court Vision", "description": "Quick decision making, pick-and-roll reads, skip passes"},
+            {"key": "defense", "label": "Defense", "description": "On-ball pressure, switches, help-and-recover, checking the ball"},
+            {"key": "versatility", "label": "Versatility", "description": "Positionless play, ability to guard multiple positions, transition play"},
+        ],
+    },
+    "handball": {
+        "label": "Handball (IHF)",
+        "criteria": [
+            {"key": "throwing", "label": "Throwing", "description": "Power, accuracy, variety — jump shot, spin shot, hip shot, lob"},
+            {"key": "passing", "label": "Passing", "description": "Accuracy, speed, creativity, bounce pass, lob pass"},
+            {"key": "dribbling", "label": "Dribbling & Ball Handling", "description": "Ball control, speed dribble, change of direction"},
+            {"key": "defense", "label": "Defensive Play", "description": "Positioning, blocking, tackling, interceptions, 6-0 / 5-1 systems"},
+            {"key": "movement", "label": "Movement & Positioning", "description": "Off-ball movement, fast break, wing play, pivot play"},
+            {"key": "physical", "label": "Physical Attributes", "description": "Power, speed, endurance, agility, body contact resilience"},
+        ],
+        "gk_criteria": [
+            {"key": "shot_stopping", "label": "Shot Stopping", "description": "Reflexes, positioning, angle play, penalty saving, near-post saves"},
+            {"key": "distribution", "label": "Distribution", "description": "Fast break initiation, throwing accuracy, decision making"},
+        ],
+    },
+}
+
+
+def get_scouting_criteria(sport_type):
+    """Return scouting criteria dict for a sport_type, falling back to sport family."""
+    from matches.models import get_sport_family
+    family = get_sport_family(sport_type)
+    return SCOUTING_CRITERIA.get(family, SCOUTING_CRITERIA.get("football"))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SCOUT REPORT — DETAILED PLAYER EVALUATION
+# ══════════════════════════════════════════════════════════════════════════════
+
+class ScoutReport(models.Model):
+    """Detailed scouting evaluation of a player observed during a specific match."""
+    RECOMMENDATION_CHOICES = [
+        ("highly_recommended", "Highly Recommended"),
+        ("recommended", "Recommended"),
+        ("monitor", "Continue Monitoring"),
+        ("not_recommended", "Not Recommended"),
+    ]
+
+    scout = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="scout_reports",
+        limit_choices_to={"role": "scout"},
+    )
+    player = models.ForeignKey(
+        "teams.Player", on_delete=models.CASCADE,
+        related_name="scout_reports",
+    )
+    fixture = models.ForeignKey(
+        "competitions.Fixture", on_delete=models.CASCADE,
+        related_name="scout_reports",
+    )
+    sport_type = models.CharField(max_length=30, blank=True)
+
+    # Sport-specific criteria scores: {"technical": 8, "tactical": 7, ...}
+    criteria_scores = models.JSONField(default=dict)
+    overall_rating = models.PositiveSmallIntegerField(
+        help_text="Overall rating 1–10",
+    )
+
+    strengths = models.TextField(blank=True)
+    weaknesses = models.TextField(blank=True)
+    recommendation = models.CharField(max_length=20, choices=RECOMMENDATION_CHOICES)
+    notes = models.TextField(blank=True)
+    minutes_observed = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("scout", "player", "fixture")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Scout Report: {self.player} @ {self.fixture} by {self.scout.get_full_name()}"
+
+    @property
+    def criteria_display(self):
+        """Return list of (label, score) for template display."""
+        sc = get_scouting_criteria(self.sport_type)
+        criteria_list = sc.get("criteria", [])
+        result = []
+        for c in criteria_list:
+            score = self.criteria_scores.get(c["key"])
+            if score is not None:
+                result.append({"label": c["label"], "score": score, "key": c["key"]})
+        # also include GK criteria if present
+        for c in sc.get("gk_criteria", []):
+            score = self.criteria_scores.get(c["key"])
+            if score is not None:
+                result.append({"label": c["label"], "score": score, "key": c["key"]})
+        return result

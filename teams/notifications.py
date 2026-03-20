@@ -74,7 +74,7 @@ def send_payment_receipt(team, confirmed_by_user):
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #004D1A 0%, #006B23 100%); color: #fff; padding: 25px; text-align: center; border-radius: 6px 6px 0 0;">
             <h1 style="margin: 0; font-size: 24px;">⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION</h1>
-            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px; font-style: italic;">11th Edition</p>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px; font-style: italic;">4th Edition</p>
             <p style="margin: 8px 0 0; font-size: 16px; opacity: 0.9;">KENYA YOUTH INTER-SECONDARY SCHOOL ASSOCIATION</p>
         </div>
         
@@ -143,7 +143,7 @@ def send_payment_receipt(team, confirmed_by_user):
             <div style="border-top: 2px solid #f1f1f1; padding-top: 20px; margin-top: 25px;">
                 <p style="margin: 0; color: #666; font-size: 12px; text-align: center;">
                     <strong>KENYA YOUTH INTER-SECONDARY SCHOOL ASSOCIATION (MKJ SUPA CUP)</strong><br>
-                    11th Edition • 2026 Season<br>
+                    4th Edition • 2026 Season<br>
                     Email: info@mkj_supacup.ke | Website: www.mkj_supacup.ke<br>
                     This is an automated receipt generated on {timezone.now().strftime("%d/%m/%Y at %H:%M")}
                 </p>

@@ -2770,7 +2770,7 @@ def export_appointments_excel(request):
 
 @login_required
 def export_appointments_pdf(request):
-    """Export appointments to PDF with MKJ SUPA CUP 11th edition logo"""
+    """Export appointments to PDF with MKJ SUPA CUP 4th edition logo"""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
@@ -2821,7 +2821,7 @@ def export_appointments_pdf(request):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), topMargin=0.5*inch, bottomMargin=0.5*inch)
     
-    # Create elements list and add MKJ SUPA CUP 11th edition logo
+    # Create elements list and add MKJ SUPA CUP 4th edition logo
     elements = []
     logo_path = os.path.join(settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.STATIC_ROOT, 'img', 'mkj_supacup_logo_official.jpg')
     if os.path.exists(logo_path):
@@ -2836,7 +2836,7 @@ def export_appointments_pdf(request):
     # Styles
     styles = getSampleStyleSheet()
     edition_style = ParagraphStyle("Edition", parent=styles["Heading2"], fontSize=10, textColor=colors.HexColor("#004D1A"), spaceAfter=6, alignment=1)
-    elements.append(Paragraph("⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION — 11TH EDITION", edition_style))
+    elements.append(Paragraph("⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION — 4TH EDITION", edition_style))
     
     title_style = ParagraphStyle(
         'CustomTitle',

@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Scout Report — {{ report.player.first_name }} {{ report.player.last_name }} — MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .score-bar { display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; }
+    .score-bar .label { min-width:160px; font-weight:600; font-size:.9rem; }
+    .score-bar .bar-bg { flex:1; height:20px; background:#f0f0f0; border-radius:10px; overflow:hidden; }
+    .score-bar .bar-fill { height:100%; border-radius:10px; transition:width .4s; }
+    .score-bar .bar-fill.high { background:#2E7D32; }
+    .score-bar .bar-fill.mid { background:#F57F17; }
+    .score-bar .bar-fill.low { background:#c62828; }
+    .score-bar .score-val { font-weight:800; min-width:30px; text-align:center; }
+    .info-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1rem; }
+    .info-item .lbl { font-size:.73rem; color:#666; text-transform:uppercase; }
+    .info-item .val { font-weight:600; }
+    .rec-badge-lg { display:inline-block; font-size:.85rem; font-weight:700; padding:.3rem .8rem; border-radius:20px; }
+    .rec-highly { background:#E8F5E9; color:#2E7D32; }
+    .rec-recommended { background:#E3F2FD; color:#1565C0; }
+    .rec-monitor { background:#FFF8E1; color:#F57F17; }
+    .rec-not { background:#FFEBEE; color:#c62828; }
+    .text-section { margin-bottom:1rem; }
+    .text-section h4 { font-size:.9rem; font-weight:700; margin-bottom:.3rem; }
+    .text-section p { font-size:.9rem; color:#333; line-height:1.6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        {% if is_leadership_view %}
+        <a href="{% url 'leadership_scout_reports' %}">Scouting Reports</a>
+        {% else %}
+        <a href="{% url 'scout_dashboard' %}">Scout Dashboard</a>
+        <a href="{% url 'scout_reports' %}">My Reports</a>
+        {% endif %}
+        <span>Report Detail</span>
+    </div>
+    <h1><i class="bi bi-file-earmark-bar-graph"></i> Scout Report</h1>
+</div>
+
+<!-- Player & Match Info -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-body">
+        <div class="info-row">
+            <div class="info-item">
+                <div class="lbl">Player</div>
+                <div class="val" style="font-size:1.15rem;">{{ report.player.first_name }} {{ report.player.last_name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Team</div>
+                <div class="val">{{ report.player.team.name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Position / #</div>
+                <div class="val">{{ report.player.get_position_display|default:report.player.position }} · #{{ report.player.shirt_number }}</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Match</div>
+                <div class="val">{{ report.fixture.home_team.name }} vs {{ report.fixture.away_team.name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Date</div>
+                <div class="val">{{ report.fixture.match_date|date:"d M Y" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Scout</div>
+                <div class="val">{{ report.scout.get_full_name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Minutes Observed</div>
+                <div class="val">{{ report.minutes_observed }}'</div>
+            </div>
+            <div class="info-item">
+                <div class="lbl">Submitted</div>
+                <div class="val">{{ report.created_at|date:"d M Y H:i" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Rating & Recommendation -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3><i class="bi bi-star-fill" style="color:#E65100;"></i> Overall Assessment</h3></div>
+    <div class="card-body">
+        <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <div style="text-align:center;">
+                <div style="font-size:2.5rem;font-weight:900;{% if report.overall_rating >= 7 %}color:#2E7D32;{% elif report.overall_rating >= 4 %}color:#F57F17;{% else %}color:#c62828;{% endif %}">
+                    {{ report.overall_rating }}<span style="font-size:1rem;color:#999;">/10</span>
+                </div>
+                <div style="font-size:.8rem;color:#666;">Overall Rating</div>
+            </div>
+            <div>
+                <span class="rec-badge-lg {% if report.recommendation == 'highly_recommended' %}rec-highly{% elif report.recommendation == 'recommended' %}rec-recommended{% elif report.recommendation == 'monitor' %}rec-monitor{% else %}rec-not{% endif %}">
+                    {{ report.get_recommendation_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Criteria Scores -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#E3F2FD;"><h3><i class="bi bi-bar-chart-line"></i> {{ criteria_def.label }} — Criteria Scores</h3></div>
+    <div class="card-body">
+        {% for cd in criteria_display %}
+        <div class="score-bar">
+            <div class="label">{{ cd.label }}</div>
+            <div class="bar-bg">
+                <div class="bar-fill {% if cd.score >= 7 %}high{% elif cd.score >= 4 %}mid{% else %}low{% endif %}"
+                     style="width:{{ cd.score }}0%;"></div>
+            </div>
+            <div class="score-val" style="{% if cd.score >= 7 %}color:#2E7D32;{% elif cd.score >= 4 %}color:#F57F17;{% else %}color:#c62828;{% endif %}">{{ cd.score }}</div>
+        </div>
+        {% empty %}
+        <p style="color:#999;">No criteria scores recorded.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Detailed Notes -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3><i class="bi bi-chat-left-text"></i> Detailed Assessment</h3></div>
+    <div class="card-body">
+        {% if report.strengths %}
+        <div class="text-section">
+            <h4 style="color:#2E7D32;"><i class="bi bi-check-circle"></i> Strengths</h4>
+            <p>{{ report.strengths|linebreaksbr }}</p>
+        </div>
+        {% endif %}
+
+        {% if report.weaknesses %}
+        <div class="text-section">
+            <h4 style="color:#c62828;"><i class="bi bi-exclamation-circle"></i> Weaknesses / Areas for Improvement</h4>
+            <p>{{ report.weaknesses|linebreaksbr }}</p>
+        </div>
+        {% endif %}
+
+        {% if report.notes %}
+        <div class="text-section">
+            <h4><i class="bi bi-journal"></i> Additional Notes</h4>
+            <p>{{ report.notes|linebreaksbr }}</p>
+        </div>
+        {% endif %}
+
+        {% if not report.strengths and not report.weaknesses and not report.notes %}
+        <p style="color:#999;">No written assessment provided.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-bottom:2rem;">
+    {% if is_leadership_view %}
+    <a href="{% url 'leadership_scout_reports' %}" style="display:inline-block;padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;background:#f0f0f0;color:#333;">
+        ← Back to All Scouting Reports
+    </a>
+    {% else %}
+    <a href="{% url 'scout_reports' %}" style="display:inline-block;padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;background:#f0f0f0;color:#333;">
+        ← Back to My Reports
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

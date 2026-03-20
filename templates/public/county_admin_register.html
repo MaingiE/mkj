@@ -1,7 +1,7 @@
 {% extends 'public/base.html' %}
 {% load static %}
 
-{% block title %}MKJ SUPA CUP 1st Edition — County Registration{% endblock %}
+{% block title %}MKJ SUPA CUP 4th Edition — County Registration{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -37,6 +37,8 @@
     .cr-field { margin-bottom: 1.1rem; }
     .cr-field label { display: block; font-weight: 600; color: #333; margin-bottom: .4rem; font-size: .88rem; }
     .cr-field input, .cr-field select { width: 100%; padding: .7rem .9rem; border: 1.5px solid #d0d0d0; border-radius: 10px; font-size: .92rem; transition: border-color .2s, box-shadow .2s; background: #fafafa; }
+    .cr-field .input-group input { width: 1%; flex: 1 1 auto; border-radius: 0 10px 10px 0 !important; }
+    .cr-field .input-group .input-group-text { border-radius: 10px 0 0 10px; }
     .cr-field input:focus, .cr-field select:focus { outline: none; border-color: #1A6FB5; box-shadow: 0 0 0 3px rgba(26,111,181,.1); background: #fff; }
     .cr-field .err { color: #C62828; font-size: .8rem; margin-top: .3rem; }
     .cr-field small { color: #999; font-size: .78rem; }
@@ -120,7 +122,7 @@
     <!-- Header -->
     <div class="cr-header">
         <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo" class="cr-header__logo">
-        <h1>MKJ SUPA CUP <span>1st Edition</span></h1>
+        <h1>MKJ SUPA CUP <span>4th Edition</span></h1>
         <p class="cr-header__sub">County Registration Portal</p>
         <div class="cr-header__date"><i class="bi bi-calendar-event"></i> 31 Mar — 2 Apr 2026</div>
     </div>
@@ -213,7 +215,10 @@
             </div>
             <div class="cr-field">
                 <label for="id_phone">{{ form.phone.label }}</label>
-                {{ form.phone }}
+                <div class="input-group">
+                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff;border-radius:10px 0 0 10px">+254</span>
+                    {{ form.phone }}
+                </div>
                 {% if form.phone.errors %}<div class="err">{{ form.phone.errors.0 }}</div>{% endif %}
             </div>
 
@@ -237,7 +242,10 @@
                 </div>
                 <div class="cr-field">
                     <label for="id_director_phone">{{ form.director_phone.label }}</label>
-                    {{ form.director_phone }}
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff;border-radius:10px 0 0 10px">+254</span>
+                        {{ form.director_phone }}
+                    </div>
                     {% if form.director_phone.errors %}<div class="err">{{ form.director_phone.errors.0 }}</div>{% endif %}
                 </div>
             </div>
@@ -267,11 +275,14 @@
 
                     <div class="cr-field">
                         <label for="id_mpesa_phone">M-Pesa Phone Number *</label>
-                        <input type="tel" name="mpesa_phone" id="id_mpesa_phone"
-                               class="form-control" placeholder="+254712345678"
-                               pattern="\+254\d{9}" maxlength="13"
-                               title="Format: +254XXXXXXXXX"
-                               style="width:100%;padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:10px;font-size:.92rem;background:#fafafa">
+                        <div class="input-group">
+                            <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff;border-radius:10px 0 0 10px">+254</span>
+                            <input type="tel" name="mpesa_phone" id="id_mpesa_phone"
+                                   class="form-control" placeholder="712345678"
+                                   pattern="(?:\+?254|0)?\d{9}" maxlength="13"
+                                   title="Enter 9 digits e.g. 712345678"
+                                   style="padding:.7rem .9rem;border:1.5px solid #d0d0d0;border-radius:0 10px 10px 0;font-size:.92rem;background:#fafafa">
+                        </div>
                         <small style="color:#999;font-size:.78rem">The number that will receive the M-Pesa payment prompt</small>
                     </div>
 
@@ -398,10 +409,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const stkBtn = document.getElementById('stk-push-btn');
     if (stkBtn) {
         stkBtn.addEventListener('click', function() {
-            const phone = document.getElementById('id_mpesa_phone').value.trim();
-            const phoneRe = /^\+254\d{9}$/;
-            if (!phoneRe.test(phone)) {
-                alert('Enter a valid phone number in +254XXXXXXXXX format.');
+            let phone = document.getElementById('id_mpesa_phone').value.trim();
+            // Normalize: prepend +254 if user typed 9 digits or 0-prefixed
+            if (/^\d{9}$/.test(phone)) phone = '+254' + phone;
+            else if (/^0\d{9}$/.test(phone)) phone = '+254' + phone.slice(1);
+            else if (/^254\d{9}$/.test(phone)) phone = '+' + phone;
+            if (!/^\+254\d{9}$/.test(phone)) {
+                alert('Enter a valid phone number, e.g. 712345678');
                 return;
             }
             const statusEl = document.getElementById('stk-status');

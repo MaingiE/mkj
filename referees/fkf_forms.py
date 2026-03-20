@@ -360,11 +360,11 @@ class MatchOfficialsManualEntryForm(forms.ModelForm):
         ]
         widgets = {
             'main_referee_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'main_referee_mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+254712345678', 'pattern': '\\+254\\d{9}', 'maxlength': '13'}),
+            'main_referee_mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
             'ar1_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'ar1_mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+254712345678', 'pattern': '\\+254\\d{9}', 'maxlength': '13'}),
+            'ar1_mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
             'ar2_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'ar2_mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+254712345678', 'pattern': '\\+254\\d{9}', 'maxlength': '13'}),
+            'ar2_mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
         }
         labels = {
             'main_referee_name': 'Main Referee Name',
@@ -384,7 +384,7 @@ class TeamOfficialForm(forms.ModelForm):
             'team': forms.Select(attrs={'class': 'form-control'}),
             'position': forms.Select(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
-            'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+254712345678', 'pattern': '\\+254\\d{9}', 'maxlength': '13'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
         }
 
 

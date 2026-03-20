@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   KYISA — Main JS (Public Website + CMS Portal)
+   MKJ SUPA CUP — Main JS (Public Website + CMS Portal)
    ═══════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function () {
 

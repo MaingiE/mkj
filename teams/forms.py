@@ -276,7 +276,7 @@ class PlayerRegistrationForm(forms.ModelForm):
 # ══════════════════════════════════════════════════════════════════════════════
 
 class CountyAdminRegistrationForm(forms.Form):
-    """Public county registration for MKJ SUPA CUP 11th Edition."""
+    """Public county registration for MKJ SUPA CUP 4th Edition."""
     first_name = forms.CharField(
         max_length=100,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),

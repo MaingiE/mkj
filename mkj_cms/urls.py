@@ -156,6 +156,15 @@ from .web_views import (
     scout_add_to_shortlist_view,
     scout_edit_shortlist_view,
     scout_remove_from_shortlist_view,
+    # Scout scouting portal (live matches, evaluation, reports)
+    scout_live_matches_view,
+    scout_match_squad_view,
+    scout_evaluate_player_view,
+    scout_reports_view,
+    scout_report_detail_view,
+    # Leadership scouting reports
+    leadership_scout_reports_view,
+    leadership_scout_report_detail_view,
     # M-Pesa STK push endpoint
     mpesa_stk_push_view,
     # New MKJ SUPA CUP portals
@@ -166,6 +175,13 @@ from .web_views import (
     subcounty_officer_delete_player_view,
     director_sports_dashboard_view,
     chief_officer_sports_dashboard_view,
+    # Verified player lists
+    subcounty_verified_players_view,
+    team_manager_verified_players_view,
+    director_sports_verified_players_view,
+    verified_players_pdf_view,
+    # Match day squad PDF
+    match_squad_pdf_view,
 )
 
 urlpatterns = [
@@ -187,8 +203,9 @@ urlpatterns = [
     path("register/team/success/",    team_register_success_view,  name="team_register_success"),
     path("register/referee/",         referee_register_view,       name="referee_register"),
     path("register/referee/success/", referee_register_success_view, name="referee_register_success"),
-    path("register/county-admin/",           county_admin_register_view,         name="county_admin_register"),
-    path("register/county-admin/success/",   county_admin_register_success_view, name="county_admin_register_success"),
+    # County admin registration removed — MKJ SUPA CUP uses Ligi Mashinani flow
+    # path("register/county-admin/",           county_admin_register_view,         name="county_admin_register"),
+    # path("register/county-admin/success/",   county_admin_register_success_view, name="county_admin_register_success"),
     path("api/mpesa/stk-push/",              mpesa_stk_push_view,               name="mpesa_stk_push"),
 
     # ── CMS PORTAL (Authenticated) ───────────────────────────────────────────
@@ -277,9 +294,16 @@ urlpatterns = [
     path("portal/team-manager/fixtures/<int:fixture_pk>/opponent/", team_manager_opponent_view,     name="team_manager_opponent"),
     path("portal/team-manager/sanctions/",                          team_manager_sanctions_view,    name="team_manager_sanctions"),
     path("portal/team-manager/appeal/",                             team_manager_file_appeal_view,  name="team_manager_file_appeal"),
+    path("portal/team-manager/verified-players/",                   team_manager_verified_players_view, name="team_manager_verified_players"),
 
-    # ── CEC SPORTS CAUCUS PORTAL (VIEW ONLY) ─────────────────────────────
-    path("portal/cec-sports/", cec_sports_portal_view, name="cec_sports_portal"),
+    # ── VERIFIED PLAYERS PDF (shared across portals) ──────────────────
+    path("portal/verified-players/pdf/", verified_players_pdf_view, name="verified_players_pdf"),
+
+    # ── MATCH DAY SQUAD PDF ───────────────────────────────────────────
+    path("portal/squads/<int:squad_pk>/pdf/", match_squad_pdf_view, name="match_squad_pdf"),
+
+    # ── CEC SPORTS CAUCUS PORTAL (REMOVED) ─────────────────────────────
+    # path("portal/cec-sports/", cec_sports_portal_view, name="cec_sports_portal"),
 
     # ── COMPETITION MANAGER PORTAL ────────────────────────────────────────
     path("portal/competitions/<int:pk>/standings/",   competition_standings_view,      name="competition_standings"),
@@ -363,6 +387,11 @@ urlpatterns = [
     path("portal/scout/shortlist/add/<int:player_pk>/",scout_add_to_shortlist_view,       name="scout_add_to_shortlist"),
     path("portal/scout/shortlist/<int:pk>/edit/",      scout_edit_shortlist_view,         name="scout_edit_shortlist"),
     path("portal/scout/shortlist/<int:pk>/remove/",    scout_remove_from_shortlist_view,  name="scout_remove_from_shortlist"),
+    path("portal/scout/matches/",                      scout_live_matches_view,           name="scout_live_matches"),
+    path("portal/scout/match/<int:fixture_pk>/squad/",  scout_match_squad_view,            name="scout_match_squad"),
+    path("portal/scout/match/<int:fixture_pk>/evaluate/<int:player_pk>/", scout_evaluate_player_view, name="scout_evaluate_player"),
+    path("portal/scout/reports/",                       scout_reports_view,                name="scout_reports"),
+    path("portal/scout/reports/<int:pk>/",              scout_report_detail_view,          name="scout_report_detail"),
 
     # ── SUB-COUNTY SPORTS OFFICER PORTAL ──────────────────────────────────
     path("portal/subcounty-officer/", subcounty_officer_dashboard_view, name="subcounty_officer_dashboard"),
@@ -370,12 +399,18 @@ urlpatterns = [
     path("portal/subcounty-officer/discipline/<int:discipline_pk>/", subcounty_officer_discipline_players_view, name="subcounty_officer_discipline_players"),
     path("portal/subcounty-officer/discipline/<int:discipline_pk>/add-player/", subcounty_officer_add_player_view, name="subcounty_officer_add_player"),
     path("portal/subcounty-officer/player/<int:player_pk>/delete/", subcounty_officer_delete_player_view, name="subcounty_officer_delete_player"),
+    path("portal/subcounty-officer/verified-players/", subcounty_verified_players_view, name="subcounty_verified_players"),
 
     # ── DIRECTOR OF SPORTS PORTAL ─────────────────────────────────────────
     path("portal/director-sports/", director_sports_dashboard_view, name="director_sports_dashboard"),
+    path("portal/director-sports/verified-players/", director_sports_verified_players_view, name="director_sports_verified_players"),
 
     # ── CHIEF OFFICER SPORTS PORTAL ───────────────────────────────────────
     path("portal/chief-officer-sports/", chief_officer_sports_dashboard_view, name="chief_officer_sports_dashboard"),
+
+    # ── LEADERSHIP SCOUTING REPORTS ───────────────────────────────────────
+    path("portal/leadership/scout-reports/",            leadership_scout_reports_view,       name="leadership_scout_reports"),
+    path("portal/leadership/scout-reports/<int:pk>/",   leadership_scout_report_detail_view, name="leadership_scout_report_detail"),
 
     # ── ADMIN DASHBOARD ───────────────────────────────────────────────────────
     path("portal/admin-dashboard/", include("admin_dashboard.urls")),

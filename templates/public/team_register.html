@@ -45,7 +45,14 @@
                 <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.4rem;font-size:.9rem">
                     {{ field.label }}
                 </label>
+                {% if 'phone' in field.name %}
+                <div class="input-group">
+                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                    {{ field }}
+                </div>
+                {% else %}
                 {{ field }}
+                {% endif %}
                 {% if field.help_text %}
                 <small style="color:#888;font-size:.8rem">{{ field.help_text }}</small>
                 {% endif %}

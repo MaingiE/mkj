@@ -32,10 +32,13 @@
             </div>
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">Phone *</label>
-                <input type="tel" name="phone" value="{{ user.phone }}"
-                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;"
-                       placeholder="+254712345678" pattern="\+254\d{9}" maxlength="13" required
-                       title="Format: +254XXXXXXXXX">
+                <div class="input-group">
+                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                    <input type="tel" name="phone" value="{{ user.phone }}"
+                           style="padding:.6rem;border:1px solid #ddd;border-radius:0 8px 8px 0;"
+                           placeholder="712345678" pattern="(?:\+?254|0)?\d{9}" maxlength="13" required
+                           title="Enter 9 digits e.g. 712345678">
+                </div>
             </div>
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">Email</label>

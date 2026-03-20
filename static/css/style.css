@@ -55,7 +55,7 @@ img { max-width: 100%; }
 * { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.15) transparent; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 1 — PUBLIC WEBSITE (LIGHT THEME — KYISA COLORS)
+   SECTION 1 — PUBLIC WEBSITE (LIGHT THEME — MKJ SUPA CUP COLORS)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -2919,4 +2919,32 @@ textarea.form-control { resize: vertical; min-height: 90px; }
     .stats-grid, .counter-grid { grid-template-columns: 1fr; }
     .quick-actions { grid-template-columns: 1fr; }
     .stat-card { flex-direction: row; }
+}
+
+/* ── Input Group (phone prefix +254 etc.) ─────────────────────────── */
+.input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+.input-group .input-group-text {
+    display: flex;
+    align-items: center;
+    padding: .5rem .75rem;
+    font-size: .88rem;
+    font-weight: 700;
+    color: #fff;
+    background: #1565C0;
+    border: 1px solid #1565C0;
+    border-radius: 8px 0 0 8px;
+    white-space: nowrap;
+    line-height: 1;
+}
+.input-group .form-control,
+.input-group input[type="tel"],
+.input-group input[type="text"] {
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+    border-radius: 0 8px 8px 0 !important;
 }

@@ -14,7 +14,7 @@
         <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
     </div>
     <div class="container page-hero__inner">
-        <span class="page-hero__badge reveal">1st Edition</span>
+        <span class="page-hero__badge reveal">4th Edition</span>
         <h1 class="page-hero__title reveal">Our <span class="text-gold">Competitions</span></h1>
         <p class="page-hero__sub reveal">Browse MKJ SUPA CUP sporting competitions across Makueni County sub-counties</p>
         <div class="page-hero__breadcrumb reveal">
@@ -112,9 +112,6 @@
                 </div>
                 <div class="comp-card__actions">
                     <a href="{% url 'public_competition_detail' comp.pk %}" class="btn btn--primary btn--sm">View Details →</a>
-                    {% if sport.key == "soccer" %}
-                    <a href="{% url 'county_admin_register' %}" class="btn btn--gold btn--sm">Register County</a>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -151,7 +148,6 @@
                 </div>
                 <div class="comp-card__actions">
                     {% if sport.key == "soccer" and comp.status == "registration" %}
-                    <a href="{% url 'county_admin_register' %}" class="btn btn--gold btn--sm">Register County</a>
                     {% endif %}
                 </div>
             </div>
@@ -200,9 +196,6 @@
                     {% else %}
                     <h3 style="margin:.75rem 0 .25rem;font-size:1rem;color:#888;">No {{ sport.label }} Competitions Yet</h3>
                     <p style="font-size:.85rem;color:#aaa;margin:0;">Check back soon for new tournaments</p>
-                    {% endif %}
-                    {% if sport.key == "soccer" %}
-                    <a href="{% url 'county_admin_register' %}" class="btn btn--primary btn--sm" style="margin-top:1rem;">Register Your Sub-County</a>
                     {% endif %}
                 </div>
             </div>

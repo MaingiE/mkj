@@ -149,7 +149,13 @@
     </div>
 </div>
 {% else %}
-<div style="display:flex;justify-content:flex-end;">
+<div style="display:flex;gap:1rem;justify-content:flex-end;">
+    {% if squad.status == 'approved' %}
+    <a href="{% url 'match_squad_pdf' squad_pk=squad.pk %}"
+       style="background:#1B5E20;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+        <i class="bi bi-download"></i> Download PDF
+    </a>
+    {% endif %}
     <a href="{% url 'squad_review_list' %}"
        style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
         ← Back to List

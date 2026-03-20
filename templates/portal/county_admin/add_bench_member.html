@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Add Technical Bench Member &mdash; KYISA{% endblock %}
+{% block title %}Add Technical Bench Member &mdash; MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -62,7 +62,14 @@
         {% for field in form %}
         <div style="margin-bottom:1rem">
             <label style="display:block;font-weight:600;font-size:.88rem;color:#333;margin-bottom:.3rem">{{ field.label }}</label>
+            {% if 'phone' in field.name %}
+            <div class="input-group">
+                <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                {{ field }}
+            </div>
+            {% else %}
             {{ field }}
+            {% endif %}
             {% if field.errors %}
             <div style="color:#C62828;font-size:.82rem;margin-top:.2rem">{{ field.errors.0 }}</div>
             {% endif %}

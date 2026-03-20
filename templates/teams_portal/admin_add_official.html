@@ -41,9 +41,12 @@
                         
                         <div class="mb-3">
                             <label for="phone_number" class="form-label">Phone Number *</label>
-                            <input type="tel" name="phone_number" id="phone_number" class="form-control" required
-                                   pattern="\+254\d{9}" maxlength="13" placeholder="+254712345678"
-                                   title="Phone number must be in the format +254XXXXXXXXX">
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                                <input type="tel" name="phone_number" id="phone_number" class="form-control" required
+                                       pattern="(?:\+?254|0)?\d{9}" maxlength="13" placeholder="712345678"
+                                       title="Enter 9 digits e.g. 712345678">
+                            </div>
                         </div>
                         
                         <div class="mb-3">

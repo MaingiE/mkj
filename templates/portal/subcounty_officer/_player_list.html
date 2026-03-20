@@ -1,0 +1,93 @@
+{% if show_players %}
+<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead>
+            <tr style="background:#f8f9fa;text-align:left">
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">#</th>
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">Player</th>
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">DOB / Age</th>
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">National ID</th>
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">Phone</th>
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">Status</th>
+                <th style="padding:.7rem 1rem;font-weight:700;color:#333">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in show_players %}
+            <tr style="border-bottom:1px solid #eee;{% if p.verification_status == 'rejected' %}background:#FFF5F5{% elif p.verification_status == 'resubmit' %}background:#FFFBF0{% endif %}">
+                <td style="padding:.6rem 1rem;color:#888;font-size:.82rem">{{ forloop.counter }}</td>
+                <td style="padding:.6rem 1rem">
+                    <div style="display:flex;align-items:center;gap:.6rem">
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0">
+                        {% else %}
+                        <div style="width:36px;height:36px;border-radius:50%;background:#e8eaf6;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#5c6bc0;font-weight:700">{{ p.first_name.0 }}{{ p.last_name.0 }}</div>
+                        {% endif %}
+                        <div>
+                            <strong style="font-size:.88rem">{{ p.first_name }} {{ p.last_name }}</strong>
+                            <div style="font-size:.78rem;color:#888">#{{ p.jersey_number|default:"—" }} &middot; {{ p.position|default:"N/A" }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding:.6rem 1rem">
+                    <div style="font-size:.86rem">{{ p.date_of_birth|date:"d M Y" }}</div>
+                    <div style="font-size:.78rem;color:{% if p.age >= 18 and p.age <= 23 %}#2E7D32{% else %}#C62828{% endif %};font-weight:600">{{ p.age }} yrs{% if p.age < 18 or p.age > 23 %} <i class="bi bi-exclamation-triangle-fill"></i>{% endif %}</div>
+                </td>
+                <td style="padding:.6rem 1rem;font-family:monospace;font-size:.84rem">{{ p.national_id_number }}</td>
+                <td style="padding:.6rem 1rem;font-size:.84rem">{{ p.phone|default:"—" }}</td>
+                <td style="padding:.6rem 1rem">
+                    {% if p.verification_status == 'pending' %}
+                    <span style="display:inline-flex;align-items:center;gap:.3rem;background:#FFF3E0;color:#E65100;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">
+                        <i class="bi bi-hourglass-split"></i> Pending
+                    </span>
+                    {% elif p.verification_status == 'verified' %}
+                    <span style="display:inline-flex;align-items:center;gap:.3rem;background:#E8F5E9;color:#2E7D32;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">
+                        <i class="bi bi-check-circle-fill"></i> Verified
+                    </span>
+                    {% elif p.verification_status == 'rejected' %}
+                    <span style="display:inline-flex;align-items:center;gap:.3rem;background:#FFEBEE;color:#C62828;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">
+                        <i class="bi bi-x-circle-fill"></i> Rejected
+                    </span>
+                    {% if p.rejection_reason %}
+                    <div style="font-size:.74rem;color:#C62828;margin-top:.2rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ p.rejection_reason }}">{{ p.rejection_reason }}</div>
+                    {% endif %}
+                    {% elif p.verification_status == 'resubmit' %}
+                    <span style="display:inline-flex;align-items:center;gap:.3rem;background:#FFF3E0;color:#E65100;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">
+                        <i class="bi bi-arrow-repeat"></i> Resubmit
+                    </span>
+                    {% if p.rejection_reason %}
+                    <div style="font-size:.74rem;color:#E65100;margin-top:.2rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ p.rejection_reason }}">{{ p.rejection_reason }}</div>
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td style="padding:.6rem 1rem">
+                    <div style="display:flex;gap:.4rem;align-items:center">
+                        {% if p.photo %}
+                        <a href="{{ p.photo.url }}" target="_blank" style="color:#1565C0;font-size:.85rem" title="View photo"><i class="bi bi-image"></i></a>
+                        {% endif %}
+                        {% if p.id_document %}
+                        <a href="{{ p.id_document.url }}" target="_blank" style="color:#1565C0;font-size:.85rem" title="View ID"><i class="bi bi-card-heading"></i></a>
+                        {% endif %}
+                        {% if p.verification_status != 'verified' %}
+                        <form method="post" action="{% url 'subcounty_officer_delete_player' player_pk=p.pk %}" style="margin:0"
+                              onsubmit="return confirm('Remove {{ p.first_name }} {{ p.last_name }}?')">
+                            {% csrf_token %}
+                            <button type="submit" style="background:none;border:none;color:#C62828;cursor:pointer;font-size:.85rem;padding:0" title="Remove player">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="padding:3rem;text-align:center">
+    <i class="bi bi-person-x" style="font-size:2.5rem;display:block;margin-bottom:.5rem;color:#ccc"></i>
+    <h4 style="color:#666;margin-bottom:.25rem">No players in this category</h4>
+    <p style="font-size:.88rem;color:#888">{% if tab == 'pending' %}All players have been processed.{% elif tab == 'verified' %}No players verified yet.{% elif tab == 'rejected' %}No rejected players.{% elif tab == 'resubmit' %}No players require resubmission.{% else %}Click "Add Player" to get started.{% endif %}</p>
+</div>
+{% endif %}

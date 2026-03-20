@@ -40,11 +40,11 @@
     {% for d in disciplines %}
     <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=d.pk %}" class="action-card">
         <div class="action-icon">
-            {% if 'football' in d.sport_type %}<i class="bi bi-dribbble"></i>
-            {% elif 'basketball' in d.sport_type %}<i class="bi bi-circle"></i>
-            {% elif 'volleyball' in d.sport_type %}<i class="bi bi-globe"></i>
-            {% elif 'handball' in d.sport_type %}<i class="bi bi-hand-index"></i>
-            {% else %}<i class="bi bi-trophy"></i>{% endif %}
+            {% if 'football' in d.sport_type %}⚽
+            {% elif 'basketball' in d.sport_type %}🏀
+            {% elif 'volleyball' in d.sport_type %}🏐
+            {% elif 'handball' in d.sport_type %}🤾
+            {% else %}🏆{% endif %}
         </div>
         <h4>{{ d.get_sport_type_display }}</h4>
         <p>{{ d.player_count }} / {{ d.squad_limit }} players</p>

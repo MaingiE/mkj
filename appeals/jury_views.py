@@ -651,7 +651,7 @@ def jury_export_disciplinary_excel(request):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _pdf_base(title, subtitle, header_row, data_rows, col_widths, filename):
-    """Generic PDF builder following the existing MKJ SUPA CUP export style with 11th edition logo."""
+    """Generic PDF builder following the existing MKJ SUPA CUP export style with 4th edition logo."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -674,7 +674,7 @@ def _pdf_base(title, subtitle, header_row, data_rows, col_widths, filename):
     subtitle_style = ParagraphStyle("S", parent=styles["Normal"], fontSize=9, textColor=colors.gray, spaceAfter=12)
     cell_style = ParagraphStyle("C", parent=styles["Normal"], fontSize=7.5, leading=10)
 
-    # Add MKJ SUPA CUP 11th Edition logo at the top
+    # Add MKJ SUPA CUP 4th Edition logo at the top
     elements = []
     logo_path = os.path.join(settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.STATIC_ROOT, 'img', 'mkj_supacup_logo_official.jpg')
     if os.path.exists(logo_path):
@@ -686,9 +686,9 @@ def _pdf_base(title, subtitle, header_row, data_rows, col_widths, filename):
         except:
             pass  # Logo load failed, continue without it
     
-    # Add MKJ SUPA CUP 11th Edition header
+    # Add MKJ SUPA CUP 4th Edition header
     elements.extend([
-        Paragraph("⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION — 11TH EDITION", 
+        Paragraph("⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION — 4TH EDITION", 
                  ParagraphStyle("Edition", parent=styles["Heading2"], fontSize=10, textColor=colors.HexColor("#004D1A"), spaceAfter=2, alignment=1)),
         Paragraph(title, title_style),
         Paragraph(subtitle, ParagraphStyle("S2", parent=styles["Heading2"], fontSize=12, textColor=colors.HexColor("#333"), spaceAfter=4)),

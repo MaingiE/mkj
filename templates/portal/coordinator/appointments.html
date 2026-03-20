@@ -10,6 +10,9 @@
     .role-chip { font-size: .75rem; padding: .2rem .6rem; border-radius: 6px; background: #f5f5f5; }
     .role-chip.filled { background: #E8F5E9; color: #1565C0; }
     .role-chip.empty { background: #FFF3E0; color: #E65100; }
+    .role-chip.optional-empty { background: #f5f5f5; color: #999; }
+    .mandatory-tag { font-size: .6rem; font-weight: 700; color: #c62828; margin-left: .2rem; vertical-align: super; }
+    .optional-tag { font-size: .6rem; font-weight: 600; color: #999; margin-left: .2rem; vertical-align: super; }
     .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
     .filter-bar .btn { font-size: .8rem; padding: .35rem .6rem; border-radius: 8px; }
     .summary-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -46,13 +49,16 @@
     </div>
     <div class="appt-roles">
         {% for r in fd.roles %}
-        <span class="role-chip {% if r.appointment %}filled{% else %}empty{% endif %}">
+        <span class="role-chip {% if r.appointment %}filled{% elif r.is_mandatory %}empty{% else %}optional-empty{% endif %}">
             {{ r.role_label }}: {{ r.referee_name|default:"—" }}
+            {% if r.is_mandatory %}<span class="mandatory-tag">REQUIRED</span>{% else %}<span class="optional-tag">OPT</span>{% endif %}
         </span>
         {% endfor %}
     </div>
     {% if fd.needs_officials %}
     <a href="{% url 'referee_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-primary mt-2">Appoint Officials</a>
+    {% else %}
+    <a href="{% url 'referee_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-outline-secondary mt-2">Manage Officials</a>
     {% endif %}
 </div>
 {% empty %}

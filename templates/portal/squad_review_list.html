@@ -95,6 +95,12 @@
                         <td>
                             <a href="{% url 'squad_review' squad_pk=sq.pk %}"
                                style="color:#1565C0;text-decoration:underline;">View</a>
+                            {% if sq.status == 'approved' %}
+                            <a href="{% url 'match_squad_pdf' squad_pk=sq.pk %}"
+                               style="color:#1B5E20;text-decoration:none;margin-left:.6rem;font-size:.82rem;font-weight:600;">
+                                <i class="bi bi-download"></i> PDF
+                            </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -41,16 +41,14 @@
                 <div class="nav-dropdown-menu">
                     <a href="{% url 'teams_list' %}"><i class="bi bi-people"></i> All Teams</a>
                     {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'verification_officer' %}
-                    <a href="{% url 'pending_teams' %}"><i class="bi bi-clock"></i> County Registrations</a>
+
                     <a href="{% url 'county_player_verification_list' %}"><i class="bi bi-person-vcard"></i> Player Verification</a>
                     <a href="{% url 'player_clearance_dashboard' %}"><i class="bi bi-shield-check"></i> Player Clearance</a>
                     {% endif %}
                 </div>
             </li>
             {% endif %}
-            {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'secretary_general' or user.role == 'verification_officer' or user.role == 'cec_sports' %}
-            <li><a href="{% url 'cec_sports_portal' %}" class="{% if request.resolver_match.url_name == 'cec_sports_portal' %}active{% endif %}"><i class="bi bi-people-fill"></i> CEC Sports</a></li>
-            {% endif %}
+
             {% if user.role == 'treasurer' %}
             <li><a href="{% url 'treasurer_dashboard' %}" class="{% if 'treasurer' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Treasurer</a></li>
             {% endif %}
