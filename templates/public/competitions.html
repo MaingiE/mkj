@@ -192,8 +192,8 @@
         <!-- ── Empty state ── -->
         <div class="sport-empty-check" data-sport="{{ sport.key }}">
             <div class="comp-card comp-card--empty" style="text-align:center;justify-content:center;">
-                <div class="comp-card__inner" style="padding:2.5rem 1.5rem;text-align:center;">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(21,101,192,.18)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <div class="comp-card__inner" style="padding:1.5rem 1.15rem;text-align:center;">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(26,111,181,.18)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     {% if sport.exhibition %}
                     <h3 style="margin:.75rem 0 .25rem;font-size:1rem;color:#888;">Exhibition Matches Coming Soon</h3>
                     <p style="font-size:.85rem;color:#aaa;margin:0;">Stay tuned for upcoming exhibition events</p>
@@ -250,7 +250,7 @@
                 var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
                 if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
                 ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
-                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+                ctx.fillStyle='rgba(26,111,181,'+d.o+')'; ctx.fill();
             }
             requestAnimationFrame(draw);
         })();

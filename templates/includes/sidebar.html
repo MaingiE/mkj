@@ -358,19 +358,16 @@
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
             <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
             <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
-            <a href="{% url 'referees_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'referees_list' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
         </div>
     </div>
 
     {% elif user.role == 'chief_sports_officer' %}
-    <!-- CHIEF SPORTS OFFICER SIDEBAR (same as Organising Secretary) -->
+    <!-- CHIEF SPORTS OFFICER SIDEBAR -->
     <div class="sidebar-section">
         <div class="sidebar-section-toggle"><h4>Chief Sports Officer</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
-            <a href="{% url 'cm_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cm_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
-            <a href="{% url 'cm_create_competition' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cm_create_competition' %}active{% endif %}"><span class="icon"><i class="bi bi-plus-circle"></i></span> Create Competition</a>
+            <a href="{% url 'chief_officer_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chief_officer_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> All Competitions</a>
-            <a href="{% url 'cm_venues' %}" class="sidebar-link {% if request.resolver_match.url_name == 'cm_venues' %}active{% endif %}"><span class="icon"><i class="bi bi-geo-alt"></i></span> Venues</a>
             <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
             <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
             <a href="{% url 'pending_teams' %}" class="sidebar-link {% if request.resolver_match.url_name == 'pending_teams' %}active{% endif %}"><span class="icon"><i class="bi bi-pencil-square"></i></span> County Registrations</a>

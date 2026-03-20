@@ -39,7 +39,7 @@ from referees.models import (
     get_required_roles, get_head_official_role, HEAD_OFFICIAL_ROLES,
 )
 from referees.forms import RefereeRegistrationForm
-from matches.models import MatchReport, MatchEvent, MatchReportStatus, SquadSubmission, SquadPlayer, SquadStatus
+from matches.models import MatchReport, MatchEvent, MatchReportStatus, SquadSubmission, SquadPlayer, SquadStatus, get_sport_family
 from datetime import date, timedelta
 
 
@@ -79,6 +79,89 @@ def send_credentials_email(user, temporary_password, role_label):
         [user.email],
     )
     email.send(fail_silently=False)
+
+
+COORDINATOR_DISCIPLINE_CHOICES = [
+    ("football", "Football"),
+    ("volleyball", "Volleyball"),
+    ("basketball", "Basketball"),
+    ("handball", "Handball"),
+]
+
+COORDINATOR_DISCIPLINE_VARIANTS = {
+    "football": [SportType.FOOTBALL_MEN, SportType.FOOTBALL_WOMEN],
+    "volleyball": [SportType.VOLLEYBALL_MEN, SportType.VOLLEYBALL_WOMEN],
+    "basketball": [
+        SportType.BASKETBALL_MEN,
+        SportType.BASKETBALL_WOMEN,
+        SportType.BASKETBALL_3X3_MEN,
+        SportType.BASKETBALL_3X3_WOMEN,
+    ],
+    "handball": [SportType.HANDBALL_MEN, SportType.HANDBALL_WOMEN],
+}
+
+
+def _normalize_coordinator_discipline(value):
+    raw_value = (value or "").strip()
+    if not raw_value:
+        return None
+    if raw_value in COORDINATOR_DISCIPLINE_VARIANTS:
+        return raw_value
+    sport_family = get_sport_family(raw_value)
+    if sport_family in ("basketball_5x5", "basketball_3x3"):
+        return "basketball"
+    return sport_family if sport_family in COORDINATOR_DISCIPLINE_VARIANTS else raw_value
+
+
+def _coordinator_variants(discipline):
+    normalized = _normalize_coordinator_discipline(discipline)
+    if not normalized:
+        return []
+    return COORDINATOR_DISCIPLINE_VARIANTS.get(normalized, [normalized])
+
+
+def _coordinator_label(discipline):
+    normalized = _normalize_coordinator_discipline(discipline)
+    return dict(COORDINATOR_DISCIPLINE_CHOICES).get(normalized, normalized or "Not Assigned")
+
+
+def _get_primary_registration_for_user(user, auto_create=False):
+    if user.role == UserRole.COUNTY_SPORTS_DIRECTOR:
+        return get_object_or_404(CountyRegistration, user=user)
+
+    county = (getattr(user, "county", "") or "").strip()
+    if not county:
+        return None
+
+    registration = CountyRegistration.objects.filter(county__iexact=county).order_by("created_at").first()
+    if registration or not auto_create:
+        return registration
+
+    return CountyRegistration.objects.create(
+        user=user,
+        county=county,
+        director_name=user.get_full_name() or user.email,
+        director_phone=user.phone or "+254700000000",
+        status=CountyRegStatus.APPROVED,
+        approved_by=user if user.is_superuser else None,
+        approved_at=timezone.now(),
+    )
+
+
+def _discipline_queryset_for_user(user):
+    disciplines = CountyDiscipline.objects.select_related("registration", "linked_team")
+    if user.role == UserRole.COUNTY_SPORTS_DIRECTOR:
+        return disciplines.filter(registration__user=user)
+    if user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+        return disciplines.filter(
+            registration__county=user.county,
+            sub_county=user.sub_county,
+        )
+    return disciplines
+
+
+def _get_managed_discipline(user, discipline_pk):
+    return get_object_or_404(_discipline_queryset_for_user(user), pk=discipline_pk)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -560,7 +643,7 @@ def dashboard_view(request):
         return redirect('subcounty_officer_dashboard')
 
     if user.role == 'chief_sports_officer':
-        return redirect('cm_dashboard')  # Same portal as Organising Secretary
+        return redirect('chief_officer_sports_dashboard')
 
     if user.role == 'director_sports':
         return redirect('director_sports_dashboard')
@@ -814,8 +897,12 @@ def delete_player_view(request, player_pk):
 
 @login_required(login_url='web_login')
 def referees_list_view(request):
-    """List referees and appointments."""
+    """List referees and appointments — sub-county officers do not access referees."""
     user = request.user
+    # Sub-county sports officers should not manage or view referees
+    if user.role == 'subcounty_sports_officer':
+        messages.warning(request, "Referees are managed by Discipline Coordinators.")
+        return redirect('subcounty_officer_dashboard')
     if user.role == 'referee':
         try:
             referees = [user.referee_profile]
@@ -1900,7 +1987,7 @@ def referee_edit_profile_view(request):
 
 def _coordinator_discipline(user):
     """Return the coordinator's assigned discipline or None."""
-    return getattr(user, 'assigned_discipline', '') or None
+    return _normalize_coordinator_discipline(getattr(user, 'assigned_discipline', ''))
 
 
 @role_required('coordinator', 'admin')
@@ -1913,14 +2000,15 @@ def coordinator_dashboard_view(request):
     from matches.models import MatchReport
 
     discipline = _coordinator_discipline(request.user)
-    discipline_label = dict(SportType.choices).get(discipline, discipline or 'Not Assigned')
+    discipline_label = _coordinator_label(discipline)
     coordinator_name = request.user.get_full_name() or request.user.email
+    discipline_variants = _coordinator_variants(discipline)
 
     if not discipline:
         messages.warning(request, 'Your account has no discipline assigned. Contact an administrator.')
 
     # Competitions for this discipline
-    competitions = Competition.objects.filter(sport_type=discipline) if discipline else Competition.objects.none()
+    competitions = Competition.objects.filter(sport_type__in=discipline_variants) if discipline_variants else Competition.objects.none()
     active = competitions.filter(status__in=['active', 'group_stage', 'knockout'])
     registration = competitions.filter(status='registration')
 
@@ -1941,8 +2029,8 @@ def coordinator_dashboard_view(request):
         'pending_referees': RefereeProfile.objects.filter(is_approved=False).count(),
         'total_venues': Venue.objects.filter(is_active=True).count(),
         'total_teams': Team.objects.filter(
-            status='registered', sport_type=discipline
-        ).count() if discipline else 0,
+            status='registered', sport_type__in=discipline_variants
+        ).count() if discipline_variants else 0,
     }
 
     # Recent fixture results
@@ -1979,7 +2067,7 @@ def coordinator_competitions_view(request):
 
     discipline = _coordinator_discipline(request.user)
     competitions = Competition.objects.filter(
-        sport_type=discipline
+        sport_type__in=_coordinator_variants(discipline)
     ).order_by('-start_date') if discipline else Competition.objects.none()
 
     status_filter = request.GET.get('status', '')
@@ -1988,7 +2076,7 @@ def coordinator_competitions_view(request):
 
     return render(request, 'portal/coordinator/competitions.html', {
         'competitions': competitions,
-        'discipline_label': dict(SportType.choices).get(discipline, discipline or 'Not Assigned'),
+        'discipline_label': _coordinator_label(discipline),
         'status_choices': CompetitionStatus.choices,
         'current_status': status_filter,
     })
@@ -2006,7 +2094,7 @@ def coordinator_competition_manage_view(request, pk):
 
     # Verify discipline ownership
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2027,7 +2115,7 @@ def coordinator_competition_manage_view(request, pk):
 
     # Eligible teams
     eligible_teams = Team.objects.filter(
-        status='registered', payment_confirmed=True, sport_type=competition.sport_type,
+        status='registered', sport_type=competition.sport_type,
     ).exclude(
         pk__in=PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
     ).order_by('county', 'name')
@@ -2072,7 +2160,7 @@ def coordinator_manage_pools_view(request, pk):
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2105,9 +2193,7 @@ def coordinator_manage_pools_view(request, pk):
             try:
                 pool = Pool.objects.get(pk=pool_id, competition=competition)
                 team = Team.objects.get(pk=team_id)
-                if not team.payment_confirmed:
-                    messages.error(request, f'{team.name} — payment not confirmed.')
-                elif team.status != 'registered':
+                if team.status != 'registered':
                     messages.error(request, f'{team.name} is not approved.')
                 elif PoolTeam.objects.filter(pool__competition=competition, team=team).exists():
                     messages.error(request, f'{team.name} is already in a pool.')
@@ -2133,7 +2219,7 @@ def coordinator_manage_pools_view(request, pk):
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').order_by('name')
     assigned_ids = PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
     eligible_teams = Team.objects.filter(
-        status='registered', payment_confirmed=True, sport_type=competition.sport_type,
+        status='registered', sport_type=competition.sport_type,
     ).exclude(pk__in=assigned_ids).order_by('county', 'name')
 
     return render(request, 'portal/coordinator/manage_pools.html', {
@@ -2151,7 +2237,7 @@ def coordinator_generate_fixtures_view(request, pk):
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2305,7 +2391,7 @@ def coordinator_allocate_venue_view(request, pk):
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2349,7 +2435,7 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2449,7 +2535,7 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
         return redirect('coordinator_competition_manage', pk=pk)
 
     venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
-    teams = Team.objects.filter(status='registered', payment_confirmed=True).order_by('name')
+    teams = Team.objects.filter(status='registered').order_by('name')
 
     return render(request, 'portal/coordinator/edit_fixture.html', {
         'competition': competition,
@@ -2467,7 +2553,7 @@ def coordinator_edit_standings_view(request, pk):
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2579,7 +2665,7 @@ def coordinator_match_reports_view(request):
     discipline = _coordinator_discipline(request.user)
     if discipline:
         reports = MatchReport.objects.filter(
-            fixture__competition__sport_type=discipline
+            fixture__competition__sport_type__in=_coordinator_variants(discipline)
         )
     else:
         reports = MatchReport.objects.none()
@@ -2597,7 +2683,7 @@ def coordinator_match_reports_view(request):
         'reports': reports,
         'status_filter': status_filter,
         'status_choices': MatchReportStatus.choices,
-        'discipline_label': dict(SportType.choices).get(discipline, discipline or 'Not Assigned'),
+        'discipline_label': _coordinator_label(discipline),
     })
 
 
@@ -2607,7 +2693,7 @@ def coordinator_squads_view(request):
     discipline = _coordinator_discipline(request.user)
     if discipline:
         squads = SquadSubmission.objects.filter(
-            fixture__competition__sport_type=discipline
+            fixture__competition__sport_type__in=_coordinator_variants(discipline)
         )
     else:
         squads = SquadSubmission.objects.none()
@@ -2625,7 +2711,7 @@ def coordinator_squads_view(request):
         'squads': squads,
         'status_filter': status_filter,
         'status_choices': SquadStatus.choices,
-        'discipline_label': dict(SportType.choices).get(discipline, discipline or 'Not Assigned'),
+        'discipline_label': _coordinator_label(discipline),
     })
 
 
@@ -2637,7 +2723,7 @@ def coordinator_statistics_view(request, pk):
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -2726,7 +2812,7 @@ def coordinator_appointments_view(request):
 
     if discipline:
         fixtures_qs = Fixture.objects.filter(
-            competition__sport_type=discipline
+            competition__sport_type__in=_coordinator_variants(discipline)
         )
     else:
         fixtures_qs = Fixture.objects.none()
@@ -2785,7 +2871,7 @@ def coordinator_appointments_view(request):
         'total_needing': total_needing,
         'total_fully': total_fully,
         'approved_referees_count': RefereeProfile.objects.filter(is_approved=True).count(),
-        'discipline_label': dict(SportType.choices).get(discipline, discipline or 'Not Assigned'),
+        'discipline_label': _coordinator_label(discipline),
     })
 
 
@@ -2794,7 +2880,7 @@ def coordinator_competition_rules_view(request, pk):
     """Coordinator: Define competition criteria / rules for their discipline competition."""
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
-    if discipline and competition.sport_type != discipline and not request.user.is_superuser:
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
         messages.error(request, 'This competition is not in your discipline.')
         return redirect('coordinator_dashboard')
 
@@ -4418,6 +4504,8 @@ def verify_county_player_view(request, player_pk):
             player.verification_status = 'verified'
             player.rejection_reason = ''
             player.save(update_fields=['verification_status', 'rejection_reason'])
+            if hasattr(player.discipline, 'linked_team') and player.discipline.linked_team:
+                player.discipline.linked_team.sync_players_from_county_discipline()
             ActivityLog.objects.create(
                 action='PLAYER_UPDATE',
                 description=f'County player {player.first_name} {player.last_name} verified '
@@ -4499,7 +4587,7 @@ def mpesa_stk_push_view(request):
         from teams.mpesa_service import initiate_stk_push
         result = initiate_stk_push(
             phone_number=phone,
-            amount=int(COUNTY_REGISTRATION_FEE_CAP),
+            amount=max(1, int(COUNTY_REGISTRATION_FEE_CAP)),
             account_reference=django_settings.MPESA_ACCOUNT_REF,
             description='MKJ SUPA CUP County Registration Fee',
         )
@@ -4564,6 +4652,8 @@ def county_admin_register_view(request):
                 county=cd['county'],
                 director_name=cd['director_name'],
                 director_phone=cd['director_phone'],
+                status=CountyRegStatus.APPROVED,
+                approved_at=timezone.now(),
                 payment_method=payment_method,
                 mpesa_phone=mpesa_phone,
                 mpesa_reference=mpesa_reference,
@@ -4578,11 +4668,6 @@ def county_admin_register_view(request):
                 except (ValueError, TypeError):
                     pass
 
-            # Mark payment as submitted if any proof was provided
-            has_proof = mpesa_reference or bank_reference or bank_slip
-            if has_proof:
-                reg.payment_submitted_at = timezone.now()
-                reg.status = CountyRegStatus.PAYMENT_SUBMITTED
             reg.save()
 
             messages.success(request, mark_safe(
@@ -4593,12 +4678,8 @@ def county_admin_register_view(request):
                 f'Check your inbox and spam folder, then change the password on first login.<br><br>'
                 f'<strong>Next steps:</strong><br>'
                 f'1. Log in to the portal with your email and the temporary password from email<br>'
-                f'2. Change your password when prompted<br>'
-                + (f'3. Your payment proof has been submitted — the treasurer will review it shortly<br>'
-                   f'4. Once approved, add disciplines first, then add your county delegation players'
-                   if has_proof else
-                   f'3. Submit payment (M-Pesa or bank slip) from your portal dashboard<br>'
-                   f'4. Once the treasurer approves, add disciplines first, then add your county delegation players')
+                     f'2. Change your password when prompted<br>'
+                     f'3. Your registration is active immediately — add disciplines, players, and technical bench members'
             ))
             if not email_sent:
                 messages.warning(
@@ -4677,65 +4758,44 @@ def county_admin_dashboard_view(request):
 def county_admin_payment_view(request):
     """County admin submits payment proof (M-Pesa or bank slip)."""
     reg = get_object_or_404(CountyRegistration, user=request.user)
-
-    if reg.status not in (CountyRegStatus.PENDING_PAYMENT, CountyRegStatus.REJECTED):
-        messages.info(request, 'Payment has already been submitted.')
-        return redirect('county_admin_dashboard')
-
-    if request.method == 'POST':
-        form = CountyPaymentForm(request.POST, request.FILES)
-        if form.is_valid():
-            cd = form.cleaned_data
-            reg.payment_method = cd.get('payment_method', '')
-            reg.mpesa_reference = cd.get('mpesa_reference', '')
-            reg.bank_reference = cd.get('bank_reference', '')
-            if cd.get('bank_slip'):
-                reg.bank_slip = cd['bank_slip']
-            reg.payment_amount = cd['payment_amount']
-            reg.payment_submitted_at = timezone.now()
-            reg.status = CountyRegStatus.PAYMENT_SUBMITTED
-            reg.save()
-            messages.success(request, 'Payment proof submitted! The treasurer will review it shortly.')
-            return redirect('county_admin_dashboard')
-    else:
-        form = CountyPaymentForm()
-
-    return render(request, 'portal/county_admin/payment.html', {
-        'form': form,
-        'reg': reg,
-        'registration_fee': COUNTY_REGISTRATION_FEE_CAP,
-        'bank_name': django_settings.MKJ_BANK_NAME,
-        'bank_branch': django_settings.MKJ_BANK_BRANCH,
-        'bank_account_name': django_settings.MKJ_BANK_ACCOUNT_NAME,
-        'bank_account_no': django_settings.MKJ_BANK_ACCOUNT_NO,
-        'mpesa_paybill': django_settings.MKJ_MPESA_PAYBILL,
-        'mpesa_account_no': django_settings.MKJ_MPESA_ACCOUNT_NO,
-    })
+    reg.status = CountyRegStatus.APPROVED
+    if not reg.approved_at:
+        reg.approved_at = timezone.now()
+    reg.save(update_fields=['status', 'approved_at'])
+    messages.info(request, 'MKJ SUPA CUP does not charge a registration fee. Your registration remains active.')
+    return redirect('county_admin_dashboard')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 #   COUNTY SPORTS ADMIN — DISCIPLINE MANAGEMENT
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_add_discipline_view(request):
     """County admin chooses which disciplines to participate in."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER)
+    if not reg:
+        messages.error(request, 'Assign a county before adding disciplines.')
+        return redirect('dashboard')
+
+    sub_county = request.user.sub_county if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER else ''
 
     if not reg.is_approved:
         messages.warning(request, 'You must be approved before adding disciplines.')
         return redirect('county_admin_dashboard')
 
-    existing = set(reg.disciplines.values_list('sport_type', flat=True))
+    existing = set(reg.disciplines.filter(sub_county=sub_county).values_list('sport_type', flat=True))
     available = [(k, v) for k, v in SQUAD_LIMITS.items() if k not in existing]
 
     if request.method == 'POST':
         sport = request.POST.get('sport_type', '')
         if sport in dict(SQUAD_LIMITS) and sport not in existing:
-            CountyDiscipline.objects.create(registration=reg, sport_type=sport)
+            CountyDiscipline.objects.create(registration=reg, sport_type=sport, sub_county=sub_county)
             messages.success(request, f'{dict(SportType.choices).get(sport, sport)} added.')
         else:
             messages.error(request, 'Invalid discipline or already added.')
+        if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+            return redirect('subcounty_officer_disciplines')
         return redirect('county_admin_dashboard')
 
     return render(request, 'portal/county_admin/add_discipline.html', {
@@ -4880,11 +4940,14 @@ def treasurer_county_registrations_view(request):
 #   COUNTY SPORTS DIRECTOR — TECHNICAL BENCH MANAGEMENT
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_add_bench_member_view(request, discipline_pk):
     """County sports director adds a technical bench member to a discipline."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
-    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
+    reg = _get_primary_registration_for_user(request.user, auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER)
+    if not reg:
+        messages.error(request, 'Assign a county before managing technical bench members.')
+        return redirect('dashboard')
+    discipline = _get_managed_discipline(request.user, discipline_pk)
 
     if not reg.is_approved:
         messages.warning(request, 'Registration must be approved first.')
@@ -4918,10 +4981,14 @@ def county_admin_add_bench_member_view(request, discipline_pk):
                         tm_user.last_name = member.last_name
                         tm_user.phone = member.phone
                         tm_user.county = reg.county
+                        tm_user.sub_county = discipline.sub_county
                         tm_user.is_active = True
-                        tm_user.save(update_fields=['first_name', 'last_name', 'phone', 'county', 'is_active'])
+                        tm_user.save(update_fields=['first_name', 'last_name', 'phone', 'county', 'sub_county', 'is_active'])
                         member.user = tm_user
                         member.save(update_fields=['user'])
+                        if hasattr(discipline, 'linked_team'):
+                            discipline.linked_team.manager = tm_user
+                            discipline.linked_team.save(update_fields=['manager'])
                         messages.success(request, f'{member.get_full_name} added as {member.get_role_display()}. Existing Team Manager account linked.')
                     else:
                         try:
@@ -4933,11 +5000,15 @@ def county_admin_add_bench_member_view(request, discipline_pk):
                                 last_name=member.last_name,
                                 phone=member.phone,
                                 county=reg.county,
+                                sub_county=discipline.sub_county,
                                 role=UserRole.TEAM_MANAGER,
                                 must_change_password=True,
                             )
                             member.user = tm_user
                             member.save(update_fields=['user'])
+                            if hasattr(discipline, 'linked_team'):
+                                discipline.linked_team.manager = tm_user
+                                discipline.linked_team.save(update_fields=['manager'])
                             try:
                                 send_credentials_email(tm_user, temp_pw, 'Team Manager')
                                 messages.success(request, f'{member.get_full_name} added as {member.get_role_display()}. Login credentials sent to {member.email}.')
@@ -4950,6 +5021,8 @@ def county_admin_add_bench_member_view(request, discipline_pk):
                 else:
                     messages.success(request, f'{member.get_full_name} added as {member.get_role_display()}.')
 
+            if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+                return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
             return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
     else:
         form = TechnicalBenchForm()
@@ -4967,17 +5040,22 @@ def county_admin_add_bench_member_view(request, discipline_pk):
     })
 
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_delete_bench_member_view(request, member_pk):
     """Remove a technical bench member."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
-    member = get_object_or_404(TechnicalBenchMember, pk=member_pk, discipline__registration=reg)
+    reg = _get_primary_registration_for_user(request.user, auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER)
+    if not reg:
+        messages.error(request, 'Assign a county before managing technical bench members.')
+        return redirect('dashboard')
+    member = get_object_or_404(TechnicalBenchMember, pk=member_pk, discipline__in=_discipline_queryset_for_user(request.user))
     discipline_pk = member.discipline.pk
 
     if request.method == 'POST':
         name = member.get_full_name
         member.delete()
         messages.success(request, f'{name} removed from technical bench.')
+    if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
     return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
 
 
@@ -5201,6 +5279,8 @@ def team_manager_dashboard_view(request):
     if bench:
         discipline = bench.discipline
         county_reg = discipline.registration
+        if hasattr(discipline, 'linked_team') and discipline.linked_team:
+            discipline.linked_team.sync_players_from_county_discipline()
         verified_players = CountyPlayer.objects.filter(
             discipline=discipline,
             verification_status='verified',
@@ -5314,6 +5394,9 @@ def team_manager_match_squad_view(request, fixture_pk):
     if not team:
         messages.error(request, 'Your team is not involved in this fixture.')
         return redirect('team_manager_dashboard')
+
+    if team.source_discipline_id:
+        team.sync_players_from_county_discipline()
 
     # Lock once match has started/completed OR kickoff time has passed.
     kickoff_dt = fixture.kickoff_datetime
@@ -6385,22 +6468,22 @@ def scout_remove_from_shortlist_view(request, pk):
 
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_dashboard_view(request):
-    """Dashboard for Sub-County Sports Officers from Makueni County constituencies."""
+    """Dashboard for sub-county sports officers."""
     user = request.user
     sub_county = user.sub_county or 'Unassigned'
-
-    # Show teams from this officer's sub-county
-    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
-    disciplines = []
-    players_count = 0
-    if county_reg:
-        disciplines = CountyDiscipline.objects.filter(registration=county_reg)
-        players_count = CountyPlayer.objects.filter(discipline__in=disciplines).count()
+    county_reg = _get_primary_registration_for_user(user, auto_create=True)
+    disciplines = _discipline_queryset_for_user(user)
+    players_count = CountyPlayer.objects.filter(discipline__in=disciplines).count()
+    teams_count = Team.objects.filter(source_discipline__in=disciplines).count()
+    bench_count = TechnicalBenchMember.objects.filter(discipline__in=disciplines).count()
 
     stats = {
+        'county': user.county or 'Unassigned',
         'sub_county': sub_county,
         'disciplines': disciplines.count() if disciplines else 0,
         'players': players_count,
+        'teams': teams_count,
+        'bench_members': bench_count,
         'fixtures': Fixture.objects.count(),
         'competitions': Competition.objects.count(),
     }
@@ -6420,50 +6503,64 @@ def subcounty_officer_dashboard_view(request):
 
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_disciplines_view(request):
-    """List all disciplines for the Makueni county registration."""
-    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    """List and add disciplines for the officer's assigned sub-county."""
+    county_reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not county_reg:
-        messages.warning(request, 'No county registration found for Makueni.')
+        messages.warning(request, 'Assign a county before managing disciplines.')
         return redirect('subcounty_officer_dashboard')
 
-    disciplines = CountyDiscipline.objects.filter(registration=county_reg)
+    existing = set(_discipline_queryset_for_user(request.user).values_list('sport_type', flat=True))
+    if request.method == 'POST':
+        sport = request.POST.get('sport_type', '').strip()
+        if not request.user.sub_county:
+            messages.error(request, 'Assign a sub-county to this user before adding disciplines.')
+        elif sport in dict(SQUAD_LIMITS) and sport not in existing:
+            CountyDiscipline.objects.create(
+                registration=county_reg,
+                sport_type=sport,
+                sub_county=request.user.sub_county,
+            )
+            messages.success(request, f'{dict(SportType.choices).get(sport, sport)} added for {request.user.sub_county}.')
+        else:
+            messages.error(request, 'Invalid discipline or already added for this sub-county.')
+        return redirect('subcounty_officer_disciplines')
+
+    disciplines = _discipline_queryset_for_user(request.user)
     return render(request, 'portal/subcounty_officer/disciplines.html', {
         'disciplines': disciplines,
         'reg': county_reg,
+        'available': [(code, dict(SportType.choices).get(code, code), limit) for code, limit in SQUAD_LIMITS.items() if code not in existing],
     })
 
 
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_discipline_players_view(request, discipline_pk):
     """View players in a discipline."""
-    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    county_reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not county_reg:
-        messages.warning(request, 'No county registration found for Makueni.')
+        messages.warning(request, 'Assign a county before managing disciplines.')
         return redirect('subcounty_officer_dashboard')
 
-    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=county_reg)
+    discipline = _get_managed_discipline(request.user, discipline_pk)
     players = discipline.players.all()
 
     return render(request, 'portal/subcounty_officer/discipline_players.html', {
         'reg': county_reg,
         'discipline': discipline,
         'players': players,
+        'bench_members': discipline.technical_bench.all().order_by('role'),
     })
 
 
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_add_player_view(request, discipline_pk):
     """Sub-county sports officer adds a player to a discipline."""
-    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    county_reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not county_reg:
-        messages.warning(request, 'No county registration found for Makueni.')
+        messages.warning(request, 'Assign a county before managing disciplines.')
         return redirect('subcounty_officer_dashboard')
 
-    if not county_reg.is_approved:
-        messages.warning(request, 'County registration must be approved before adding players.')
-        return redirect('subcounty_officer_dashboard')
-
-    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=county_reg)
+    discipline = _get_managed_discipline(request.user, discipline_pk)
 
     if not discipline.can_add_player:
         messages.error(
@@ -6498,12 +6595,12 @@ def subcounty_officer_add_player_view(request, discipline_pk):
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_delete_player_view(request, player_pk):
     """Sub-county sports officer removes a player from a discipline."""
-    county_reg = CountyRegistration.objects.filter(county='Makueni').first()
+    county_reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not county_reg:
-        messages.warning(request, 'No county registration found for Makueni.')
+        messages.warning(request, 'Assign a county before managing disciplines.')
         return redirect('subcounty_officer_dashboard')
 
-    player = get_object_or_404(CountyPlayer, pk=player_pk, discipline__registration=county_reg)
+    player = get_object_or_404(CountyPlayer, pk=player_pk, discipline__in=_discipline_queryset_for_user(request.user))
     discipline_pk = player.discipline.pk
 
     if request.method == 'POST':
@@ -6548,16 +6645,19 @@ def director_sports_dashboard_view(request):
 #   CHIEF OFFICER SPORTS PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('chief_officer_sports', 'admin')
+@role_required('chief_officer_sports', 'chief_sports_officer', 'admin')
 def chief_officer_sports_dashboard_view(request):
     """Dashboard for Chief Officer - Sports — executive oversight."""
+    all_disciplines = CountyDiscipline.objects.select_related('registration').all()
     stats = {
         'competitions': Competition.objects.count(),
         'teams': Team.objects.count(),
-        'players': Player.objects.count(),
+        'players': CountyPlayer.objects.count(),
         'referees': RefereeProfile.objects.filter(is_approved=True).count(),
         'fixtures': Fixture.objects.count(),
         'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+        'subcounties_active': all_disciplines.exclude(sub_county='').values('sub_county').distinct().count(),
+        'disciplines': all_disciplines.count(),
     }
 
     active_comps = Competition.objects.filter(
@@ -6568,8 +6668,13 @@ def chief_officer_sports_dashboard_view(request):
         status='completed'
     ).select_related('competition', 'home_team', 'away_team').order_by('-match_date')[:8]
 
+    recent_teams = Team.objects.select_related('county').order_by('-registered_at')[:10]
+    recent_players = CountyPlayer.objects.select_related('discipline__registration').order_by('-registered_at')[:10]
+
     return render(request, 'portal/chief_officer_sports/dashboard.html', {
         'stats': stats,
         'active_competitions': active_comps,
         'recent_results': recent_results,
+        'recent_teams': recent_teams,
+        'recent_players': recent_players,
     })

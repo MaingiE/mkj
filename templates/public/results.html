@@ -16,7 +16,7 @@
     <div class="container page-hero__inner">
         <span class="page-hero__badge reveal">Live Scores</span>
         <h1 class="page-hero__title reveal">Results & <span class="text-gold">Statistics</span></h1>
-        <p class="page-hero__sub reveal">Live scores, standings, and player leaderboards from KYISA competitions</p>
+        <p class="page-hero__sub reveal">Live scores, standings, and player leaderboards from MKJ SUPA CUP competitions</p>
         <div class="page-hero__breadcrumb reveal">
             <a href="{% url 'home' %}">Home</a>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
@@ -144,7 +144,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(21,101,192,.2)" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(26,111,181,.2)" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
             <h3>No Results Available</h3>
             <p>Match results will appear here once competitions are underway.</p>
         </div>
@@ -278,7 +278,7 @@
                 var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
                 if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
                 ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
-                ctx.fillStyle='rgba(76,175,80,'+d.o+')'; ctx.fill();
+                ctx.fillStyle='rgba(26,111,181,'+d.o+')'; ctx.fill();
             }
             requestAnimationFrame(draw);
         })();

@@ -24,14 +24,14 @@
     .preloader{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s}
     .preloader--done{opacity:0;visibility:hidden;pointer-events:none}
     .preloader-inner{text-align:center}
-    .preloader-logo{width:90px;height:90px;border-radius:50%;background:#fff;border:3px solid rgba(21,101,192,.15);margin:0 auto 1.5rem;object-fit:cover;box-shadow:0 4px 20px rgba(21,101,192,.12)}
-    .preloader-name{display:block;font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:#1565C0;letter-spacing:5px}
-    .preloader-tagline{display:block;font-size:.75rem;color:#757575;letter-spacing:3px;text-transform:uppercase;margin-top:.25rem}
-    .preloader-bar{width:180px;height:2px;background:rgba(21,101,192,.1);border-radius:2px;margin:1.5rem auto 0;overflow:hidden}
-    .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#1565C0,#42A5F5);border-radius:2px;transition:width .12s}
+    .preloader-logo{width:70px;height:70px;border-radius:50%;background:#fff;border:3px solid rgba(26,111,181,.15);margin:0 auto 1rem;object-fit:cover;box-shadow:0 4px 20px rgba(26,111,181,.12)}
+    .preloader-name{display:block;font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;color:#1A6FB5;letter-spacing:4px}
+    .preloader-tagline{display:block;font-size:.7rem;color:#757575;letter-spacing:2px;text-transform:uppercase;margin-top:.25rem}
+    .preloader-bar{width:160px;height:2px;background:rgba(26,111,181,.1);border-radius:2px;margin:1.2rem auto 0;overflow:hidden}
+    .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#1A6FB5,#E8B91E);border-radius:2px;transition:width .12s}
     /* Navbar */
-    .fkf-nav{position:fixed;top:0;left:0;right:0;z-index:10000;padding:0 2rem;height:70px;display:flex;align-items:center;background:transparent;transition:all .35s}
-    .fkf-nav--solid{background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 12px rgba(0,0,0,.08)}
+    .fkf-nav{position:fixed;top:0;left:0;right:0;z-index:10000;padding:0 2rem;height:56px;display:flex;align-items:center;background:transparent;transition:all .3s}
+    .fkf-nav--solid{background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 8px rgba(0,0,0,.06)}
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -80,13 +80,6 @@
                 </ul>
             </li>
             <li><a href="{% url 'contact' %}" class="{% if active_page == 'contact' %}active{% endif %}">Contact</a></li>
-            <li class="nav-dropdown">
-                <a href="#" class="{% if active_page == 'register' %}active{% endif %}" onclick="this.parentElement.classList.toggle('open');return false;">Register ▾</a>
-                <ul class="dropdown-menu">
-                    <li><a href="{% url 'county_admin_register' %}">🏛️ County Registration</a></li>
-                    <li><a href="{% url 'referee_register' %}">🏁 Register as Referee</a></li>
-                </ul>
-            </li>
         </ul>
 
         <div class="fkf-nav-actions">
@@ -142,8 +135,6 @@
                 <div>
                     <h4>Resources</h4>
                     <ul>
-                            <li><a href="{% url 'county_admin_register' %}">County Registration</a></li>
-                        <li><a href="{% url 'referee_register' %}">Register Referee</a></li>
                         <li><a href="{% url 'web_login' %}">Staff Portal</a></li>
                         <li><a href="/api/docs/">API Docs</a></li>
                         <li><a href="/admin/">Admin Panel</a></li>

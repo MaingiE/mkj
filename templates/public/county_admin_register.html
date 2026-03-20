@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <style>
-    .cr-page { padding: 120px 0 60px; background: linear-gradient(160deg, #0d1b0e 0%, #1565C0 50%, #2E7D32 100%); min-height: 100vh; }
+    .cr-page { padding: 120px 0 60px; background: linear-gradient(160deg, #0d1b0e 0%, #1A6FB5 50%, #1A6FB5 100%); min-height: 100vh; }
     .cr-container { max-width: 720px; margin: 0 auto; padding: 0 1rem; }
 
     /* Header */
@@ -23,12 +23,12 @@
     .cr-fee__amount { font-size: 1.8rem; font-weight: 800; color: #fff; line-height: 1.1; }
     .cr-fee__note { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .2rem; }
     .cr-card { background: #fff; border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
-    .cr-card h3 { font-size: 1rem; font-weight: 700; color: #1565C0; margin: 0 0 1rem; padding-bottom: .6rem; border-bottom: 2px solid #e8f5e9; display: flex; align-items: center; gap: .5rem; }
+    .cr-card h3 { font-size: 1rem; font-weight: 700; color: #1A6FB5; margin: 0 0 1rem; padding-bottom: .6rem; border-bottom: 2px solid #e8f0f8; display: flex; align-items: center; gap: .5rem; }
     .cr-card h3 i { font-size: 1.1rem; }
 
     /* Alert */
     .cr-alert { margin-bottom: 1.5rem; padding: 1rem 1.2rem; border-radius: 10px; font-size: .9rem; line-height: 1.6; }
-    .cr-alert-success { background: #e8f5e9; border-left: 4px solid #1565C0; }
+    .cr-alert-success { background: #e8f0f8; border-left: 4px solid #1A6FB5; }
     .cr-alert-error { background: #fce4ec; border-left: 4px solid #C62828; }
     .cr-alert-warning { background: #fff3e0; border-left: 4px solid #f57c00; }
 
@@ -37,7 +37,7 @@
     .cr-field { margin-bottom: 1.1rem; }
     .cr-field label { display: block; font-weight: 600; color: #333; margin-bottom: .4rem; font-size: .88rem; }
     .cr-field input, .cr-field select { width: 100%; padding: .7rem .9rem; border: 1.5px solid #d0d0d0; border-radius: 10px; font-size: .92rem; transition: border-color .2s, box-shadow .2s; background: #fafafa; }
-    .cr-field input:focus, .cr-field select:focus { outline: none; border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.1); background: #fff; }
+    .cr-field input:focus, .cr-field select:focus { outline: none; border-color: #1A6FB5; box-shadow: 0 0 0 3px rgba(26,111,181,.1); background: #fff; }
     .cr-field .err { color: #C62828; font-size: .8rem; margin-top: .3rem; }
     .cr-field small { color: #999; font-size: .78rem; }
 
@@ -49,8 +49,8 @@
     .cr-info i { margin-top: 2px; flex-shrink: 0; }
 
     /* Submit */
-    .cr-submit { width: 100%; padding: .95rem; background: linear-gradient(135deg, #1565C0, #2E7D32); color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .2s; display: flex; align-items: center; justify-content: center; gap: .5rem; }
-    .cr-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(21,101,192,.35); }
+    .cr-submit { width: 100%; padding: .95rem; background: linear-gradient(135deg, #1A6FB5, #1A6FB5); color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .2s; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+    .cr-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,111,181,.35); }
     .cr-submit:active { transform: translateY(0); }
 
     /* Non-field errors */
@@ -87,23 +87,23 @@
     .cr-pay-tabs { display: flex; gap: .5rem; margin-bottom: 1.2rem; }
     .cr-pay-tab { flex: 1; text-align: center; padding: .8rem .5rem; background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all .2s; font-size: .85rem; font-weight: 600; color: #666; }
     .cr-pay-tab:hover { border-color: #aaa; }
-    .cr-pay-tab.active { background: #e8f5e9; border-color: #1565C0; color: #1565C0; }
+    .cr-pay-tab.active { background: #e8f0f8; border-color: #1A6FB5; color: #1A6FB5; }
     .cr-pay-tab i { display: block; font-size: 1.5rem; margin-bottom: .3rem; }
 
     .cr-pay-panel { display: none; }
     .cr-pay-panel.active { display: block; }
 
     .cr-mpesa-prompt { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 12px; padding: 1.2rem; margin-bottom: 1.2rem; }
-    .cr-mpesa-prompt h4 { font-size: .92rem; font-weight: 700; color: #1565C0; margin: 0 0 .5rem; }
+    .cr-mpesa-prompt h4 { font-size: .92rem; font-weight: 700; color: #1A6FB5; margin: 0 0 .5rem; }
     .cr-mpesa-prompt p { font-size: .85rem; color: #555; margin: 0; }
 
-    .cr-stk-btn { width: 100%; padding: .85rem; background: linear-gradient(135deg, #42A5F5, #2E7D32); color: #fff; border: none; border-radius: 10px; font-size: .95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: transform .15s, box-shadow .2s; margin-bottom: 1rem; }
-    .cr-stk-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(76,175,80,.35); }
+    .cr-stk-btn { width: 100%; padding: .85rem; background: linear-gradient(135deg, #42A5F5, #1A6FB5); color: #fff; border: none; border-radius: 10px; font-size: .95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: transform .15s, box-shadow .2s; margin-bottom: 1rem; }
+    .cr-stk-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,111,181,.35); }
     .cr-stk-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
     .cr-stk-status { padding: .8rem 1rem; border-radius: 10px; font-size: .88rem; margin-bottom: 1rem; display: none; }
     .cr-stk-status.info { background: #e3f2fd; border-left: 4px solid #1976D2; display: block; }
-    .cr-stk-status.success { background: #e8f5e9; border-left: 4px solid #2E7D32; display: block; }
+    .cr-stk-status.success { background: #e8f0f8; border-left: 4px solid #1A6FB5; display: block; }
     .cr-stk-status.error { background: #fce4ec; border-left: 4px solid #C62828; display: block; }
 
     .cr-divider { text-align: center; color: #999; font-size: .82rem; font-weight: 600; margin: 1.2rem 0; position: relative; }
@@ -122,7 +122,7 @@
         <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo" class="cr-header__logo">
         <h1>MKJ SUPA CUP <span>1st Edition</span></h1>
         <p class="cr-header__sub">County Registration Portal</p>
-        <div class="cr-header__date"><i class="bi bi-calendar-event"></i> 11 Apr — 17 Apr 2026</div>
+        <div class="cr-header__date"><i class="bi bi-calendar-event"></i> 31 Mar — 2 Apr 2026</div>
     </div>
 
     <!-- Steps -->
@@ -295,7 +295,7 @@
                 <!-- ── Bank Transfer Panel ── -->
                 <div class="cr-pay-panel" id="bank-panel">
                     <div class="cr-mpesa-prompt" style="background:#e3f2fd;border-color:#90caf9">
-                        <h4 style="color:#1565C0"><i class="bi bi-bank"></i> Bank Transfer Details</h4>
+                        <h4 style="color:#1A6FB5"><i class="bi bi-bank"></i> Bank Transfer Details</h4>
                         <p>Transfer <strong>KSh {{ registration_fee|floatformat:0 }}</strong> to the MKJ SUPA CUP bank account shown above, then provide proof of payment below.</p>
                     </div>
 
@@ -350,7 +350,7 @@
         </form>
 
         <div class="cr-footer" style="color:#888;margin-top:1.5rem">
-            Already registered? <a href="{% url 'web_login' %}" style="color:#1565C0">Log in to the portal</a>
+            Already registered? <a href="{% url 'web_login' %}" style="color:#1A6FB5">Log in to the portal</a>
         </div>
     </div>
 
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(function(data) {
                 if (data.success) {
                     statusEl.textContent = '✓ Payment prompt sent! Check your phone and enter the M-Pesa code below once payment completes.';
-                    statusEl.style.color = '#1565C0';
+                    statusEl.style.color = '#1A6FB5';
                     if (data.checkout_id) {
                         let hidden = document.getElementById('id_mpesa_checkout_id');
                         if (!hidden) {

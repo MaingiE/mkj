@@ -4,20 +4,20 @@
 {% block title %}Register Team{% endblock %}
 
 {% block content %}
-<section style="padding:120px 0 60px;background:linear-gradient(135deg,#f5f7f5 0%,#e8f5e9 100%);min-height:100vh">
+<section style="padding:120px 0 60px;background:linear-gradient(135deg,#f5f7f5 0%,#e8f0f8 100%);min-height:100vh">
 <div class="container" style="max-width:700px">
 
     <div style="text-align:center;margin-bottom:2rem">
-        <h1 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:800;color:#1565C0"><i class="bi bi-people"></i> Register Your Team</h1>
+        <h1 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:800;color:#1A6FB5"><i class="bi bi-people"></i> Register Your Team</h1>
         <p style="color:#555;margin-top:.5rem">Register for MKJ SUPA CUP competitions. Fill in the details below and await admin approval.</p>
     </div>
 
     <!-- Fee notice -->
-    <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:12px;padding:1rem 1.4rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
+    <div style="background:#e8f0f8;border:1px solid #90c5e8;border-radius:12px;padding:1rem 1.4rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
         <span style="font-size:2rem"><i class="bi bi-credit-card"></i></span>
         <div>
-            <strong style="color:#1565C0;font-size:1rem">One-Time County Registration Fee</strong>
-            <div style="font-size:1.6rem;font-weight:800;color:#1565C0;line-height:1.2">KSh 250,000</div>
+            <strong style="color:#1A6FB5;font-size:1rem">One-Time County Registration Fee</strong>
+            <div style="font-size:1.6rem;font-weight:800;color:#1A6FB5;line-height:1.2">KSh 250,000</div>
             <div style="font-size:.82rem;color:#555;margin-top:.2rem">Paid once per county per season &#8212; covers ALL sports. Payment is confirmed by the MKJ SUPA CUP Treasurer before your team is approved.</div>
         </div>
     </div>
@@ -26,7 +26,7 @@
 
         {% if messages %}
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" style="margin-bottom:1.5rem;padding:1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% else %}#fff3e0{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1565C0{% elif message.tags == 'error' %}#C62828{% else %}#f57c00{% endif %}">
+        <div class="alert alert-{{ message.tags }}" style="margin-bottom:1.5rem;padding:1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% else %}#fff3e0{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1A6FB5{% elif message.tags == 'error' %}#C62828{% else %}#f57c00{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
@@ -36,7 +36,7 @@
             {% csrf_token %}
 
             <!-- Team Info -->
-            <h3 style="font-size:1.1rem;font-weight:700;color:#1565C0;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid #e8f5e9">
+            <h3 style="font-size:1.1rem;font-weight:700;color:#1A6FB5;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid #e8f0f8">
                 <i class="bi bi-building"></i> Team Information
             </h3>
             {% for field in form %}
@@ -57,7 +57,7 @@
             {% endfor %}
 
             <!-- Home Kit -->
-            <h3 style="font-size:1.1rem;font-weight:700;color:#1565C0;margin:2rem 0 1rem;padding-bottom:.5rem;border-bottom:2px solid #e8f5e9">
+            <h3 style="font-size:1.1rem;font-weight:700;color:#1A6FB5;margin:2rem 0 1rem;padding-bottom:.5rem;border-bottom:2px solid #e8f0f8">
                 <i class="bi bi-palette"></i> Home Kit <span style="font-size:.8rem;color:#888;font-weight:400">(required)</span>
             </h3>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem 1rem">
@@ -163,10 +163,10 @@
 
         <div style="text-align:center;margin-top:1.5rem">
             <p style="color:#888;font-size:.85rem">
-                Already registered? <a href="{% url 'web_login' %}" style="color:#1565C0;font-weight:600">Staff Login</a>
+                Already registered? <a href="{% url 'web_login' %}" style="color:#1A6FB5;font-weight:600">Staff Login</a>
             </p>
             <p style="color:#888;font-size:.85rem;margin-top:.5rem">
-                Want to register as referee? <a href="{% url 'referee_register' %}" style="color:#1565C0;font-weight:600">Referee Registration</a>
+                Want to register as referee? <a href="{% url 'referee_register' %}" style="color:#1A6FB5;font-weight:600">Referee Registration</a>
             </p>
         </div>
     </div>

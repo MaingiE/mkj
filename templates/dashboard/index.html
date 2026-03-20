@@ -28,8 +28,8 @@
     </div>
 
     {% if user.role == 'admin' or user.role == 'coordinator' or user.role == 'referee' %}
-    <div class="stat-card yellow">
-        <div class="stat-icon yellow"><i class="bi bi-flag"></i></div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-flag"></i></div>
         <div class="stat-info">
             <h3>{{ stats.referees }}</h3>
             <p>Referees</p>
@@ -140,10 +140,10 @@
             {% endif %}
 
             {% if user.role == 'chief_sports_officer' %}
-            <a href="{% url 'cm_dashboard' %}" class="action-card">
+            <a href="{% url 'chief_officer_sports_dashboard' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-star"></i></div>
                 <h4>Chief Sports Officer</h4>
-                <p>Full competition management</p>
+                <p>Cross-subcounty oversight and verification</p>
             </a>
             {% endif %}
 

@@ -106,7 +106,7 @@
 
     .create-form-grid {
         display: grid;
-        grid-template-columns: 2fr 1.5fr 1.5fr 1.2fr 1.5fr auto;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: .75rem;
         align-items: end;
     }
@@ -558,9 +558,31 @@
                 </div>
                 <div>
                     <label>Role <span class="req">*</span></label>
-                    <select name="role" class="form-control" required>
+                    <select name="role" id="create-role" class="form-control" required>
                         <option value="">Select Role...</option>
                         {% for value, label in role_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="create-county-wrap" style="display:none;">
+                    <label>County <span class="req">*</span></label>
+                    <select name="county" class="form-control">
+                        <option value="">Select County...</option>
+                        {% for value, label in county_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="create-subcounty-wrap" style="display:none;">
+                    <label>Sub-County <span class="req">*</span></label>
+                    <input type="text" name="sub_county" class="form-control" placeholder="e.g. Kaiti">
+                </div>
+                <div id="create-discipline-wrap" style="display:none;">
+                    <label>Coordinator Sport <span class="req">*</span></label>
+                    <select name="assigned_discipline" class="form-control">
+                        <option value="">Select Sport...</option>
+                        {% for value, label in coordinator_discipline_choices %}
                         <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
@@ -855,5 +877,23 @@
             closeAllDropdowns();
         }
     });
+
+    function toggleCreateRoleFields() {
+        const role = document.getElementById('create-role');
+        const countyWrap = document.getElementById('create-county-wrap');
+        const subcountyWrap = document.getElementById('create-subcounty-wrap');
+        const disciplineWrap = document.getElementById('create-discipline-wrap');
+        const value = role ? role.value : '';
+
+        const isSubcounty = value === 'subcounty_sports_officer';
+        const isDisciplineRole = value === 'coordinator' || value === 'scout';
+
+        countyWrap.style.display = isSubcounty ? 'block' : 'none';
+        subcountyWrap.style.display = isSubcounty ? 'block' : 'none';
+        disciplineWrap.style.display = isDisciplineRole ? 'block' : 'none';
+    }
+
+    document.getElementById('create-role').addEventListener('change', toggleCreateRoleFields);
+    toggleCreateRoleFields();
 </script>
 {% endblock %}

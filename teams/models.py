@@ -1,8 +1,13 @@
 """
 MKJ SUPA CUP Teams — Models
 """
+import re
+
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from django.utils.text import slugify
+
 from competitions.models import SportType
 from accounts.models import KenyaCounty, kenya_phone_validator
 
@@ -118,13 +123,20 @@ class CountyDiscipline(models.Model):
         related_name="disciplines",
     )
     sport_type = models.CharField(max_length=30, choices=SportType.choices)
+    sub_county = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="Sub-county or constituency that owns this discipline entry",
+    )
 
     class Meta:
-        unique_together = ["registration", "sport_type"]
-        ordering = ["sport_type"]
+        unique_together = ["registration", "sport_type", "sub_county"]
+        ordering = ["sub_county", "sport_type"]
 
     def __str__(self):
-        return f"{self.registration.county} — {self.get_sport_type_display()}"
+        owner = self.sub_county or self.registration.county
+        return f"{owner} — {self.get_sport_type_display()}"
 
     @property
     def squad_limit(self):
@@ -137,6 +149,60 @@ class CountyDiscipline(models.Model):
     @property
     def can_add_player(self):
         return self.player_count < self.squad_limit
+
+    def generated_team_name(self):
+        base_name = f"{self.sub_county or self.registration.county} {self.get_sport_type_display()}"
+        base_name = re.sub(r"\s+", " ", base_name).strip()
+        candidate = base_name[:200]
+        suffix = 1
+        while Team.objects.filter(name=candidate).exclude(source_discipline=self).exists():
+            token = f" #{suffix}"
+            candidate = f"{base_name[:200 - len(token)]}{token}"
+            suffix += 1
+        return candidate
+
+    def ensure_linked_team(self):
+        county_obj = get_or_create_county_record(
+            self.registration.county,
+            sports_officer_name=self.registration.director_name,
+            sports_officer_email=getattr(self.registration.user, "email", ""),
+            sports_officer_phone=self.registration.director_phone,
+        )
+        defaults = {
+            "name": self.generated_team_name(),
+            "county": county_obj,
+            "sub_county": self.sub_county,
+            "sport_type": self.sport_type,
+            "status": TeamStatus.REGISTERED,
+            "payment_confirmed": True,
+            "payment_amount": 0,
+            "payment_confirmed_at": timezone.now(),
+            "contact_phone": self.registration.director_phone or getattr(self.registration.user, "phone", "+254700000000"),
+            "contact_email": getattr(self.registration.user, "email", ""),
+        }
+        team, created = Team.objects.get_or_create(source_discipline=self, defaults=defaults)
+        if not created:
+            team.name = self.generated_team_name()
+            team.county = county_obj
+            team.sub_county = self.sub_county
+            team.sport_type = self.sport_type
+            team.status = TeamStatus.REGISTERED
+            team.payment_confirmed = True
+            if not team.payment_confirmed_at:
+                team.payment_confirmed_at = timezone.now()
+            if not team.contact_phone:
+                team.contact_phone = defaults["contact_phone"]
+            if not team.contact_email:
+                team.contact_email = defaults["contact_email"]
+            team.save(update_fields=[
+                "name", "county", "sub_county", "sport_type", "status",
+                "payment_confirmed", "payment_confirmed_at", "contact_phone", "contact_email",
+            ])
+        return team
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.ensure_linked_team()
 
 
 class CountyPlayer(models.Model):
@@ -393,6 +459,45 @@ class County(models.Model):
         return self.sports_officer_name or self.alt_contact_name
 
 
+def _county_code_base(county_name):
+    base = slugify(county_name or "county").replace("-", "").upper()
+    return (base or "COUNTY")[:10]
+
+
+def get_or_create_county_record(county_name, sports_officer_name="", sports_officer_email="", sports_officer_phone=""):
+    county = County.objects.filter(name__iexact=county_name).first()
+    if county:
+        updated = False
+        if sports_officer_name and not county.sports_officer_name:
+            county.sports_officer_name = sports_officer_name
+            updated = True
+        if sports_officer_email and not county.sports_officer_email:
+            county.sports_officer_email = sports_officer_email
+            updated = True
+        if sports_officer_phone and not county.sports_officer_phone:
+            county.sports_officer_phone = sports_officer_phone
+            updated = True
+        if updated:
+            county.save(update_fields=["sports_officer_name", "sports_officer_email", "sports_officer_phone", "updated_at"])
+        return county
+
+    code_base = _county_code_base(county_name)
+    code = code_base
+    suffix = 1
+    while County.objects.filter(code=code).exists():
+        token = str(suffix)
+        code = f"{code_base[:10 - len(token)]}{token}"
+        suffix += 1
+
+    return County.objects.create(
+        name=county_name,
+        code=code,
+        sports_officer_name=sports_officer_name,
+        sports_officer_email=sports_officer_email,
+        sports_officer_phone=sports_officer_phone,
+    )
+
+
 class TeamStatus(models.TextChoices):
     PENDING    = "pending",    "Pending Approval"
     REGISTERED = "registered", "Registered"
@@ -402,9 +507,17 @@ class TeamStatus(models.TextChoices):
 class Team(models.Model):
     name        = models.CharField(max_length=200, unique=True)
     county      = models.ForeignKey(County, on_delete=models.CASCADE, related_name="teams", help_text="County this team represents")
+    sub_county  = models.CharField(max_length=100, blank=True, default="", help_text="Sub-county or constituency this team represents")
     sport_type  = models.CharField(
         max_length=30, choices=SportType.choices, default=SportType.FOOTBALL_MEN,
         help_text="Sport this team competes in"
+    )
+    source_discipline = models.OneToOneField(
+        "CountyDiscipline",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="linked_team",
     )
     competition = models.ForeignKey(
         "competitions.Competition", on_delete=models.SET_NULL, null=True, blank=True,
@@ -448,7 +561,7 @@ class Team(models.Model):
     contact_email = models.EmailField(blank=True)
 
     # ── Payment tracking ───────────────────────────────────────────────────────
-    payment_confirmed    = models.BooleanField(default=False, help_text="Payment verified by treasurer")
+    payment_confirmed    = models.BooleanField(default=True, help_text="Registration cleared for competition participation")
     payment_reference    = models.CharField(max_length=100, blank=True, help_text="M-Pesa or receipt reference")
     payment_amount       = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Amount paid (KSh)")
     payment_confirmed_by = models.ForeignKey(
@@ -482,6 +595,68 @@ class Team(models.Model):
     def kits_complete(self):
         """True if both home and away kit details are filled (required for approval)."""
         return self.home_kit_complete and self.away_kit_complete
+
+    def sync_players_from_county_discipline(self):
+        if not self.source_discipline_id:
+            return 0
+
+        synced_count = 0
+        used_numbers = set(self.players.values_list("shirt_number", flat=True))
+        next_number = 1
+
+        def allocate_shirt(preferred):
+            nonlocal next_number
+            if preferred and preferred not in used_numbers:
+                used_numbers.add(preferred)
+                return preferred
+            while next_number in used_numbers:
+                next_number += 1
+            used_numbers.add(next_number)
+            return next_number
+
+        for county_player in self.source_discipline.players.all():
+            team_player = self.players.filter(national_id_number=county_player.national_id_number).first()
+            is_verified = county_player.verification_status == "verified"
+            defaults = {
+                "team": self,
+                "first_name": county_player.first_name,
+                "last_name": county_player.last_name,
+                "date_of_birth": county_player.date_of_birth,
+                "position": county_player.position if county_player.position in dict(Position.choices) else Position.CM,
+                "shirt_number": allocate_shirt(county_player.jersey_number),
+                "birth_cert_number": county_player.huduma_number,
+                "photo": county_player.photo,
+                "id_document": county_player.id_document,
+                "birth_certificate": county_player.birth_certificate,
+                "verification_status": VerificationStatus.VERIFIED if is_verified else VerificationStatus.PENDING,
+                "verified_at": timezone.now() if is_verified else None,
+                "huduma_status": HudumaVerificationStatus.VERIFIED if is_verified and county_player.huduma_status != "failed" else HudumaVerificationStatus.NOT_CHECKED,
+                "huduma_verified_at": county_player.huduma_verified_at,
+                "fifa_connect_status": FIFAConnectStatus.CLEAR if is_verified and county_player.higher_league_status != "flagged" else FIFAConnectStatus.NOT_CHECKED,
+                "fifa_connect_notes": county_player.higher_league_details,
+                "status": PlayerStatus.ELIGIBLE if is_verified else PlayerStatus.INELIGIBLE,
+            }
+
+            if team_player is None:
+                Player.objects.create(
+                    national_id_number=county_player.national_id_number,
+                    **defaults,
+                )
+                synced_count += 1
+                continue
+
+            updated_fields = []
+            for field_name, value in defaults.items():
+                if field_name == "team":
+                    continue
+                if getattr(team_player, field_name) != value:
+                    setattr(team_player, field_name, value)
+                    updated_fields.append(field_name)
+            if updated_fields:
+                team_player.save(update_fields=updated_fields)
+                synced_count += 1
+
+        return synced_count
 
 
 class Position(models.TextChoices):

@@ -23,7 +23,7 @@
                 </p>
             </div>
             <div style="margin-left: auto;">
-                <span style="background: rgba(251,192,45,.2); color: #FDD835; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(251,192,45,.3);">
+                <span style="background: rgba(255,255,255,.16); color: #fff; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.3);">
                     <i class="bi bi-star-fill"></i> CHIEF OFFICER
                 </span>
             </div>
@@ -47,8 +47,8 @@
             <p>Teams</p>
         </div>
     </div>
-    <div class="stat-card yellow">
-        <div class="stat-icon yellow"><i class="bi bi-person-vcard"></i></div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-person-vcard"></i></div>
         <div class="stat-info">
             <h3>{{ stats.players }}</h3>
             <p>Players</p>
@@ -72,7 +72,14 @@
         <div class="stat-icon green"><i class="bi bi-building"></i></div>
         <div class="stat-info">
             <h3>{{ stats.counties_registered }}</h3>
-            <p>Sub-Counties Registered</p>
+            <p>Counties Registered</p>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-diagram-3"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.subcounties_active }}</h3>
+            <p>Active Sub-Counties</p>
         </div>
     </div>
 </div>
@@ -102,19 +109,79 @@
                 <h4>Referees</h4>
                 <p>Match officials roster</p>
             </a>
-            <a href="{% url 'cec_sports_portal' %}" class="action-card">
-                <div class="action-icon"><i class="bi bi-people-fill"></i></div>
-                <h4>CEC Sports View</h4>
-                <p>County executive overview</p>
+            <a href="{% url 'county_player_verification_list' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-check2-square"></i></div>
+                <h4>Player Verification</h4>
+                <p>Review all discipline registrations and verification</p>
             </a>
-            <a href="{% url 'appeals_list' %}" class="action-card">
-                <div class="action-icon"><i class="bi bi-briefcase"></i></div>
-                <h4>Appeals</h4>
-                <p>View filed appeals</p>
+            <a href="{% url 'pending_teams' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-diagram-3"></i></div>
+                <h4>Sub-County Registrations</h4>
+                <p>View all county and sub-county operational entries</p>
             </a>
         </div>
     </div>
 </div>
+
+{% if recent_teams %}
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-people"></i> Recent Teams</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>County</th>
+                        <th>Sub-County</th>
+                        <th>Sport</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in recent_teams %}
+                    <tr>
+                        <td><strong>{{ team.name }}</strong></td>
+                        <td>{{ team.county.name }}</td>
+                        <td>{{ team.sub_county|default:'-' }}</td>
+                        <td>{{ team.get_sport_type_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if recent_players %}
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-person-vcard"></i> Recent County Players</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>County</th>
+                        <th>Sub-County</th>
+                        <th>Discipline</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in recent_players %}
+                    <tr>
+                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                        <td>{{ player.discipline.registration.county }}</td>
+                        <td>{{ player.discipline.sub_county|default:'-' }}</td>
+                        <td>{{ player.discipline.get_sport_type_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Active Competitions -->
 {% if active_competitions %}

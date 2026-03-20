@@ -9,8 +9,8 @@
    NEWS DETAIL PAGE
 ═══════════════════════════════════════ */
 .nd-hero {
-    padding: 10rem 0 3rem;
-    background: linear-gradient(135deg, #0a1a0d 0%, #1565C0 50%, #0d2810 100%);
+    padding: 6rem 0 2rem;
+    background: linear-gradient(135deg, #0C1B3A 0%, #1A6FB5 50%, #0C1B3A 100%);
     position: relative; overflow: hidden;
     text-align: center; color: #fff;
 }
@@ -29,7 +29,7 @@
 .nd-breadcrumb a:hover { color: #fff; }
 .nd-hero h1 {
     font-family: 'Outfit', sans-serif;
-    font-size: 2.4rem; font-weight: 800; margin-bottom: 1rem;
+    font-size: 2rem; font-weight: 800; margin-bottom: .75rem;
     max-width: 800px; margin-left: auto; margin-right: auto;
     line-height: 1.25; letter-spacing: -1px;
 }
@@ -41,11 +41,11 @@
 
 /* ── Article Body ── */
 .nd-body {
-    max-width: 780px; margin: -2rem auto 3rem; padding: 0 1.5rem;
+    max-width: 780px; margin: -1.5rem auto 2rem; padding: 0 1.5rem;
     position: relative; z-index: 5;
 }
 .nd-featured-img {
-    border-radius: 16px; overflow: hidden; margin-bottom: 2.5rem;
+    border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem;
     box-shadow: 0 8px 40px rgba(0,0,0,.1);
 }
 .nd-featured-img img { width: 100%; display: block; }
@@ -71,8 +71,8 @@
 }
 .nd-author-avatar {
     width: 44px; height: 44px; border-radius: 50%;
-    background: #e8f5e9; display: flex; align-items: center; justify-content: center;
-    color: #1565C0; font-weight: 700; font-size: 1rem;
+    background: #e8f0f8; display: flex; align-items: center; justify-content: center;
+    color: #1A6FB5; font-weight: 700; font-size: 1rem;
 }
 .nd-author-info { line-height: 1.3; }
 .nd-author-info strong { font-size: .9rem; color: #1a1a1a; }
@@ -95,7 +95,7 @@
     text-decoration: none; transition: transform .25s, box-shadow .25s;
 }
 .nd-rel-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
-.nd-rel-img { height: 140px; overflow: hidden; background: #e8f5e9; }
+.nd-rel-img { height: 140px; overflow: hidden; background: #e8f0f8; }
 .nd-rel-img img { width: 100%; height: 100%; object-fit: cover; }
 .nd-rel-body { padding: 1rem; }
 .nd-rel-body h4 {
@@ -161,7 +161,7 @@
                 {% if r.featured_image %}
                     <img src="{{ r.featured_image.url }}" alt="{{ r.title }}">
                 {% else %}
-                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1565C0;">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1A6FB5;">
                         <i class="bi bi-file-text" style="font-size:2rem;opacity:.3;"></i>
                     </div>
                 {% endif %}

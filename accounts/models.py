@@ -70,9 +70,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     role        = models.CharField(max_length=30, choices=UserRole.choices, default=UserRole.TEAM_MANAGER)
     county      = models.CharField(max_length=100, blank=True, help_text="Kenyan county")
     sub_county  = models.CharField(
-        max_length=50, blank=True, default="",
-        choices=MakueniSubCounty.choices,
-        help_text="Makueni County sub-county (constituency) for sports officers",
+        max_length=100, blank=True, default="",
+        help_text="Sub-county or constituency assignment for sub-county sports officers",
     )
     profile_photo = models.ImageField(upload_to="profiles/", null=True, blank=True)
     is_active   = models.BooleanField(default=True)
@@ -80,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_suspended = models.BooleanField(default=False, help_text="Admin-suspended account")
     assigned_discipline = models.CharField(
         max_length=30, blank=True, default="",
-        help_text="Sport discipline this user manages (for Coordinator / Scout roles)",
+        help_text="Sport family or discipline this user manages (for Coordinator / Scout roles)",
     )
     must_change_password = models.BooleanField(
         default=False,

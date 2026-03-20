@@ -9,12 +9,20 @@ from django.db.models import Sum, Count, Q
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
 
-from accounts.models import User, UserRole
+from accounts.models import User, UserRole, KenyaCounty
 from teams.models import Team, Player
 from referees.models import RefereeProfile, RefereeAppointment
 from competitions.models import Competition, Fixture
 from matches.models import MatchReport
 from .models import ActivityLog
+
+
+COORDINATOR_DISCIPLINE_CHOICES = [
+    ("football", "Football"),
+    ("volleyball", "Volleyball"),
+    ("basketball", "Basketball"),
+    ("handball", "Handball"),
+]
 
 
 def admin_required(user):
@@ -445,8 +453,6 @@ def view_report(request, report_id):
 @user_passes_test(superadmin_required)
 def manage_league_admins(request):
     """Manage all users — filter, search, view."""
-    from competitions.models import SportType
-
     role_filter = request.GET.get('role', 'all')
     status_filter = request.GET.get('status', 'all')
     search_query = request.GET.get('search', '')
@@ -472,7 +478,7 @@ def manage_league_admins(request):
 
     coordinator_users = User.objects.filter(role='coordinator').order_by('assigned_discipline', 'first_name', 'last_name')
     coordinators_by_discipline = {
-        code: [] for code, _ in SportType.choices
+        code: [] for code, _ in COORDINATOR_DISCIPLINE_CHOICES
     }
     unassigned_coordinators = []
     for coord in coordinator_users:
@@ -482,7 +488,7 @@ def manage_league_admins(request):
             unassigned_coordinators.append(coord)
 
     sport_coordinator_rows = []
-    for sport_code, sport_label in SportType.choices:
+    for sport_code, sport_label in COORDINATOR_DISCIPLINE_CHOICES:
         assigned = coordinators_by_discipline.get(sport_code, [])
         sport_coordinator_rows.append({
             'sport_label': sport_label,
@@ -509,6 +515,8 @@ def manage_league_admins(request):
         'role_choices': UserRole.choices,
         'sport_coordinator_rows': sport_coordinator_rows,
         'unassigned_coordinators': unassigned_coordinators,
+        'coordinator_discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
+        'county_choices': KenyaCounty.choices,
     }
     return render(request, 'admin_dashboard/manage_league_admins.html', context)
 
@@ -525,6 +533,9 @@ def create_league_admin(request):
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         role = request.POST.get('role', 'team_manager')
+        county = request.POST.get('county', '').strip()
+        sub_county = request.POST.get('sub_county', '').strip()
+        assigned_discipline = request.POST.get('assigned_discipline', '').strip()
 
         # Validate phone format
         import re
@@ -536,8 +547,18 @@ def create_league_admin(request):
             messages.error(request, f"Email '{email}' already registered.")
             return redirect('manage_league_admins')
 
+        if role == UserRole.SUBCOUNTY_SPORTS_OFFICER and (not county or not sub_county):
+            messages.error(request, 'County and sub-county are required for sub-county sports officers.')
+            return redirect('manage_league_admins')
+
+        if role == UserRole.COORDINATOR and not assigned_discipline:
+            messages.error(request, 'Choose a sport family for the coordinator.')
+            return redirect('manage_league_admins')
+
         try:
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+            stored_county = county if role == UserRole.SUBCOUNTY_SPORTS_OFFICER else ''
+            stored_sub_county = sub_county if role == UserRole.SUBCOUNTY_SPORTS_OFFICER else ''
             user_obj = User.objects.create_user(
                 email=email,
                 password=password,
@@ -545,6 +566,9 @@ def create_league_admin(request):
                 last_name=last_name,
                 phone=phone,
                 role=role,
+                county=stored_county,
+                sub_county=stored_sub_county,
+                assigned_discipline=assigned_discipline if role in (UserRole.COORDINATOR, UserRole.SCOUT) else '',
                 is_active=True,
             )
             user_obj.must_change_password = True
@@ -624,13 +648,14 @@ def reset_league_admin_password(request, user_id):
 @user_passes_test(superadmin_required)
 def edit_user_roles(request, user_id):
     """Edit user's role assignment using MKJ SUPA CUP UserRole field."""
-    from competitions.models import SportType
     user_obj = get_object_or_404(User, id=user_id)
 
     if request.method == 'POST':
         new_role = request.POST.get('role', user_obj.role)
         old_role = user_obj.role
         new_discipline = request.POST.get('assigned_discipline', '').strip()
+        new_county = request.POST.get('county', '').strip()
+        new_sub_county = request.POST.get('sub_county', '').strip()
 
         if new_role not in dict(UserRole.choices):
             messages.error(request, f"Invalid role: {new_role}")
@@ -652,6 +677,15 @@ def edit_user_roles(request, user_id):
         elif old_role in ('scout', 'coordinator') and new_role not in ('scout', 'coordinator'):
             user_obj.assigned_discipline = ''
             update_fields.append('assigned_discipline')
+
+        if new_role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+            user_obj.county = new_county
+            user_obj.sub_county = new_sub_county
+            update_fields.extend(['county', 'sub_county'])
+        elif old_role == UserRole.SUBCOUNTY_SPORTS_OFFICER and new_role != UserRole.SUBCOUNTY_SPORTS_OFFICER:
+            user_obj.county = ''
+            user_obj.sub_county = ''
+            update_fields.extend(['county', 'sub_county'])
 
         user_obj.save(update_fields=update_fields)
 
@@ -687,7 +721,8 @@ def edit_user_roles(request, user_id):
     context = {
         'edit_user': user_obj,
         'role_choices': UserRole.choices,
-        'sport_type_choices': SportType.choices,
+        'sport_type_choices': COORDINATOR_DISCIPLINE_CHOICES,
+        'county_choices': KenyaCounty.choices,
     }
     return render(request, 'admin_dashboard/edit_user_roles.html', context)
 

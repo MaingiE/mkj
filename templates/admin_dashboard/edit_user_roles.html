@@ -154,7 +154,7 @@
                 </label>
                 {% endfor %}
 
-                <div class="alert alert-warning" style="margin-top:1rem;margin-bottom:1.25rem;">
+                <div class="alert alert-info" style="margin-top:1rem;margin-bottom:1.25rem;">
                     <strong>Warning:</strong> Changing the role will immediately affect what this user can see and do.
                     {% if edit_user.role == 'referee' %}
                     <br><span style="color:#C62828;">Moving away from Referee preserves their profile but removes access to referee features.</span>
@@ -167,7 +167,7 @@
                         <i class="bi bi-bullseye"></i> Assigned Discipline
                     </label>
                     <p style="color:#757575;font-size:.82rem;margin-bottom:.6rem;">
-                        Scouts and Coordinators are scoped to a specific sport discipline. Players and competitions will be filtered accordingly.
+                        Scouts and Coordinators are scoped to a sport family and will cover both men and women in that discipline.
                     </p>
                     <select name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
                         <option value="">— Not Assigned —</option>
@@ -175,6 +175,27 @@
                         <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
+                </div>
+
+                <div id="subcounty-section" style="display:none;margin-bottom:1.25rem;padding:1rem;background:#F5F5F5;border-radius:10px;border:1px solid #E0E0E0;">
+                    <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:.5rem;">
+                        <i class="bi bi-geo-alt"></i> Sub-County Assignment
+                    </label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                        <div>
+                            <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">County</label>
+                            <select name="county" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
+                                <option value="">— Select County —</option>
+                                {% for val, label in county_choices %}
+                                <option value="{{ val }}" {% if edit_user.county == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">Sub-County</label>
+                            <input type="text" name="sub_county" value="{{ edit_user.sub_county }}" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;" placeholder="e.g. Kaiti">
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display:flex;gap:.8rem;">
@@ -193,10 +214,16 @@
 function toggleDisciplineSection() {
     var checked = document.querySelector('input[name="role"]:checked');
     var section = document.getElementById('discipline-section');
+    var subcountySection = document.getElementById('subcounty-section');
     if (checked && (checked.value === 'scout' || checked.value === 'coordinator')) {
         section.style.display = 'block';
     } else {
         section.style.display = 'none';
+    }
+    if (checked && checked.value === 'subcounty_sports_officer') {
+        subcountySection.style.display = 'block';
+    } else {
+        subcountySection.style.display = 'none';
     }
 }
 document.querySelectorAll('input[name="role"]').forEach(function(r) {

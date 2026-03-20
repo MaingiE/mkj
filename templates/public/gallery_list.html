@@ -9,8 +9,8 @@
    GALLERY LIST PAGE
 ═══════════════════════════════════════ */
 .gallery-hero {
-    padding: 10rem 0 4rem;
-    background: linear-gradient(135deg, #0a1a0d 0%, #1565C0 50%, #0d2810 100%);
+    padding: 6rem 0 2rem;
+    background: linear-gradient(135deg, #0C1B3A 0%, #1A6FB5 50%, #0C1B3A 100%);
     position: relative; overflow: hidden;
     text-align: center; color: #fff;
 }
@@ -30,18 +30,18 @@
 }
 .gallery-hero h1 {
     font-family: 'Outfit', sans-serif;
-    font-size: 3rem; font-weight: 800; margin-bottom: .75rem;
+    font-size: 2.2rem; font-weight: 800; margin-bottom: .5rem;
     letter-spacing: -1px;
 }
-.gallery-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto; }
+.gallery-hero p { font-size: .95rem; opacity: .8; max-width: 600px; margin: 0 auto; }
 
 /* ── Albums grid ── */
 .gallery-section {
-    max-width: 1200px; margin: -2rem auto 4rem; padding: 0 1.5rem;
+    max-width: 1200px; margin: -1.5rem auto 2.5rem; padding: 0 1.5rem;
     position: relative; z-index: 5;
 }
 .ga-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
 }
 .ga-card {
     background: #fff; border-radius: 16px; overflow: hidden;
@@ -52,8 +52,8 @@
 }
 .ga-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
 .ga-card-img {
-    height: 220px; overflow: hidden; position: relative;
-    background: #e8f5e9;
+    height: 180px; overflow: hidden; position: relative;
+    background: #e8f0f8;
 }
 .ga-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
 .ga-card:hover .ga-card-img img { transform: scale(1.05); }
@@ -68,7 +68,7 @@
     color: #fff; font-size: .82rem; font-weight: 600;
     display: flex; align-items: center; gap: .4rem;
 }
-.ga-card-body { padding: 1.25rem; }
+.ga-card-body { padding: 1rem; }
 .ga-card-body h3 {
     font-family: 'Outfit', sans-serif;
     font-size: 1rem; font-weight: 600; color: #1a1a1a;
@@ -92,8 +92,8 @@
     font-size: .85rem; font-weight: 600; transition: all .2s;
 }
 .gallery-pagination a { background: #fff; color: #555; border: 1px solid #e0e0e0; }
-.gallery-pagination a:hover { background: #e8f5e9; color: #1565C0; border-color: #1565C0; }
-.gallery-pagination .current { background: #1565C0; color: #fff; border: 1px solid #1565C0; }
+.gallery-pagination a:hover { background: #e8f0f8; color: #1A6FB5; border-color: #1A6FB5; }
+.gallery-pagination .current { background: #1A6FB5; color: #fff; border: 1px solid #1A6FB5; }
 
 /* ── Empty ── */
 .gallery-empty {
@@ -111,7 +111,7 @@
     <div class="container">
         <div class="gallery-hero-badge"><i class="bi bi-images"></i> GALLERY</div>
         <h1>Photo Gallery</h1>
-        <p>Relive the best moments from KYISA events, matches, and ceremonies across Kenya's sub-counties.</p>
+        <p>Relive the best moments from MKJ SUPA CUP events, matches, and ceremonies across Kenya's sub-counties.</p>
     </div>
 </section>
 
@@ -125,7 +125,7 @@
                 {% if album.display_cover %}
                     <img src="{{ album.display_cover }}" alt="{{ album.title }}">
                 {% else %}
-                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1565C0;">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1A6FB5;">
                         <i class="bi bi-images" style="font-size:3rem;opacity:.3;"></i>
                     </div>
                 {% endif %}

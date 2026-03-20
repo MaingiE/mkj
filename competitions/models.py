@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-COUNTY_REGISTRATION_FEE_CAP = 250_000  # KSh — participation fee per county per season
+COUNTY_REGISTRATION_FEE_CAP = 0  # MKJ SUPA CUP has no county registration fee
 
 
 class SportType(models.TextChoices):
@@ -195,10 +195,6 @@ class PoolTeam(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
         if self.team_id:
-            if not self.team.payment_confirmed:
-                raise ValidationError(
-                    f"{self.team.name} cannot be pooled — payment has not been confirmed by the treasurer."
-                )
             if self.team.status != "registered":
                 raise ValidationError(
                     f"{self.team.name} is not approved. Only registered teams can be pooled."
@@ -301,9 +297,7 @@ class Fixture(models.Model):
         for side, fk in [("home_team", self.home_team_id), ("away_team", self.away_team_id)]:
             if fk:
                 team = getattr(self, side)
-                if not team.payment_confirmed:
-                    errors[side] = f"{team.name} cannot play — payment not confirmed by the treasurer."
-                elif team.status != "registered":
+                if team.status != "registered":
                     errors[side] = f"{team.name} is not an approved team."
         if errors:
             raise ValidationError(errors)
@@ -373,7 +367,7 @@ class CountyPayment(models.Model):
     participation_fee = models.DecimalField(
         max_digits=10, decimal_places=2,
         default=COUNTY_REGISTRATION_FEE_CAP,
-        help_text="Participation fee in KSh (standard 250,000)"
+        help_text="Participation fee in KSh (MKJ SUPA CUP currently uses 0)"
     )
     payment_status  = models.CharField(
         max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING
@@ -400,7 +394,7 @@ class CountyPayment(models.Model):
         verbose_name_plural = "County Payments"
 
     def clean(self):
-        if self.participation_fee and self.participation_fee > COUNTY_REGISTRATION_FEE_CAP:
+        if self.participation_fee and COUNTY_REGISTRATION_FEE_CAP and self.participation_fee > COUNTY_REGISTRATION_FEE_CAP:
             raise ValidationError(
                 f"Participation fee cannot exceed KSh {COUNTY_REGISTRATION_FEE_CAP:,}."
             )
@@ -446,17 +440,7 @@ class CountyRegistration(models.Model):
         verbose_name_plural = "County Registrations"
 
     def clean(self):
-        # Ensure county has paid for this season before registering for competitions
-        if self.competition_id:
-            season = self.competition.season
-            payment = CountyPayment.objects.filter(
-                county=self.county, season=season
-            ).first()
-            if not payment or not payment.is_paid:
-                raise ValidationError(
-                    f"{self.county} has not paid the county participation fee for {season}. "
-                    f"Payment of KSh {COUNTY_REGISTRATION_FEE_CAP:,} must be confirmed by the Treasurer first."
-                )
+        return
 
     def save(self, *args, **kwargs):
         # Auto-link county payment

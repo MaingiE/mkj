@@ -8,7 +8,31 @@
         <span>Disciplines</span>
     </div>
     <h1><i class="bi bi-grid"></i> Disciplines</h1>
-    <p>{{ reg.county }} County — Browse disciplines and manage players</p>
+    <p>{{ reg.county }} — {{ request.user.sub_county }} disciplines, players, and team setup</p>
+</div>
+
+<div class="card" style="margin-bottom:1rem;">
+    <div class="card-body">
+        <form method="post" style="display:grid;grid-template-columns:2fr 1fr auto;gap:.75rem;align-items:end;">
+            {% csrf_token %}
+            <div>
+                <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem;">Discipline</label>
+                <select name="sport_type" class="form-control">
+                    <option value="">Select discipline...</option>
+                    {% for code, label, limit in available %}
+                    <option value="{{ code }}">{{ label }} ({{ limit }} players)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem;">Sub-County</label>
+                <input type="text" class="form-control" value="{{ request.user.sub_county }}" readonly>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">Add Discipline</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 {% if disciplines %}
@@ -34,7 +58,7 @@
 <div class="card" style="padding:3rem;text-align:center;color:#888">
     <i class="bi bi-grid" style="font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.4"></i>
     <h4 style="color:#666;margin-bottom:.25rem">No Disciplines Yet</h4>
-    <p style="font-size:.9rem">No disciplines have been set up for Makueni County yet.</p>
+    <p style="font-size:.9rem">No disciplines have been set up for this sub-county yet.</p>
 </div>
 {% endif %}
 
