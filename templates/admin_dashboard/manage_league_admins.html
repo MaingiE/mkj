@@ -554,7 +554,10 @@
                 </div>
                 <div>
                     <label>Phone <span class="req">*</span></label>
-                    <input type="tel" name="phone" class="form-control" placeholder="+254712345678" pattern="\+254\d{9}" maxlength="13" required title="Format: +254XXXXXXXXX">
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                        <input type="tel" name="phone" class="form-control" placeholder="712345678" pattern="\d{9}" minlength="9" maxlength="9" inputmode="numeric" required title="Enter 9 digits e.g. 712345678">
+                    </div>
                 </div>
                 <div>
                     <label>Role <span class="req">*</span></label>
@@ -566,17 +569,16 @@
                     </select>
                 </div>
                 <div id="create-county-wrap" style="display:none;">
-                    <label>County <span class="req">*</span></label>
-                    <select name="county" class="form-control">
-                        <option value="">Select County...</option>
-                        {% for value, label in county_choices %}
-                        <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    <input type="hidden" name="county" value="Makueni">
                 </div>
                 <div id="create-subcounty-wrap" style="display:none;">
                     <label>Sub-County <span class="req">*</span></label>
-                    <input type="text" name="sub_county" class="form-control" placeholder="e.g. Kaiti">
+                    <select name="sub_county" class="form-control">
+                        <option value="">Select Sub-County...</option>
+                        {% for value, label in subcounty_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div id="create-discipline-wrap" style="display:none;">
                     <label>Coordinator Sport <span class="req">*</span></label>
@@ -819,7 +821,7 @@
                     <li><i class="bi bi-person-check"></i> <strong>Verification Officer:</strong> Verify county players</li>
                     <li><i class="bi bi-flag"></i> <strong>Referee:</strong> Match reports &amp; appointments</li>
                     <li><i class="bi bi-people"></i> <strong>Team Manager:</strong> Manage own team &amp; players</li>
-                    <li><i class="bi bi-geo-alt"></i> <strong>County Sports Director:</strong> Manage disciplines &amp; players</li>
+                    <li><i class="bi bi-geo-alt"></i> <strong>County Sports Admin:</strong> Manage disciplines &amp; players</li>
                     <li><i class="bi bi-cash-stack"></i> <strong>Treasurer:</strong> Verify payments &amp; fees</li>
                     <li><i class="bi bi-briefcase"></i> <strong>Chair of the Jury:</strong> Handle appeals &amp; hearings</li>
                     <li><i class="bi bi-newspaper"></i> <strong>Media Manager:</strong> News, articles &amp; media</li>
@@ -880,17 +882,20 @@
 
     function toggleCreateRoleFields() {
         const role = document.getElementById('create-role');
-        const countyWrap = document.getElementById('create-county-wrap');
-        const subcountyWrap = document.getElementById('create-subcounty-wrap');
         const disciplineWrap = document.getElementById('create-discipline-wrap');
+        const subcountyWrap = document.getElementById('create-subcounty-wrap');
+        const subcountySelect = subcountyWrap ? subcountyWrap.querySelector('select') : null;
         const value = role ? role.value : '';
 
-        const isSubcounty = value === 'subcounty_sports_officer';
         const isDisciplineRole = value === 'coordinator' || value === 'scout';
+        const isSubcountyRole = value === 'team_manager' || value === 'subcounty_sports_officer';
 
-        countyWrap.style.display = isSubcounty ? 'block' : 'none';
-        subcountyWrap.style.display = isSubcounty ? 'block' : 'none';
         disciplineWrap.style.display = isDisciplineRole ? 'block' : 'none';
+        subcountyWrap.style.display = isSubcountyRole ? 'block' : 'none';
+
+        if (subcountySelect) {
+            subcountySelect.required = isSubcountyRole;
+        }
     }
 
     document.getElementById('create-role').addEventListener('change', toggleCreateRoleFields);

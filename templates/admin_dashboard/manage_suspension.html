@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Suspension — {{ player.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Manage Suspension</h1>
+    <p>{{ player.get_full_name }} — {{ player.team.name|default:"No Team" }}</p>
+</div>
+
+<div class="card mb-1">
+    <div class="card-header"><h3>Player Details</h3></div>
+    <div class="card-body">
+        <table class="table">
+            <tr><th>Name</th><td>{{ player.first_name }} {{ player.last_name }}</td></tr>
+            <tr><th>ID Number</th><td>{{ player.id_number|default:"—" }}</td></tr>
+            <tr><th>Team</th><td>{{ player.team.name|default:"—" }}</td></tr>
+            <tr><th>Position</th><td>{{ player.position|default:"—" }}</td></tr>
+            <tr><th>Current Status</th><td><span class="badge {% if player.status == 'suspended' %}badge-danger{% else %}badge-success{% endif %}">{{ player.status|title }}</span></td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-1">
+    <div class="card-header"><h3>Actions</h3></div>
+    <div class="card-body" style="display:flex;gap:1rem;">
+        {% if player.status != 'suspended' %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="suspend">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to suspend this player?')">
+                <i class="bi bi-x-circle"></i> Suspend Player
+            </button>
+        </form>
+        {% else %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="clear">
+            <button type="submit" class="btn btn-success" onclick="return confirm('Clear this player\'s suspension?')">
+                <i class="bi bi-check-circle"></i> Clear Suspension
+            </button>
+        </form>
+        {% endif %}
+
+        <a href="{% url 'view_suspensions' %}" class="btn btn-outline">
+            <i class="bi bi-arrow-left"></i> Back to Suspensions
+        </a>
+    </div>
+</div>
+{% endblock %}

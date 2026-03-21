@@ -61,8 +61,8 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="id_number" class="form-label">ID/Passport Number *</label>
-                                <input type="text" class="form-control" id="id_number" name="id_number" required>
-                                <small class="text-muted">National ID or Passport</small>
+                                <input type="text" class="form-control" id="id_number" name="id_number" pattern="\d{5,10}" minlength="5" maxlength="10" inputmode="numeric" required>
+                                <small class="text-muted">Enter 5 to 10 digits</small>
                             </div>
                         </div>
                         

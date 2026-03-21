@@ -24,7 +24,7 @@
 <!-- Final Score -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header">
-        <h3>{% if sport_family == 'Football' %}⚽{% elif sport_family == 'Volleyball' %}🏐{% elif sport_family == 'Handball' %}🤾{% else %}🏀{% endif %} Final Score
+        <h3>{% if sport_family == 'Soccer' %}⚽{% elif sport_family == 'Volleyball' %}🏐{% elif sport_family == 'Handball' %}🤾{% else %}🏀{% endif %} Final Score
             <span style="font-size:.8rem;font-weight:normal;color:#666;margin-left:.5rem;">({{ sport_cfg.score_unit }})</span>
         </h3>
     </div>
@@ -173,7 +173,7 @@
                        style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">
             </div>
             {% endif %}
-            {% if sport_family == 'Football' %}
+            {% if sport_family == 'Soccer' %}
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">Added Time HT</label>
                 <input type="number" name="added_time_ht" min="0" value="{{ report.added_time_ht|default:0 }}"
@@ -189,12 +189,12 @@
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">
                     <input type="checkbox" name="overtime_played" {% if report and report.overtime_played %}checked{% endif %}>
-                    {% if sport_family == 'Football' %}Extra Time Played{% else %}Overtime Played{% endif %}
+                    {% if sport_family == 'Soccer' %}Extra Time Played{% else %}Overtime Played{% endif %}
                 </label>
             </div>
             <div id="overtimePeriodsWrap" style="{% if not report or not report.overtime_played %}display:none{% endif %}">
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">
-                    {% if sport_family == 'Football' %}ET Halves{% else %}OT Periods{% endif %}
+                    {% if sport_family == 'Soccer' %}ET Halves{% else %}OT Periods{% endif %}
                 </label>
                 <input type="number" name="overtime_periods" min="1" value="{{ report.overtime_periods|default:1 }}"
                        style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;">

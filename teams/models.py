@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from competitions.models import SportType
-from accounts.models import KenyaCounty, kenya_phone_validator
+from accounts.models import KenyaCounty, kenya_phone_validator, national_id_validator
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -76,7 +76,7 @@ class CountyRegistration(models.Model):
     # Payment evidence
     mpesa_reference = models.CharField(max_length=100, blank=True, default="",
                                         help_text="M-Pesa transaction code from confirmation SMS")
-    mpesa_phone = models.CharField(max_length=13, blank=True, default="",
+    mpesa_phone = models.CharField(max_length=13, blank=True, default="", validators=[kenya_phone_validator],
                                     help_text="Phone number used for M-Pesa payment")
     mpesa_checkout_id = models.CharField(max_length=100, blank=True, default="",
                                           help_text="Daraja STK push CheckoutRequestID")
@@ -218,7 +218,7 @@ class CountyPlayer(models.Model):
     last_name = models.CharField(max_length=100)
     date_of_birth = models.DateField()
     national_id_number = models.CharField(
-        max_length=20, unique=True,
+        max_length=20, unique=True, validators=[national_id_validator],
         help_text="National ID — unique across all counties and disciplines",
     )
     huduma_number = models.CharField(
@@ -226,6 +226,14 @@ class CountyPlayer(models.Model):
         help_text="Huduma Namba / Huduma Kenya number",
     )
     phone = models.CharField(max_length=13, validators=[kenya_phone_validator])
+    sub_county = models.CharField(
+        max_length=100, blank=True, default="",
+        help_text="Sub-county the player represents",
+    )
+    ward = models.CharField(
+        max_length=100, blank=True, default="",
+        help_text="Ward within the sub-county",
+    )
     position = models.CharField(max_length=10, blank=True, default="",
                                 help_text="Player position (where applicable)")
     jersey_number = models.PositiveIntegerField(null=True, blank=True,
@@ -339,7 +347,7 @@ class TechnicalBenchMember(models.Model):
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, default="")
     phone = models.CharField(max_length=13, validators=[kenya_phone_validator])
-    national_id_number = models.CharField(max_length=20, blank=True, default="")
+    national_id_number = models.CharField(max_length=20, blank=True, default="", validators=[national_id_validator])
     photo = models.ImageField(upload_to="technical_bench/photos/", null=True, blank=True)
     id_document = models.ImageField(upload_to="technical_bench/ids/", null=True, blank=True)
 
@@ -390,7 +398,7 @@ class CountyDelegationMember(models.Model):
     role = models.CharField(max_length=40, choices=CountyDelegationRole.choices)
     full_name = models.CharField(max_length=200)
     phone = models.CharField(max_length=13, validators=[kenya_phone_validator])
-    national_id_number = models.CharField(max_length=20)
+    national_id_number = models.CharField(max_length=20, validators=[national_id_validator])
     email = models.EmailField(blank=True, default="")
 
     # Optional linked user account (mandatory for CECM role)
@@ -733,7 +741,7 @@ class Player(models.Model):
     date_of_birth  = models.DateField()
     position       = models.CharField(max_length=10, choices=Position.choices)
     shirt_number       = models.PositiveIntegerField()
-    national_id_number = models.CharField(max_length=20, blank=True, default="",
+    national_id_number = models.CharField(max_length=20, blank=True, default="", validators=[national_id_validator],
                                           help_text="National ID number")
     birth_cert_number  = models.CharField(max_length=30, blank=True, default="",
                                           help_text="Birth Certificate number")

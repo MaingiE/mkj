@@ -6,6 +6,12 @@
     .report-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
     .report-card h4 { font-size: .95rem; font-weight: 600; margin: 0; }
     .report-card .meta { font-size: .8rem; color: #757575; }
+    .official-summary { margin-top: .7rem; display: flex; flex-wrap: wrap; gap: .45rem; }
+    .official-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .6rem; border-radius: 999px; background: #f5f7fb; color: #243b53; font-size: .78rem; }
+    .official-chip strong { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
+    .official-chip.pending { background: #fff4e5; color: #9a3412; }
+    .official-chip.confirmed { background: #e8f5e9; color: #1565c0; }
+    .official-chip.declined { background: #ffebee; color: #b71c1c; }
     .status-badge { font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px; }
     .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
     .filter-bar .btn { font-size: .8rem; padding: .35rem .6rem; border-radius: 8px; }
@@ -32,6 +38,17 @@
             Referee: {{ report.referee.user.get_full_name }} &middot;
             Submitted: {{ report.submitted_at|date:"d M Y H:i" }}
         </div>
+        {% if report.appointment_snapshot %}
+        <div class="meta" style="margin-top:.7rem;font-weight:600;color:#4b5563;">Officials Appointed</div>
+        <div class="official-summary">
+            {% for official in report.appointment_snapshot %}
+            <span class="official-chip {{ official.status }}">
+                <strong>{{ official.role_display }}</strong>
+                {{ official.referee_name }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
     <div style="display:flex;gap:.5rem;align-items:center;">
         <span class="status-badge" style="background:{% if report.status == 'submitted' %}#FFF3E0;color:#E65100{% elif report.status == 'approved' %}#E8F5E9;color:#1565C0{% else %}#FFEBEE;color:#C62828{% endif %};">{{ report.get_status_display }}</span>

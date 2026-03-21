@@ -705,8 +705,8 @@
             uniting six sub-counties in friendly competition.
         </p>
         <div class="hero-btns">
-            <a href="{% url 'public_competitions' %}" class="hero-btn hero-btn--gold">
-                View Competitions
+            <a href="{% url 'public_fixtures_results' %}" class="hero-btn hero-btn--gold">
+                Fixtures & Results
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
             <a href="{% url 'about' %}" class="hero-btn hero-btn--outline">Learn More</a>
@@ -775,7 +775,7 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
             </div>
             <h4>Multiple Disciplines</h4>
-            <p>Football, basketball, volleyball, handball and more — celebrating the full breadth of Makueni's sporting talent.</p>
+            <p>Soccer, basketball, volleyball, handball and more — celebrating the full breadth of Makueni's sporting talent.</p>
         </div>
         <div class="feature-card reveal-up" style="transition-delay:.2s">
             <div class="feature-icon feature-icon--green">
@@ -803,7 +803,7 @@
                 <span style="font-size:.75rem;color:#94a3b8;font-weight:600;">Photo Coming Soon</span>
             </div>
             <div class="gallery-card__overlay">
-                <span class="gallery-card__tag">Football</span>
+                <span class="gallery-card__tag">Soccer</span>
                 <span class="gallery-card__title">Sub-Counties Battle for Makueni Supremacy</span>
             </div>
         </div>
@@ -813,7 +813,7 @@
                 <span style="font-size:.75rem;color:#94a3b8;font-weight:600;">Photo Coming Soon</span>
             </div>
             <div class="gallery-card__overlay">
-                <span class="gallery-card__tag">Women's Football</span>
+                <span class="gallery-card__tag">Women's Soccer</span>
                 <span class="gallery-card__title">High-Intensity Pitch Action</span>
             </div>
         </div>
@@ -852,8 +852,8 @@
     <!-- Stats cards -->
     <div class="mc-stats">
         <div class="mc-stat-card reveal-up">
-            <span class="mc-stat-num" data-count="{{ stats.competitions|default:'0' }}">0</span>
-            <span class="mc-stat-label">Competitions</span>
+            <span class="mc-stat-num" data-count="{{ stats.disciplines|default:'0' }}">0</span>
+            <span class="mc-stat-label">Disciplines</span>
         </div>
         <div class="mc-stat-card reveal-up" style="transition-delay:.05s">
             <span class="mc-stat-num" data-count="{{ stats.teams|default:'0' }}">0</span>
@@ -885,7 +885,7 @@
                     <span class="mc-team-name">{{ match.home_team.name }}</span>
                     <div class="mc-vs-block">
                         <span class="mc-vs">VS</span>
-                        <div class="mc-match-time">{{ match.match_date|date:"d M · H:i" }}</div>
+                        <div class="mc-match-time">{{ match.match_date|date:"d M" }}{% if match.kickoff_time %} · {{ match.kickoff_time|time:"H:i" }}{% endif %}</div>
                     </div>
                     <span class="mc-team-name" style="text-align:right;">{{ match.away_team.name }}</span>
                 </div>
@@ -952,8 +952,8 @@
         <h2>Follow the MKJ SUPA CUP 2026</h2>
         <p>Six sub-counties, one champion — follow fixtures, live scores, and results as Makueni's best compete for the Governor's Trophy.</p>
         <div class="cta-actions">
-            <a href="{% url 'public_competitions' %}" class="hero-btn hero-btn--gold">
-                View Competitions
+            <a href="{% url 'public_fixtures_results' %}" class="hero-btn hero-btn--gold">
+                Fixtures & Results
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
             <a href="{% url 'contact' %}" class="hero-btn hero-btn--outline">Contact Us</a>

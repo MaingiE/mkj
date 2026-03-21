@@ -1,7 +1,10 @@
 """
 MKJ SUPA CUP Accounts — Custom User Model with Role-Based Access
 """
+import re
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
@@ -12,6 +15,49 @@ kenya_phone_validator = RegexValidator(
     message='Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).',
 )
 
+# Shared national ID validator: digits only, 5 to 10 characters.
+national_id_validator = RegexValidator(
+    regex=r'^\d{5,10}$',
+    message='ID number must contain 5 to 10 digits.',
+)
+
+
+def normalize_kenya_phone_digits(raw_phone: str) -> str:
+    """Return the local 9-digit Kenyan phone number without the +254 prefix."""
+    phone = re.sub(r'\D', '', (raw_phone or '').strip())
+    if not phone:
+        return ''
+    if phone.startswith('254') and len(phone) == 12:
+        phone = phone[3:]
+    elif phone.startswith('0') and len(phone) == 10:
+        phone = phone[1:]
+    if re.fullmatch(r'\d{9}', phone):
+        return phone
+    return ''
+
+
+def normalize_kenya_phone(raw_phone: str) -> str:
+    digits = normalize_kenya_phone_digits(raw_phone)
+    return f'+254{digits}' if digits else ''
+
+
+def validate_kenya_phone_or_raise(raw_phone: str, label: str = 'Phone number') -> str:
+    normalized = normalize_kenya_phone(raw_phone)
+    if not normalized:
+        raise ValidationError(f'{label} must contain exactly 9 digits after the +254 prefix.')
+    return normalized
+
+
+def normalize_national_id(raw_id: str) -> str:
+    return re.sub(r'\D', '', (raw_id or '').strip())
+
+
+def validate_national_id_or_raise(raw_id: str, label: str = 'ID number') -> str:
+    normalized = normalize_national_id(raw_id)
+    if not re.fullmatch(r'\d{5,10}', normalized):
+        raise ValidationError(f'{label} must contain 5 to 10 digits.')
+    return normalized
+
 
 class UserRole(models.TextChoices):
     COMPETITION_MANAGER = "competition_manager", "Organising Secretary"
@@ -19,7 +65,7 @@ class UserRole(models.TextChoices):
     VERIFICATION_OFFICER = "verification_officer", "Verification Officer"
     REFEREE             = "referee",             "Referee"
     TEAM_MANAGER        = "team_manager",        "Team Manager"
-    COUNTY_SPORTS_DIRECTOR = "county_sports_admin", "County Sports Director"
+    COUNTY_SPORTS_DIRECTOR = "county_sports_admin", "County Sports Admin"
     CEC_SPORTS_MEMBER = "cec_sports", "County CEC Member - Sports"
     TREASURER           = "treasurer",           "Treasurer"
     JURY_CHAIR          = "jury_chair",          "Chair of the Jury"
@@ -40,6 +86,44 @@ class MakueniSubCounty(models.TextChoices):
     KAITI        = "Kaiti",        "Kaiti"
     KILOME       = "Kilome",       "Kilome"
     MBOONI       = "Mbooni",       "Mbooni"
+
+
+# ── Ward mapping per Makueni sub-county (IEBC boundaries) ─────────────────
+MAKUENI_SUBCOUNTY_WARDS = {
+    "Makueni": [
+        "Wote", "Muvau/Kikumini", "Mavindini",
+        "Kitise/Kithuki", "Kathonzweni", "Nzaui/Kilili/Kalamba", "Mbitini",
+    ],
+    "Kibwezi West": [
+        "Makindu", "Nguu/Masumba", "Emali/Mulala", "Nguumo",
+    ],
+    "Kibwezi East": [
+        "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani",
+    ],
+    "Kaiti": [
+        "Ukia", "Kee", "Kilungu", "Ilima",
+    ],
+    "Kilome": [
+        "Kasikeu", "Mukaa", "Kiima Kiu/Kalanzoni",
+    ],
+    "Mbooni": [
+        "Tulimani", "Mbooni", "Kithungo/Kitundu", "Kiteta/Kisau", "Waia/Kako",
+    ],
+}
+
+
+def get_wards_for_subcounty(sub_county):
+    """Return list of ward names for a Makueni sub-county."""
+    return MAKUENI_SUBCOUNTY_WARDS.get(sub_county, [])
+
+
+def get_all_wards_flat():
+    """Return all wards as a flat sorted list of (value, label) tuples."""
+    wards = []
+    for sc_wards in MAKUENI_SUBCOUNTY_WARDS.values():
+        for w in sc_wards:
+            wards.append((w, w))
+    return sorted(set(wards))
 
 
 class UserManager(BaseUserManager):

@@ -6,10 +6,11 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from django.db.models import Sum, Count, Q
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
 
-from accounts.models import User, UserRole, KenyaCounty
+from accounts.models import User, UserRole, KenyaCounty, MakueniSubCounty, validate_kenya_phone_or_raise
 from teams.models import Team, Player
 from referees.models import RefereeProfile, RefereeAppointment
 from competitions.models import Competition, Fixture
@@ -18,7 +19,7 @@ from .models import ActivityLog
 
 
 COORDINATOR_DISCIPLINE_CHOICES = [
-    ("football", "Football"),
+    ("football", "Soccer"),
     ("volleyball", "Volleyball"),
     ("basketball", "Basketball"),
     ("handball", "Handball"),
@@ -517,6 +518,7 @@ def manage_league_admins(request):
         'unassigned_coordinators': unassigned_coordinators,
         'coordinator_discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
         'county_choices': KenyaCounty.choices,
+        'subcounty_choices': MakueniSubCounty.choices,
     }
     return render(request, 'admin_dashboard/manage_league_admins.html', context)
 
@@ -533,23 +535,33 @@ def create_league_admin(request):
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         role = request.POST.get('role', 'team_manager')
-        county = request.POST.get('county', '').strip()
+        county = 'Makueni'  # MKJ system is Makueni-only
         sub_county = request.POST.get('sub_county', '').strip()
         assigned_discipline = request.POST.get('assigned_discipline', '').strip()
 
-        # Validate phone format
-        import re
-        if not re.match(r'^\+254\d{9}$', phone):
-            messages.error(request, "Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).")
+        try:
+            phone = validate_kenya_phone_or_raise(phone, 'Phone number')
+        except ValidationError as exc:
+            messages.error(request, str(exc))
             return redirect('manage_league_admins')
 
         if User.objects.filter(email=email).exists():
             messages.error(request, f"Email '{email}' already registered.")
             return redirect('manage_league_admins')
 
-        if role == UserRole.SUBCOUNTY_SPORTS_OFFICER and (not county or not sub_county):
-            messages.error(request, 'County and sub-county are required for sub-county sports officers.')
+        if role in (UserRole.SUBCOUNTY_SPORTS_OFFICER, UserRole.TEAM_MANAGER) and not sub_county:
+            messages.error(request, 'Sub-county is required for this role.')
             return redirect('manage_league_admins')
+
+        if role == UserRole.SUBCOUNTY_SPORTS_OFFICER and sub_county:
+            existing = User.objects.filter(
+                role=UserRole.SUBCOUNTY_SPORTS_OFFICER,
+                sub_county=sub_county,
+                is_active=True,
+            ).exists()
+            if existing:
+                messages.error(request, f'A Sub-County Sports Officer already exists for {sub_county}. Only one is allowed per sub-county.')
+                return redirect('manage_league_admins')
 
         if role == UserRole.COORDINATOR and not assigned_discipline:
             messages.error(request, 'Choose a sport family for the coordinator.')
@@ -557,8 +569,8 @@ def create_league_admin(request):
 
         try:
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-            stored_county = county if role == UserRole.SUBCOUNTY_SPORTS_OFFICER else ''
-            stored_sub_county = sub_county if role == UserRole.SUBCOUNTY_SPORTS_OFFICER else ''
+            stored_county = 'Makueni'
+            stored_sub_county = sub_county if role in (UserRole.SUBCOUNTY_SPORTS_OFFICER, UserRole.TEAM_MANAGER) else ''
             user_obj = User.objects.create_user(
                 email=email,
                 password=password,
@@ -654,12 +666,23 @@ def edit_user_roles(request, user_id):
         new_role = request.POST.get('role', user_obj.role)
         old_role = user_obj.role
         new_discipline = request.POST.get('assigned_discipline', '').strip()
-        new_county = request.POST.get('county', '').strip()
+        new_county = 'Makueni'
         new_sub_county = request.POST.get('sub_county', '').strip()
 
         if new_role not in dict(UserRole.choices):
             messages.error(request, f"Invalid role: {new_role}")
             return redirect('edit_user_roles', user_id=user_obj.id)
+
+        # Enforce one Sub-County Sports Officer per sub-county
+        if new_role == UserRole.SUBCOUNTY_SPORTS_OFFICER and new_sub_county:
+            existing = User.objects.filter(
+                role=UserRole.SUBCOUNTY_SPORTS_OFFICER,
+                sub_county=new_sub_county,
+                is_active=True,
+            ).exclude(pk=user_obj.pk).exists()
+            if existing:
+                messages.error(request, f'A Sub-County Sports Officer already exists for {new_sub_county}. Only one is allowed per sub-county.')
+                return redirect('edit_user_roles', user_id=user_obj.id)
 
         user_obj.role = new_role
 
@@ -678,12 +701,12 @@ def edit_user_roles(request, user_id):
             user_obj.assigned_discipline = ''
             update_fields.append('assigned_discipline')
 
-        if new_role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+        if new_role in (UserRole.SUBCOUNTY_SPORTS_OFFICER, 'team_manager'):
             user_obj.county = new_county
             user_obj.sub_county = new_sub_county
             update_fields.extend(['county', 'sub_county'])
-        elif old_role == UserRole.SUBCOUNTY_SPORTS_OFFICER and new_role != UserRole.SUBCOUNTY_SPORTS_OFFICER:
-            user_obj.county = ''
+        else:
+            user_obj.county = new_county
             user_obj.sub_county = ''
             update_fields.extend(['county', 'sub_county'])
 
@@ -723,6 +746,7 @@ def edit_user_roles(request, user_id):
         'role_choices': UserRole.choices,
         'sport_type_choices': COORDINATOR_DISCIPLINE_CHOICES,
         'county_choices': KenyaCounty.choices,
+        'subcounty_choices': MakueniSubCounty.choices,
     }
     return render(request, 'admin_dashboard/edit_user_roles.html', context)
 
@@ -886,8 +910,7 @@ def user_detail_view(request, user_id):
 @login_required
 @user_passes_test(superadmin_required)
 def user_edit_profile(request, user_id):
-    """Edit user profile details (name, email, phone, county, etc.)."""
-    from accounts.models import KenyaCounty
+    """Edit user profile details (name, email, phone, sub-county, etc.)."""
 
     user_obj = get_object_or_404(User, id=user_id)
 
@@ -897,13 +920,15 @@ def user_edit_profile(request, user_id):
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
-        county = request.POST.get('county', '').strip()
+        county = 'Makueni'
+        sub_county = request.POST.get('sub_county', '').strip()
 
-        # Validate phone format: +254 followed by 9 digits
-        import re
-        if phone and not re.match(r'^\+254\d{9}$', phone):
-            messages.error(request, "Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).")
-            return redirect('user_detail', user_id=user_obj.id)
+        if phone:
+            try:
+                phone = validate_kenya_phone_or_raise(phone, 'Phone number')
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+                return redirect('user_detail', user_id=user_obj.id)
 
         # Validate email uniqueness
         if new_email and new_email != old_email:
@@ -927,6 +952,9 @@ def user_edit_profile(request, user_id):
         if county != user_obj.county:
             changes.append(f'county: {user_obj.county or "(empty)"} → {county or "(empty)"}')
             user_obj.county = county
+        if sub_county != (user_obj.sub_county or ''):
+            changes.append(f'sub_county: {user_obj.sub_county or "(empty)"} → {sub_county or "(empty)"}')
+            user_obj.sub_county = sub_county
 
         if changes:
             user_obj.save()
@@ -950,7 +978,7 @@ def user_edit_profile(request, user_id):
     context = {
         'detail_user': user_obj,
         'role_choices': UserRole.choices,
-        'county_choices': KenyaCounty.choices,
+        'subcounty_choices': MakueniSubCounty.choices,
     }
     return render(request, 'admin_dashboard/user_edit_profile.html', context)
 

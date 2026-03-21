@@ -10,8 +10,8 @@ COUNTY_REGISTRATION_FEE_CAP = 0  # MKJ SUPA CUP has no county registration fee
 
 
 class SportType(models.TextChoices):
-    FOOTBALL_MEN       = "football_men",       "Football (Men)"
-    FOOTBALL_WOMEN     = "football_women",     "Football (Women)"
+    FOOTBALL_MEN       = "football_men",       "Soccer (Men)"
+    FOOTBALL_WOMEN     = "football_women",     "Soccer (Women)"
     VOLLEYBALL_MEN     = "volleyball_men",     "Volleyball (Men)"
     VOLLEYBALL_WOMEN   = "volleyball_women",   "Volleyball (Women)"
     BASKETBALL_MEN     = "basketball_men",     "Basketball 5x5 (Men)"

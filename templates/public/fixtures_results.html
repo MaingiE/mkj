@@ -1,0 +1,702 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Fixtures & Results{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIXTURES & RESULTS PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Gender Tabs ─────────────────────────────────────────────────────── */
+.gender-tabs {
+    display: flex;
+    gap: .5rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+.gender-tab {
+    padding: .55rem 1.5rem;
+    border-radius: 50px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #555;
+    background: #f4f4f4;
+    border: 1px solid #e0e0e0;
+    transition: all .2s;
+    cursor: pointer;
+    text-decoration: none;
+}
+.gender-tab:hover { background: #e8e8e8; color: #333; }
+.gender-tab--active {
+    background: #1A6FB5;
+    color: #fff;
+    border-color: #1A6FB5;
+}
+
+/* ── Discipline Accordion ────────────────────────────────────────────── */
+.disc-accordion {
+    margin-bottom: 1.5rem;
+}
+.disc-accordion__header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .85rem 1.25rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    cursor: pointer;
+    transition: all .2s;
+    border: 1px solid #eee;
+    user-select: none;
+}
+.disc-accordion__header:hover { background: #f9f9f9; box-shadow: 0 3px 14px rgba(0,0,0,.08); }
+.disc-accordion__icon { font-size: 1.4rem; }
+.disc-accordion__name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    flex: 1;
+}
+.disc-accordion__gender-badge {
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .2rem .6rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.disc-accordion__gender-badge--men { background: #E3F2FD; color: #1565C0; }
+.disc-accordion__gender-badge--women { background: #FCE4EC; color: #AD1457; }
+.disc-accordion__arrow {
+    transition: transform .3s;
+    color: #999;
+}
+.disc-accordion__arrow--open { transform: rotate(180deg); }
+.disc-accordion__body {
+    display: none;
+    padding: 1rem 0 0;
+}
+.disc-accordion__body--open { display: block; }
+.disc-accordion__empty {
+    text-align: center;
+    padding: 2rem;
+    color: #999;
+    font-size: .88rem;
+}
+
+/* ── Competition Card ────────────────────────────────────────────────── */
+.fr-comp-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border: 1px solid #eee;
+}
+.fr-comp-card__header {
+    padding: .85rem 1.25rem;
+    background: linear-gradient(135deg, #0C1B3A, #163A5C);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    flex-wrap: wrap;
+}
+.fr-comp-card__title {
+    font-size: .95rem;
+    font-weight: 700;
+    flex: 1;
+}
+.fr-comp-card__badge {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .15rem .5rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.fr-comp-card__badge--active { background: rgba(46,125,50,.25); color: #81C784; }
+.fr-comp-card__badge--registration { background: rgba(232,185,30,.2); color: #E8B91E; }
+.fr-comp-card__badge--completed { background: rgba(255,255,255,.15); color: rgba(255,255,255,.7); }
+.fr-comp-card__badge--group { background: rgba(26,111,181,.3); color: #90CAF9; }
+.fr-comp-card__badge--knockout { background: rgba(255,152,0,.25); color: #FFB74D; }
+
+.fr-comp-card__body { padding: 1.25rem; }
+
+/* ── Sub-tabs in competition ─────────────────────────────────────────── */
+.fr-tabs {
+    display: flex;
+    gap: .3rem;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+.fr-tab {
+    padding: .45rem .9rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all .2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+.fr-tab:hover { color: #333; }
+.fr-tab--active {
+    color: #1A6FB5;
+    border-bottom-color: #1A6FB5;
+}
+
+.fr-tab-content { display: none; }
+.fr-tab-content--active { display: block; }
+
+/* ── Pool Standings Table ────────────────────────────────────────────── */
+.pool-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    border: 1px solid #f0f0f0;
+}
+.pool-header {
+    background: linear-gradient(135deg, #1A6FB5, #2196F3);
+    color: #fff;
+    padding: .55rem 1rem;
+    font-weight: 700;
+    font-size: .85rem;
+}
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .78rem;
+}
+.standings-table th {
+    background: #FAFAFA;
+    padding: .45rem .4rem;
+    text-align: center;
+    font-weight: 600;
+    color: #777;
+    border-bottom: 1px solid #eee;
+    font-size: .7rem;
+    text-transform: uppercase;
+}
+.standings-table th:first-child { text-align: left; padding-left: .8rem; }
+.standings-table td {
+    padding: .45rem .4rem;
+    text-align: center;
+    border-bottom: 1px solid #f5f5f5;
+    color: #444;
+}
+.standings-table td:first-child {
+    text-align: left;
+    padding-left: .8rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+.standings-table tr:last-child td { border-bottom: none; }
+.standings-table tr:nth-child(1) td:first-child,
+.standings-table tr:nth-child(2) td:first-child {
+    border-left: 3px solid #2E7D32;
+}
+
+/* ── Fixture Card ────────────────────────────────────────────────────── */
+.fx-card {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .65rem .85rem;
+    background: #FAFAFA;
+    border-radius: 10px;
+    margin-bottom: .5rem;
+    border: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+}
+.fx-card__pool {
+    font-size: .65rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    width: 100%;
+}
+.fx-card__teams {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex: 1;
+    min-width: 0;
+}
+.fx-card__team {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fx-card__team--away { text-align: right; }
+.fx-card__vs {
+    font-size: .68rem;
+    font-weight: 800;
+    color: #1A6FB5;
+    padding: .15rem .4rem;
+    background: rgba(26,111,181,.08);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.fx-card__score {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .88rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    flex-shrink: 0;
+}
+.fx-card__score-sep { color: #ccc; font-weight: 400; }
+.fx-card__ft {
+    font-size: .6rem;
+    font-weight: 700;
+    color: #2E7D32;
+    background: rgba(46,125,50,.08);
+    padding: .15rem .35rem;
+    border-radius: 4px;
+    margin-left: .25rem;
+}
+.fx-card__meta {
+    font-size: .72rem;
+    color: #999;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    flex-shrink: 0;
+}
+
+/* ── Knockout bracket ────────────────────────────────────────────────── */
+.ko-round {
+    margin-bottom: 1.25rem;
+}
+.ko-round__title {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #E65100;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+.fr-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #aaa;
+    font-size: .85rem;
+}
+
+/* ── View-all link ───────────────────────────────────────────────────── */
+.fr-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1A6FB5;
+    margin-top: .5rem;
+    transition: color .2s;
+}
+.fr-view-all:hover { color: #0d5a96; }
+
+@media (max-width: 600px) {
+    .fx-card__teams { flex-direction: column; gap: .2rem; }
+    .fx-card__team, .fx-card__team--away { text-align: center; }
+    .fx-card { flex-direction: column; text-align: center; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PAGE HERO
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">4th Edition</span>
+        <h1 class="page-hero__title reveal">Fixtures & <span class="text-gold">Results</span></h1>
+        <p class="page-hero__sub reveal">Browse fixtures, standings, and results across all MKJ SUPA CUP disciplines</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>Fixtures & Results</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     GENDER FILTER TABS
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec" style="padding-bottom:0;">
+    <div class="container">
+        <div class="gender-tabs">
+            <a href="{% url 'public_fixtures_results' %}"
+               class="gender-tab {% if not gender_filter and not sport_filter %}gender-tab--active{% endif %}">All</a>
+            <a href="{% url 'public_fixtures_results' %}?gender=men"
+               class="gender-tab {% if gender_filter == 'men' %}gender-tab--active{% endif %}">Men</a>
+            <a href="{% url 'public_fixtures_results' %}?gender=women"
+               class="gender-tab {% if gender_filter == 'women' %}gender-tab--active{% endif %}">Women</a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     DISCIPLINES — Accordion with Fixtures, Standings, Results
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="sec" style="padding-top:1rem;">
+    <div class="container">
+        {% for disc in disciplines_data %}
+        <div class="disc-accordion" id="disc-{{ disc.slug }}-{{ disc.gender|lower }}">
+            <!-- Accordion Header -->
+            <div class="disc-accordion__header" onclick="toggleAccordion(this)">
+                <span class="disc-accordion__icon">{{ disc.icon }}</span>
+                <span class="disc-accordion__name">{{ disc.name }}</span>
+                <span class="disc-accordion__gender-badge disc-accordion__gender-badge--{{ disc.gender|lower }}">{{ disc.gender }}</span>
+                <svg class="disc-accordion__arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+
+            <!-- Accordion Body -->
+            <div class="disc-accordion__body">
+                {% if disc.competitions %}
+                    {% for item in disc.competitions %}
+                    <div class="fr-comp-card">
+                        <!-- Competition Header -->
+                        <div class="fr-comp-card__header">
+                            <span class="fr-comp-card__title">{{ item.competition.name }}</span>
+                            {% if item.competition.status == 'active' or item.competition.status == 'group_stage' or item.competition.status == 'knockout' %}
+                            <span class="fr-comp-card__badge fr-comp-card__badge--active">{{ item.competition.get_status_display }}</span>
+                            {% elif item.competition.status == 'registration' %}
+                            <span class="fr-comp-card__badge fr-comp-card__badge--registration">Registration</span>
+                            {% elif item.competition.status == 'completed' %}
+                            <span class="fr-comp-card__badge fr-comp-card__badge--completed">Completed</span>
+                            {% endif %}
+                            <span class="fr-comp-card__badge fr-comp-card__badge--group">{{ item.competition.get_format_type_display }}</span>
+                        </div>
+
+                        <!-- Competition Body with Tabs -->
+                        <div class="fr-comp-card__body">
+                            <div class="fr-tabs" data-tabs>
+                                {% if item.pool_standings %}
+                                <button class="fr-tab fr-tab--active" data-tab="standings-{{ item.competition.pk }}">Standings</button>
+                                {% endif %}
+                                {% if item.group_fixtures %}
+                                <button class="fr-tab {% if not item.pool_standings %}fr-tab--active{% endif %}" data-tab="group-{{ item.competition.pk }}">Group Fixtures</button>
+                                {% endif %}
+                                {% if item.knockout_rounds %}
+                                <button class="fr-tab" data-tab="knockout-{{ item.competition.pk }}">Knockouts</button>
+                                {% endif %}
+                                {% if item.results %}
+                                <button class="fr-tab" data-tab="results-{{ item.competition.pk }}">Results</button>
+                                {% endif %}
+                                {% if item.upcoming %}
+                                <button class="fr-tab" data-tab="upcoming-{{ item.competition.pk }}">Upcoming</button>
+                                {% endif %}
+                            </div>
+
+                            <!-- ── STANDINGS TAB ── -->
+                            {% if item.pool_standings %}
+                            <div class="fr-tab-content fr-tab-content--active" id="standings-{{ item.competition.pk }}">
+                                {% for ps in item.pool_standings %}
+                                <div class="pool-card">
+                                    <div class="pool-header">{{ ps.pool.name }}</div>
+                                    <table class="standings-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th>P</th>
+                                                <th>W</th>
+                                                <th>D</th>
+                                                <th>L</th>
+                                                <th>GF</th>
+                                                <th>GA</th>
+                                                <th>GD</th>
+                                                <th>Pts</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for pt in ps.teams %}
+                                            <tr>
+                                                <td>{{ pt.team.name }}</td>
+                                                <td>{{ pt.played }}</td>
+                                                <td>{{ pt.won }}</td>
+                                                <td>{{ pt.drawn }}</td>
+                                                <td>{{ pt.lost }}</td>
+                                                <td>{{ pt.goals_for }}</td>
+                                                <td>{{ pt.goals_against }}</td>
+                                                <td>{{ pt.goal_difference }}</td>
+                                                <td><strong>{{ pt.points }}</strong></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% endfor %}
+                                <a href="{% url 'public_competition_standings' pk=item.competition.pk %}" class="fr-view-all">
+                                    Full Standings & Stats
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <!-- ── GROUP FIXTURES TAB ── -->
+                            {% if item.group_fixtures %}
+                            <div class="fr-tab-content {% if not item.pool_standings %}fr-tab-content--active{% endif %}" id="group-{{ item.competition.pk }}">
+                                {% for fx in item.group_fixtures %}
+                                <div class="fx-card">
+                                    {% if fx.pool %}
+                                    <div class="fx-card__pool">{{ fx.pool.name }} — Round {{ fx.round_number|default:"" }}</div>
+                                    {% endif %}
+                                    <div class="fx-card__teams">
+                                        <span class="fx-card__team">{{ fx.home_team.name }}</span>
+                                        {% if fx.status == 'completed' %}
+                                        <div class="fx-card__score">
+                                            {{ fx.home_score|default:"0" }}
+                                            <span class="fx-card__score-sep">&ndash;</span>
+                                            {{ fx.away_score|default:"0" }}
+                                            <span class="fx-card__ft">FT</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="fx-card__vs">VS</span>
+                                        {% endif %}
+                                        <span class="fx-card__team fx-card__team--away">{{ fx.away_team.name }}</span>
+                                    </div>
+                                    <div class="fx-card__meta">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                                        {{ fx.match_date|date:"d M" }}{% if fx.kickoff_time %} · {{ fx.kickoff_time|time:"H:i" }}{% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- ── KNOCKOUT TAB ── -->
+                            {% if item.knockout_rounds %}
+                            <div class="fr-tab-content" id="knockout-{{ item.competition.pk }}">
+                                {% for round_name, fixtures in item.knockout_rounds.items %}
+                                <div class="ko-round">
+                                    <div class="ko-round__title">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                                        {{ round_name }}
+                                    </div>
+                                    {% for fx in fixtures %}
+                                    <div class="fx-card">
+                                        <div class="fx-card__teams">
+                                            <span class="fx-card__team">{{ fx.home_team.name }}</span>
+                                            {% if fx.status == 'completed' %}
+                                            <div class="fx-card__score">
+                                                {{ fx.home_score|default:"0" }}
+                                                <span class="fx-card__score-sep">&ndash;</span>
+                                                {{ fx.away_score|default:"0" }}
+                                                <span class="fx-card__ft">FT</span>
+                                            </div>
+                                            {% else %}
+                                            <span class="fx-card__vs">VS</span>
+                                            {% endif %}
+                                            <span class="fx-card__team fx-card__team--away">{{ fx.away_team.name }}</span>
+                                        </div>
+                                        <div class="fx-card__meta">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                                            {{ fx.match_date|date:"d M" }}{% if fx.kickoff_time %} · {{ fx.kickoff_time|time:"H:i" }}{% endif %}
+                                            {% if fx.venue %} · {{ fx.venue.name }}{% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- ── RESULTS TAB ── -->
+                            {% if item.results %}
+                            <div class="fr-tab-content" id="results-{{ item.competition.pk }}">
+                                {% for fx in item.results %}
+                                <div class="fx-card">
+                                    <div class="fx-card__teams">
+                                        <span class="fx-card__team">{{ fx.home_team.name }}</span>
+                                        <div class="fx-card__score">
+                                            {{ fx.home_score|default:"0" }}
+                                            <span class="fx-card__score-sep">&ndash;</span>
+                                            {{ fx.away_score|default:"0" }}
+                                            <span class="fx-card__ft">FT</span>
+                                        </div>
+                                        <span class="fx-card__team fx-card__team--away">{{ fx.away_team.name }}</span>
+                                    </div>
+                                    <div class="fx-card__meta">
+                                        {{ fx.match_date|date:"d M Y" }}
+                                        {% if fx.venue %} · {{ fx.venue.name }}{% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- ── UPCOMING TAB ── -->
+                            {% if item.upcoming %}
+                            <div class="fr-tab-content" id="upcoming-{{ item.competition.pk }}">
+                                {% for fx in item.upcoming %}
+                                <div class="fx-card">
+                                    <div class="fx-card__teams">
+                                        <span class="fx-card__team">{{ fx.home_team.name }}</span>
+                                        <span class="fx-card__vs">VS</span>
+                                        <span class="fx-card__team fx-card__team--away">{{ fx.away_team.name }}</span>
+                                    </div>
+                                    <div class="fx-card__meta">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                                        {{ fx.match_date|date:"d M Y" }}{% if fx.kickoff_time %} · {{ fx.kickoff_time|time:"H:i" }}{% endif %}
+                                        {% if fx.venue %} · {{ fx.venue.name }}{% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- No content at all -->
+                            {% if not item.pool_standings and not item.group_fixtures and not item.knockout_rounds and not item.results and not item.upcoming %}
+                            <div class="fr-empty">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <p>No fixtures generated yet. Check back soon!</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="disc-accordion__empty">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto .5rem;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    No {{ disc.name }} ({{ disc.gender }}) competitions registered yet
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="fr-empty" style="padding:3rem;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <p>No disciplines found. Try a different filter.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    /* ── Accordion toggle ─────────────────── */
+    window.toggleAccordion = function(header) {
+        var body = header.nextElementSibling;
+        var arrow = header.querySelector('.disc-accordion__arrow');
+        var isOpen = body.classList.contains('disc-accordion__body--open');
+
+        if (isOpen) {
+            body.classList.remove('disc-accordion__body--open');
+            arrow.classList.remove('disc-accordion__arrow--open');
+        } else {
+            body.classList.add('disc-accordion__body--open');
+            arrow.classList.add('disc-accordion__arrow--open');
+        }
+    };
+
+    /* ── Tab switching ─────────────────────── */
+    document.querySelectorAll('[data-tabs]').forEach(function(tabBar) {
+        tabBar.querySelectorAll('.fr-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var targetId = tab.getAttribute('data-tab');
+                var card = tab.closest('.fr-comp-card__body');
+
+                // Deactivate all tabs & content in this card
+                card.querySelectorAll('.fr-tab').forEach(function(t) { t.classList.remove('fr-tab--active'); });
+                card.querySelectorAll('.fr-tab-content').forEach(function(c) { c.classList.remove('fr-tab-content--active'); });
+
+                // Activate clicked tab & its content
+                tab.classList.add('fr-tab--active');
+                var content = document.getElementById(targetId);
+                if (content) content.classList.add('fr-tab-content--active');
+            });
+        });
+    });
+
+    /* ── Auto-open first discipline with data ─── */
+    var opened = false;
+    document.querySelectorAll('.disc-accordion').forEach(function(acc) {
+        if (!opened) {
+            var body = acc.querySelector('.disc-accordion__body');
+            var cards = body.querySelectorAll('.fr-comp-card');
+            if (cards.length > 0) {
+                body.classList.add('disc-accordion__body--open');
+                var arrow = acc.querySelector('.disc-accordion__arrow');
+                if (arrow) arrow.classList.add('disc-accordion__arrow--open');
+                opened = true;
+            }
+        }
+    });
+
+    /* ── Page hero canvas animation ─────────── */
+    var c = document.getElementById('pageCanvas');
+    if (c) {
+        var ctx = c.getContext('2d');
+        function resize(){ c.width = c.offsetWidth; c.height = c.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        var dots = [];
+        for (var i = 0; i < 30; i++) dots.push({
+            x: Math.random() * c.width,
+            y: Math.random() * c.height,
+            r: Math.random() * 2 + .5,
+            dx: (Math.random() - .5) * .3,
+            dy: (Math.random() - .5) * .3,
+            o: Math.random() * .15 + .03
+        });
+        (function draw(){
+            ctx.clearRect(0, 0, c.width, c.height);
+            dots.forEach(function(d){
+                d.x += d.dx; d.y += d.dy;
+                if (d.x < 0 || d.x > c.width) d.dx *= -1;
+                if (d.y < 0 || d.y > c.height) d.dy *= -1;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,' + d.o + ')';
+                ctx.fill();
+            });
+            requestAnimationFrame(draw);
+        })();
+    }
+
+    /* ── Scroll reveal ─────────── */
+    var revealElements = document.querySelectorAll('.reveal, .reveal-up');
+    if (window.IntersectionObserver) {
+        var obs = new IntersectionObserver(function(entries){
+            entries.forEach(function(e){
+                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+        }, { threshold: .1 });
+        revealElements.forEach(function(el){ obs.observe(el); });
+    } else {
+        revealElements.forEach(function(el){ el.classList.add('visible'); });
+    }
+})();
+</script>
+{% endblock %}

@@ -28,7 +28,7 @@
                 <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.4rem;font-size:.9rem">{{ field.label }}</label>
                 {% if 'phone' in field.name %}
                 <div class="input-group">
-                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff;border-radius:10px 0 0 10px;padding:.5rem .9rem">+254</span>
                     {{ field }}
                 </div>
                 {% else %}
@@ -50,4 +50,53 @@
         </form>
     </div>
 </div>
+
+<script>
+(function(){
+    const WARDS = {{ wards_json|safe }};
+
+    /* ── Ward cascading from sub_county ────────────────────────── */
+    const scSelect = document.getElementById('id_sub_county');
+    const wardSelect = document.getElementById('id_ward');
+    const savedWard = wardSelect ? wardSelect.value : '';
+
+    function populateWards(sc){
+        if(!wardSelect) return;
+        const wards = WARDS[sc] || [];
+        wardSelect.innerHTML = '<option value="">— Select Ward —</option>';
+        wards.forEach(function(w){
+            const opt = document.createElement('option');
+            opt.value = w; opt.textContent = w;
+            if(w === savedWard) opt.selected = true;
+            wardSelect.appendChild(opt);
+        });
+    }
+    if(scSelect){
+        populateWards(scSelect.value);
+        scSelect.addEventListener('change', function(){ populateWards(this.value); });
+    }
+
+    /* ── Phone: digits only, strictly 9 chars ──────────────────── */
+    const phoneInput = document.getElementById('id_phone');
+    if(phoneInput){
+        phoneInput.addEventListener('input', function(){
+            this.value = this.value.replace(/\D/g,'').slice(0,9);
+        });
+        phoneInput.addEventListener('keypress', function(e){
+            if(this.value.length >= 9 || !/\d/.test(e.key)) e.preventDefault();
+        });
+    }
+
+    /* ── ID Number: digits only, stops at 10 ───────────────────── */
+    const idInput = document.getElementById('id_national_id_number');
+    if(idInput){
+        idInput.addEventListener('input', function(){
+            this.value = this.value.replace(/\D/g,'').slice(0,10);
+        });
+        idInput.addEventListener('keypress', function(e){
+            if(this.value.length >= 10 || !/\d/.test(e.key)) e.preventDefault();
+        });
+    }
+})();
+</script>
 {% endblock %}

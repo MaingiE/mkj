@@ -16,27 +16,19 @@ class IDVerification:
     def validate_kenyan_id(id_number):
         """
         Validate Kenya National ID format
-        Format: 8 digits or new format with letters
+        Format: digits only, 5 to 10 characters
         """
         if not id_number:
             raise ValidationError("ID number is required")
         
-        # Remove spaces and convert to string
-        id_number = str(id_number).replace(' ', '').strip()
-        
-        # Old format: 8 digits
-        old_format = re.match(r'^\d{8}$', id_number)
-        
-        # New format: Can contain letters and numbers (e.g., 12345678A)
-        new_format = re.match(r'^[A-Z0-9]{7,12}$', id_number.upper())
-        
-        if not (old_format or new_format):
+        id_number = re.sub(r'\D', '', str(id_number)).strip()
+
+        if not re.fullmatch(r'^\d{5,10}$', id_number):
             raise ValidationError(
-                "Invalid ID number format. Must be 8 digits (e.g., 12345678) "
-                "or new format with 7-12 characters (e.g., 12345678A)"
+                "Invalid ID number format. ID number must contain 5 to 10 digits."
             )
-        
-        return id_number.upper()
+
+        return id_number
     
     @staticmethod
     def check_age_eligibility(date_of_birth, min_age=16, max_age=45):

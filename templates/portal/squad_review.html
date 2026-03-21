@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Review Squad — {{ squad.team.name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Review Team List — {{ squad.team.name }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
         <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'squad_review_list' %}">Squad Review</a>
+        <a href="{% url 'squad_review_list' %}">Team List Review</a>
         <span>{{ squad.team.name }}</span>
     </div>
-    <h1>📋 Review Squad Sheet</h1>
+    <h1>📋 Review Team List</h1>
     <p>{{ squad.team.name }} — {{ squad.fixture.home_team }} vs {{ squad.fixture.away_team }}</p>
 </div>
 

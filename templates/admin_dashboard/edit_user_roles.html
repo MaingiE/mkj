@@ -142,7 +142,7 @@
                             {% elif value == 'verification_officer' %}Verify county player registrations and documents
                             {% elif value == 'referee' %}Accept appointments, submit match reports
                             {% elif value == 'team_manager' %}Manage team players, squads, transfers
-                            {% elif value == 'county_sports_admin' %}Manage disciplines and players
+                            {% elif value == 'county_sports_admin' %}Manage sub-county disciplines and players
                             {% elif value == 'treasurer' %}Verify payments, approve team registrations
                             {% elif value == 'jury_chair' %}Handle appeals, schedule hearings, publish decisions
                             {% elif value == 'media_manager' %}Manage news articles, photo albums, and videos
@@ -181,20 +181,15 @@
                     <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:.5rem;">
                         <i class="bi bi-geo-alt"></i> Sub-County Assignment
                     </label>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-                        <div>
-                            <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">County</label>
-                            <select name="county" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
-                                <option value="">— Select County —</option>
-                                {% for val, label in county_choices %}
-                                <option value="{{ val }}" {% if edit_user.county == val %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">Sub-County</label>
-                            <input type="text" name="sub_county" value="{{ edit_user.sub_county }}" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;" placeholder="e.g. Kaiti">
-                        </div>
+                    <div>
+                        <input type="hidden" name="county" value="Makueni">
+                        <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">Sub-County</label>
+                        <select name="sub_county" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
+                            <option value="">— Select Sub-County —</option>
+                            {% for val, label in subcounty_choices %}
+                            <option value="{{ val }}" {% if edit_user.sub_county == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
 
@@ -211,24 +206,21 @@
 </div>
 
 <script>
-function toggleDisciplineSection() {
+function toggleRoleSections() {
     var checked = document.querySelector('input[name="role"]:checked');
-    var section = document.getElementById('discipline-section');
+    var disciplineSection = document.getElementById('discipline-section');
     var subcountySection = document.getElementById('subcounty-section');
-    if (checked && (checked.value === 'scout' || checked.value === 'coordinator')) {
-        section.style.display = 'block';
-    } else {
-        section.style.display = 'none';
-    }
-    if (checked && checked.value === 'subcounty_sports_officer') {
-        subcountySection.style.display = 'block';
-    } else {
-        subcountySection.style.display = 'none';
-    }
+    var value = checked ? checked.value : '';
+
+    var isDisciplineRole = (value === 'scout' || value === 'coordinator');
+    var isSubcountyRole = (value === 'team_manager' || value === 'subcounty_sports_officer');
+
+    disciplineSection.style.display = isDisciplineRole ? 'block' : 'none';
+    subcountySection.style.display = isSubcountyRole ? 'block' : 'none';
 }
 document.querySelectorAll('input[name="role"]').forEach(function(r) {
-    r.addEventListener('change', toggleDisciplineSection);
+    r.addEventListener('change', toggleRoleSections);
 });
-toggleDisciplineSection();
+toggleRoleSections();
 </script>
 {% endblock %}

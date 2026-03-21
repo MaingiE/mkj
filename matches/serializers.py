@@ -99,7 +99,7 @@ class MatchReportSerializer(serializers.ModelSerializer):
     class Meta:
         model  = MatchReport
         fields = [
-            "id", "fixture", "fixture_label", "referee",
+            "id", "fixture", "fixture_label", "referee", "appointment_snapshot",
             "status", "status_display",
             "home_score", "away_score",
             "home_yellow_cards", "away_yellow_cards",
@@ -109,7 +109,7 @@ class MatchReportSerializer(serializers.ModelSerializer):
             "referee_notes", "is_abandoned", "abandonment_reason",
             "events", "submitted_at", "reviewed_at", "reviewer_notes",
         ]
-        read_only_fields = ["submitted_at", "reviewed_at", "reviewed_by"]
+        read_only_fields = ["referee", "appointment_snapshot", "submitted_at", "reviewed_at", "reviewed_by"]
 
     def get_fixture_label(self, obj):
         f = obj.fixture

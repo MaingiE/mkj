@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Match Substitutions — {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Match Substitutions</h1>
+    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} &mdash; {{ fixture.match_date|date:'M d, Y' }}</p>
+</div>
+
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-house-door"></i></div>
+        <div class="stat-info">
+            <h3>{{ home_normal }}{% if home_normal_limit %}/{{ home_normal_limit }}{% endif %}</h3>
+            <p>{{ fixture.home_team.name|truncatechars:20 }} Subs</p>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-airplane"></i></div>
+        <div class="stat-info">
+            <h3>{{ away_normal }}{% if away_normal_limit %}/{{ away_normal_limit }}{% endif %}</h3>
+            <p>{{ fixture.away_team.name|truncatechars:20 }} Subs</p>
+        </div>
+    </div>
+    {% if concussion_allowed %}
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="bi bi-bandaid"></i></div>
+        <div class="stat-info">
+            <h3>{{ home_concussion }} / {{ away_concussion }}</h3>
+            <p>Concussion Subs (H/A)</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- HOME TEAM -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-house-door"></i> {{ fixture.home_team.name }}</h3></div>
+    <div class="card-body">
+        {% if home_subs %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr>
+                    <th>Min</th><th>Player Off</th><th>Player On</th><th>Type</th><th>Status</th><th>Actions</th>
+                </tr></thead>
+                <tbody>
+                {% for sub in home_subs %}
+                <tr>
+                    <td>{{ sub.minute }}'</td>
+                    <td>{{ sub.player_off.get_full_name }}</td>
+                    <td>{{ sub.player_on.get_full_name }}</td>
+                    <td><span class="badge {% if sub.sub_type == 'concussion' %}badge-danger{% else %}badge-info{% endif %}">{{ sub.get_sub_type_display }}</span></td>
+                    <td><span class="badge {% if sub.status == 'executed' %}badge-success{% elif sub.status == 'denied' %}badge-danger{% elif sub.status == 'approved' %}badge-info{% else %}badge-warning{% endif %}">{{ sub.get_status_display }}</span></td>
+                    <td>
+                        {% if sub.status == 'requested' %}
+                        <form method="post" action="{% url 'substitution_approve' sub_pk=sub.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <button class="btn btn-sm btn-primary" title="Approve"><i class="bi bi-check"></i></button>
+                        </form>
+                        <form method="post" action="{% url 'substitution_approve' sub_pk=sub.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="deny">
+                            <button class="btn btn-sm btn-danger" title="Deny"><i class="bi bi-x"></i></button>
+                        </form>
+                        {% elif sub.status == 'approved' %}
+                        <form method="post" action="{% url 'substitution_approve' sub_pk=sub.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="execute">
+                            <button class="btn btn-sm btn-success" title="Execute"><i class="bi bi-check-all"></i> Execute</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No substitution requests for this team.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- AWAY TEAM -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-airplane"></i> {{ fixture.away_team.name }}</h3></div>
+    <div class="card-body">
+        {% if away_subs %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr>
+                    <th>Min</th><th>Player Off</th><th>Player On</th><th>Type</th><th>Status</th><th>Actions</th>
+                </tr></thead>
+                <tbody>
+                {% for sub in away_subs %}
+                <tr>
+                    <td>{{ sub.minute }}'</td>
+                    <td>{{ sub.player_off.get_full_name }}</td>
+                    <td>{{ sub.player_on.get_full_name }}</td>
+                    <td><span class="badge {% if sub.sub_type == 'concussion' %}badge-danger{% else %}badge-info{% endif %}">{{ sub.get_sub_type_display }}</span></td>
+                    <td><span class="badge {% if sub.status == 'executed' %}badge-success{% elif sub.status == 'denied' %}badge-danger{% elif sub.status == 'approved' %}badge-info{% else %}badge-warning{% endif %}">{{ sub.get_status_display }}</span></td>
+                    <td>
+                        {% if sub.status == 'requested' %}
+                        <form method="post" action="{% url 'substitution_approve' sub_pk=sub.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <button class="btn btn-sm btn-primary" title="Approve"><i class="bi bi-check"></i></button>
+                        </form>
+                        <form method="post" action="{% url 'substitution_approve' sub_pk=sub.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="deny">
+                            <button class="btn btn-sm btn-danger" title="Deny"><i class="bi bi-x"></i></button>
+                        </form>
+                        {% elif sub.status == 'approved' %}
+                        <form method="post" action="{% url 'substitution_approve' sub_pk=sub.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="execute">
+                            <button class="btn btn-sm btn-success" title="Execute"><i class="bi bi-check-all"></i> Execute</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No substitution requests for this team.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-top:1rem;">
+    <a href="{% url 'matches_list' %}" class="btn btn-outline"><i class="bi bi-arrow-left"></i> Back to Fixtures</a>
+</div>
+{% endblock %}

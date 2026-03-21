@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}County Admin Dashboard &mdash; MKJ SUPA CUP{% endblock %}
+{% block title %}Sub-County Dashboard &mdash; MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
-        <a href="{% url 'county_admin_dashboard' %}">County Admin</a>
+        <a href="{% url 'county_admin_dashboard' %}">Sub-County Portal</a>
         <span>Dashboard</span>
     </div>
-    <h1><i class="bi bi-building"></i> {{ reg.county }} County</h1>
-    <p>Manage your county registration, disciplines, and players.</p>
+    <h1><i class="bi bi-geo-alt"></i> {{ reg.county }} &mdash; Sub-County Portal</h1>
+    <p>Manage your sub-county registration, disciplines, and players.</p>
 </div>
 
 <!-- Registration Status Banner -->

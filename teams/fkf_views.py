@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 from django.db import models
 from django.urls import reverse
+import re
 from .models import Team, Player, Zone, LeagueSettings, TransferRequest, TeamOfficial
 from .forms import TeamRegistrationForm, PlayerRegistrationForm, TeamKitForm
 from .officials_forms import TeamOfficialForm
@@ -731,6 +732,11 @@ def add_player_action(request):
             return redirect('teams:add_players_approved')
         
         try:
+            id_number = ''.join(filter(str.isdigit, id_number))
+            if not re.fullmatch(r'\d{5,10}', id_number):
+                messages.error(request, 'ID Number must contain 5 to 10 digits.')
+                return redirect('teams:add_players_approved')
+
             # Check if ID number already exists
             if Player.objects.filter(id_number=id_number).exists():
                 messages.error(request, f'ID Number {id_number} is already registered.')
@@ -1273,7 +1279,11 @@ def admin_edit_player(request, player_id):
         player.last_name = request.POST.get('last_name', player.last_name)
         player.date_of_birth = request.POST.get('date_of_birth', player.date_of_birth)
         player.nationality = request.POST.get('nationality', player.nationality)
-        player.id_number = request.POST.get('id_number', player.id_number)
+        normalized_id_number = ''.join(filter(str.isdigit, request.POST.get('id_number', player.id_number) or ''))
+        if not re.fullmatch(r'\d{5,10}', normalized_id_number):
+            messages.error(request, 'National ID Number must contain 5 to 10 digits.')
+            return redirect('teams:admin_edit_player', player_id=player_id)
+        player.id_number = normalized_id_number
         
         # Update FKF license information
         player.fkf_license_number = request.POST.get('fkf_license_number', player.fkf_license_number)

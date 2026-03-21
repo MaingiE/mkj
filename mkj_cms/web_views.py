@@ -2,6 +2,8 @@
 MKJ SUPA CUP CMS — Web Frontend Views (Template-Based Portals)
 Includes public website pages, public registration, and authenticated CMS portal views.
 """
+import json
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -11,13 +13,14 @@ from django.utils.safestring import mark_safe
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings as django_settings
 from functools import wraps
 import csv
 import secrets, string, json, re
 
-from accounts.models import User, UserRole, KenyaCounty
+from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or_raise, MAKUENI_SUBCOUNTY_WARDS
 from competitions.models import (
     Competition, Fixture, SportType, EXHIBITION_SPORTS, COUNTY_REGISTRATION_FEE_CAP,
     CountyPayment, PaymentStatus, CompetitionStatus,
@@ -31,7 +34,7 @@ from teams.models import (
 from teams.forms import (
     PlayerRegistrationForm,
     CountyAdminRegistrationForm, CountyPaymentForm, CountyPlayerForm,
-    TechnicalBenchForm, CountyDelegationMemberForm,
+    TechnicalBenchForm, CountyDelegationMemberForm, KitColorsForm,
 )
 from referees.models import (
     RefereeProfile, RefereeAppointment, RefereeAvailability,
@@ -39,8 +42,15 @@ from referees.models import (
     get_required_roles, get_head_official_role, HEAD_OFFICIAL_ROLES,
 )
 from referees.forms import RefereeRegistrationForm
-from matches.models import MatchReport, MatchEvent, MatchReportStatus, SquadSubmission, SquadPlayer, SquadStatus, get_sport_family
+from matches.models import (
+    MatchReport, MatchEvent, MatchReportStatus,
+    SquadSubmission, SquadPlayer, SquadStatus,
+    SubstitutionRequest, SubstitutionType, SubstitutionStatus,
+    get_sport_family, get_squad_rules,
+)
 from datetime import date, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 # ── ROLE DECORATOR ────────────────────────────────────────────────────────────
@@ -72,17 +82,21 @@ def send_credentials_email(user, temporary_password, role_label):
         f'MKJ SUPA CUP Administration'
     )
     print("\n=== NEW USER ACCOUNT EMAIL ===\n" + text_content + "\n============================\n")
-    email = EmailMultiAlternatives(
-        subject,
-        text_content,
-        getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.go.ke'),
-        [user.email],
-    )
-    email.send(fail_silently=False)
+    try:
+        email = EmailMultiAlternatives(
+            subject,
+            text_content,
+            getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.go.ke'),
+            [user.email],
+        )
+        email.send(fail_silently=True)
+        logger.info("Credentials email sent to %s (%s)", user.email, role_label)
+    except Exception as exc:
+        logger.error("Failed to send credentials email to %s: %s", user.email, exc)
 
 
 COORDINATOR_DISCIPLINE_CHOICES = [
-    ("football", "Football"),
+    ("football", "Soccer"),
     ("volleyball", "Volleyball"),
     ("basketball", "Basketball"),
     ("handball", "Handball"),
@@ -173,6 +187,7 @@ def home_view(request):
     now = timezone.now()
     stats = {
         'competitions': Competition.objects.count(),
+        'disciplines': Competition.objects.values('sport_type').distinct().count(),
         'teams': Team.objects.count(),
         'players': Player.objects.count(),
     }
@@ -281,6 +296,156 @@ def public_competitions_view(request):
     })
 
 
+def public_fixtures_results_view(request):
+    """
+    Public Fixtures & Results page — replaces old Competitions page.
+    Disciplines grouped with Men/Women dropdown; each discipline shows
+    group stages, knockouts, standings tables, and results.
+    """
+    from competitions.models import Pool, PoolTeam
+
+    gender_filter = request.GET.get('gender', '').strip().lower()
+    sport_filter = request.GET.get('sport', '').strip()
+
+    # Build discipline groups with Men/Women variants
+    DISCIPLINE_GROUPS = [
+        {
+            'name': 'Football', 'icon': '\u26BD', 'slug': 'football',
+            'men_key': SportType.FOOTBALL_MEN,
+            'women_key': SportType.FOOTBALL_WOMEN,
+        },
+        {
+            'name': 'Volleyball', 'icon': '\U0001F3D0', 'slug': 'volleyball',
+            'men_key': SportType.VOLLEYBALL_MEN,
+            'women_key': SportType.VOLLEYBALL_WOMEN,
+        },
+        {
+            'name': 'Basketball 5\u00D75', 'icon': '\U0001F3C0', 'slug': 'basketball',
+            'men_key': SportType.BASKETBALL_MEN,
+            'women_key': SportType.BASKETBALL_WOMEN,
+        },
+        {
+            'name': 'Basketball 3\u00D73', 'icon': '\U0001F3C0', 'slug': 'basketball_3x3',
+            'men_key': SportType.BASKETBALL_3X3_MEN,
+            'women_key': SportType.BASKETBALL_3X3_WOMEN,
+        },
+        {
+            'name': 'Handball', 'icon': '\U0001F93E', 'slug': 'handball',
+            'men_key': SportType.HANDBALL_MEN,
+            'women_key': SportType.HANDBALL_WOMEN,
+        },
+    ]
+
+    # If sport filter is provided, narrow to that discipline & gender
+    active_sport_keys = set()
+    if sport_filter:
+        active_sport_keys.add(sport_filter)
+    elif gender_filter in ('men', 'women'):
+        key_attr = 'men_key' if gender_filter == 'men' else 'women_key'
+        for dg in DISCIPLINE_GROUPS:
+            active_sport_keys.add(dg[key_attr])
+
+    # Build per-discipline data
+    disciplines_data = []
+    for dg in DISCIPLINE_GROUPS:
+        for gender_label, sport_key in [('Men', dg['men_key']), ('Women', dg['women_key'])]:
+            if active_sport_keys and sport_key not in active_sport_keys:
+                continue
+
+            comps = Competition.objects.filter(
+                sport_type=sport_key
+            ).exclude(status='cancelled').order_by('-start_date')
+
+            if not comps.exists():
+                disciplines_data.append({
+                    'name': dg['name'],
+                    'icon': dg['icon'],
+                    'slug': dg['slug'],
+                    'gender': gender_label,
+                    'sport_key': sport_key,
+                    'competitions': [],
+                })
+                continue
+
+            comp_list = []
+            for comp in comps:
+                # Pool standings
+                pools = Pool.objects.filter(competition=comp).prefetch_related(
+                    'pool_teams__team'
+                ).order_by('name')
+
+                pool_standings = []
+                for pool in pools:
+                    teams = pool.pool_teams.select_related('team').all()
+                    sorted_teams = sorted(
+                        teams,
+                        key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
+                        reverse=True,
+                    )
+                    pool_standings.append({'pool': pool, 'teams': sorted_teams})
+
+                # Group stage fixtures
+                group_fixtures = Fixture.objects.filter(
+                    competition=comp, is_knockout=False
+                ).select_related(
+                    'home_team', 'away_team', 'venue', 'pool'
+                ).order_by('match_date', 'kickoff_time')
+
+                # Knockout fixtures
+                knockout_fixtures = Fixture.objects.filter(
+                    competition=comp, is_knockout=True
+                ).select_related(
+                    'home_team', 'away_team', 'venue', 'winner'
+                ).order_by('knockout_round', 'bracket_position')
+
+                knockout_rounds = {}
+                for f in knockout_fixtures:
+                    round_name = f.get_knockout_round_display() if f.knockout_round else 'Unknown'
+                    knockout_rounds.setdefault(round_name, []).append(f)
+
+                # Recent results (completed)
+                results = Fixture.objects.filter(
+                    competition=comp, status='completed'
+                ).select_related(
+                    'home_team', 'away_team', 'venue'
+                ).order_by('-match_date')[:10]
+
+                # Upcoming fixtures
+                upcoming = Fixture.objects.filter(
+                    competition=comp, match_date__gte=timezone.now().date()
+                ).exclude(
+                    status__in=['completed', 'cancelled']
+                ).select_related(
+                    'home_team', 'away_team', 'venue'
+                ).order_by('match_date')[:10]
+
+                comp_list.append({
+                    'competition': comp,
+                    'pool_standings': pool_standings,
+                    'group_fixtures': group_fixtures,
+                    'knockout_rounds': knockout_rounds,
+                    'results': results,
+                    'upcoming': upcoming,
+                })
+
+            disciplines_data.append({
+                'name': dg['name'],
+                'icon': dg['icon'],
+                'slug': dg['slug'],
+                'gender': gender_label,
+                'sport_key': sport_key,
+                'competitions': comp_list,
+            })
+
+    return render(request, 'public/fixtures_results.html', {
+        'active_page': 'fixtures',
+        'disciplines_data': disciplines_data,
+        'discipline_groups': DISCIPLINE_GROUPS,
+        'gender_filter': gender_filter,
+        'sport_filter': sport_filter,
+    })
+
+
 def public_competition_detail_view(request, pk):
     """Public competition detail with teams and fixtures."""
     competition = get_object_or_404(Competition, pk=pk)
@@ -289,7 +454,7 @@ def public_competition_detail_view(request, pk):
         'home_team', 'away_team', 'venue'
     ).order_by('match_date')
     return render(request, 'public/competition_detail.html', {
-        'active_page': 'competitions',
+        'active_page': 'fixtures',
         'competition': competition,
         'teams': teams,
         'fixtures': fixtures,
@@ -1048,7 +1213,8 @@ def referee_register_view(request):
                 first_name=cd['first_name'],
                 last_name=cd['last_name'],
                 phone=cd.get('phone', ''),
-                county=cd.get('county', ''),
+                county='Makueni',
+                sub_county=cd.get('sub_county', ''),
                 role=UserRole.REFEREE,
                 is_active=False,
             )
@@ -1057,7 +1223,7 @@ def referee_register_view(request):
                 user=user,
                 license_number=cd['license_number'],
                 level=cd.get('level') or 'County',
-                county=cd.get('county', ''),
+                county='Makueni',
                 id_number=cd.get('id_number', ''),
                 years_experience=cd.get('years_experience') or 0,
                 is_approved=False,
@@ -1259,9 +1425,14 @@ def verify_player_view(request, player_pk):
 def squad_select_view(request, fixture_pk):
     """Team Manager picks starters & subs with formation, kit, and GK validation."""
     from django.conf import settings as conf
+    from matches.models import get_squad_rules, get_starters_for_sport, get_sport_family
 
     fixture = get_object_or_404(Fixture, pk=fixture_pk)
     user = request.user
+    sport_type = fixture.competition.sport_type
+    sport_family = get_sport_family(sport_type)
+    squad_rules = get_squad_rules(sport_type)
+    required_starters = get_starters_for_sport(sport_type)
 
     # Determine the manager's team in this fixture
     my_teams = Team.objects.filter(manager=user)
@@ -1320,30 +1491,37 @@ def squad_select_view(request, fixture_pk):
         if overlap:
             errors.append('A player cannot be both a starter and a substitute.')
 
-        min_starters = getattr(conf, 'SQUAD_MIN_STARTERS', 7)
+        # Sport-specific limits
+        min_starters = squad_rules.get('min_starters', 7)
+        max_subs = squad_rules.get('max_subs', 12)
+        max_squad = squad_rules.get('max_squad', 23)
+
         if len(starters_int) < min_starters:
             errors.append(f'At least {min_starters} starters required. You selected {len(starters_int)}.')
-        if len(starters_int) > conf.SQUAD_MAX_STARTERS:
-            errors.append(f'Maximum {conf.SQUAD_MAX_STARTERS} starters allowed.')
-        if len(subs_int) > conf.SQUAD_MAX_SUBS:
-            errors.append(f'Maximum {conf.SQUAD_MAX_SUBS} substitutes allowed.')
+        if len(starters_int) > required_starters:
+            errors.append(f'Maximum {required_starters} starters allowed for this sport.')
+        if len(subs_int) > max_subs:
+            errors.append(f'Maximum {max_subs} substitutes allowed on the team list.')
+        if (len(starters_int) + len(subs_int)) > max_squad:
+            errors.append(f'Maximum {max_squad} total players allowed on the team list.')
 
-        # Validate at least one GK in starters
+        # Validate at least one GK in starters (football & handball)
         starter_players = Player.objects.filter(pk__in=starters_int, team=team)
         sub_players = Player.objects.filter(pk__in=subs_int, team=team)
 
-        starter_gk_count = starter_players.filter(position='GK').count()
-        if starter_gk_count < 1:
-            errors.append('At least one goalkeeper (GK) must be in the starting lineup.')
+        if sport_family in ('football', 'handball'):
+            starter_gk_count = starter_players.filter(position='GK').count()
+            if starter_gk_count < 1:
+                errors.append('At least one goalkeeper (GK) must be in the starting lineup.')
 
-        # Validate at least one GK in subs (if there are subs)
-        if subs_int:
-            sub_gk_count = sub_players.filter(position='GK').count()
-            if sub_gk_count < 1:
-                errors.append('Substitutes must include at least one goalkeeper (GK).')
+            # Validate at least one GK in subs (if there are subs)
+            if subs_int:
+                sub_gk_count = sub_players.filter(position='GK').count()
+                if sub_gk_count < 1:
+                    errors.append('Substitutes must include at least one goalkeeper (GK).')
 
-        # Validate formation is provided
-        if not formation:
+        # Validate formation is provided (football & handball only)
+        if sport_family in ('football', 'handball') and not formation:
             errors.append('Playing formation / units is required (e.g. 4-3-3, 4-4-2).')
 
         # Validate kit choice
@@ -1373,7 +1551,7 @@ def squad_select_view(request, fixture_pk):
             for p in sub_players:
                 SquadPlayer.objects.create(submission=submission, player=p, is_starter=False, shirt_number=p.shirt_number)
 
-            messages.success(request, f'✅ Squad submitted for {fixture.home_team} vs {fixture.away_team}.')
+            messages.success(request, f'✅ Team list submitted for {fixture.home_team} vs {fixture.away_team}.')
             return redirect('matches_list')
 
     # Kit info for display
@@ -1401,12 +1579,17 @@ def squad_select_view(request, fixture_pk):
         'saved_formation': saved_formation,
         'saved_kit': saved_kit,
         'kit_options': kit_options,
+        'sport_family': sport_family,
+        'squad_rules': squad_rules,
         'settings': {
-            'min_starters': getattr(conf, 'SQUAD_MIN_STARTERS', 7),
-            'min_players': conf.SQUAD_MIN_PLAYERS,
-            'max_players': conf.SQUAD_MAX_PLAYERS,
-            'max_starters': conf.SQUAD_MAX_STARTERS,
-            'max_subs': conf.SQUAD_MAX_SUBS,
+            'min_starters': squad_rules.get('min_starters', 7),
+            'min_players': squad_rules.get('min_starters', 7),
+            'max_players': squad_rules.get('max_squad', 23),
+            'max_starters': required_starters,
+            'max_subs': squad_rules.get('max_subs', 12),
+            'normal_sub_limit': squad_rules.get('normal_sub_limit'),
+            'sub_windows': squad_rules.get('sub_windows'),
+            'concussion_sub': squad_rules.get('concussion_sub', False),
         },
     })
 
@@ -1424,7 +1607,9 @@ def squad_review_list_view(request):
             profile = user.referee_profile
             # Show squads for fixtures the referee is the head official
             appointed_fixture_ids = RefereeAppointment.objects.filter(
-                referee=profile, role__in=HEAD_OFFICIAL_ROLES
+                referee=profile,
+                role__in=HEAD_OFFICIAL_ROLES,
+                status='confirmed',
             ).values_list('fixture_id', flat=True)
             pending_squads = SquadSubmission.objects.filter(
                 fixture_id__in=appointed_fixture_ids,
@@ -1439,7 +1624,10 @@ def squad_review_list_view(request):
 
     all_squads = SquadSubmission.objects.exclude(
         status=SquadStatus.DRAFT
-    ).select_related('fixture__home_team', 'fixture__away_team', 'team').order_by('-submitted_at')[:30]
+    ).select_related('fixture__home_team', 'fixture__away_team', 'team')
+    if user.role == 'referee':
+        all_squads = all_squads.filter(fixture_id__in=appointed_fixture_ids)
+    all_squads = all_squads.order_by('-submitted_at')[:30]
 
     return render(request, 'portal/squad_review_list.html', {
         'pending_squads': pending_squads,
@@ -1451,6 +1639,20 @@ def squad_review_list_view(request):
 def squad_review_view(request, squad_pk):
     """Referee reviews a submitted squad — approve or reject."""
     squad = get_object_or_404(SquadSubmission, pk=squad_pk)
+    if request.user.role == 'referee':
+        from referees.models import AppointmentStatus, get_head_official_role
+
+        required_role = get_head_official_role(squad.fixture.competition.sport_type)
+        can_review = RefereeAppointment.objects.filter(
+            fixture=squad.fixture,
+            referee=request.user.referee_profile,
+            role=required_role,
+            status=AppointmentStatus.CONFIRMED,
+        ).exists()
+        if not can_review:
+            messages.error(request, 'Only the confirmed head official appointed to this fixture may review this squad.')
+            return redirect('squad_review_list')
+
     squad_players = squad.squad_players.select_related('player').order_by('-is_starter', 'shirt_number')
     starters = [sp for sp in squad_players if sp.is_starter]
     subs = [sp for sp in squad_players if not sp.is_starter]
@@ -1483,6 +1685,271 @@ def squad_review_view(request, squad_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#   SUBSTITUTION REQUESTS (Team Manager → 4th Official / Referee)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('team_manager', 'admin')
+def substitution_request_view(request, fixture_pk):
+    """Team Manager requests a substitution during a match."""
+    from matches.models import get_starters_for_sport
+
+    fixture = get_object_or_404(Fixture, pk=fixture_pk)
+    user = request.user
+    sport_type = fixture.competition.sport_type
+    sport_family = get_sport_family(sport_type)
+    rules = get_squad_rules(sport_type)
+
+    # Determine the manager's team
+    my_teams = Team.objects.filter(manager=user)
+    if fixture.home_team in my_teams:
+        team = fixture.home_team
+    elif fixture.away_team in my_teams:
+        team = fixture.away_team
+    else:
+        messages.error(request, 'Your team is not involved in this fixture.')
+        return redirect('matches_list')
+
+    # Must have an approved team list
+    team_list = SquadSubmission.objects.filter(
+        fixture=fixture, team=team, status=SquadStatus.APPROVED,
+    ).first()
+    if not team_list:
+        messages.error(request, 'No approved team list found for this match.')
+        return redirect('matches_list')
+
+    # Current match state — who is on the pitch, who is still available
+    executed_subs = SubstitutionRequest.objects.filter(
+        fixture=fixture, team=team, status=SubstitutionStatus.EXECUTED,
+    ).select_related('player_on', 'player_off')
+
+    # Build set of players currently on pitch
+    starters = set(
+        team_list.squad_players.filter(is_starter=True).values_list('player_id', flat=True)
+    )
+    bench = set(
+        team_list.squad_players.filter(is_starter=False).values_list('player_id', flat=True)
+    )
+
+    on_pitch = set(starters)
+    used_from_bench = set()
+    for sub in executed_subs:
+        on_pitch.discard(sub.player_off_id)
+        on_pitch.add(sub.player_on_id)
+        used_from_bench.add(sub.player_on_id)
+
+    available_bench = bench - used_from_bench
+
+    # Substitution counts
+    normal_used = SubstitutionRequest.count_normal_subs_used(fixture, team)
+    concussion_used = SubstitutionRequest.count_concussion_subs_used(fixture, team)
+    windows_used = SubstitutionRequest.count_windows_used(fixture, team)
+    opponent_extra = SubstitutionRequest.opponent_extra_subs_granted(fixture, team)
+
+    normal_limit = rules.get('normal_sub_limit')  # None = unlimited
+    window_limit = rules.get('sub_windows')  # None = unlimited
+    concussion_allowed = rules.get('concussion_sub', False)
+
+    # Effective normal limit: base + any extras from opponent concussion subs
+    effective_normal_limit = None
+    if normal_limit is not None:
+        effective_normal_limit = normal_limit + opponent_extra
+
+    # Pending requests
+    pending = SubstitutionRequest.objects.filter(
+        fixture=fixture, team=team,
+        status__in=[SubstitutionStatus.REQUESTED, SubstitutionStatus.APPROVED],
+    ).select_related('player_on', 'player_off')
+
+    # Player objects for dropdowns
+    on_pitch_players = Player.objects.filter(pk__in=on_pitch).order_by('shirt_number')
+    bench_players = Player.objects.filter(pk__in=available_bench).order_by('shirt_number')
+
+    if request.method == 'POST':
+        player_off_id = request.POST.get('player_off')
+        player_on_id = request.POST.get('player_on')
+        minute = request.POST.get('minute', '0')
+        sub_type = request.POST.get('sub_type', SubstitutionType.NORMAL)
+        reason = request.POST.get('reason', '').strip()
+
+        errors = []
+        try:
+            player_off_id = int(player_off_id)
+            player_on_id = int(player_on_id)
+            minute = int(minute)
+        except (TypeError, ValueError):
+            errors.append('Invalid player or minute value.')
+
+        if not errors:
+            if player_off_id == player_on_id:
+                errors.append('Player on and player off cannot be the same.')
+            if player_off_id not in on_pitch:
+                errors.append('The player being replaced is not currently on the pitch.')
+            if player_on_id not in available_bench:
+                errors.append('The replacement player is not available on the bench.')
+            if sub_type == SubstitutionType.CONCUSSION and not reason:
+                errors.append('Reason is required for concussion substitutions.')
+            if sub_type == SubstitutionType.CONCUSSION and not concussion_allowed:
+                errors.append('Concussion substitutions are not available for this sport.')
+
+            # Check limits (for sports with limits)
+            if sub_type == SubstitutionType.NORMAL and effective_normal_limit is not None:
+                if normal_used >= effective_normal_limit:
+                    errors.append(
+                        f'All {effective_normal_limit} normal substitutions have been used.'
+                    )
+            if sub_type == SubstitutionType.CONCUSSION:
+                if concussion_used >= 1:
+                    errors.append('Only one concussion substitution is allowed per match.')
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+        else:
+            player_off = get_object_or_404(Player, pk=player_off_id)
+            player_on = get_object_or_404(Player, pk=player_on_id)
+
+            # Determine substitution window (soccer only)
+            sub_window = None
+            if sport_family == 'football' and sub_type == SubstitutionType.NORMAL:
+                sub_window = windows_used + 1 if windows_used < (window_limit or 999) else windows_used
+
+            grants_extra = (
+                sub_type == SubstitutionType.CONCUSSION
+                and rules.get('concussion_sub_grants_opponent_extra', False)
+            )
+
+            SubstitutionRequest.objects.create(
+                fixture=fixture,
+                team=team,
+                player_off=player_off,
+                player_on=player_on,
+                minute=minute,
+                sub_type=sub_type,
+                status=SubstitutionStatus.REQUESTED,
+                sub_window=sub_window,
+                grants_opponent_extra=grants_extra,
+                reason=reason,
+                requested_by=user,
+            )
+            messages.success(
+                request,
+                f'Substitution requested: {player_off.get_full_name()} → {player_on.get_full_name()} (min {minute})'
+            )
+            return redirect('substitution_request', fixture_pk=fixture.pk)
+
+    # History of all subs this match
+    all_subs = SubstitutionRequest.objects.filter(
+        fixture=fixture, team=team,
+    ).select_related('player_on', 'player_off', 'approved_by').order_by('minute')
+
+    return render(request, 'portal/substitution_request.html', {
+        'fixture': fixture,
+        'team': team,
+        'team_list': team_list,
+        'on_pitch_players': on_pitch_players,
+        'bench_players': bench_players,
+        'all_subs': all_subs,
+        'pending': pending,
+        'normal_used': normal_used,
+        'concussion_used': concussion_used,
+        'windows_used': windows_used,
+        'normal_limit': effective_normal_limit,
+        'window_limit': window_limit,
+        'concussion_allowed': concussion_allowed,
+        'sport_family': sport_family,
+        'rules': rules,
+    })
+
+
+@role_required('referee', 'admin', 'competition_manager')
+def substitution_approve_view(request, sub_pk):
+    """4th official (normal sub) or referee (concussion sub) approves/denies a substitution."""
+    sub_req = get_object_or_404(SubstitutionRequest, pk=sub_pk)
+
+    if sub_req.status not in (SubstitutionStatus.REQUESTED, SubstitutionStatus.APPROVED):
+        messages.info(request, 'This substitution has already been processed.')
+        return redirect('substitution_match_list', fixture_pk=sub_req.fixture_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'approve':
+            sub_req.status = SubstitutionStatus.APPROVED
+            sub_req.approved_by = request.user
+            sub_req.decided_at = timezone.now()
+            sub_req.save()
+            messages.success(
+                request,
+                f'✅ Substitution approved: {sub_req.player_off.get_full_name()} → {sub_req.player_on.get_full_name()}'
+            )
+
+        elif action == 'execute':
+            sub_req.status = SubstitutionStatus.EXECUTED
+            if not sub_req.approved_by:
+                sub_req.approved_by = request.user
+            sub_req.decided_at = timezone.now()
+            sub_req.save()
+            messages.success(
+                request,
+                f'✅ Substitution executed: {sub_req.player_off.get_full_name()} → {sub_req.player_on.get_full_name()} (min {sub_req.minute})'
+            )
+
+        elif action == 'deny':
+            sub_req.status = SubstitutionStatus.DENIED
+            sub_req.approved_by = request.user
+            sub_req.decided_at = timezone.now()
+            sub_req.denial_reason = request.POST.get('denial_reason', '')
+            sub_req.save()
+            messages.warning(
+                request,
+                f'❌ Substitution denied: {sub_req.player_off.get_full_name()} → {sub_req.player_on.get_full_name()}'
+            )
+
+    return redirect('substitution_match_list', fixture_pk=sub_req.fixture_id)
+
+
+@role_required('referee', 'admin', 'competition_manager', 'coordinator')
+def substitution_match_list_view(request, fixture_pk):
+    """4th Official / Referee view: all substitution requests for a fixture."""
+    fixture = get_object_or_404(Fixture, pk=fixture_pk)
+    sport_type = fixture.competition.sport_type
+    rules = get_squad_rules(sport_type)
+
+    home_subs = SubstitutionRequest.objects.filter(
+        fixture=fixture, team=fixture.home_team,
+    ).select_related('player_on', 'player_off', 'requested_by', 'approved_by').order_by('minute')
+
+    away_subs = SubstitutionRequest.objects.filter(
+        fixture=fixture, team=fixture.away_team,
+    ).select_related('player_on', 'player_off', 'requested_by', 'approved_by').order_by('minute')
+
+    # Counts for both teams
+    home_normal = SubstitutionRequest.count_normal_subs_used(fixture, fixture.home_team)
+    away_normal = SubstitutionRequest.count_normal_subs_used(fixture, fixture.away_team)
+    home_concussion = SubstitutionRequest.count_concussion_subs_used(fixture, fixture.home_team)
+    away_concussion = SubstitutionRequest.count_concussion_subs_used(fixture, fixture.away_team)
+    home_extra = SubstitutionRequest.opponent_extra_subs_granted(fixture, fixture.home_team)
+    away_extra = SubstitutionRequest.opponent_extra_subs_granted(fixture, fixture.away_team)
+
+    normal_limit = rules.get('normal_sub_limit')
+
+    return render(request, 'portal/substitution_match_list.html', {
+        'fixture': fixture,
+        'home_subs': home_subs,
+        'away_subs': away_subs,
+        'home_normal': home_normal,
+        'away_normal': away_normal,
+        'home_concussion': home_concussion,
+        'away_concussion': away_concussion,
+        'home_normal_limit': (normal_limit + home_extra) if normal_limit else None,
+        'away_normal_limit': (normal_limit + away_extra) if normal_limit else None,
+        'concussion_allowed': rules.get('concussion_sub', False),
+        'rules': rules,
+        'sport_family': get_sport_family(sport_type),
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #   MATCH REPORT (Referee submits)
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1490,21 +1957,23 @@ def squad_review_view(request, squad_pk):
 def match_report_form_view(request, fixture_pk):
     """Referee creates / edits a match report for a fixture they officiated."""
     from matches.models import get_sport_config, get_event_types_for_sport, PeriodScore
-    from referees.models import HEAD_OFFICIAL_ROLES
+    from referees.models import AppointmentStatus, get_head_official_role
 
     fixture = get_object_or_404(Fixture, pk=fixture_pk)
     user = request.user
     sport_type = fixture.competition.sport_type
     sport_cfg = get_sport_config(sport_type)
     sport_event_types = get_event_types_for_sport(sport_type)
+    head_official_role = get_head_official_role(sport_type)
 
     # Only the head official (or admin) may submit the match report
     if user.role == 'referee':
         is_head = RefereeAppointment.objects.filter(
             fixture=fixture,
             referee=user.referee_profile,
-            role__in=HEAD_OFFICIAL_ROLES,
-        ).exclude(status='replaced').exists()
+            role=head_official_role,
+            status=AppointmentStatus.CONFIRMED,
+        ).exists()
         if not is_head:
             messages.error(request, 'Only the head official (centre referee) appointed to this fixture may submit the match report.')
             return redirect('referee_portal')
@@ -1576,8 +2045,18 @@ def match_report_form_view(request, fixture_pk):
         else:
             # Determine referee profile
             ref_profile = None
-            if hasattr(user, 'referee_profile'):
+            if user.role == 'referee' and hasattr(user, 'referee_profile'):
                 ref_profile = user.referee_profile
+            elif hasattr(user, 'referee_profile'):
+                ref_profile = user.referee_profile
+            else:
+                head_appointment = RefereeAppointment.objects.select_related('referee').filter(
+                    fixture=fixture,
+                    role=head_official_role,
+                    status=AppointmentStatus.CONFIRMED,
+                ).first()
+                if head_appointment:
+                    ref_profile = head_appointment.referee
             report = MatchReport(
                 fixture=fixture,
                 referee=ref_profile,
@@ -1963,18 +2442,10 @@ def referee_edit_profile_view(request):
         user.first_name = request.POST.get('first_name', user.first_name)
         user.last_name = request.POST.get('last_name', user.last_name)
         new_phone = request.POST.get('phone', user.phone).strip()
-        # Normalize phone so users can enter 7XXXXXXXX or 07XXXXXXXX.
-        if new_phone.startswith('0') and len(new_phone) == 10:
-            new_phone = f'+254{new_phone[1:]}'
-        elif new_phone.startswith('7') and len(new_phone) == 9:
-            new_phone = f'+254{new_phone}'
-        elif new_phone.startswith('254') and len(new_phone) == 12:
-            new_phone = f'+{new_phone}'
-
-        # Validate normalized phone format.
-        import re
-        if new_phone and not re.match(r'^\+254\d{9}$', new_phone):
-            messages.error(request, 'Phone number must be valid. Use 7XXXXXXXX, 07XXXXXXXX or +254XXXXXXXXX.')
+        try:
+            new_phone = validate_kenya_phone_or_raise(new_phone, 'Phone number')
+        except ValidationError as exc:
+            messages.error(request, str(exc))
             return redirect('referee_edit_profile')
         user.phone = new_phone
         user.save(update_fields=['first_name', 'last_name', 'phone'])
@@ -2138,6 +2609,16 @@ def coordinator_competitions_view(request):
         'status_choices': CompetitionStatus.choices,
         'current_status': status_filter,
     })
+
+
+@role_required('coordinator', 'admin')
+def coordinator_create_competition_view(request):
+    """Coordinators manage the existing MKJ competition instead of creating new ones."""
+    messages.info(
+        request,
+        'Coordinators do not create competitions. Use your discipline portal to allocate registered teams to groups, auto-generate fixtures, reschedule matches, and appoint referees.',
+    )
+    return redirect('coordinator_competitions')
 
 
 @role_required('coordinator', 'admin')
@@ -2767,7 +3248,7 @@ def coordinator_squads_view(request):
     squads = squads.select_related(
         'fixture__competition', 'fixture__home_team', 'fixture__away_team',
         'team',
-    ).order_by('-created_at')
+    ).order_by('-submitted_at')
 
     return render(request, 'portal/coordinator/squads.html', {
         'squads': squads,
@@ -3321,22 +3802,20 @@ def competition_report_approve_view(request, pk, report_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   REFEREE MANAGER — MATCH APPOINTMENTS
+#   APPOINTMENTS MANAGEMENT
 # ══════════════════════════════════════════════════════════════════════════════
 
 from referees.models import AppointmentRole, AppointmentStatus as ApptStatus, get_required_roles
 
 
-@role_required('coordinator', 'admin')
+@role_required('admin')
 def referee_appointments_view(request):
-    """
-    Referee Manager — overview of all fixtures that need officials,
-    summary statistics and appointment status per match.
-    """
-    today = date.today()
-    filter_status = request.GET.get('status', 'upcoming')  # upcoming | all | past
+    """Admin overview for referee appointments across all fixtures."""
+    from referees.models import get_optional_roles
 
-    # Base queryset: upcoming confirmed/pending fixtures
+    today = date.today()
+    filter_status = request.GET.get('status', 'upcoming')
+
     fixtures_qs = Fixture.objects.select_related(
         'competition', 'home_team', 'away_team', 'venue',
     ).prefetch_related('referee_appointments__referee__user')
@@ -3345,45 +3824,59 @@ def referee_appointments_view(request):
         fixtures_qs = fixtures_qs.filter(match_date__gte=today).exclude(status__in=['cancelled'])
     elif filter_status == 'past':
         fixtures_qs = fixtures_qs.filter(match_date__lt=today)
-    else:
-        fixtures_qs = fixtures_qs.all()
 
     fixtures_qs = fixtures_qs.order_by('match_date', 'kickoff_time')
 
-    # Build enriched list
     role_labels = dict(AppointmentRole.choices)
     fixture_data = []
     total_needing = 0
-    total_fully_appointed = 0
     total_partially = 0
+    total_fully_appointed = 0
 
     for fixture in fixtures_qs:
         required_roles = get_required_roles(fixture.competition.sport_type)
-        appointments = {a.role: a for a in fixture.referee_appointments.all()}
+        optional_roles = get_optional_roles(fixture.competition.sport_type)
+        appointments = {
+            appointment.role: appointment
+            for appointment in fixture.referee_appointments.all()
+            if appointment.status != 'replaced'
+        }
+
         roles_info = []
         filled = 0
         for role_key in required_roles:
-            appt = appointments.get(role_key)
+            appointment = appointments.get(role_key)
             roles_info.append({
                 'role_key': role_key,
                 'role_label': role_labels.get(role_key, role_key),
-                'appointment': appt,
-                'referee_name': appt.referee.user.get_full_name() if appt else None,
-                'status': appt.status if appt else None,
-                'status_display': appt.get_status_display() if appt else 'Not Appointed',
+                'appointment': appointment,
+                'referee_name': appointment.referee.user.get_full_name() if appointment else None,
+                'status': appointment.status if appointment else None,
+                'is_mandatory': True,
             })
-            if appt:
+            if appointment:
                 filled += 1
 
-        needs_officials = filled < len(required_roles)
-        is_fully_appointed = filled == len(required_roles)
+        for role_key in optional_roles:
+            appointment = appointments.get(role_key)
+            roles_info.append({
+                'role_key': role_key,
+                'role_label': role_labels.get(role_key, role_key),
+                'appointment': appointment,
+                'referee_name': appointment.referee.user.get_full_name() if appointment else None,
+                'status': appointment.status if appointment else None,
+                'is_mandatory': False,
+            })
 
-        if needs_officials:
-            total_needing += 1
+        is_fully_appointed = filled == len(required_roles)
+        needs_officials = filled < len(required_roles)
+
         if is_fully_appointed:
             total_fully_appointed += 1
         elif filled > 0:
             total_partially += 1
+        else:
+            total_needing += 1
 
         fixture_data.append({
             'fixture': fixture,
@@ -3394,9 +3887,6 @@ def referee_appointments_view(request):
             'is_fully_appointed': is_fully_appointed,
         })
 
-    # Summary stats
-    approved_referees_count = RefereeProfile.objects.filter(is_approved=True).count()
-
     return render(request, 'portal/referee_appointments.html', {
         'fixture_data': fixture_data,
         'filter_status': filter_status,
@@ -3404,7 +3894,7 @@ def referee_appointments_view(request):
         'total_needing': total_needing,
         'total_fully_appointed': total_fully_appointed,
         'total_partially': total_partially,
-        'approved_referees_count': approved_referees_count,
+        'approved_referees_count': RefereeProfile.objects.filter(is_approved=True).count(),
     })
 
 
@@ -4290,378 +4780,6 @@ def cm_competition_rules_view(request, pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   VERIFICATION OFFICER — COUNTY-BASED VERIFICATION FLOW
-# ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
-def vo_registered_counties_view(request):
-    """List all registered (approved) counties with stats."""
-    counties = CountyRegistration.objects.filter(
-        status='approved'
-    ).order_by('county')
-
-    county_data = []
-    for reg in counties:
-        disciplines = reg.disciplines.all()
-        total_players = CountyPlayer.objects.filter(discipline__registration=reg).count()
-        pending_players = CountyPlayer.objects.filter(
-            discipline__registration=reg, verification_status='pending'
-        ).count()
-        verified_players = CountyPlayer.objects.filter(
-            discipline__registration=reg, verification_status='verified'
-        ).count()
-        county_data.append({
-            'registration': reg,
-            'discipline_count': disciplines.count(),
-            'total_players': total_players,
-            'pending_players': pending_players,
-            'verified_players': verified_players,
-        })
-
-    return render(request, 'portal/verification/registered_counties.html', {
-        'county_data': county_data,
-        'total_counties': len(county_data),
-    })
-
-
-@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
-def vo_county_disciplines_view(request, county_reg_pk):
-    """Show disciplines registered under a specific county."""
-    reg = get_object_or_404(CountyRegistration, pk=county_reg_pk, status='approved')
-    disciplines = reg.disciplines.prefetch_related('players', 'technical_bench').all()
-
-    disc_data = []
-    for disc in disciplines:
-        players = disc.players.all()
-        bench = disc.technical_bench.all()
-        disc_data.append({
-            'discipline': disc,
-            'total_players': players.count(),
-            'pending': players.filter(verification_status='pending').count(),
-            'verified': players.filter(verification_status='verified').count(),
-            'rejected': players.filter(verification_status='rejected').count(),
-            'resubmit': players.filter(verification_status='resubmit').count(),
-            'bench_count': bench.count(),
-        })
-
-    return render(request, 'portal/verification/county_disciplines.html', {
-        'reg': reg,
-        'disc_data': disc_data,
-    })
-
-
-@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
-def vo_discipline_players_view(request, discipline_pk):
-    """Show players in a discipline with gender filter, linking to verification."""
-    discipline = get_object_or_404(
-        CountyDiscipline.objects.select_related('registration'),
-        pk=discipline_pk,
-    )
-
-    tab = request.GET.get('tab', 'pending')
-    player_query = request.GET.get('q', '').strip()
-
-    players = discipline.players.all().order_by('last_name', 'first_name')
-
-    if player_query:
-        players = players.filter(
-            Q(first_name__icontains=player_query) |
-            Q(last_name__icontains=player_query) |
-            Q(national_id_number__icontains=player_query)
-        )
-
-    pending = players.filter(verification_status='pending')
-    verified = players.filter(verification_status='verified')
-    rejected = players.filter(verification_status='rejected')
-    resubmit = players.filter(verification_status='resubmit')
-
-    return render(request, 'portal/verification/discipline_players.html', {
-        'discipline': discipline,
-        'reg': discipline.registration,
-        'tab': tab,
-        'pending_players': pending,
-        'verified_players': verified,
-        'rejected_players': rejected,
-        'resubmit_players': resubmit,
-        'player_query': player_query,
-        'stats': {
-            'pending': pending.count(),
-            'verified': verified.count(),
-            'rejected': rejected.count(),
-            'resubmit': resubmit.count(),
-        },
-    })
-
-
-@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
-def vo_discipline_delegation_view(request, discipline_pk):
-    """View technical bench / delegation for a discipline (separate from players)."""
-    discipline = get_object_or_404(
-        CountyDiscipline.objects.select_related('registration'),
-        pk=discipline_pk,
-    )
-    bench_members = discipline.technical_bench.all().order_by('role')
-
-    return render(request, 'portal/verification/discipline_delegation.html', {
-        'discipline': discipline,
-        'reg': discipline.registration,
-        'bench_members': bench_members,
-    })
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY PLAYER VERIFICATION (Competition Manager / Organising Secretary)
-# ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
-def county_player_verification_list_view(request):
-    """CM view: All county players by verification status with filters."""
-    tab = request.GET.get('tab', 'pending')
-    discipline_filter = request.GET.get('discipline', '')
-    county_filter = request.GET.get('county', '')
-    huduma_filter = request.GET.get('huduma', '')
-    clearance_filter = request.GET.get('clearance', '')
-    player_query = request.GET.get('q', '').strip()
-
-    players = CountyPlayer.objects.select_related(
-        'discipline', 'discipline__registration',
-    ).order_by('-registered_at', 'last_name')
-
-    if discipline_filter:
-        players = players.filter(discipline__sport_type=discipline_filter)
-    if county_filter:
-        players = players.filter(discipline__registration__county=county_filter)
-    if huduma_filter:
-        players = players.filter(huduma_status=huduma_filter)
-    if clearance_filter:
-        players = players.filter(higher_league_status=clearance_filter)
-    if player_query:
-        players = players.filter(
-            Q(first_name__icontains=player_query) |
-            Q(last_name__icontains=player_query) |
-            Q(national_id_number__icontains=player_query)
-        )
-
-    pending = players.filter(verification_status='pending')
-    verified = players.filter(verification_status='verified')
-    rejected = players.filter(verification_status='rejected')
-    resubmit = players.filter(verification_status='resubmit')
-
-    # Build discipline filter choices
-    disciplines = (
-        CountyDiscipline.objects.values_list('sport_type', flat=True)
-        .distinct().order_by('sport_type')
-    )
-    discipline_choices = [(st, dict(SportType.choices).get(st, st)) for st in disciplines]
-
-    # Build county filter choices
-    counties = (
-        CountyRegistration.objects.values_list('county', flat=True)
-        .distinct().order_by('county')
-    )
-    county_choices = [(c, dict(KenyaCounty.choices).get(c, c)) for c in counties]
-
-    return render(request, 'portal/cm/county_player_verification.html', {
-        'tab': tab,
-        'pending_players': pending,
-        'verified_players': verified,
-        'rejected_players': rejected,
-        'resubmit_players': resubmit,
-        'disciplines': discipline_choices,
-        'counties': county_choices,
-        'discipline_filter': discipline_filter,
-        'county_filter': county_filter,
-        'huduma_filter': huduma_filter,
-        'clearance_filter': clearance_filter,
-        'player_query': player_query,
-        'stats': {
-            'pending': pending.count(),
-            'verified': verified.count(),
-            'rejected': rejected.count(),
-            'resubmit': resubmit.count(),
-        },
-    })
-
-
-@role_required('competition_manager', 'chief_sports_officer', 'admin', 'verification_officer')
-def verify_county_player_view(request, player_pk):
-    """CM view: Inspect a county player's documents and verify/reject/resubmit."""
-    player = get_object_or_404(
-        CountyPlayer.objects.select_related('discipline', 'discipline__registration'),
-        pk=player_pk,
-    )
-    is_football = player.discipline.sport_type in ('football_men', 'football_women')
-    clearance_check_label = 'FIFA Connect' if is_football else 'Higher League'
-
-    blocking_reasons = []
-    if player.age < 18 or player.age > 23:
-        blocking_reasons.append('Age must be between 18 and 23.')
-    if player.huduma_status != 'verified':
-        blocking_reasons.append('Huduma age verification must be marked as Verified.')
-    if player.higher_league_status != 'clear':
-        blocking_reasons.append(f'{clearance_check_label} check must be marked as Clear.')
-
-    can_verify = len(blocking_reasons) == 0
-
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        from admin_dashboard.models import ActivityLog
-
-        if action == 'huduma_verify':
-            player.huduma_status = 'verified'
-            player.huduma_verified_at = timezone.now()
-            player.save(update_fields=['huduma_status', 'huduma_verified_at'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'Huduma check marked VERIFIED for county player {player.first_name} {player.last_name} '
-                            f'({player.discipline.get_sport_type_display()} - {player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.success(request, f'Huduma check marked verified for {player.first_name} {player.last_name}.')
-            return redirect('verify_county_player', player_pk=player.pk)
-
-        elif action == 'huduma_fail':
-            player.huduma_status = 'failed'
-            player.huduma_verified_at = None
-            player.save(update_fields=['huduma_status', 'huduma_verified_at'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'Huduma check marked FAILED for county player {player.first_name} {player.last_name} '
-                            f'({player.discipline.get_sport_type_display()} - {player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.warning(request, f'Huduma check marked failed for {player.first_name} {player.last_name}.')
-            return redirect('verify_county_player', player_pk=player.pk)
-
-        elif action == 'huduma_reset':
-            player.huduma_status = 'not_checked'
-            player.huduma_verified_at = None
-            player.save(update_fields=['huduma_status', 'huduma_verified_at'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'Huduma check reset for county player {player.first_name} {player.last_name} '
-                            f'({player.discipline.get_sport_type_display()} - {player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.info(request, f'Huduma check reset for {player.first_name} {player.last_name}.')
-            return redirect('verify_county_player', player_pk=player.pk)
-
-        elif action == 'clearance_clear':
-            player.higher_league_status = 'clear'
-            player.higher_league_details = ''
-            player.save(update_fields=['higher_league_status', 'higher_league_details'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'{clearance_check_label} check marked CLEAR for county player '
-                            f'{player.first_name} {player.last_name} '
-                            f'({player.discipline.get_sport_type_display()} - {player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.success(request, f'{clearance_check_label} check marked clear for {player.first_name} {player.last_name}.')
-            return redirect('verify_county_player', player_pk=player.pk)
-
-        elif action == 'clearance_flag':
-            details = request.POST.get('higher_league_details', '').strip()
-            player.higher_league_status = 'flagged'
-            player.higher_league_details = details
-            player.save(update_fields=['higher_league_status', 'higher_league_details'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'{clearance_check_label} check FLAGGED for county player '
-                            f'{player.first_name} {player.last_name} '
-                            f'({player.discipline.get_sport_type_display()} - {player.discipline.registration.county}): {details}',
-                user=request.user,
-            )
-            messages.warning(request, f'{clearance_check_label} check flagged for {player.first_name} {player.last_name}.')
-            return redirect('verify_county_player', player_pk=player.pk)
-
-        elif action == 'clearance_reset':
-            player.higher_league_status = 'not_checked'
-            player.higher_league_details = ''
-            player.save(update_fields=['higher_league_status', 'higher_league_details'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'{clearance_check_label} check reset for county player '
-                            f'{player.first_name} {player.last_name} '
-                            f'({player.discipline.get_sport_type_display()} - {player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.info(request, f'{clearance_check_label} check reset for {player.first_name} {player.last_name}.')
-            return redirect('verify_county_player', player_pk=player.pk)
-
-        if action == 'verify':
-            # Enforce prerequisite checks before final verification.
-            if not can_verify:
-                messages.error(request, 'Cannot verify yet: ' + ' '.join(blocking_reasons))
-                return redirect('verify_county_player', player_pk=player.pk)
-
-            player.verification_status = 'verified'
-            player.rejection_reason = ''
-            player.save(update_fields=['verification_status', 'rejection_reason'])
-            if hasattr(player.discipline, 'linked_team') and player.discipline.linked_team:
-                player.discipline.linked_team.sync_players_from_county_discipline()
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'County player {player.first_name} {player.last_name} verified '
-                            f'({player.discipline.get_sport_type_display()} — '
-                            f'{player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.success(request, f'✅ {player.first_name} {player.last_name} has been verified.')
-
-        elif action == 'reject':
-            reason = request.POST.get('rejection_reason', '').strip()
-            player.verification_status = 'rejected'
-            player.rejection_reason = reason
-            player.save(update_fields=['verification_status', 'rejection_reason'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'County player {player.first_name} {player.last_name} rejected '
-                            f'({player.discipline.get_sport_type_display()} — '
-                            f'{player.discipline.registration.county}): {reason}',
-                user=request.user,
-            )
-            messages.warning(request, f'❌ {player.first_name} {player.last_name} has been rejected.')
-
-        elif action == 'resubmit':
-            reason = request.POST.get('rejection_reason', '').strip()
-            player.verification_status = 'resubmit'
-            player.rejection_reason = reason
-            player.save(update_fields=['verification_status', 'rejection_reason'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'County player {player.first_name} {player.last_name} sent back for '
-                            f'resubmission ({player.discipline.get_sport_type_display()} — '
-                            f'{player.discipline.registration.county}): {reason}',
-                user=request.user,
-            )
-            messages.info(request, f'🔄 {player.first_name} {player.last_name} sent back for resubmission.')
-
-        elif action == 'reset':
-            player.verification_status = 'pending'
-            player.rejection_reason = ''
-            player.save(update_fields=['verification_status', 'rejection_reason'])
-            ActivityLog.objects.create(
-                action='PLAYER_UPDATE',
-                description=f'County player {player.first_name} {player.last_name} reset to pending '
-                            f'({player.discipline.get_sport_type_display()} — '
-                            f'{player.discipline.registration.county})',
-                user=request.user,
-            )
-            messages.info(request, f'🔄 {player.first_name} {player.last_name} reset to pending.')
-
-        return redirect('county_player_verification_list')
-
-    return render(request, 'portal/cm/verify_county_player.html', {
-        'player': player,
-        'is_football': is_football,
-        'clearance_check_label': clearance_check_label,
-        'can_verify': can_verify,
-        'blocking_reasons': blocking_reasons,
-    })
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #   M-PESA STK PUSH — AJAX ENDPOINT
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -4728,13 +4846,19 @@ def county_admin_register_view(request):
 
             email_sent = True
             try:
-                send_credentials_email(user, temp_password, 'County Sports Director')
+                send_credentials_email(user, temp_password, 'Sub-County Sports Director')
             except Exception:
                 email_sent = False
 
             # ── Collect payment data from registration form ──
             payment_method = request.POST.get('payment_method', '').strip()
             mpesa_phone = request.POST.get('mpesa_phone', '').strip()
+            if mpesa_phone:
+                try:
+                    mpesa_phone = validate_kenya_phone_or_raise(mpesa_phone, 'M-Pesa phone number')
+                except ValidationError as exc:
+                    messages.error(request, str(exc))
+                    return redirect('public_county_admin_register')
             mpesa_reference = request.POST.get('mpesa_reference', '').strip()
             mpesa_checkout_id = request.POST.get('mpesa_checkout_id', '').strip()
             bank_reference = request.POST.get('bank_reference', '').strip()
@@ -4824,10 +4948,10 @@ def cec_sports_portal_view(request):
 #   COUNTY SPORTS ADMIN — PORTAL DASHBOARD
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_dashboard_view(request):
     """County admin home — registration status, payment, disciplines, players."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     disciplines = reg.disciplines.all()
     player_count = sum(d.player_count for d in disciplines)
     delegation_members = reg.delegation_members.all().order_by('role', 'full_name')
@@ -4848,10 +4972,10 @@ def county_admin_dashboard_view(request):
 #   COUNTY SPORTS ADMIN — PAYMENT SUBMISSION
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_payment_view(request):
     """County admin submits payment proof (M-Pesa or bank slip)."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     reg.status = CountyRegStatus.APPROVED
     if not reg.approved_at:
         reg.approved_at = timezone.now()
@@ -4902,10 +5026,10 @@ def county_admin_add_discipline_view(request):
 #   COUNTY SPORTS ADMIN — PLAYER MANAGEMENT
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_discipline_players_view(request, discipline_pk):
     """View players in a discipline and add new ones."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
     players = discipline.players.all()
 
@@ -4916,10 +5040,10 @@ def county_admin_discipline_players_view(request, discipline_pk):
     })
 
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_add_player_view(request, discipline_pk):
     """Add a player to a discipline."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
 
     if not reg.is_approved:
@@ -4934,8 +5058,9 @@ def county_admin_add_player_view(request, discipline_pk):
         )
         return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
 
+    disc_sc = getattr(discipline, 'sub_county', '') or ''
     if request.method == 'POST':
-        form = CountyPlayerForm(request.POST, request.FILES)
+        form = CountyPlayerForm(request.POST, request.FILES, discipline_sub_county=disc_sc)
         if form.is_valid():
             player = form.save(commit=False)
             player.discipline = discipline
@@ -4947,19 +5072,20 @@ def county_admin_add_player_view(request, discipline_pk):
             )
             return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
     else:
-        form = CountyPlayerForm()
+        form = CountyPlayerForm(discipline_sub_county=disc_sc)
 
     return render(request, 'portal/county_admin/add_player.html', {
         'form': form,
         'discipline': discipline,
         'reg': reg,
+        'wards_json': json.dumps(MAKUENI_SUBCOUNTY_WARDS),
     })
 
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_delete_player_view(request, player_pk):
     """Remove a player from a discipline."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     player = get_object_or_404(CountyPlayer, pk=player_pk, discipline__registration=reg)
     discipline_pk = player.discipline.pk
 
@@ -5153,10 +5279,49 @@ def county_admin_delete_bench_member_view(request, member_pk):
     return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
 
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
+def county_admin_kit_colors_view(request, discipline_pk):
+    """County admin / sub-county officer edits kit colours for the discipline's linked team."""
+    reg = _get_primary_registration_for_user(
+        request.user,
+        auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER,
+    )
+    if not reg:
+        messages.error(request, 'Assign a county before managing kits.')
+        return redirect('dashboard')
+
+    discipline = _get_managed_discipline(request.user, discipline_pk) if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER else get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
+
+    # Ensure linked team exists
+    team = getattr(discipline, 'linked_team', None)
+    if team is None:
+        team = discipline.ensure_linked_team()
+    if team is None:
+        messages.error(request, 'Unable to resolve the linked team for this discipline.')
+        return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+
+    if request.method == 'POST':
+        form = KitColorsForm(request.POST, request.FILES, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Kit colours updated successfully.')
+            redir = 'subcounty_officer_discipline_players' if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER else 'county_admin_discipline_players'
+            return redirect(redir, discipline_pk=discipline_pk)
+    else:
+        form = KitColorsForm(instance=team)
+
+    return render(request, 'portal/county_admin/kit_colors.html', {
+        'form': form,
+        'discipline': discipline,
+        'reg': reg,
+        'team': team,
+    })
+
+
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_delegation_members_view(request):
     """County sports director manages county-level delegation officials."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
 
     if not reg.is_approved:
         messages.warning(request, 'Registration must be approved before adding delegation members.')
@@ -5222,10 +5387,10 @@ def county_admin_delegation_members_view(request):
     })
 
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_delete_delegation_member_view(request, member_pk):
     """Remove a county-level delegation member and linked account if present."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     member = get_object_or_404(CountyDelegationMember, pk=member_pk, registration=reg)
 
     if request.method == 'POST':
@@ -5243,10 +5408,10 @@ def county_admin_delete_delegation_member_view(request, member_pk):
 #   COUNTY SPORTS DIRECTOR — PLAYER VERIFICATION OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin')
+@role_required('county_sports_admin', 'subcounty_sports_officer')
 def county_admin_verification_view(request):
     """County sports director views verification status of all their players."""
-    reg = get_object_or_404(CountyRegistration, user=request.user)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     disciplines = reg.disciplines.prefetch_related('players').all()
 
     approved_players = []
@@ -5306,13 +5471,10 @@ def player_profile_view(request, player_pk):
     )
     if player_type == 'county':
         # County sports director can view their own county's players
-        if user.role == 'county_sports_admin':
-            try:
-                reg = CountyRegistration.objects.get(user=user)
-                if player.discipline.registration == reg:
-                    can_view = True
-            except CountyRegistration.DoesNotExist:
-                pass
+        if user.role in ('county_sports_admin', 'subcounty_sports_officer'):
+            reg = _get_primary_registration_for_user(user)
+            if reg and player.discipline.registration == reg:
+                can_view = True
         # Team manager can view verified players in their county
         if user.role == 'team_manager':
             try:
@@ -5776,13 +5938,10 @@ def team_list_pdf_view(request, discipline_pk):
         user.is_superuser or
         user.role in ('admin', 'competition_manager')
     )
-    if user.role == 'county_sports_admin':
-        try:
-            reg = CountyRegistration.objects.get(user=user)
-            if discipline.registration == reg:
-                can_download = True
-        except CountyRegistration.DoesNotExist:
-            pass
+    if user.role in ('county_sports_admin', 'subcounty_sports_officer'):
+        reg = _get_primary_registration_for_user(user)
+        if reg and discipline.registration == reg:
+            can_download = True
     if user.role == 'team_manager':
         try:
             bench = TechnicalBenchMember.objects.get(user=user)
@@ -5849,12 +6008,20 @@ def team_list_pdf_view(request, discipline_pk):
             fontSize=11, spaceAfter=2, alignment=1,
         )
 
+        sport_display = discipline.get_sport_type_display()
+        # Extract gender from sport display e.g. "Soccer (Men)" -> "Men"
+        gender = ''
+        if '(' in sport_display and ')' in sport_display:
+            gender = sport_display.split('(')[-1].replace(')', '').strip()
+        sport_name = sport_display.split('(')[0].strip() if '(' in sport_display else sport_display
+        sub_county = discipline.sub_county or discipline.registration.county or ''
+
         elements.append(Paragraph(
             "KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION",
             header_style,
         ))
         elements.append(Paragraph(
-            f"{discipline.registration.county} County — {discipline.get_sport_type_display()}",
+            f"{sub_county} Sub County {sport_display}",
             title_style,
         ))
         elements.append(Paragraph("Official Team List", subtitle_style))
@@ -5950,9 +6117,10 @@ def team_list_pdf_view(request, discipline_pk):
         doc.build(elements)
         buffer.seek(0)
 
-        county = discipline.registration.county
-        sport = discipline.get_sport_type_display().replace(' ', '_')
-        filename = f"MKJ SUPA CUP_{county}_{sport}_Team_List.pdf"
+        safe_subcounty = (sub_county or 'Unknown').replace(' ', '_')
+        safe_sport = sport_name.replace(' ', '_')
+        safe_gender = gender.replace(' ', '_') if gender else ''
+        filename = f"{safe_subcounty}_Sub_County_{safe_sport}_Team_List_{safe_gender}.pdf".replace('__', '_')
 
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -6987,8 +7155,9 @@ def subcounty_officer_add_player_view(request, discipline_pk):
         )
         return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
 
+    disc_sc = getattr(discipline, 'sub_county', '') or ''
     if request.method == 'POST':
-        form = CountyPlayerForm(request.POST, request.FILES)
+        form = CountyPlayerForm(request.POST, request.FILES, discipline_sub_county=disc_sc)
         if form.is_valid():
             player = form.save(commit=False)
             player.discipline = discipline
@@ -7000,12 +7169,13 @@ def subcounty_officer_add_player_view(request, discipline_pk):
             )
             return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
     else:
-        form = CountyPlayerForm()
+        form = CountyPlayerForm(discipline_sub_county=disc_sc)
 
     return render(request, 'portal/subcounty_officer/add_player.html', {
         'form': form,
         'discipline': discipline,
         'reg': county_reg,
+        'wards_json': json.dumps(MAKUENI_SUBCOUNTY_WARDS),
     })
 
 
@@ -7209,7 +7379,7 @@ def verified_players_pdf_view(request):
         players = CountyPlayer.objects.filter(
             verification_status='verified', discipline__in=disciplines,
         )
-        scope_label = f"{user.sub_county or 'Sub-County'} — {user.county or ''}"
+        scope_label = f"{user.sub_county or 'Sub-County'} Sub County"
     elif user.role == 'team_manager':
         try:
             bench = TechnicalBenchMember.objects.select_related(
@@ -7354,7 +7524,9 @@ def verified_players_pdf_view(request):
         doc.build(elements)
         buffer.seek(0)
 
-        filename = f"MKJ_SUPA_CUP_Verified_Players_{timezone.now().strftime('%Y%m%d')}.pdf"
+        # Build descriptive filename with subcounty, discipline, gender
+        scope_parts = scope_label.replace(' — ', '_').replace(' ', '_')
+        filename = f"{scope_parts}_Verified_Players_{timezone.now().strftime('%Y%m%d')}.pdf"
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response

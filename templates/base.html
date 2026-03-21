@@ -41,8 +41,6 @@
                 <div class="nav-dropdown-menu">
                     <a href="{% url 'teams_list' %}"><i class="bi bi-people"></i> All Teams</a>
                     {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'verification_officer' %}
-
-                    <a href="{% url 'county_player_verification_list' %}"><i class="bi bi-person-vcard"></i> Player Verification</a>
                     <a href="{% url 'player_clearance_dashboard' %}"><i class="bi bi-shield-check"></i> Player Clearance</a>
                     {% endif %}
                 </div>
@@ -53,7 +51,7 @@
             <li><a href="{% url 'treasurer_dashboard' %}" class="{% if 'treasurer' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Treasurer</a></li>
             {% endif %}
             {% if user.role == 'county_sports_admin' %}
-            <li><a href="{% url 'county_admin_dashboard' %}" class="{% if 'county_admin' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-building"></i> My County</a></li>
+            <li><a href="{% url 'county_admin_dashboard' %}" class="{% if 'county_admin' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-geo-alt"></i> My Sub-County</a></li>
             {% endif %}
             {% if user.role == 'team_manager' %}
             <li><a href="{% url 'team_manager_dashboard' %}" class="{% if 'team_manager' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people"></i> My Team</a></li>
@@ -76,8 +74,13 @@
                 <div class="nav-dropdown-menu">
                     <a href="{% url 'referees_list' %}"><i class="bi bi-flag"></i> All Referees</a>
                     {% if user.role == 'admin' or user.role == 'coordinator' %}
+                    {% if user.role == 'coordinator' %}
+                    <a href="{% url 'coordinator_referees' %}"><i class="bi bi-clock"></i> Manage Referees</a>
+                    <a href="{% url 'coordinator_appointments' %}"><i class="bi bi-calendar-event"></i> Appointments</a>
+                    {% else %}
                     <a href="{% url 'pending_referees' %}"><i class="bi bi-clock"></i> Pending Approval</a>
                     <a href="{% url 'referee_appointments' %}"><i class="bi bi-calendar-event"></i> Appointments</a>
+                    {% endif %}
                     {% endif %}
                 </div>
             </li>

@@ -105,4 +105,21 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+(function(){
+    /* Phone: digits only, strictly 9 chars */
+    var phoneInput = document.getElementById('id_phone');
+    if(phoneInput){
+        phoneInput.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,9); });
+        phoneInput.addEventListener('keypress', function(e){ if(this.value.length >= 9 || !/\d/.test(e.key)) e.preventDefault(); });
+    }
+    /* ID Number: digits only, stops at 10 */
+    var idInput = document.getElementById('id_national_id_number');
+    if(idInput){
+        idInput.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,10); });
+        idInput.addEventListener('keypress', function(e){ if(this.value.length >= 10 || !/\d/.test(e.key)) e.preventDefault(); });
+    }
+})();
+</script>
 {% endblock %}

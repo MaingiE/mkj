@@ -69,8 +69,7 @@
         <ul class="fkf-nav-links" id="navLinks">
             <li><a href="{% url 'home' %}" class="{% if active_page == 'home' %}active{% endif %}">Home</a></li>
             <li><a href="{% url 'about' %}" class="{% if active_page == 'about' %}active{% endif %}">About</a></li>
-            <li><a href="{% url 'public_competitions' %}" class="{% if active_page == 'competitions' %}active{% endif %}">Competitions</a></li>
-            <li><a href="{% url 'public_results' %}" class="{% if active_page == 'results' %}active{% endif %}">Results</a></li>
+            <li><a href="{% url 'public_fixtures_results' %}" class="{% if active_page == 'fixtures' %}active{% endif %}">Fixtures & Results</a></li>
             <li class="nav-dropdown">
                 <a href="#" class="{% if active_page == 'news_media' %}active{% endif %}" onclick="this.parentElement.classList.toggle('open');return false;">News & Media ▾</a>
                 <ul class="dropdown-menu">
@@ -127,8 +126,7 @@
                     <ul>
                         <li><a href="{% url 'home' %}">Home</a></li>
                         <li><a href="{% url 'about' %}">About MKJ SUPA CUP</a></li>
-                        <li><a href="{% url 'public_competitions' %}">Competitions</a></li>
-                        <li><a href="{% url 'public_results' %}">Results</a></li>
+                        <li><a href="{% url 'public_fixtures_results' %}">Fixtures & Results</a></li>
                         <li><a href="{% url 'contact' %}">Contact Us</a></li>
                     </ul>
                 </div>

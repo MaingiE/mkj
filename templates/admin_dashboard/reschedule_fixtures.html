@@ -12,7 +12,7 @@
     <h2 class="mb-4 text-primary">Reschedule Fixtures</h2>
     <div class="card">
         <div class="card-body">
-            {% if matches %}
+            {% if fixtures %}
             <table class="table table-bordered table-hover">
                 <thead class="table-light">
                     <tr>
@@ -25,7 +25,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for match in matches %}
+                    {% for match in fixtures %}
                     <tr>
                         <td>{{ match.home_team }} vs {{ match.away_team }}</td>
                         <td>{{ match.match_date|date:'M d, Y' }}</td>
@@ -33,8 +33,8 @@
                         <td>{{ match.venue }}</td>
                         <td>{{ match.get_status_display }}</td>
                         <td>
-                            <a href="{% url 'matches:reschedule_match' match.id %}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-calendar-alt"></i> Reschedule
+                            <a href="{% url 'matches_list' %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-calendar-alt"></i> Open Fixtures
                             </a>
                         </td>
                     </tr>

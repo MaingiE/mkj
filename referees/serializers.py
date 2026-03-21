@@ -62,6 +62,25 @@ class RefereeAppointmentSerializer(serializers.ModelSerializer):
         f = obj.fixture
         return f"{f.home_team} vs {f.away_team} — {f.match_date}"
 
+    def validate(self, attrs):
+        fixture = attrs.get("fixture", getattr(self.instance, "fixture", None))
+        referee = attrs.get("referee", getattr(self.instance, "referee", None))
+        role = attrs.get("role", getattr(self.instance, "role", None))
+        status = attrs.get("status", getattr(self.instance, "status", None))
+        notes = attrs.get("notes", getattr(self.instance, "notes", ""))
+
+        appointment = RefereeAppointment(
+            fixture=fixture,
+            referee=referee,
+            role=role,
+            status=status,
+            notes=notes,
+        )
+        if self.instance:
+            appointment.pk = self.instance.pk
+        appointment.clean()
+        return attrs
+
     def create(self, validated_data):
         validated_data["appointed_by"] = self.context["request"].user
         return super().create(validated_data)

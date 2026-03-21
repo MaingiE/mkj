@@ -3,7 +3,10 @@ MKJ SUPA CUP Referees — Models
 """
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+
+from accounts.models import national_id_validator
 
 
 class RefereeLevel(models.TextChoices):
@@ -36,7 +39,7 @@ class RefereeProfile(models.Model):
         related_name="referees_approved"
     )
     approved_at    = models.DateTimeField(null=True, blank=True)
-    id_number      = models.CharField(max_length=20, blank=True, help_text="National ID / Passport")
+    id_number      = models.CharField(max_length=20, blank=True, validators=[national_id_validator], help_text="National ID")
     profile_picture = models.ImageField(upload_to="referee_photos/", null=True, blank=True, help_text="Passport-size photo")
     referee_type    = models.CharField(
         max_length=20, choices=RefereeType.choices,
@@ -221,7 +224,39 @@ class RefereeAppointment(models.Model):
 
     class Meta:
         unique_together = ["fixture", "referee", "role"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["fixture", "role"],
+                name="unique_appointment_role_per_fixture",
+            ),
+        ]
         ordering        = ["-appointed_at"]
+
+    def clean(self):
+        if not self.fixture or not self.role:
+            return
+
+        sport_type = getattr(getattr(self.fixture, "competition", None), "sport_type", None)
+        allowed_roles = set(get_required_roles(sport_type) + get_optional_roles(sport_type))
+        if sport_type and self.role not in allowed_roles:
+            raise ValidationError({
+                "role": f"{self.get_role_display()} is not a valid appointment role for {sport_type}."
+            })
+
+        duplicate_role = RefereeAppointment.objects.filter(
+            fixture=self.fixture,
+            role=self.role,
+        )
+        if self.pk:
+            duplicate_role = duplicate_role.exclude(pk=self.pk)
+        if duplicate_role.exists():
+            raise ValidationError({
+                "role": f"{self.get_role_display()} is already assigned for this fixture."
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.referee} → {self.fixture} ({self.role})"

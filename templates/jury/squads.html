@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Match Day Squads — Jury | MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Match Day Team Lists — Jury | MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <div>
-        <h1><i class="bi bi-list-check"></i> Match Day Squads</h1>
-        <p class="text-muted">Squad submissions &amp; starting eleven for all matches</p>
+        <h1><i class="bi bi-list-check"></i> Match Day Team Lists</h1>
+        <p class="text-muted">Team list submissions &amp; starting eleven for all matches</p>
     </div>
     <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
         <a href="{% url 'jury_export_squads_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
@@ -87,11 +87,11 @@
                     </td>
                     <td>{{ s.submitted_at|date:"d M Y H:i"|default:"-" }}</td>
                     <td>
-                        <a href="{% url 'jury_squad_detail' pk=s.pk %}" class="btn btn-sm btn-outline">View Squad</a>
+                        <a href="{% url 'jury_squad_detail' pk=s.pk %}" class="btn btn-sm btn-outline">View Team List</a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="8" style="text-align:center; color:#888; padding:2rem;">No squad submissions found.</td></tr>
+                <tr><td colspan="8" style="text-align:center; color:#888; padding:2rem;">No team list submissions found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

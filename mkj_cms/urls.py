@@ -42,6 +42,7 @@ from news_media.portal_views import (
 from .web_views import (
     # Public website
     home_view, about_view, public_competitions_view,
+    public_fixtures_results_view,
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
     contact_view,
@@ -65,12 +66,13 @@ from .web_views import (
     player_verification_list_view, verify_player_view,
     # Squad selection & approval
     squad_select_view, squad_review_list_view, squad_review_view,
+    substitution_request_view, substitution_approve_view, substitution_match_list_view,
     # Match reporting
     match_report_form_view, match_report_detail_view, match_report_review_view,
     # Referee appointments & portal
     appointment_action_view,
     referee_dashboard_view, referee_edit_profile_view,
-    # Referee manager — appointment management
+    # Appointment management
     referee_appointments_view, referee_appoint_view,
     # Treasurer portal
     treasurer_dashboard_view,
@@ -103,20 +105,14 @@ from .web_views import (
     # County Sports Director — technical bench & verification
     county_admin_add_bench_member_view,
     county_admin_delete_bench_member_view,
+    county_admin_kit_colors_view,
     county_admin_delegation_members_view,
     county_admin_delete_delegation_member_view,
     county_admin_verification_view,
-    # County player verification (Competition Manager)
-    county_player_verification_list_view,
-    verify_county_player_view,
-    # Verification Officer — county-based flow
-    vo_registered_counties_view,
-    vo_county_disciplines_view,
-    vo_discipline_players_view,
-    vo_discipline_delegation_view,
     # Discipline Coordinator portal
     coordinator_dashboard_view,
     coordinator_competitions_view,
+    coordinator_create_competition_view,
     coordinator_competition_manage_view,
     coordinator_manage_pools_view,
     coordinator_generate_fixtures_view,
@@ -188,7 +184,8 @@ urlpatterns = [
     # ── PUBLIC WEBSITE ────────────────────────────────────────────────────────
     path("",                              home_view,                      name="home"),
     path("about/",                        about_view,                     name="about"),
-    path("competitions/public/",          public_competitions_view,       name="public_competitions"),
+    path("fixtures/",                     public_fixtures_results_view,   name="public_fixtures_results"),
+    path("competitions/public/",          public_fixtures_results_view,   name="public_competitions"),
     path("competitions/public/<int:pk>/", public_competition_detail_view, name="public_competition_detail"),
     path("results/",                      public_results_view,            name="public_results"),
     path("results/statistics/",            public_statistics_view,         name="public_statistics"),
@@ -257,9 +254,9 @@ urlpatterns = [
     # ── PORTAL: REFEREE APPOINTMENTS ──────────────────────────────────────
     path("portal/appointments/<int:appointment_pk>/",     appointment_action_view,    name="appointment_action"),
 
-    # ── PORTAL: REFEREE MANAGER — APPOINTMENT MANAGEMENT ──────────────────
-    path("portal/referee-manager/appointments/",                   referee_appointments_view, name="referee_appointments"),
-    path("portal/referee-manager/appointments/<int:fixture_pk>/",  referee_appoint_view,      name="referee_appoint"),
+    # ── PORTAL: ADMIN APPOINTMENT MANAGEMENT ─────────────────────────────
+    path("portal/admin/referee-appointments/",                    referee_appointments_view, name="referee_appointments"),
+    path("portal/admin/referee-appointments/<int:fixture_pk>/",   referee_appoint_view,      name="referee_appoint"),
 
     # ── PORTAL: REFEREE DASHBOARD & PROFILE ──────────────────────────────
     path("portal/referee/",                               referee_dashboard_view,     name="referee_portal"),
@@ -284,6 +281,7 @@ urlpatterns = [
     path("portal/county-admin/delegation/<int:member_pk>/delete/", county_admin_delete_delegation_member_view, name="county_admin_delete_delegation_member"),
     path("portal/county-admin/verification/", county_admin_verification_view, name="county_admin_verification"),
     path("portal/county-admin/discipline/<int:discipline_pk>/team-list.pdf", team_list_pdf_view, name="team_list_pdf"),
+    path("portal/county-admin/discipline/<int:discipline_pk>/kit-colors/", county_admin_kit_colors_view, name="county_admin_kit_colors"),
 
     # ── PLAYER PROFILE ────────────────────────────────────────────────────
     path("portal/players/<int:player_pk>/profile/", player_profile_view, name="player_profile"),
@@ -301,6 +299,11 @@ urlpatterns = [
 
     # ── MATCH DAY SQUAD PDF ───────────────────────────────────────────
     path("portal/squads/<int:squad_pk>/pdf/", match_squad_pdf_view, name="match_squad_pdf"),
+
+    # ── SUBSTITUTIONS ────────────────────────────────────────────────
+    path("portal/fixtures/<int:fixture_pk>/substitutions/request/", substitution_request_view, name="substitution_request"),
+    path("portal/fixtures/<int:fixture_pk>/substitutions/", substitution_match_list_view, name="substitution_match_list"),
+    path("portal/substitutions/<int:sub_pk>/approve/", substitution_approve_view, name="substitution_approve"),
 
     # ── CEC SPORTS CAUCUS PORTAL (REMOVED) ─────────────────────────────
     # path("portal/cec-sports/", cec_sports_portal_view, name="cec_sports_portal"),
@@ -325,19 +328,12 @@ urlpatterns = [
     path("portal/cm/competitions/<int:pk>/rules/",         cm_competition_rules_view,     name="cm_competition_rules"),
     path("portal/cm/venues/",                              cm_manage_venues_view,         name="cm_venues"),
 
-    # ── VERIFICATION OFFICER — COUNTY-BASED FLOW ─────────────────────────
-    path("portal/verification/counties/",                                 vo_registered_counties_view,     name="vo_registered_counties"),
-    path("portal/verification/counties/<int:county_reg_pk>/disciplines/", vo_county_disciplines_view,      name="vo_county_disciplines"),
-    path("portal/verification/disciplines/<int:discipline_pk>/players/",  vo_discipline_players_view,      name="vo_discipline_players"),
-    path("portal/verification/disciplines/<int:discipline_pk>/delegation/", vo_discipline_delegation_view, name="vo_discipline_delegation"),
 
-    # ── CM: COUNTY PLAYER VERIFICATION ────────────────────────────────────
-    path("portal/cm/county-players/",                       county_player_verification_list_view, name="county_player_verification_list"),
-    path("portal/cm/county-players/<int:player_pk>/verify/", verify_county_player_view,            name="verify_county_player"),
 
     # ── DISCIPLINE COORDINATOR PORTAL ─────────────────────────────────────
     path("portal/coordinator/",                                          coordinator_dashboard_view,           name="coordinator_dashboard"),
     path("portal/coordinator/competitions/",                             coordinator_competitions_view,        name="coordinator_competitions"),
+    path("portal/coordinator/competitions/create/",                      coordinator_create_competition_view,  name="coordinator_create_competition"),
     path("portal/coordinator/competitions/<int:pk>/",                    coordinator_competition_manage_view,  name="coordinator_competition_manage"),
     path("portal/coordinator/competitions/<int:pk>/pools/",              coordinator_manage_pools_view,        name="coordinator_manage_pools"),
     path("portal/coordinator/competitions/<int:pk>/fixtures/generate/",  coordinator_generate_fixtures_view,   name="coordinator_generate_fixtures"),
@@ -352,6 +348,7 @@ urlpatterns = [
     path("portal/coordinator/squads/",                                   coordinator_squads_view,              name="coordinator_squads"),
     path("portal/coordinator/referees/",                                 coordinator_referees_view,            name="coordinator_referees"),
     path("portal/coordinator/appointments/",                             coordinator_appointments_view,        name="coordinator_appointments"),
+    path("portal/coordinator/appointments/<int:fixture_pk>/",            referee_appoint_view,                 name="coordinator_appoint"),
 
     # ── SECRETARY GENERAL PORTAL ─────────────────────────────────────────────
     path("portal/sg/",                          sg_dashboard_view,          name="sg_dashboard"),

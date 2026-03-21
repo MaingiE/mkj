@@ -28,14 +28,16 @@
 {% block content %}
 <div class="dc-hero">
     <h1><i class="bi bi-trophy"></i> {{ discipline_label }} — Competitions</h1>
-    <p>All competitions for your discipline</p>
+    <p>Use this page to group registered teams, generate fixtures, reschedule matches, and appoint referees for your discipline.</p>
 </div>
 
-<div class="filter-bar">
-    <a href="{% url 'coordinator_competitions' %}" class="btn {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
-    {% for val, label in status_choices %}
-    <a href="{% url 'coordinator_competitions' %}?status={{ val }}" class="btn {% if current_status == val %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</a>
-    {% endfor %}
+<div style="display:flex;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
+    <div class="filter-bar" style="margin-bottom:0;">
+        <a href="{% url 'coordinator_competitions' %}" class="btn {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+        {% for val, label in status_choices %}
+        <a href="{% url 'coordinator_competitions' %}?status={{ val }}" class="btn {% if current_status == val %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
 </div>
 
 {% if competitions %}
@@ -57,7 +59,7 @@
 {% else %}
     <div style="text-align:center;padding:3rem;color:#999;">
         <i class="bi bi-trophy" style="font-size:3rem;opacity:.3;"></i>
-        <p>No competitions found for your discipline.</p>
+        <p>No competitions are currently available for your discipline.</p>
     </div>
 {% endif %}
 {% endblock %}

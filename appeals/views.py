@@ -188,11 +188,21 @@ def submit_appeal_view(request):
             appeal.appellant_team = appellant_team
             appeal.appellant_user = request.user
             appeal.fee_amount = APPEAL_FEE_KES
+            # Resolve respondent from the selected match
+            appeal.resolve_respondent_from_match()
             appeal.save()
             messages.success(request, "Appeal draft created. Now add evidence and pay the fee.")
             return redirect("appeal_detail", pk=appeal.pk)
     else:
         form = AppealForm(appellant_team=appellant_team)
+
+    # Only show matches involving the appellant team
+    from competitions.models import Fixture
+    from django.db.models import Q
+    team_matches = Fixture.objects.filter(
+        Q(home_team=appellant_team) | Q(away_team=appellant_team)
+    ).order_by('-match_date')
+    form.fields["match"].queryset = team_matches
 
     context = {
         "form": form,

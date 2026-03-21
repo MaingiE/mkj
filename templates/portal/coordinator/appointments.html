@@ -56,9 +56,9 @@
         {% endfor %}
     </div>
     {% if fd.needs_officials %}
-    <a href="{% url 'referee_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-primary mt-2">Appoint Officials</a>
+    <a href="{% url 'coordinator_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-primary mt-2">Appoint Officials</a>
     {% else %}
-    <a href="{% url 'referee_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-outline-secondary mt-2">Manage Officials</a>
+    <a href="{% url 'coordinator_appoint' fixture_pk=fd.fixture.pk %}" class="btn btn-sm btn-outline-secondary mt-2">Manage Officials</a>
     {% endif %}
 </div>
 {% empty %}

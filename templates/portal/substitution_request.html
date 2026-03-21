@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Substitution — {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Substitution Request</h1>
+    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} &mdash; {{ fixture.match_date|date:'M d, Y' }}</p>
+</div>
+
+<!-- Substitution Limits -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-arrow-left-right"></i></div>
+        <div class="stat-info">
+            <h3>{{ normal_used }}{% if normal_limit %}/{{ normal_limit }}{% endif %}</h3>
+            <p>Normal Subs Used</p>
+        </div>
+    </div>
+    {% if sport_family == 'football' %}
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-window"></i></div>
+        <div class="stat-info">
+            <h3>{{ windows_used }}{% if window_limit %}/{{ window_limit }}{% endif %}</h3>
+            <p>Sub Windows Used</p>
+        </div>
+    </div>
+    {% endif %}
+    {% if concussion_allowed %}
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="bi bi-bandaid"></i></div>
+        <div class="stat-info">
+            <h3>{{ concussion_used }}/1</h3>
+            <p>Concussion Sub</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pending Requests -->
+{% if pending %}
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-hourglass-split"></i> Pending Requests</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr>
+                    <th>Min</th><th>Player Off</th><th>Player On</th><th>Type</th><th>Status</th>
+                </tr></thead>
+                <tbody>
+                {% for sub in pending %}
+                <tr>
+                    <td>{{ sub.minute }}'</td>
+                    <td>{{ sub.player_off.get_full_name }}</td>
+                    <td>{{ sub.player_on.get_full_name }}</td>
+                    <td><span class="badge {% if sub.sub_type == 'concussion' %}badge-danger{% else %}badge-info{% endif %}">{{ sub.get_sub_type_display }}</span></td>
+                    <td><span class="badge badge-warning">{{ sub.get_status_display }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Request Form -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-plus-circle"></i> New Substitution Request</h3></div>
+    <div class="card-body">
+        {% if bench_players %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label for="player_off">Player Off (on pitch)</label>
+                    <select name="player_off" id="player_off" class="form-control" required>
+                        <option value="">— Select player to come off —</option>
+                        {% for p in on_pitch_players %}
+                        <option value="{{ p.id }}">#{{ p.shirt_number|default:"?" }} {{ p.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="player_on">Player On (bench)</label>
+                    <select name="player_on" id="player_on" class="form-control" required>
+                        <option value="">— Select replacement from bench —</option>
+                        {% for p in bench_players %}
+                        <option value="{{ p.id }}">#{{ p.shirt_number|default:"?" }} {{ p.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="minute">Minute</label>
+                    <input type="number" name="minute" id="minute" class="form-control" min="0" max="150" required placeholder="e.g. 65">
+                </div>
+                <div class="form-group">
+                    <label for="sub_type">Type</label>
+                    <select name="sub_type" id="sub_type" class="form-control">
+                        <option value="normal">Normal</option>
+                        {% if concussion_allowed %}
+                        <option value="concussion">Concussion</option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" id="reason-group" style="display:none;margin-top:1rem;">
+                <label for="reason">Reason (required for concussion subs)</label>
+                <textarea name="reason" id="reason" class="form-control" rows="2" placeholder="Describe the concussion incident..."></textarea>
+            </div>
+            <div style="margin-top:1rem;">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-right"></i> Request Substitution</button>
+                <a href="{% url 'matches_list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-people" style="font-size:2rem;color:var(--text-muted);"></i>
+            <p>No bench players available for substitution.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Substitution History -->
+{% if all_subs %}
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-clock-history"></i> Substitution History</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr>
+                    <th>Min</th><th>Player Off</th><th>Player On</th><th>Type</th><th>Status</th><th>Official</th>
+                </tr></thead>
+                <tbody>
+                {% for sub in all_subs %}
+                <tr>
+                    <td>{{ sub.minute }}'</td>
+                    <td>{{ sub.player_off.get_full_name }}</td>
+                    <td>{{ sub.player_on.get_full_name }}</td>
+                    <td><span class="badge {% if sub.sub_type == 'concussion' %}badge-danger{% else %}badge-info{% endif %}">{{ sub.get_sub_type_display }}</span></td>
+                    <td><span class="badge {% if sub.status == 'executed' %}badge-success{% elif sub.status == 'denied' %}badge-danger{% elif sub.status == 'approved' %}badge-info{% else %}badge-warning{% endif %}">{{ sub.get_status_display }}</span></td>
+                    <td>{{ sub.approved_by.get_full_name|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('sub_type')?.addEventListener('change', function(){
+    document.getElementById('reason-group').style.display = this.value === 'concussion' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

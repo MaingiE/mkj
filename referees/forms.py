@@ -6,7 +6,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 import re
 from .models import RefereeProfile, RefereeLevel
-from accounts.models import KenyaCounty
+from accounts.models import KenyaCounty, MakueniSubCounty, validate_national_id_or_raise
 
 
 def normalize_kenya_phone(raw_phone: str) -> str:
@@ -75,19 +75,27 @@ class RefereeRegistrationForm(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': '712345678',
-            'pattern': '(?:\\+?254|0)?\\d{9}',
-            'maxlength': '13',
+            'pattern': '\\d{9}',
+            'minlength': '9',
+            'maxlength': '9',
+            'inputmode': 'numeric',
         }),
         label='Phone Number *',
-        help_text='You can type 7XXXXXXXX, 07XXXXXXXX or +254XXXXXXXXX.',
+        help_text='Enter exactly 9 digits after the +254 prefix.',
     )
-    county = forms.ChoiceField(
-        choices=[('', '-- Select County --')] + list(KenyaCounty.choices),
+    county = forms.CharField(
+        initial='Makueni',
+        widget=forms.HiddenInput(),
+        required=False,
+        label='County',
+    )
+    sub_county = forms.ChoiceField(
+        choices=[('', '-- Select Sub-County --')] + list(MakueniSubCounty.choices),
         required=False,
         widget=forms.Select(attrs={
             'class': 'form-control',
         }),
-        label='County',
+        label='Sub-County',
     )
     level = forms.ChoiceField(
         choices=[('', '-- Select Level --')] + list(RefereeLevel.choices),
@@ -102,7 +110,11 @@ class RefereeRegistrationForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'National ID / Passport',
+            'placeholder': 'National ID',
+            'pattern': '\\d{5,10}',
+            'minlength': '5',
+            'maxlength': '10',
+            'inputmode': 'numeric',
         }),
         label='National ID',
     )
@@ -144,3 +156,9 @@ class RefereeRegistrationForm(forms.Form):
         if not re.match(r'^\+254\d{9}$', phone):
             raise ValidationError('Phone number must be valid. Use 7XXXXXXXX, 07XXXXXXXX or +254XXXXXXXXX.')
         return phone
+
+    def clean_id_number(self):
+        id_number = self.cleaned_data.get('id_number')
+        if id_number:
+            return validate_national_id_or_raise(id_number, 'National ID')
+        return id_number

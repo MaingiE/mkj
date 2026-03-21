@@ -61,7 +61,11 @@
 <div class="page-header">
     <div class="breadcrumb">
         <a href="{% url 'dashboard' %}">Dashboard</a>
+        {% if request.user.role == 'coordinator' %}
+        <a href="{% url 'coordinator_appointments' %}">Appointments</a>
+        {% else %}
         <a href="{% url 'referee_appointments' %}">Appointments</a>
+        {% endif %}
         <span>Appoint Officials</span>
     </div>
     <h1>⚽ Appoint Officials</h1>
@@ -250,17 +254,31 @@
 
         {% if not referees_list %}
         <div style="text-align:center;padding:2rem;color:#999;">
-            <p>No approved referees found. <a href="{% url 'pending_referees' %}">Approve pending referees</a> first.</p>
+            <p>No approved referees found.
+                {% if request.user.role == 'coordinator' %}
+                <a href="{% url 'coordinator_referees' %}">Manage referee approvals</a>
+                {% else %}
+                <a href="{% url 'pending_referees' %}">Approve pending referees</a>
+                {% endif %}
+                first.
+            </p>
         </div>
         {% endif %}
     </div>
 </div>
 
 <div style="margin-bottom:2rem;">
+    {% if request.user.role == 'coordinator' %}
+    <a href="{% url 'coordinator_appointments' %}"
+       style="display:inline-block;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;background:#f0f0f0;color:#333;">
+        ← Back to Appointments
+    </a>
+    {% else %}
     <a href="{% url 'referee_appointments' %}"
        style="display:inline-block;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;background:#f0f0f0;color:#333;">
         ← Back to All Appointments
     </a>
+    {% endif %}
 </div>
 {% endblock %}
 

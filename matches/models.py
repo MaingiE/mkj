@@ -45,7 +45,7 @@ def get_sport_family(sport_type):
 # Per-sport match configuration
 SPORT_CONFIG = {
     "football": {
-        "label": "Football",
+        "label": "Soccer",
         "periods": 2,
         "period_label": "Half",
         "period_labels": ["1st Half", "2nd Half"],
@@ -170,6 +170,46 @@ SPORT_STARTERS = {
     "beach_volleyball": 2, "beach_handball": 4,
 }
 
+# ── Sport-specific squad rules (international guidelines) ────────────────────
+# max_squad  = total players allowed on team list (starters + subs)
+# max_subs   = maximum substitute players on the team list
+# normal_sub_limit = number of normal substitutions allowed per match
+# sub_windows = substitution windows allowed (excluding half-time); None = unlimited
+# concussion_sub = whether an additional concussion substitution is allowed
+SPORT_SQUAD_RULES = {
+    "football": {
+        "max_squad": 23, "max_subs": 12, "min_starters": 7,
+        "normal_sub_limit": 5, "sub_windows": 3,
+        "concussion_sub": True, "concussion_sub_grants_opponent_extra": True,
+    },
+    "volleyball": {
+        "max_squad": 14, "max_subs": 8, "min_starters": 6,
+        "normal_sub_limit": 6, "sub_windows": None,  # per set, unlimited windows
+        "concussion_sub": False, "concussion_sub_grants_opponent_extra": False,
+    },
+    "basketball_5x5": {
+        "max_squad": 12, "max_subs": 7, "min_starters": 5,
+        "normal_sub_limit": None, "sub_windows": None,  # unlimited
+        "concussion_sub": False, "concussion_sub_grants_opponent_extra": False,
+    },
+    "basketball_3x3": {
+        "max_squad": 4, "max_subs": 1, "min_starters": 3,
+        "normal_sub_limit": None, "sub_windows": None,  # unlimited
+        "concussion_sub": False, "concussion_sub_grants_opponent_extra": False,
+    },
+    "handball": {
+        "max_squad": 16, "max_subs": 9, "min_starters": 7,
+        "normal_sub_limit": None, "sub_windows": None,  # unlimited
+        "concussion_sub": False, "concussion_sub_grants_opponent_extra": False,
+    },
+}
+
+
+def get_squad_rules(sport_type):
+    """Return the squad rules dict for a sport type."""
+    family = get_sport_family(sport_type)
+    return SPORT_SQUAD_RULES.get(family, SPORT_SQUAD_RULES["football"])
+
 
 def get_starters_for_sport(sport_type):
     """Return the required number of starters for a sport type."""
@@ -236,10 +276,11 @@ class SquadSubmission(models.Model):
 
     class Meta:
         unique_together = ["fixture", "team"]
-        verbose_name = "Squad Submission"
+        verbose_name = "Team List"
+        verbose_name_plural = "Team Lists"
 
     def __str__(self):
-        return f"{self.team} squad for {self.fixture}"
+        return f"{self.team} team list for {self.fixture}"
 
 
 class SquadPlayer(models.Model):
@@ -256,6 +297,140 @@ class SquadPlayer(models.Model):
     def __str__(self):
         role = "Starter" if self.is_starter else "Sub"
         return f"#{self.shirt_number} {self.player.get_full_name()} ({role})"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#   SUBSTITUTION REQUEST (procedural, 4th-official / referee approved)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class SubstitutionType(models.TextChoices):
+    NORMAL      = "normal",      "Normal Substitution"
+    CONCUSSION  = "concussion",  "Concussion Substitution"
+
+
+class SubstitutionStatus(models.TextChoices):
+    REQUESTED = "requested", "Requested"
+    APPROVED  = "approved",  "Approved by 4th Official"
+    EXECUTED  = "executed",  "Executed (Players Swapped)"
+    DENIED    = "denied",    "Denied"
+
+
+class SubstitutionRequest(models.Model):
+    """
+    Procedural substitution request per FIFA / FIVB / FIBA / IHF guidelines.
+
+    Soccer (FIFA):
+    - Up to 5 normal substitutions in 3 windows (+ half-time).
+    - A 6th concussion substitution may be approved by the referee.
+    - When a concussion sub is used, the opponent is awarded one extra substitution.
+
+    Other sports: unlimited substitutions, no window restrictions.
+    """
+    fixture = models.ForeignKey(
+        "competitions.Fixture", on_delete=models.CASCADE,
+        related_name="substitution_requests",
+    )
+    team = models.ForeignKey(
+        "teams.Team", on_delete=models.CASCADE,
+        related_name="substitution_requests",
+    )
+    player_off = models.ForeignKey(
+        "teams.Player", on_delete=models.CASCADE,
+        related_name="subbed_off_requests",
+        help_text="Player leaving the field",
+    )
+    player_on = models.ForeignKey(
+        "teams.Player", on_delete=models.CASCADE,
+        related_name="subbed_on_requests",
+        help_text="Player entering the field",
+    )
+    minute = models.PositiveIntegerField(
+        help_text="Match minute when the substitution is requested",
+    )
+    sub_type = models.CharField(
+        max_length=12, choices=SubstitutionType.choices,
+        default=SubstitutionType.NORMAL,
+    )
+    status = models.CharField(
+        max_length=12, choices=SubstitutionStatus.choices,
+        default=SubstitutionStatus.REQUESTED,
+    )
+    # Window tracking (soccer: max 3 windows excluding half-time)
+    sub_window = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Substitution window number (soccer: 1-3). Null for sports with unlimited windows.",
+    )
+    # Concussion sub triggers an extra sub for the opponent (soccer)
+    grants_opponent_extra = models.BooleanField(
+        default=False,
+        help_text="If True, this concussion sub awarded the opponent an additional substitution.",
+    )
+    reason = models.TextField(
+        blank=True,
+        help_text="Reason for substitution (required for concussion subs).",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="sub_requests_made",
+        help_text="Team manager / bench official who requested the substitution.",
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="sub_requests_approved",
+        help_text="4th official (normal) or referee (concussion) who approved.",
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    denial_reason = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["fixture", "team", "minute"]
+        verbose_name = "Substitution Request"
+
+    def __str__(self):
+        return (
+            f"Sub request: {self.player_off} → {self.player_on} "
+            f"({self.get_sub_type_display()}, min {self.minute})"
+        )
+
+    @staticmethod
+    def count_normal_subs_used(fixture, team):
+        """Count executed normal substitutions for a team in a fixture."""
+        return SubstitutionRequest.objects.filter(
+            fixture=fixture, team=team,
+            sub_type=SubstitutionType.NORMAL,
+            status=SubstitutionStatus.EXECUTED,
+        ).count()
+
+    @staticmethod
+    def count_concussion_subs_used(fixture, team):
+        """Count executed concussion subs for a team in a fixture."""
+        return SubstitutionRequest.objects.filter(
+            fixture=fixture, team=team,
+            sub_type=SubstitutionType.CONCUSSION,
+            status=SubstitutionStatus.EXECUTED,
+        ).count()
+
+    @staticmethod
+    def count_windows_used(fixture, team):
+        """Count distinct substitution windows used (soccer only)."""
+        return SubstitutionRequest.objects.filter(
+            fixture=fixture, team=team,
+            sub_type=SubstitutionType.NORMAL,
+            status=SubstitutionStatus.EXECUTED,
+            sub_window__isnull=False,
+        ).values_list("sub_window", flat=True).distinct().count()
+
+    @staticmethod
+    def opponent_extra_subs_granted(fixture, team):
+        """Count extra subs granted to a team because the opponent used concussion subs."""
+        opponent_team = fixture.away_team if fixture.home_team == team else fixture.home_team
+        return SubstitutionRequest.objects.filter(
+            fixture=fixture, team=opponent_team,
+            sub_type=SubstitutionType.CONCUSSION,
+            status=SubstitutionStatus.EXECUTED,
+            grants_opponent_extra=True,
+        ).count()
 
 
 class MatchReportStatus(models.TextChoices):
@@ -277,6 +452,11 @@ class MatchReport(models.Model):
     referee      = models.ForeignKey(
         "referees.RefereeProfile", on_delete=models.SET_NULL, null=True,
         related_name="match_reports"
+    )
+    appointment_snapshot = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Snapshot of appointed officials for this fixture when the report was last saved.",
     )
     status       = models.CharField(max_length=20, choices=MatchReportStatus.choices, default=MatchReportStatus.DRAFT)
 
@@ -332,6 +512,29 @@ class MatchReport(models.Model):
 
     def __str__(self):
         return f"Report: {self.fixture}"
+
+    def build_appointment_snapshot(self):
+        from referees.models import RefereeAppointment
+
+        appointments = RefereeAppointment.objects.filter(
+            fixture_id=self.fixture_id,
+        ).select_related("referee__user").order_by("role", "referee__user__last_name", "referee__user__first_name")
+
+        return [
+            {
+                "role": appointment.role,
+                "role_display": appointment.get_role_display(),
+                "status": appointment.status,
+                "referee_id": appointment.referee_id,
+                "referee_name": appointment.referee.user.get_full_name(),
+            }
+            for appointment in appointments
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.fixture_id:
+            self.appointment_snapshot = self.build_appointment_snapshot()
+        return super().save(*args, **kwargs)
 
     @property
     def sport_config(self):

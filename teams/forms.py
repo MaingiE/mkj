@@ -12,33 +12,30 @@ from .models import (
     TechnicalBenchMember, TechnicalBenchRole,
     CountyDelegationMember, CountyDelegationRole,
 )
-from accounts.models import KenyaCounty, User, kenya_phone_validator
+from accounts.models import (
+    KenyaCounty,
+    User,
+    kenya_phone_validator,
+    MakueniSubCounty,
+    MAKUENI_SUBCOUNTY_WARDS,
+    normalize_kenya_phone as shared_normalize_kenya_phone,
+    validate_kenya_phone_or_raise as shared_validate_kenya_phone_or_raise,
+    validate_national_id_or_raise as shared_validate_national_id_or_raise,
+)
 from competitions.models import Competition, CompetitionStatus, SportType
 
 
 def normalize_kenya_phone(raw_phone: str) -> str:
     """Normalize Kenyan phone input to +254XXXXXXXXX format."""
-    phone = (raw_phone or '').strip().replace(' ', '')
-    if not phone:
-        return ''
-
-    if phone.startswith('+254') and len(phone) == 13:
-        return phone
-    if phone.startswith('254') and len(phone) == 12:
-        return f'+{phone}'
-    if phone.startswith('0') and len(phone) == 10:
-        return f'+254{phone[1:]}'
-    if phone.startswith('7') and len(phone) == 9:
-        return f'+254{phone}'
-
-    return phone
+    return shared_normalize_kenya_phone(raw_phone)
 
 
 def validate_kenya_phone_or_raise(phone: str, label: str = 'Phone number') -> str:
-    normalized = normalize_kenya_phone(phone)
-    if not re.match(r'^\+254\d{9}$', normalized):
-        raise ValidationError(f'{label} must be valid. Use 7XXXXXXXX, 07XXXXXXXX or +254XXXXXXXXX.')
-    return normalized
+    return shared_validate_kenya_phone_or_raise(phone, label)
+
+
+def validate_national_id_or_raise(id_number: str, label: str = 'ID number') -> str:
+    return shared_validate_national_id_or_raise(id_number, label)
 
 
 class TeamRegistrationForm(forms.ModelForm):
@@ -92,8 +89,10 @@ class TeamRegistrationForm(forms.ModelForm):
             'contact_phone': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': '712345678',
-                'pattern': '(?:\\+?254|0)?\\d{9}',
-                'maxlength': '13',
+                'pattern': '\\d{9}',
+                'minlength': '9',
+                'maxlength': '9',
+                'inputmode': 'numeric',
                 'required': True,
             }),
             'contact_email': forms.EmailInput(attrs={
@@ -210,6 +209,10 @@ class PlayerRegistrationForm(forms.ModelForm):
             'national_id_number': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g. 12345678',
+                'pattern': '\\d{5,10}',
+                'minlength': '5',
+                'maxlength': '10',
+                'inputmode': 'numeric',
             }),
             'birth_cert_number': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -270,6 +273,12 @@ class PlayerRegistrationForm(forms.ModelForm):
                 )
         return dob
 
+    def clean_national_id_number(self):
+        national_id_number = self.cleaned_data.get('national_id_number')
+        if national_id_number:
+            return validate_national_id_or_raise(national_id_number, 'National ID number')
+        return national_id_number
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  COUNTY SPORTS ADMIN — Registration Form (public, no login)
@@ -293,7 +302,7 @@ class CountyAdminRegistrationForm(forms.Form):
     )
     phone = forms.CharField(
         max_length=13,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric'}),
         label='Phone Number *',
     )
     county = forms.ChoiceField(
@@ -310,7 +319,7 @@ class CountyAdminRegistrationForm(forms.Form):
     )
     director_phone = forms.CharField(
         max_length=13,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric'}),
         label='Director of Sports — Phone Number *',
     )
 
@@ -389,15 +398,35 @@ class CountyPlayerForm(forms.ModelForm):
     """Form for county sports director to register a player under a discipline."""
 
     def __init__(self, *args, **kwargs):
+        self._discipline_sub_county = kwargs.pop('discipline_sub_county', '')
         super().__init__(*args, **kwargs)
         # Huduma number is optional at registration time.
         self.fields['huduma_number'].required = False
+
+        # Build sub_county choices from MakueniSubCounty enum
+        sc_choices = [('', '— Select Sub-County —')]
+        sc_choices += [(sc.value, sc.label) for sc in MakueniSubCounty]
+        self.fields['sub_county'].widget = forms.Select(
+            attrs={'class': 'form-control', 'id': 'id_sub_county'},
+        )
+        self.fields['sub_county'].widget.choices = sc_choices
+
+        # If discipline already has a sub_county, pre-select it
+        if self._discipline_sub_county and not self.data:
+            self.initial['sub_county'] = self._discipline_sub_county
+
+        # Ward starts empty; JS populates choices dynamically
+        self.fields['ward'].widget = forms.Select(
+            attrs={'class': 'form-control', 'id': 'id_ward'},
+        )
+        self.fields['ward'].widget.choices = [('', '— Select Ward —')]
 
     class Meta:
         model = CountyPlayer
         fields = [
             'first_name', 'last_name', 'date_of_birth',
             'national_id_number', 'huduma_number', 'phone',
+            'sub_county', 'ward',
             'position', 'jersey_number',
             'photo', 'id_document', 'birth_certificate',
         ]
@@ -405,9 +434,9 @@ class CountyPlayerForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 12345678'}),
             'huduma_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Huduma Namba (optional)'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13', 'required': True}),
+            'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 12345678', 'pattern': '\\d{5,10}', 'minlength': '5', 'maxlength': '10', 'inputmode': 'numeric'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric'}),
             'position': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. GK, CB, CM, ST'}),
             'jersey_number': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '99'}),
             'photo': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
@@ -421,6 +450,8 @@ class CountyPlayerForm(forms.ModelForm):
             'national_id_number': 'National ID Number *',
             'huduma_number': 'Huduma Namba (optional)',
             'phone': 'Phone Number *',
+            'sub_county': 'Sub-County *',
+            'ward': 'Ward *',
             'position': 'Position',
             'jersey_number': 'Jersey Number',
             'photo': 'Passport Photo *',
@@ -429,7 +460,7 @@ class CountyPlayerForm(forms.ModelForm):
         }
 
     def clean_national_id_number(self):
-        nid = self.cleaned_data['national_id_number']
+        nid = validate_national_id_or_raise(self.cleaned_data['national_id_number'], 'National ID number')
         qs = CountyPlayer.objects.filter(national_id_number=nid)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -497,8 +528,8 @@ class TechnicalBenchForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@example.com'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13', 'required': True}),
-            'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric', 'required': True}),
+            'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID', 'pattern': '\\d{5,10}', 'minlength': '5', 'maxlength': '10', 'inputmode': 'numeric'}),
             'photo': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'id_document': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.pdf'}),
         }
@@ -512,6 +543,12 @@ class TechnicalBenchForm(forms.ModelForm):
             'photo': 'Passport Photo',
             'id_document': 'Copy of National ID',
         }
+
+    def clean_national_id_number(self):
+        national_id_number = self.cleaned_data.get('national_id_number')
+        if national_id_number:
+            return validate_national_id_or_raise(national_id_number, 'National ID number')
+        return national_id_number
 
 
 class CountyDelegationMemberForm(forms.ModelForm):
@@ -540,8 +577,8 @@ class CountyDelegationMemberForm(forms.ModelForm):
         widgets = {
             'role': forms.Select(attrs={'class': 'form-control'}),
             'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full names'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '(?:\\+?254|0)?\\d{9}', 'maxlength': '13'}),
-            'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID number'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric'}),
+            'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID number', 'pattern': '\\d{5,10}', 'minlength': '5', 'maxlength': '10', 'inputmode': 'numeric'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email (required for CECM account)'}),
         }
         labels = {
@@ -550,5 +587,49 @@ class CountyDelegationMemberForm(forms.ModelForm):
             'phone': 'Phone Number *',
             'national_id_number': 'ID Number *',
             'email': 'Email Address',
+        }
+
+    def clean_national_id_number(self):
+        return validate_national_id_or_raise(self.cleaned_data.get('national_id_number'), 'ID number')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  KIT COLORS — County Admin edits the linked Team's kit colours
+# ══════════════════════════════════════════════════════════════════════════════
+
+class KitColorsForm(forms.ModelForm):
+    """Form for county admin to set home/away kit colours on the linked Team."""
+
+    class Meta:
+        model = Team
+        fields = [
+            'home_outfield_colour', 'home_shorts_colour',
+            'home_socks_colour', 'home_gk_colour', 'home_kit_image',
+            'away_outfield_colour', 'away_shorts_colour',
+            'away_socks_colour', 'away_gk_colour', 'away_kit_image',
+        ]
+        widgets = {
+            'home_outfield_colour': forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'home_shorts_colour':   forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'home_socks_colour':    forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'home_gk_colour':       forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'home_kit_image':       forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'away_outfield_colour': forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'away_shorts_colour':   forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'away_socks_colour':    forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'away_gk_colour':       forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'height:42px;padding:4px'}),
+            'away_kit_image':       forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+        }
+        labels = {
+            'home_outfield_colour': 'Outfield Jersey',
+            'home_shorts_colour':   'Shorts',
+            'home_socks_colour':    'Socks',
+            'home_gk_colour':       'Goalkeeper Jersey',
+            'home_kit_image':       'Kit Photo (optional)',
+            'away_outfield_colour': 'Outfield Jersey',
+            'away_shorts_colour':   'Shorts',
+            'away_socks_colour':    'Socks',
+            'away_gk_colour':       'Goalkeeper Jersey',
+            'away_kit_image':       'Kit Photo (optional)',
         }
 

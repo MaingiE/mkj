@@ -45,12 +45,44 @@ class AppealForm(forms.ModelForm):
             self.fields["respondent_team"].queryset = Team.objects.exclude(pk=appellant_team.pk)
         self.fields["match"].required = False
         self.fields["competition"].required = False
+        # Respondent is auto-determined from match — hide but keep for fallback
+        self.fields["respondent_team"].required = False
+        self.fields["respondent_team"].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned = super().clean()
+        match = cleaned.get("match")
         respondent = cleaned.get("respondent_team")
+        # Auto-resolve respondent from the selected match
+        if match and self.appellant_team:
+            if match.home_team_id == self.appellant_team.pk:
+                cleaned["respondent_team"] = match.away_team
+            elif match.away_team_id == self.appellant_team.pk:
+                cleaned["respondent_team"] = match.home_team
+            else:
+                raise ValidationError("Your team is not involved in the selected match.")
+        respondent = cleaned.get("respondent_team")
+        if not respondent:
+            raise ValidationError("A match must be selected so the opponent (respondent) is determined.")
         if self.appellant_team and respondent and respondent == self.appellant_team:
             raise ValidationError("You cannot file an appeal against your own team.")
+        # Validate 30-min filing window
+        if match:
+            from .models import FILING_WINDOW_MINUTES
+            from competitions.models import FixtureStatus
+            from django.utils import timezone as tz
+            if match.status != FixtureStatus.LIVE:
+                kickoff_dt = getattr(match, 'kickoff_datetime', None)
+                if kickoff_dt:
+                    if tz.is_naive(kickoff_dt):
+                        kickoff_dt = tz.make_aware(kickoff_dt)
+                    estimated_end = kickoff_dt + tz.timedelta(minutes=90)
+                    filing_deadline = estimated_end + tz.timedelta(minutes=FILING_WINDOW_MINUTES)
+                    if tz.now() > filing_deadline:
+                        raise ValidationError(
+                            f"Appeals must be filed within {FILING_WINDOW_MINUTES} minutes "
+                            f"after the end of the match. The window has expired."
+                        )
         return cleaned
 
 

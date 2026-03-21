@@ -30,7 +30,9 @@ class TeamRegistrationForm(forms.ModelForm):
             'placeholder': '712345678',
             'id': 'phone-input',
             'pattern': '[0-9]{9}',
-            'maxlength': '9'
+            'minlength': '9',
+            'maxlength': '9',
+            'inputmode': 'numeric'
         }),
         help_text="Enter 9 digits only (e.g., 712345678). Will be saved as +254XXXXXXXXX"
     )
@@ -147,7 +149,7 @@ class PlayerRegistrationForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID/Passport Number'}),
+            'id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID Number', 'pattern': '\\d{5,10}', 'minlength': '5', 'maxlength': '10', 'inputmode': 'numeric'}),
             'fkf_license_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'FKF License Number (Optional)'}),
             'license_expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'position': forms.Select(attrs={'class': 'form-control'}),

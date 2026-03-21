@@ -53,12 +53,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model  = User
         fields = [
             "email", "first_name", "last_name", "phone",
-            "role", "county", "password", "password2",
+            "role", "county", "sub_county", "password", "password2",
         ]
 
     def validate(self, data):
         if data["password"] != data.pop("password2"):
             raise serializers.ValidationError({"password2": "Passwords do not match."})
+        data["county"] = "Makueni"
         return data
 
     def create(self, validated_data):

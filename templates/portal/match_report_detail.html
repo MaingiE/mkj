@@ -20,10 +20,36 @@
     {% endif %}
 </div>
 
+{% if report.appointment_snapshot %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>Officials Appointed</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;">
+            {% for official in report.appointment_snapshot %}
+            <div style="padding:.85rem 1rem;border:1px solid #e5e7eb;border-radius:10px;background:#fafafa;">
+                <div style="font-size:.8rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.04em;">{{ official.role_display }}</div>
+                <div style="font-weight:700;color:#222;margin-top:.2rem;">{{ official.referee_name }}</div>
+                <div style="font-size:.82rem;color:{% if official.status == 'confirmed' %}#1565C0{% elif official.status == 'pending' %}#E65100{% elif official.status == 'declined' %}#C62828{% else %}#777{% endif %};margin-top:.2rem;">
+                    {{ official.status|title }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% elif report.fixture.referee_appointments.exists %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h3>Officials Appointed</h3></div>
+    <div class="card-body">
+        <p style="margin:0;color:#666;font-size:.92rem;">This report predates appointment snapshot storage. Current fixture appointments are available in the appointments panel.</p>
+    </div>
+</div>
+{% endif %}
+
 <!-- Score -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header">
-        <h3>{% if sport_cfg.label == 'Football' %}⚽{% elif sport_cfg.label == 'Volleyball' %}🏐{% elif sport_cfg.label == 'Handball' %}🤾{% else %}🏀{% endif %} Final Score
+        <h3>{% if sport_cfg.label == 'Soccer' %}⚽{% elif sport_cfg.label == 'Volleyball' %}🏐{% elif sport_cfg.label == 'Handball' %}🤾{% else %}🏀{% endif %} Final Score
             <span style="font-size:.8rem;font-weight:normal;color:#666;margin-left:.5rem;">({{ sport_cfg.score_unit }})</span>
         </h3>
     </div>
@@ -43,7 +69,7 @@
         <div style="margin-top:.5rem;color:#666;font-size:1rem;">Sets: {{ report.home_sets }} — {{ report.away_sets }}</div>
         {% endif %}
         {% if report.overtime_played %}
-        <div style="margin-top:.3rem;color:#FF8F00;font-size:.9rem;">⏱️ {% if sport_cfg.label == 'Football' %}After Extra Time{% else %}After Overtime ({{ report.overtime_periods }} OT period{{ report.overtime_periods|pluralize }}){% endif %}</div>
+        <div style="margin-top:.3rem;color:#FF8F00;font-size:.9rem;">⏱️ {% if sport_cfg.label == 'Soccer' %}After Extra Time{% else %}After Overtime ({{ report.overtime_periods }} OT period{{ report.overtime_periods|pluralize }}){% endif %}</div>
         {% endif %}
     </div>
 </div>
@@ -100,11 +126,11 @@
                 {% if sport_cfg.default_duration %}
                 <div><strong>Duration:</strong></div><div>{{ report.match_duration }} mins</div>
                 {% endif %}
-                {% if sport_cfg.label == 'Football' %}
+                {% if sport_cfg.label == 'Soccer' %}
                 <div><strong>Added Time HT:</strong></div><div>{{ report.added_time_ht }} mins</div>
                 <div><strong>Added Time FT:</strong></div><div>{{ report.added_time_ft }} mins</div>
                 {% endif %}
-                <div><strong>{% if sport_cfg.label == 'Football' or sport_cfg.label == 'Handball' %}Pitch{% else %}Court{% endif %}:</strong></div><div>{{ report.get_pitch_condition_display }}</div>
+                <div><strong>{% if sport_cfg.label == 'Soccer' or sport_cfg.label == 'Handball' %}Pitch{% else %}Court{% endif %}:</strong></div><div>{{ report.get_pitch_condition_display }}</div>
                 <div><strong>Weather:</strong></div><div>{{ report.weather|default:"—" }}</div>
                 <div><strong>Attendance:</strong></div><div>{{ report.attendance|default:"—" }}</div>
             </div>

@@ -2,6 +2,7 @@
 MKJ SUPA CUP Matches — Views
 """
 from rest_framework import generics, status, permissions
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -14,6 +15,7 @@ from .serializers import (
     MatchReportSerializer, MatchReportApprovalSerializer,
 )
 from accounts.permissions import IsReferee, IsTeamManager, IsRefereeManagerOrAdmin
+from referees.models import RefereeAppointment, AppointmentStatus, get_head_official_role
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -125,13 +127,31 @@ class MatchReportViewSet(ModelViewSet):
             return [IsReferee()]
         return [permissions.IsAuthenticated()]
 
+    def _require_confirmed_head_official(self, fixture):
+        required_role = get_head_official_role(fixture.competition.sport_type)
+        has_appointment = RefereeAppointment.objects.filter(
+            fixture=fixture,
+            referee=self.request.user.referee_profile,
+            role=required_role,
+            status=AppointmentStatus.CONFIRMED,
+        ).exists()
+        if not has_appointment:
+            raise PermissionDenied("Only the confirmed head official appointed to this fixture may submit or edit the match report.")
+
     @extend_schema(tags=["matches"], summary="Submit match report (referee)")
     def perform_create(self, serializer):
+        fixture = serializer.validated_data["fixture"]
+        self._require_confirmed_head_official(fixture)
         serializer.save(
             referee=self.request.user.referee_profile,
             submitted_at=timezone.now(),
             status="submitted",
         )
+
+    def perform_update(self, serializer):
+        fixture = serializer.validated_data.get("fixture", serializer.instance.fixture)
+        self._require_confirmed_head_official(fixture)
+        serializer.save(referee=self.request.user.referee_profile)
 
     @extend_schema(tags=["matches"])
     def list(self, request, *args, **kwargs):

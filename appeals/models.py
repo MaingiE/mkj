@@ -19,6 +19,7 @@ APPEAL_FEE_KES = 2000       # KES 2,000 appeal submission fee (refundable if app
 REAPPEAL_FEE_KES = 4000     # KES 4,000 re-appeal fee
 REAPPEAL_WINDOW_MINUTES = 10  # Re-appeal must be filed within 10 minutes of decision
 RESPONSE_WINDOW_MINUTES = 30  # Respondent has 30 minutes to submit a response
+FILING_WINDOW_MINUTES = 30    # Appeal must be filed within 30 minutes after end of match
 
 
 class AppealStatus(models.TextChoices):
@@ -165,6 +166,41 @@ class Appeal(models.Model):
     def can_submit(self):
         """Appeal can only be submitted with evidence + paid fee."""
         return self.has_evidence and self.fee_status == FeeStatus.VERIFIED
+
+    @property
+    def filing_window_ok(self):
+        """
+        When linked to a match, the appeal must be filed within 30 minutes
+        after the match ends.  For live matches the window hasn't closed yet.
+        Returns True if no match is linked or the window is still open.
+        """
+        if not self.match:
+            return True
+        from competitions.models import FixtureStatus
+        if self.match.status == FixtureStatus.LIVE:
+            return True  # match still running
+        # For completed / other statuses, use kickoff + 90 min as estimated end
+        kickoff_dt = getattr(self.match, 'kickoff_datetime', None)
+        if not kickoff_dt:
+            return True  # no kickoff time recorded, allow filing
+        if timezone.is_naive(kickoff_dt):
+            kickoff_dt = timezone.make_aware(kickoff_dt)
+        estimated_end = kickoff_dt + timezone.timedelta(minutes=90)
+        filing_deadline = estimated_end + timezone.timedelta(minutes=FILING_WINDOW_MINUTES)
+        return timezone.now() <= filing_deadline
+
+    def resolve_respondent_from_match(self):
+        """
+        If a match is linked, automatically set the respondent_team to the
+        opponent (the other team in the fixture).
+        """
+        if not self.match or not self.appellant_team_id:
+            return
+        fixture = self.match
+        if fixture.home_team_id == self.appellant_team_id:
+            self.respondent_team = fixture.away_team
+        elif fixture.away_team_id == self.appellant_team_id:
+            self.respondent_team = fixture.home_team
 
     @property
     def has_response(self):

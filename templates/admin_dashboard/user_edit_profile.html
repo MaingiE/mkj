@@ -96,15 +96,16 @@
                         <label>Phone *</label>
                         <div class="input-group">
                             <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
-                            <input type="tel" name="phone" class="form-control" value="{{ detail_user.phone|default:'' }}" placeholder="712345678" pattern="(?:\+?254|0)?\d{9}" maxlength="13" required title="Enter 9 digits e.g. 712345678">
+                            <input type="tel" name="phone" class="form-control" value="{{ detail_user.phone|slice:'4:'|default:'' }}" placeholder="712345678" pattern="\d{9}" minlength="9" maxlength="9" inputmode="numeric" required title="Enter 9 digits e.g. 712345678">
                         </div>
                     </div>
                     <div class="field">
-                        <label>County</label>
-                        <select name="county" class="form-control">
-                            <option value="">-- Select County --</option>
-                            {% for value, label in county_choices %}
-                            <option value="{{ value }}" {% if detail_user.county == value %}selected{% endif %}>{{ label }}</option>
+                        <input type="hidden" name="county" value="Makueni">
+                        <label>Sub-County</label>
+                        <select name="sub_county" class="form-control" required>
+                            <option value="">-- Select Sub-County --</option>
+                            {% for value, label in subcounty_choices %}
+                            <option value="{{ value }}" {% if detail_user.sub_county == value %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                     </div>

@@ -214,6 +214,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── SQUAD RULES ────────────────────────────────────────────────────────────────
 SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF = 2
+# Default fallbacks — overridden by SPORT_SQUAD_RULES in matches/models.py
 SQUAD_MIN_STARTERS = 7      # Minimum starters required
 SQUAD_MIN_PLAYERS  = 7      # Absolute minimum players (starters only if no subs)
 SQUAD_MAX_PLAYERS  = 23
