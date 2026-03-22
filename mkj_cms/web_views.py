@@ -22,8 +22,8 @@ import secrets, string, json, re
 
 from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or_raise, MAKUENI_SUBCOUNTY_WARDS
 from competitions.models import (
-    Competition, Fixture, SportType, EXHIBITION_SPORTS, COUNTY_REGISTRATION_FEE_CAP,
-    CountyPayment, PaymentStatus, CompetitionStatus,
+    Competition, Fixture, SportType, EXHIBITION_SPORTS,
+    CompetitionStatus,
     GenderChoice, CompetitionFormat, AgeGroup,
 )
 from teams.models import (
@@ -34,7 +34,7 @@ from teams.models import (
 )
 from teams.forms import (
     PlayerRegistrationForm,
-    CountyAdminRegistrationForm, CountyPaymentForm, CountyPlayerForm,
+    CountyPlayerForm,
     TechnicalBenchForm, CountyDelegationMemberForm, KitColorsForm,
 )
 from referees.models import (
@@ -42,7 +42,6 @@ from referees.models import (
     AppointmentStatus, AvailabilityStatus, AppointmentRole, RefereeType,
     get_required_roles, get_head_official_role, HEAD_OFFICIAL_ROLES,
 )
-from referees.forms import RefereeRegistrationForm
 from matches.models import (
     MatchReport, MatchEvent, MatchReportStatus,
     SquadSubmission, SquadPlayer, SquadStatus,
@@ -206,7 +205,7 @@ def _ensure_competition_for_sport_type(sport_type):
         format_type=CompetitionFormat.GROUP_AND_KNOCKOUT,
         season=current_year,
         age_group=AgeGroup.OPEN,
-        status=CompetitionStatus.REGISTRATION,
+        status=CompetitionStatus.UPCOMING,
         start_date=today,
         end_date=today + datetime.timedelta(days=90),
         max_teams=32,
@@ -643,6 +642,7 @@ def public_competition_standings_view(request, pk):
     from matches.stats_engine import (
         get_top_scorers, get_top_assisters,
         get_disciplinary_table, get_clean_sheet_leaders,
+        get_fair_play_table,
     )
 
     competition = get_object_or_404(Competition, pk=pk)
@@ -1223,86 +1223,14 @@ def change_password_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   PUBLIC REGISTRATION VIEWS (No login required)
-# ══════════════════════════════════════════════════════════════════════════════
-
-def team_register_view(request):
-    """Deprecated — team registration is handled via the portal."""
-    return redirect('web_login')
-
-
-def team_register_success_view(request):
-    """Deprecated — redirects to login."""
-    return redirect('web_login')
-
-
-def referee_register_view(request):
-    """Public referee registration — creates User + RefereeProfile (pending)."""
-    if request.method == 'POST':
-        form = RefereeRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            cd = form.cleaned_data
-            # Create user account (inactive until approved)
-            random_pw = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
-            user = User.objects.create_user(
-                email=cd['email'],
-                password=random_pw,
-                first_name=cd['first_name'],
-                last_name=cd['last_name'],
-                phone=cd.get('phone', ''),
-                county='Makueni',
-                sub_county=cd.get('sub_county', ''),
-                role=UserRole.REFEREE,
-                is_active=False,
-            )
-            # Create referee profile
-            profile = RefereeProfile.objects.create(
-                user=user,
-                license_number=cd['license_number'],
-                level=cd.get('level') or 'County',
-                county='Makueni',
-                id_number=cd.get('id_number', ''),
-                years_experience=cd.get('years_experience') or 0,
-                is_approved=False,
-            )
-            # Save profile picture if uploaded
-            if cd.get('profile_picture'):
-                profile.profile_picture = cd['profile_picture']
-                profile.save(update_fields=['profile_picture'])
-            messages.success(request, mark_safe(
-                f'<strong>Registration Successful!</strong><br>'
-                f'Thank you, <strong>{cd["first_name"]} {cd["last_name"]}</strong>!<br>'
-                f'License: <code>{cd["license_number"]}</code><br><br>'
-                f'<strong>Next Steps:</strong><br>'
-                f'1. Wait for admin approval<br>'
-                f'2. You will receive login credentials via email<br>'
-                f'3. Log in and change your password'
-            ))
-            return redirect('referee_register_success')
-    else:
-        form = RefereeRegistrationForm()
-    return render(request, 'public/referee_register.html', {
-        'form': form,
-        'active_page': 'register',
-    })
-
-
-def referee_register_success_view(request):
-    """Success page after referee registration."""
-    return render(request, 'public/referee_register_success.html', {
-        'active_page': 'register',
-    })
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #   ADMIN / MANAGER — TEAM APPROVAL VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer')
 def pending_teams_view(request):
-    """Legacy endpoint kept for compatibility; county registration is now the only channel."""
-    messages.info(request, 'Legacy team registration flow has been retired. Use county registrations.')
-    return redirect('treasurer_county_registrations')
+    """Legacy endpoint — registration removed."""
+    messages.info(request, 'Registration has been removed from MKJ SUPA CUP.')
+    return redirect('dashboard')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2244,6 +2172,7 @@ def match_report_form_view(request, fixture_pk):
 @login_required(login_url='web_login')
 def match_report_detail_view(request, report_pk):
     """View a match report (read-only)."""
+    from matches.models import get_sport_config
     report = get_object_or_404(MatchReport, pk=report_pk)
     events = report.events.select_related('team', 'player').order_by('minute')
     sport_cfg = get_sport_config(report.fixture.competition.sport_type)
@@ -2294,6 +2223,7 @@ def match_report_review_view(request, report_pk):
 
         return redirect('coordinator_match_reports')
 
+    from matches.models import get_sport_config
     sport_cfg = get_sport_config(report.fixture.competition.sport_type)
     period_scores = report.period_scores.order_by('period_number')
     return render(request, 'portal/match_report_review.html', {
@@ -2543,6 +2473,7 @@ def _auto_generate_pool_fixtures(pool, competition, user):
             away_team=away,
             match_date=current_date,
             kickoff_time=kickoff_time,
+            venue=pool.venue,
             status='pending',
             round_number=round_number,
             is_knockout=False,
@@ -2561,7 +2492,7 @@ def coordinator_dashboard_view(request):
     """Discipline Coordinator dashboard — overview scoped to assigned discipline."""
     from competitions.models import (
         Competition, Fixture, Venue, Pool, PoolTeam,
-        SportType, CompetitionStatus, CountyPayment,
+        SportType, CompetitionStatus,
     )
     from matches.models import MatchReport
 
@@ -2576,7 +2507,7 @@ def coordinator_dashboard_view(request):
     # Competitions for this discipline
     competitions = Competition.objects.filter(sport_type__in=discipline_variants) if discipline_variants else Competition.objects.none()
     active = competitions.filter(status__in=['active', 'group_stage', 'knockout'])
-    registration = competitions.filter(status='registration')
+    upcoming = competitions.filter(status='upcoming')
 
     comp_ids = competitions.values_list('pk', flat=True)
 
@@ -2620,7 +2551,7 @@ def coordinator_dashboard_view(request):
         'discipline_label': discipline_label,
         'coordinator_name': coordinator_name,
         'active_competitions': active,
-        'registration_competitions': registration,
+        'upcoming_competitions': upcoming,
         'recent_results': recent_results,
         'pending_reports': pending_reports,
     })
@@ -2650,12 +2581,8 @@ def coordinator_competitions_view(request):
 
 @role_required('coordinator', 'admin')
 def coordinator_create_competition_view(request):
-    """Redirect to competitions list — competitions are auto-created when disciplines are registered."""
-    messages.info(
-        request,
-        'Competitions are automatically created when sub-county officers register disciplines. '
-        'Use your competitions list to manage pools, generate fixtures, and configure settings.',
-    )
+    """Removed — MKJ SUPA CUP is the default competition. Competitions are auto-created per discipline."""
+    messages.info(request, 'MKJ SUPA CUP competitions are automatically created per discipline.')
     return redirect('coordinator_competitions')
 
 
@@ -2771,7 +2698,7 @@ def coordinator_competition_manage_view(request, pk):
 @role_required('coordinator', 'admin')
 def coordinator_manage_pools_view(request, pk):
     """Coordinator: Create/delete pools and assign/remove teams for their discipline competition."""
-    from competitions.models import Competition, Pool, PoolTeam
+    from competitions.models import Competition, Pool, PoolTeam, Venue
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
@@ -2784,12 +2711,19 @@ def coordinator_manage_pools_view(request, pk):
 
         if action == 'create_pool':
             pool_name = request.POST.get('pool_name', '').strip()
+            venue_id = request.POST.get('venue_id', '')
             if not pool_name:
                 messages.error(request, 'Pool name is required.')
             elif Pool.objects.filter(competition=competition, name=pool_name).exists():
                 messages.error(request, f'Pool "{pool_name}" already exists.')
             else:
-                Pool.objects.create(competition=competition, name=pool_name)
+                venue = None
+                if venue_id:
+                    try:
+                        venue = Venue.objects.get(pk=venue_id)
+                    except Venue.DoesNotExist:
+                        pass
+                Pool.objects.create(competition=competition, name=pool_name, venue=venue)
                 messages.success(request, f'Pool "{pool_name}" created.')
 
         elif action == 'delete_pool':
@@ -2835,16 +2769,18 @@ def coordinator_manage_pools_view(request, pk):
 
         return redirect('coordinator_manage_pools', pk=competition.pk)
 
-    pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').order_by('name')
+    pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').select_related('venue').order_by('name')
     assigned_ids = PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
     eligible_teams = Team.objects.filter(
         status='registered', sport_type=competition.sport_type,
     ).exclude(pk__in=assigned_ids).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
 
     return render(request, 'portal/coordinator/manage_pools.html', {
         'competition': competition,
         'pools': pools,
         'eligible_teams': eligible_teams,
+        'venues': venues,
     })
 
 
@@ -3528,186 +3464,35 @@ def coordinator_competition_rules_view(request, pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   TREASURER PORTAL
+#   TREASURER PORTAL (Payment/Registration removed — MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('treasurer', 'admin')
 def treasurer_dashboard_view(request):
-    """Treasurer home — overview of county payments and county registration status."""
-    current_season = str(date.today().year)
-
-    # County payment stats
-    county_payments = CountyPayment.objects.filter(season=current_season)
-    counties_paid = county_payments.filter(payment_status__in=['paid', 'waived']).count()
-    counties_pending = county_payments.filter(payment_status='pending').count()
-    total_collected = sum(
-        cp.participation_fee for cp in county_payments
-        if cp.payment_status in ('paid', 'waived')
-    )
-
-    # County registration stats (new canonical channel)
-    pending_count = CountyRegistration.objects.filter(
-        status=CountyRegStatus.PAYMENT_SUBMITTED
-    ).count()
-    paid_count = pending_count
-    approved_count = CountyRegistration.objects.filter(
-        status=CountyRegStatus.APPROVED
-    ).count()
-    rejected_count = CountyRegistration.objects.filter(
-        status=CountyRegStatus.REJECTED
-    ).count()
-
-    # Recent county registrations
-    recent = CountyRegistration.objects.select_related('user').order_by('-created_at')[:5]
-    # Recent county payments
-    recent_payments = county_payments.order_by('-updated_at')[:5]
+    """Treasurer home — MKJ SUPA CUP has no registration fees."""
+    from appeals.models import Appeal
+    total_teams = Team.objects.count()
+    total_players = CountyPlayer.objects.count()
+    pending_appeals = Appeal.objects.filter(status='pending').count()
 
     return render(request, 'portal/treasurer/dashboard.html', {
-        'pending_count':    pending_count,
-        'paid_count':       paid_count,
-        'approved_count':   approved_count,
-        'rejected_count':   rejected_count,
-        'recent_teams':     recent,
-        'registration_fee': COUNTY_REGISTRATION_FEE_CAP,
-        'counties_paid':    counties_paid,
-        'counties_pending': counties_pending,
-        'total_collected':  total_collected,
-        'recent_payments':  recent_payments,
-        'current_season':   current_season,
+        'total_teams': total_teams,
+        'total_players': total_players,
+        'pending_appeals': pending_appeals,
     })
 
 
 @role_required('treasurer', 'admin')
 def treasurer_teams_view(request):
-    """Legacy endpoint kept for compatibility; county registration is now the only channel."""
-    messages.info(request, 'Legacy team registration flow has been retired. Use county registrations.')
-    return redirect('treasurer_county_registrations')
+    """Removed — no payment/registration workflow."""
+    return redirect('treasurer_dashboard')
 
 
 @role_required('treasurer', 'admin')
 def treasurer_county_payments_view(request):
-    """
-    Treasurer manages county-level payments.
-    Each county pays KSh 250,000 per season to cover ALL sports.
-    """
-    current_season = str(date.today().year)
-    season = request.GET.get('season', current_season)
-
-    if request.method == 'POST':
-        action = request.POST.get('action')
-
-        if action == 'create_county':
-            county = request.POST.get('county', '').strip()
-            if not county:
-                messages.error(request, 'Please select a county.')
-            elif CountyPayment.objects.filter(county=county, season=season).exists():
-                messages.warning(request, f'{county} already has a payment record for {season}.')
-            else:
-                CountyPayment.objects.create(
-                    county=county,
-                    season=season,
-                    participation_fee=COUNTY_REGISTRATION_FEE_CAP,
-                )
-                messages.success(request, f'County payment record created for {county} ({season}).')
-
-        elif action == 'confirm_payment':
-            payment_id = request.POST.get('payment_id')
-            ref = request.POST.get('payment_reference', '').strip()
-            payment_date_str = request.POST.get('payment_date', '').strip()
-            notes = request.POST.get('notes', '').strip()
-
-            if not ref:
-                messages.error(request, 'Please enter the M-Pesa / payment reference.')
-            else:
-                try:
-                    cp = CountyPayment.objects.get(pk=payment_id)
-                    cp.payment_status = PaymentStatus.PAID
-                    cp.payment_reference = ref
-                    cp.confirmed_by = request.user
-                    cp.confirmed_at = timezone.now()
-                    cp.notes = notes
-                    if payment_date_str:
-                        from datetime import datetime as dt
-                        cp.payment_date = dt.strptime(payment_date_str, '%Y-%m-%d').date()
-                    else:
-                        cp.payment_date = date.today()
-                    cp.save()
-
-                    # Also unlock all teams from this county
-                    Team.objects.filter(
-                        county__name=cp.county, payment_confirmed=False
-                    ).update(
-                        payment_confirmed=True,
-                        payment_reference=ref,
-                        payment_amount=COUNTY_REGISTRATION_FEE_CAP,
-                        payment_confirmed_by=request.user,
-                        payment_confirmed_at=timezone.now(),
-                    )
-
-                    # Audit log
-                    from admin_dashboard.models import ActivityLog as AuditLog
-                    AuditLog.objects.create(
-                        user=request.user,
-                        action='COUNTY_PAYMENT_CONFIRMED',
-                        description=(
-                            f'{request.user.get_full_name()} confirmed county payment for '
-                            f'{cp.county} — Season {season} (Ref: {ref})'
-                        ),
-                        object_repr=str(cp),
-                        ip_address=request.META.get('REMOTE_ADDR', ''),
-                    )
-                    messages.success(request, f'Payment confirmed for {cp.county} (Ref: {ref}).')
-                except CountyPayment.DoesNotExist:
-                    messages.error(request, 'Payment record not found.')
-
-        elif action == 'waive_payment':
-            payment_id = request.POST.get('payment_id')
-            notes = request.POST.get('notes', '').strip()
-            try:
-                cp = CountyPayment.objects.get(pk=payment_id)
-                cp.payment_status = PaymentStatus.WAIVED
-                cp.confirmed_by = request.user
-                cp.confirmed_at = timezone.now()
-                cp.notes = notes or 'Payment waived'
-                cp.save()
-
-                # Unlock teams
-                Team.objects.filter(
-                    county=cp.county, payment_confirmed=False
-                ).update(
-                    payment_confirmed=True,
-                    payment_confirmed_by=request.user,
-                    payment_confirmed_at=timezone.now(),
-                )
-
-                messages.success(request, f'Payment waived for {cp.county}.')
-            except CountyPayment.DoesNotExist:
-                messages.error(request, 'Payment record not found.')
-
-        return redirect('treasurer_county_payments')
-
-    county_payments = CountyPayment.objects.filter(season=season).order_by('county')
-    paid = county_payments.filter(payment_status__in=['paid', 'waived'])
-    pending = county_payments.filter(payment_status='pending')
-
-    # Counties from KenyaCounty enum that don't have a payment record yet
-    existing_counties = set(county_payments.values_list('county', flat=True))
-    available_counties = [
-        (c.value, c.label) for c in KenyaCounty
-        if c.value not in existing_counties
-    ]
-
-    return render(request, 'portal/treasurer/county_payments.html', {
-        'paid_payments':       paid,
-        'pending_payments':    pending,
-        'paid_count':          paid.count(),
-        'pending_count':       pending.count(),
-        'total_collected':     sum(cp.participation_fee for cp in paid),
-        'registration_fee':    COUNTY_REGISTRATION_FEE_CAP,
-        'season':              season,
-        'current_season':      current_season,
-        'available_counties':  available_counties,
-    })
+    """Removed — MKJ SUPA CUP has no county payment fees."""
+    messages.info(request, 'MKJ SUPA CUP does not charge participation fees.')
+    return redirect('treasurer_dashboard')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -4163,13 +3948,13 @@ def cm_dashboard_view(request):
     """Competition Manager dashboard — overview of all competitions and key stats."""
     from competitions.models import (
         Competition, Fixture, Venue, Pool, PoolTeam,
-        SportType, CompetitionStatus, CountyPayment, PaymentStatus,
+        SportType, CompetitionStatus,
     )
     from matches.models import MatchReport
 
     competitions = Competition.objects.all()
     active = competitions.filter(status__in=['active', 'group_stage', 'knockout'])
-    registration = competitions.filter(status='registration')
+    upcoming = competitions.filter(status='upcoming')
 
     # Key counts
     stats = {
@@ -4180,9 +3965,6 @@ def cm_dashboard_view(request):
         'pending_reports': MatchReport.objects.filter(status='submitted').count(),
         'total_teams': Team.objects.filter(status='registered').count(),
         'total_venues': Venue.objects.filter(is_active=True).count(),
-        'paid_counties': CountyPayment.objects.filter(
-            payment_status__in=['paid', 'waived']
-        ).count(),
         'pending_county_players': CountyPlayer.objects.filter(verification_status='pending').count(),
     }
 
@@ -4211,7 +3993,7 @@ def cm_dashboard_view(request):
     return render(request, 'portal/cm/dashboard.html', {
         'stats': stats,
         'active_competitions': active,
-        'registration_competitions': registration,
+        'upcoming_competitions': upcoming,
         'recent_results': recent_results,
         'pending_reports': pending_reports,
         'sport_breakdown': sport_breakdown,
@@ -4220,12 +4002,8 @@ def cm_dashboard_view(request):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_create_competition_view(request):
-    """Competitions are auto-created when sub-county officers register disciplines."""
-    messages.info(
-        request,
-        'Competitions are now auto-created when sub-county officers register disciplines. '
-        'Use the competitions list to manage existing competitions.',
-    )
+    """Removed — MKJ SUPA CUP is the default competition. Competitions are auto-created per discipline."""
+    messages.info(request, 'MKJ SUPA CUP competitions are automatically created per discipline.')
     return redirect('cm_dashboard')
 
 
@@ -4276,7 +4054,6 @@ def cm_competition_manage_view(request, pk):
     """
     from competitions.models import (
         Competition, Pool, PoolTeam, Fixture, Venue, KnockoutRound,
-        CountyPayment,
     )
     from matches.models import MatchReport
 
@@ -4351,7 +4128,7 @@ def cm_competition_manage_view(request, pk):
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_manage_pools_view(request, pk):
     """Create/delete pools and assign/remove teams."""
-    from competitions.models import Competition, Pool, PoolTeam, CountyPayment
+    from competitions.models import Competition, Pool, PoolTeam
 
     competition = get_object_or_404(Competition, pk=pk)
 
@@ -4802,52 +4579,19 @@ def cm_competition_rules_view(request, pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   M-PESA STK PUSH — AJAX ENDPOINT
+#   M-PESA / REGISTRATION PAYMENT — REMOVED (MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
-
-@require_POST
-def mpesa_stk_push_view(request):
-    """AJAX endpoint to trigger an M-Pesa STK push payment prompt."""
-    try:
-        body = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
-
-    phone = body.get('phone', '').strip()
-    if not re.match(r'^\+254\d{9}$', phone):
-        return JsonResponse({'success': False, 'error': 'Invalid phone number. Use +254XXXXXXXXX format.'}, status=400)
-
-    try:
-        from teams.mpesa_service import initiate_stk_push
-        result = initiate_stk_push(
-            phone_number=phone,
-            amount=max(1, int(COUNTY_REGISTRATION_FEE_CAP)),
-            account_reference=django_settings.MPESA_ACCOUNT_REF,
-            description='MKJ SUPA CUP County Registration Fee',
-        )
-        if result['success']:
-            checkout_id = result['data'].get('CheckoutRequestID', '')
-            return JsonResponse({'success': True, 'checkout_id': checkout_id})
-        else:
-            return JsonResponse({'success': False, 'error': str(result.get('data', 'STK push failed.'))})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': 'Payment service unavailable. Please pay manually.'})
-
-
-# (County admin public registration removed — county admin role deprecated)
 
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer', 'secretary_general', 'coordinator', 'verification_officer', 'cec_sports')
 def cec_sports_portal_view(request):
     """CEC sports caucus portal (view-only): high-level competition and verification visibility."""
     competitions = Competition.objects.order_by('-created_at')[:12]
-    counties_registered = CountyRegistration.objects.filter(status='approved').count()
     pending_players = CountyPlayer.objects.filter(verification_status='pending').count()
     verified_players = CountyPlayer.objects.filter(verification_status='verified').count()
 
     return render(request, 'portal/cec_sports_dashboard.html', {
         'competitions': competitions,
-        'counties_registered': counties_registered,
         'pending_players': pending_players,
         'verified_players': verified_players,
     })
@@ -4857,82 +4601,11 @@ def cec_sports_portal_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SUB-COUNTY OFFICER — PAYMENT SUBMISSION
+#   SUB-COUNTY OFFICER — PAYMENT REMOVED (MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('subcounty_sports_officer', 'admin')
-def county_admin_payment_view(request):
-    """Sub-county officer payment page (MKJ SUPA CUP has no fee)."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=True)
-    reg.status = CountyRegStatus.APPROVED
-    if not reg.approved_at:
-        reg.approved_at = timezone.now()
-    reg.save(update_fields=['status', 'approved_at'])
-    messages.info(request, 'MKJ SUPA CUP does not charge a registration fee. Your registration remains active.')
-    return redirect('subcounty_officer_dashboard')
 
 
 # (County admin discipline/player views removed — use subcounty_officer equivalents)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#   TREASURER — COUNTY REGISTRATION APPROVALS
-# ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('treasurer', 'admin', 'competition_manager', 'chief_sports_officer')
-def treasurer_county_registrations_view(request):
-    """Treasurer reviews county admin registrations and approves/rejects."""
-    if request.method == 'POST':
-        reg_id = request.POST.get('registration_id')
-        action = request.POST.get('action')
-        reg = get_object_or_404(CountyRegistration, pk=reg_id)
-
-        if action == 'approve':
-            reg.status = CountyRegStatus.APPROVED
-            reg.approved_by = request.user
-            reg.approved_at = timezone.now()
-            reg.save()
-            # Notify county admin by email
-            try:
-                from django.core.mail import send_mail
-                send_mail(
-                    subject='[MKJ SUPA CUP] County Registration Approved',
-                    message=(
-                        f'Dear {reg.user.get_full_name()},\n\n'
-                        f'Your county registration for {reg.county} has been approved.\n'
-                        f'You can now log in to the MKJ SUPA CUP portal and begin adding disciplines and players.\n\n'
-                        f'MKJ SUPA CUP Administration'
-                    ),
-                    from_email=getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.go.ke'),
-                    recipient_list=[reg.user.email],
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
-            messages.success(request, f'{reg.county} county registration approved.')
-        elif action == 'reject':
-            reason = request.POST.get('rejection_reason', '')
-            reg.status = CountyRegStatus.REJECTED
-            reg.rejection_reason = reason
-            reg.save()
-            messages.warning(request, f'{reg.county} county registration rejected.')
-
-        return redirect('treasurer_county_registrations')
-
-    pending = CountyRegistration.objects.filter(
-        status=CountyRegStatus.PAYMENT_SUBMITTED
-    ).order_by('-payment_submitted_at')
-    approved = CountyRegistration.objects.filter(
-        status=CountyRegStatus.APPROVED
-    ).order_by('-approved_at')
-    all_regs = CountyRegistration.objects.all().order_by('-created_at')
-
-    return render(request, 'portal/treasurer/county_registrations.html', {
-        'pending': pending,
-        'approved': approved,
-        'all_regs': all_regs,
-        'registration_fee': COUNTY_REGISTRATION_FEE_CAP,
-    })
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -6399,8 +6072,8 @@ def scout_players_view(request):
         players = players.filter(discipline__registration__county=county_filter)
     if search_query:
         players = players.filter(
-            models.Q(first_name__icontains=search_query) |
-            models.Q(last_name__icontains=search_query)
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query)
         )
 
     # Get IDs already shortlisted by this scout

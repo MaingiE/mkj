@@ -29,9 +29,6 @@
                 <a href="{% url 'competitions_list' %}" class="{% if 'competition' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-trophy"></i> Competitions <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
                 <div class="nav-dropdown-menu">
                     <a href="{% url 'competitions_list' %}"><i class="bi bi-list-ul"></i> All Competitions</a>
-                    {% if user.role == 'competition_manager' or user.role == 'admin' %}
-                    <a href="{% url 'cm_create_competition' %}"><i class="bi bi-plus-circle"></i> Create New</a>
-                    {% endif %}
                 </div>
             </li>
             {% endif %}

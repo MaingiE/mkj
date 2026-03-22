@@ -46,9 +46,6 @@ from .web_views import (
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
     contact_view,
-    # Public registration
-    team_register_view, team_register_success_view,
-    referee_register_view, referee_register_success_view,
     # CMS portal
     web_login_view, web_logout_view, dashboard_view,
     force_change_password_view,
@@ -77,7 +74,6 @@ from .web_views import (
     treasurer_dashboard_view,
     treasurer_teams_view,
     treasurer_county_payments_view,
-    treasurer_county_registrations_view,
     # Competition Manager specific views
     competition_standings_view,
     competition_reports_view,
@@ -94,8 +90,7 @@ from .web_views import (
     cm_edit_standings_view,
     cm_edit_fixture_view,
     cm_competition_rules_view,
-    # Shared subcounty views (bench, delegation, verification, payment, kit)
-    county_admin_payment_view,
+    # Shared subcounty views (bench, delegation, verification, kit)
     county_admin_add_bench_member_view,
     county_admin_delete_bench_member_view,
     county_admin_kit_colors_view,
@@ -155,8 +150,6 @@ from .web_views import (
     # Leadership scouting reports
     leadership_scout_reports_view,
     leadership_scout_report_detail_view,
-    # M-Pesa STK push endpoint
-    mpesa_stk_push_view,
     # New MKJ SUPA CUP portals
     subcounty_officer_dashboard_view,
     subcounty_officer_disciplines_view,
@@ -189,13 +182,6 @@ urlpatterns = [
 
     # ── NEWS & MEDIA ──────────────────────────────────────────────────────────
     path("media-hub/", include("news_media.urls")),
-
-    # ── PUBLIC REGISTRATION ───────────────────────────────────────────────────
-    path("register/team/",            team_register_view,          name="team_register"),
-    path("register/team/success/",    team_register_success_view,  name="team_register_success"),
-    path("register/referee/",         referee_register_view,       name="referee_register"),
-    path("register/referee/success/", referee_register_success_view, name="referee_register_success"),
-    path("api/mpesa/stk-push/",              mpesa_stk_push_view,               name="mpesa_stk_push"),
 
     # ── CMS PORTAL (Authenticated) ───────────────────────────────────────────
     path("portal/login/",                   web_login_view,         name="web_login"),
@@ -258,7 +244,6 @@ urlpatterns = [
     path("portal/treasurer/",                treasurer_dashboard_view,       name="treasurer_dashboard"),
     path("portal/treasurer/teams/",          treasurer_teams_view,           name="treasurer_teams"),
     path("portal/treasurer/county-payments/", treasurer_county_payments_view, name="treasurer_county_payments"),
-    path("portal/treasurer/county-registrations/", treasurer_county_registrations_view, name="treasurer_county_registrations"),
 
     # ── COUNTY SPORTS ADMIN PORTAL (REMOVED — merged into subcounty officer) ──
 
@@ -377,7 +362,6 @@ urlpatterns = [
     path("portal/subcounty-officer/discipline/<int:discipline_pk>/add-player/", subcounty_officer_add_player_view, name="subcounty_officer_add_player"),
     path("portal/subcounty-officer/player/<int:player_pk>/delete/", subcounty_officer_delete_player_view, name="subcounty_officer_delete_player"),
     path("portal/subcounty-officer/verified-players/", subcounty_verified_players_view, name="subcounty_verified_players"),
-    path("portal/subcounty-officer/payment/",                            county_admin_payment_view,               name="subcounty_officer_payment"),
     path("portal/subcounty-officer/discipline/<int:discipline_pk>/add-bench-member/", county_admin_add_bench_member_view, name="subcounty_officer_add_bench_member"),
     path("portal/subcounty-officer/bench-member/<int:member_pk>/delete/", county_admin_delete_bench_member_view,  name="subcounty_officer_delete_bench_member"),
     path("portal/subcounty-officer/delegation/",                         county_admin_delegation_members_view,    name="subcounty_officer_delegation_members"),

@@ -6,8 +6,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-COUNTY_REGISTRATION_FEE_CAP = 0  # MKJ SUPA CUP has no county registration fee
-
 
 class SportType(models.TextChoices):
     FOOTBALL_MEN       = "football_men",       "Soccer (Men)"
@@ -52,7 +50,6 @@ class KnockoutRound(models.TextChoices):
 
 
 class CompetitionStatus(models.TextChoices):
-    REGISTRATION = "registration", "Registration Open"
     UPCOMING     = "upcoming",     "Upcoming"
     GROUP_STAGE  = "group_stage",  "Group Stage"
     KNOCKOUT     = "knockout",     "Knockout Stage"
@@ -91,7 +88,7 @@ class Competition(models.Model):
     )
     season      = models.CharField(max_length=10, default="2025")
     age_group   = models.CharField(max_length=10, choices=AgeGroup.choices, default=AgeGroup.U17)
-    status      = models.CharField(max_length=20, choices=CompetitionStatus.choices, default=CompetitionStatus.REGISTRATION)
+    status      = models.CharField(max_length=20, choices=CompetitionStatus.choices, default=CompetitionStatus.UPCOMING)
     description = models.TextField(blank=True)
     rules       = models.TextField(blank=True, help_text="Competition rules, regulations, and format details")
     start_date  = models.DateField()
@@ -347,115 +344,3 @@ class Fixture(models.Model):
         return ko - timedelta(hours=hours)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# County Payment & Registration
-# One payment per county per season (KSh 250,000) covers ALL sports
-# ─────────────────────────────────────────────────────────────────────────────
-
-class PaymentStatus(models.TextChoices):
-    PENDING  = "pending",  "Pending Payment"
-    PAID     = "paid",     "Paid"
-    WAIVED   = "waived",   "Waived"
-
-
-class CountyPayment(models.Model):
-    """
-    A single county-level payment per season.
-    KSh 250,000 covers ALL sport disciplines for that county.
-    The Treasurer verifies and marks payment.
-    """
-    county          = models.CharField(max_length=100)
-    season          = models.CharField(max_length=10, default="2025")
-    participation_fee = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        default=COUNTY_REGISTRATION_FEE_CAP,
-        help_text="Participation fee in KSh (MKJ SUPA CUP currently uses 0)"
-    )
-    payment_status  = models.CharField(
-        max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING
-    )
-    payment_reference = models.CharField(
-        max_length=100, blank=True,
-        help_text="M-Pesa or bank reference number"
-    )
-    payment_date    = models.DateField(null=True, blank=True)
-    confirmed_by    = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="county_payments_confirmed",
-        help_text="Treasurer who confirmed the payment"
-    )
-    confirmed_at    = models.DateTimeField(null=True, blank=True)
-    notes           = models.TextField(blank=True)
-    created_at      = models.DateTimeField(auto_now_add=True)
-    updated_at      = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ["county", "season"]
-        ordering = ["season", "county"]
-        verbose_name = "County Payment"
-        verbose_name_plural = "County Payments"
-
-    def clean(self):
-        if self.participation_fee and COUNTY_REGISTRATION_FEE_CAP and self.participation_fee > COUNTY_REGISTRATION_FEE_CAP:
-            raise ValidationError(
-                f"Participation fee cannot exceed KSh {COUNTY_REGISTRATION_FEE_CAP:,}."
-            )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.county} — {self.season} ({self.get_payment_status_display()})"
-
-    @property
-    def is_paid(self):
-        return self.payment_status in (PaymentStatus.PAID, PaymentStatus.WAIVED)
-
-
-class CountyRegistration(models.Model):
-    """
-    Tracks a county's registration for a specific competition.
-    Links to CountyPayment — a county can only enter competitions
-    once their county-level payment is confirmed.
-    """
-    competition     = models.ForeignKey(
-        Competition, on_delete=models.CASCADE, related_name="county_registrations"
-    )
-    county          = models.CharField(max_length=100)
-    county_payment  = models.ForeignKey(
-        CountyPayment, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="registrations",
-        help_text="Link to county-level payment for this season"
-    )
-    registered_by   = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
-        related_name="county_registrations_created"
-    )
-    registered_at   = models.DateTimeField(auto_now_add=True)
-    notes           = models.TextField(blank=True)
-
-    class Meta:
-        unique_together = ["competition", "county"]
-        ordering = ["competition", "county"]
-        verbose_name = "County Registration"
-        verbose_name_plural = "County Registrations"
-
-    def clean(self):
-        return
-
-    def save(self, *args, **kwargs):
-        # Auto-link county payment
-        if not self.county_payment_id and self.competition_id:
-            self.county_payment = CountyPayment.objects.filter(
-                county=self.county, season=self.competition.season
-            ).first()
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.county} — {self.competition.name}"
-
-    @property
-    def is_paid(self):
-        return self.county_payment and self.county_payment.is_paid

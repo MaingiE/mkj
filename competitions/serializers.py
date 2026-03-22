@@ -2,7 +2,7 @@
 MKJ SUPA CUP Competitions — Serializers
 """
 from rest_framework import serializers
-from .models import Competition, Venue, Pool, PoolTeam, Fixture, CountyPayment, CountyRegistration
+from .models import Competition, Venue, Pool, PoolTeam, Fixture
 
 
 class VenueSerializer(serializers.ModelSerializer):

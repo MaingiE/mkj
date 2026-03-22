@@ -262,10 +262,10 @@
                 </div>
             {% endif %}
 
-            {% if registration_competitions %}
+            {% if upcoming_competitions %}
             <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid #eee;">
-                <div style="font-size:.78rem;font-weight:700;color:#757575;text-transform:uppercase;margin-bottom:.5rem;">Registration Open</div>
-                {% for comp in registration_competitions %}
+                <div style="font-size:.78rem;font-weight:700;color:#757575;text-transform:uppercase;margin-bottom:.5rem;">Upcoming</div>
+                {% for comp in upcoming_competitions %}
                 <div class="recent-item">
                     <div>
                         <div class="ri-main">
@@ -273,7 +273,7 @@
                         </div>
                         <div class="ri-sub">{{ comp.get_sport_type_display }}</div>
                     </div>
-                    <span class="ri-badge" style="background:#FFF8E1;color:#F57F17;">Registration</span>
+                    <span class="ri-badge" style="background:#FFF8E1;color:#F57F17;">Upcoming</span>
                 </div>
                 {% endfor %}
             </div>

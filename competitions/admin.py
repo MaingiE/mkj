@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Competition, Venue, Pool, PoolTeam, Fixture, CountyPayment, CountyRegistration
+from .models import Competition, Venue, Pool, PoolTeam, Fixture
 
 
 @admin.register(Competition)
@@ -49,17 +49,3 @@ class FixtureAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-@admin.register(CountyPayment)
-class CountyPaymentAdmin(admin.ModelAdmin):
-    list_display  = ["county", "season", "participation_fee", "payment_status", "payment_reference", "payment_date", "confirmed_by"]
-    list_filter   = ["payment_status", "season"]
-    search_fields = ["county", "payment_reference"]
-
-
-@admin.register(CountyRegistration)
-class CountyRegistrationAdmin(admin.ModelAdmin):
-    list_display  = ["county", "competition", "county_payment", "registered_at"]
-    list_filter   = ["competition"]
-    search_fields = ["county"]
-    readonly_fields = ["registered_at"]
-    ordering       = ["competition", "county"]

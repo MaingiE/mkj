@@ -153,96 +153,6 @@ def admin_dashboard(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   TEAM REGISTRATION APPROVAL
-# ══════════════════════════════════════════════════════════════════════════════
-
-@login_required
-@user_passes_test(admin_required)
-def approve_registrations(request):
-    """Approve/reject team registrations and create manager accounts."""
-    pending_teams_qs = Team.objects.filter(status='pending').order_by('-registered_at')
-
-    if request.method == 'POST':
-        team_id = request.POST.get('team_id')
-        action = request.POST.get('action')
-        team = get_object_or_404(Team, id=team_id)
-
-        if action == 'approve':
-            team.status = 'registered'
-            team.save()
-
-            # Explicit audit log
-            ActivityLog.objects.create(
-                user=request.user,
-                action='TEAM_APPROVE',
-                description=f'{request.user.get_full_name()} approved team: {team.name} (County: {team.county})',
-                object_repr=str(team),
-                ip_address=request.META.get('REMOTE_ADDR', ''),
-            )
-
-            # Create manager account if contact email exists and no manager linked
-            if team.contact_email and not team.manager:
-                try:
-                    # Check if user with this email already exists
-                    if User.objects.filter(email=team.contact_email).exists():
-                        mgr = User.objects.get(email=team.contact_email)
-                        team.manager = mgr
-                        team.save()
-                        messages.success(request, mark_safe(
-                            f'<strong>{team.name}</strong> approved!<br>'
-                            f'Linked to existing user: {team.contact_email}'
-                        ))
-                    else:
-                        import secrets, string as _s
-                        default_pw = ''.join(secrets.choice(_s.ascii_letters + _s.digits) for _ in range(10))
-                        mgr = User.objects.create_user(
-                            email=team.contact_email,
-                            password=default_pw,
-                            first_name=team.name,
-                            last_name='Manager',
-                            role=UserRole.TEAM_MANAGER,
-                            county=team.county,
-                        )
-                        mgr.must_change_password = True
-                        mgr.save(update_fields=['must_change_password'])
-                        team.manager = mgr
-                        team.save()
-
-                        # Send credentials via email only (no password shown in UI)
-                        email_sent = send_welcome_email(mgr, default_pw, 'Team Manager')
-
-                        messages.success(request, mark_safe(
-                            f'<strong>{team.name}</strong> approved!<br>'
-                            f'Manager account: <code>{team.contact_email}</code><br>'
-                            f'Temporary password sent to the manager email.'
-                        ))
-                        if not email_sent:
-                            messages.warning(request, 'Email delivery failed. Ask admin to resend credentials.')
-                except Exception as e:
-                    messages.warning(request, f'Team approved but manager account failed: {e}')
-            else:
-                messages.success(request, f'{team.name} has been approved.')
-
-        elif action == 'reject':
-            team.status = 'suspended'
-            team.save()
-            ActivityLog.objects.create(
-                user=request.user,
-                action='TEAM_REJECT',
-                description=f'{request.user.get_full_name()} rejected team: {team.name}',
-                object_repr=str(team),
-                ip_address=request.META.get('REMOTE_ADDR', ''),
-            )
-            messages.warning(request, f'{team.name} registration rejected.')
-
-        return redirect('approve_registrations')
-
-    return render(request, 'admin_dashboard/approve_registrations.html', {
-        'pending_teams': pending_teams_qs,
-    })
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #   MATCH REPORT APPROVAL
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1088,22 +998,6 @@ def user_toggle_staff(request, user_id):
 # ══════════════════════════════════════════════════════════════════════════════
 #   PLACEHOLDER VIEWS for features referenced in urls.py
 # ══════════════════════════════════════════════════════════════════════════════
-
-@login_required
-@user_passes_test(admin_required)
-def toggle_registration_window(request):
-    """Placeholder: Toggle registration windows (future feature)."""
-    messages.info(request, "Registration window control coming soon.")
-    return redirect('dashboard')
-
-
-@login_required
-@user_passes_test(admin_required)
-def update_registration_deadlines(request):
-    """Placeholder: Update registration deadlines (future feature)."""
-    messages.info(request, "Deadline management coming soon.")
-    return redirect('dashboard')
-
 
 @login_required
 @user_passes_test(admin_required)

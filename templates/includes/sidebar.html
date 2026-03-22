@@ -175,9 +175,6 @@
             <a href="{% url 'treasurer_dashboard' %}" class="sidebar-link {% if 'treasurer_dashboard' in request.resolver_match.url_name %}active{% endif %}">
                 <span class="icon"><i class="bi bi-cash-stack"></i></span> Dashboard
             </a>
-            <a href="{% url 'treasurer_county_payments' %}" class="sidebar-link {% if 'treasurer_county_payments' in request.resolver_match.url_name %}active{% endif %}">
-                <span class="icon"><i class="bi bi-building"></i></span> County Payments
-            </a>
             <a href="{% url 'appeals_list' %}" class="sidebar-link"><span class="icon"><i class="bi bi-briefcase"></i></span> Appeal Fees</a>
         </div>
     </div>
@@ -288,7 +285,6 @@
         <div class="sidebar-section-body">
             <a href="{% url 'subcounty_officer_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
             <a href="{% url 'subcounty_officer_disciplines' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_disciplines' or request.resolver_match.url_name == 'subcounty_officer_discipline_players' or request.resolver_match.url_name == 'subcounty_officer_add_player' %}active{% endif %}"><span class="icon"><i class="bi bi-person-vcard"></i></span> Disciplines &amp; Players</a>
-            <a href="{% url 'subcounty_officer_payment' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_payment' %}active{% endif %}"><span class="icon"><i class="bi bi-credit-card"></i></span> Payment</a>
             <a href="{% url 'subcounty_officer_delegation_members' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_delegation_members' %}active{% endif %}"><span class="icon"><i class="bi bi-person-badge"></i></span> Delegation Members</a>
             <a href="{% url 'subcounty_officer_verification' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_verification' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-check"></i></span> Verification Status</a>
             <a href="{% url 'subcounty_verified_players' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_verified_players' %}active{% endif %}"><span class="icon"><i class="bi bi-patch-check-fill"></i></span> Verified Players</a>

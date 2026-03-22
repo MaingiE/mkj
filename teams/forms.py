@@ -45,7 +45,7 @@ class TeamRegistrationForm(forms.ModelForm):
     """
     competition = forms.ModelChoiceField(
         queryset=Competition.objects.filter(
-            status__in=[CompetitionStatus.REGISTRATION, CompetitionStatus.UPCOMING],
+            status=CompetitionStatus.UPCOMING,
         ),
         required=False,
         empty_label="— Select a competition (optional) —",

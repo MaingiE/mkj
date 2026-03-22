@@ -240,26 +240,6 @@ SMILE_API_KEY    = env("SMILE_API_KEY", default="")
 SMILE_ENVIRONMENT = env("SMILE_ENVIRONMENT", default="sandbox")  # 'sandbox' or 'production'
 SMILE_TIMEOUT    = env.int("SMILE_TIMEOUT", default=30)
 
-# ── M-PESA (DARAJA) INTEGRATION ──────────────────────────────────────────────
-# Safaricom Daraja API — STK Push (Lipa Na M-Pesa Online)
-# Register at developer.safaricom.co.ke → My Apps → Create App
-MPESA_ENVIRONMENT    = env("MPESA_ENVIRONMENT", default="sandbox")  # 'sandbox' or 'production'
-MPESA_CONSUMER_KEY   = env("MPESA_CONSUMER_KEY", default="")
-MPESA_CONSUMER_SECRET = env("MPESA_CONSUMER_SECRET", default="")
-MPESA_SHORTCODE      = env("MPESA_SHORTCODE", default="174379")       # Business shortcode (Paybill/Till)
-MPESA_PASSKEY        = env("MPESA_PASSKEY", default="")               # Lipa Na M-Pesa Online passkey
-MPESA_CALLBACK_URL   = env("MPESA_CALLBACK_URL", default="")          # Public URL for callbacks
-MPESA_ACCOUNT_REF    = env("MPESA_ACCOUNT_REF", default="MKJ SUPA CUP2026")  # Account reference on receipts
-
-# ── MKJ SUPA CUP BANK ACCOUNT DETAILS ────────────────────────────────────────────────
-# Displayed on registration page for bank transfers
-MKJ_BANK_NAME         = env("MKJ_BANK_NAME", default="Kenya Commercial Bank (KCB)")
-MKJ_BANK_BRANCH       = env("MKJ_BANK_BRANCH", default="Meru Branch")
-MKJ_BANK_ACCOUNT_NAME = env("MKJ_BANK_ACCOUNT_NAME", default="Kenya Youth Inter-County Sports Association")
-MKJ_BANK_ACCOUNT_NO   = env("MKJ_BANK_ACCOUNT_NO", default="1234567890")
-MKJ_BANK_SWIFT_CODE   = env("MKJ_BANK_SWIFT_CODE", default="")
-MKJ_MPESA_PAYBILL     = env("MKJ_MPESA_PAYBILL", default="")       # Paybill number for manual payments
-MKJ_MPESA_ACCOUNT_NO  = env("MKJ_MPESA_ACCOUNT_NO", default="")    # Account number for Paybill
 IPRS_ENABLED     = env.bool("IPRS_ENABLED", default=True)
 
 # ── PRODUCTION SECURITY HARDENING ──────────────────────────────────────────────

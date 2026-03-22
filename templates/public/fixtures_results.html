@@ -389,8 +389,8 @@
                             <span class="fr-comp-card__title">{{ item.competition.name }}</span>
                             {% if item.competition.status == 'active' or item.competition.status == 'group_stage' or item.competition.status == 'knockout' %}
                             <span class="fr-comp-card__badge fr-comp-card__badge--active">{{ item.competition.get_status_display }}</span>
-                            {% elif item.competition.status == 'registration' %}
-                            <span class="fr-comp-card__badge fr-comp-card__badge--registration">Registration</span>
+                            {% elif item.competition.status == 'upcoming' %}
+                            <span class="fr-comp-card__badge fr-comp-card__badge--registration">Upcoming</span>
                             {% elif item.competition.status == 'completed' %}
                             <span class="fr-comp-card__badge fr-comp-card__badge--completed">Completed</span>
                             {% endif %}

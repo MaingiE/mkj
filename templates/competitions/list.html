@@ -29,7 +29,6 @@
             <select class="toolbar-select" id="compStatusFilter" onchange="filterComps()">
                 <option value="">All Status</option>
                 <option value="active">Active</option>
-                <option value="registration">Registration</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="group_stage">Group Stage</option>
                 <option value="knockout">Knockout</option>
@@ -61,12 +60,10 @@
                         <td>
                             {% if comp.status == 'active' %}
                             <span class="badge badge-success">Active</span>
-                            {% elif comp.status == 'registration' %}
-                            <span class="badge badge-info">Registration</span>
-                            {% elif comp.status == 'completed' %}
-                            <span class="badge badge-gray">Completed</span>
                             {% elif comp.status == 'upcoming' %}
                             <span class="badge badge-warning">Upcoming</span>
+                            {% elif comp.status == 'completed' %}
+                            <span class="badge badge-gray">Completed</span>
                             {% elif comp.status == 'group_stage' %}
                             <span class="badge badge-info">Group Stage</span>
                             {% elif comp.status == 'knockout' %}

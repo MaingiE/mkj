@@ -12,7 +12,6 @@ from . import audit_report_views
 
 urlpatterns = [
     # Admin dashboard views (for specific admin operations)
-    path('approve-registrations/', views.approve_registrations, name='approve_registrations'),
     path('approve-reports/', views.approve_reports, name='approve_reports'),
     path('suspensions/', views.view_suspensions, name='view_suspensions'),
     path('suspensions/manage/<int:player_id>/', views.manage_suspension, name='manage_suspension'),
@@ -35,10 +34,6 @@ urlpatterns = [
     path('audit-report/', audit_report_views.audit_report, name='audit_report'),
     path('audit-report/export/excel/', audit_report_views.export_audit_excel, name='export_audit_excel'),
     path('audit-report/export/pdf/', audit_report_views.export_audit_pdf, name='export_audit_pdf'),
-    
-    # Registration Window Controls
-    path('toggle-registration/', views.toggle_registration_window, name='toggle_registration'),
-    path('update-deadlines/', views.update_registration_deadlines, name='update_deadlines'),
     
     # Transfer Management
     path('transfers/', views.manage_transfers, name='manage_transfers'),
