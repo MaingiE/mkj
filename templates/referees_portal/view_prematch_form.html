@@ -36,7 +36,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Date:</strong> {{ match.match_date|date:"l, F j, Y - H:i" }}</p>
+                            <p><strong>Date:</strong> {{ match.match_date|date:"l, F j, Y" }}{% if match.kickoff_time %} - {{ match.kickoff_time|time:"H:i" }}{% endif %}</p>
                             <p><strong>Teams:</strong> {{ match.home_team }} vs {{ match.away_team }}</p>
                             <p><strong>Referee:</strong> {{ prematch_form.referee.full_name }}</p>
                         </div>

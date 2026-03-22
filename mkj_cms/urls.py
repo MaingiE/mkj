@@ -49,7 +49,6 @@ from .web_views import (
     # Public registration
     team_register_view, team_register_success_view,
     referee_register_view, referee_register_success_view,
-    county_admin_register_view, county_admin_register_success_view,
     # CMS portal
     web_login_view, web_logout_view, dashboard_view,
     force_change_password_view,
@@ -95,14 +94,8 @@ from .web_views import (
     cm_edit_standings_view,
     cm_edit_fixture_view,
     cm_competition_rules_view,
-    # County Sports Admin portal
-    county_admin_dashboard_view,
+    # Shared subcounty views (bench, delegation, verification, payment, kit)
     county_admin_payment_view,
-    county_admin_add_discipline_view,
-    county_admin_discipline_players_view,
-    county_admin_add_player_view,
-    county_admin_delete_player_view,
-    # County Sports Director — technical bench & verification
     county_admin_add_bench_member_view,
     county_admin_delete_bench_member_view,
     county_admin_kit_colors_view,
@@ -113,6 +106,7 @@ from .web_views import (
     coordinator_dashboard_view,
     coordinator_competitions_view,
     coordinator_create_competition_view,
+    coordinator_edit_competition_view,
     coordinator_competition_manage_view,
     coordinator_manage_pools_view,
     coordinator_generate_fixtures_view,
@@ -171,6 +165,7 @@ from .web_views import (
     subcounty_officer_delete_player_view,
     director_sports_dashboard_view,
     chief_officer_sports_dashboard_view,
+    chief_sports_officer_dashboard_view,
     # Verified player lists
     subcounty_verified_players_view,
     team_manager_verified_players_view,
@@ -200,9 +195,6 @@ urlpatterns = [
     path("register/team/success/",    team_register_success_view,  name="team_register_success"),
     path("register/referee/",         referee_register_view,       name="referee_register"),
     path("register/referee/success/", referee_register_success_view, name="referee_register_success"),
-    # County admin registration removed — MKJ SUPA CUP uses Ligi Mashinani flow
-    # path("register/county-admin/",           county_admin_register_view,         name="county_admin_register"),
-    # path("register/county-admin/success/",   county_admin_register_success_view, name="county_admin_register_success"),
     path("api/mpesa/stk-push/",              mpesa_stk_push_view,               name="mpesa_stk_push"),
 
     # ── CMS PORTAL (Authenticated) ───────────────────────────────────────────
@@ -268,20 +260,7 @@ urlpatterns = [
     path("portal/treasurer/county-payments/", treasurer_county_payments_view, name="treasurer_county_payments"),
     path("portal/treasurer/county-registrations/", treasurer_county_registrations_view, name="treasurer_county_registrations"),
 
-    # ── COUNTY SPORTS ADMIN PORTAL ────────────────────────────────────────
-    path("portal/county-admin/",                              county_admin_dashboard_view,          name="county_admin_dashboard"),
-    path("portal/county-admin/payment/",                      county_admin_payment_view,            name="county_admin_payment"),
-    path("portal/county-admin/add-discipline/",               county_admin_add_discipline_view,     name="county_admin_add_discipline"),
-    path("portal/county-admin/discipline/<int:discipline_pk>/", county_admin_discipline_players_view, name="county_admin_discipline_players"),
-    path("portal/county-admin/discipline/<int:discipline_pk>/add-player/", county_admin_add_player_view, name="county_admin_add_player"),
-    path("portal/county-admin/player/<int:player_pk>/delete/", county_admin_delete_player_view,     name="county_admin_delete_player"),
-    path("portal/county-admin/discipline/<int:discipline_pk>/add-bench-member/", county_admin_add_bench_member_view, name="county_admin_add_bench_member"),
-    path("portal/county-admin/bench-member/<int:member_pk>/delete/", county_admin_delete_bench_member_view, name="county_admin_delete_bench_member"),
-    path("portal/county-admin/delegation/", county_admin_delegation_members_view, name="county_admin_delegation_members"),
-    path("portal/county-admin/delegation/<int:member_pk>/delete/", county_admin_delete_delegation_member_view, name="county_admin_delete_delegation_member"),
-    path("portal/county-admin/verification/", county_admin_verification_view, name="county_admin_verification"),
-    path("portal/county-admin/discipline/<int:discipline_pk>/team-list.pdf", team_list_pdf_view, name="team_list_pdf"),
-    path("portal/county-admin/discipline/<int:discipline_pk>/kit-colors/", county_admin_kit_colors_view, name="county_admin_kit_colors"),
+    # ── COUNTY SPORTS ADMIN PORTAL (REMOVED — merged into subcounty officer) ──
 
     # ── PLAYER PROFILE ────────────────────────────────────────────────────
     path("portal/players/<int:player_pk>/profile/", player_profile_view, name="player_profile"),
@@ -334,6 +313,7 @@ urlpatterns = [
     path("portal/coordinator/",                                          coordinator_dashboard_view,           name="coordinator_dashboard"),
     path("portal/coordinator/competitions/",                             coordinator_competitions_view,        name="coordinator_competitions"),
     path("portal/coordinator/competitions/create/",                      coordinator_create_competition_view,  name="coordinator_create_competition"),
+    path("portal/coordinator/competitions/<int:pk>/edit/",               coordinator_edit_competition_view,    name="coordinator_edit_competition"),
     path("portal/coordinator/competitions/<int:pk>/",                    coordinator_competition_manage_view,  name="coordinator_competition_manage"),
     path("portal/coordinator/competitions/<int:pk>/pools/",              coordinator_manage_pools_view,        name="coordinator_manage_pools"),
     path("portal/coordinator/competitions/<int:pk>/fixtures/generate/",  coordinator_generate_fixtures_view,   name="coordinator_generate_fixtures"),
@@ -397,6 +377,14 @@ urlpatterns = [
     path("portal/subcounty-officer/discipline/<int:discipline_pk>/add-player/", subcounty_officer_add_player_view, name="subcounty_officer_add_player"),
     path("portal/subcounty-officer/player/<int:player_pk>/delete/", subcounty_officer_delete_player_view, name="subcounty_officer_delete_player"),
     path("portal/subcounty-officer/verified-players/", subcounty_verified_players_view, name="subcounty_verified_players"),
+    path("portal/subcounty-officer/payment/",                            county_admin_payment_view,               name="subcounty_officer_payment"),
+    path("portal/subcounty-officer/discipline/<int:discipline_pk>/add-bench-member/", county_admin_add_bench_member_view, name="subcounty_officer_add_bench_member"),
+    path("portal/subcounty-officer/bench-member/<int:member_pk>/delete/", county_admin_delete_bench_member_view,  name="subcounty_officer_delete_bench_member"),
+    path("portal/subcounty-officer/delegation/",                         county_admin_delegation_members_view,    name="subcounty_officer_delegation_members"),
+    path("portal/subcounty-officer/delegation/<int:member_pk>/delete/",  county_admin_delete_delegation_member_view, name="subcounty_officer_delete_delegation_member"),
+    path("portal/subcounty-officer/verification/",                       county_admin_verification_view,          name="subcounty_officer_verification"),
+    path("portal/subcounty-officer/discipline/<int:discipline_pk>/team-list.pdf", team_list_pdf_view, name="team_list_pdf"),
+    path("portal/subcounty-officer/discipline/<int:discipline_pk>/kit-colors/",   county_admin_kit_colors_view,   name="subcounty_officer_kit_colors"),
 
     # ── DIRECTOR OF SPORTS PORTAL ─────────────────────────────────────────
     path("portal/director-sports/", director_sports_dashboard_view, name="director_sports_dashboard"),
@@ -404,6 +392,9 @@ urlpatterns = [
 
     # ── CHIEF OFFICER SPORTS PORTAL ───────────────────────────────────────
     path("portal/chief-officer-sports/", chief_officer_sports_dashboard_view, name="chief_officer_sports_dashboard"),
+
+    # ── CHIEF SPORTS OFFICER PORTAL ───────────────────────────────────────
+    path("portal/chief-sports-officer/", chief_sports_officer_dashboard_view, name="chief_sports_officer_dashboard"),
 
     # ── LEADERSHIP SCOUTING REPORTS ───────────────────────────────────────
     path("portal/leadership/scout-reports/",            leadership_scout_reports_view,       name="leadership_scout_reports"),

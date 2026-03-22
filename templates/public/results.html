@@ -178,7 +178,7 @@
                     </div>
                     <div class="match-card__vs">
                         <strong>VS</strong>
-                        <small>{{ fixture.match_date|date:"d M · H:i" }}</small>
+                        <small>{{ fixture.match_date|date:"d M" }}{% if fixture.kickoff_time %} · {{ fixture.kickoff_time|time:"H:i" }}{% endif %}</small>
                     </div>
                     <div class="match-card__team">
                         <div class="team-badge">

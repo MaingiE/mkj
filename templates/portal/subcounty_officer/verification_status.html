@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
-        <a href="{% url 'county_admin_dashboard' %}">County Admin</a>
+        <a href="{% url 'subcounty_officer_dashboard' %}">Sub-County Portal</a>
         <span>Verification Status</span>
     </div>
     <h1><i class="bi bi-shield-check"></i> Player Verification Status</h1>
@@ -122,6 +122,6 @@
 {% endif %}
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'county_admin_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <a href="{% url 'subcounty_officer_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 </div>
 {% endblock %}

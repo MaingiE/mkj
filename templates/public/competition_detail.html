@@ -108,7 +108,7 @@
                 </div>
                 <div class="match-card-footer">
                     <span>📍 {{ fixture.venue.name|default:"TBD" }}</span>
-                    <span>🕐 {{ fixture.match_date|date:"H:i" }}</span>
+                    <span>🕐 {% if fixture.kickoff_time %}{{ fixture.kickoff_time|time:"H:i" }}{% else %}TBD{% endif %}</span>
                 </div>
             </div>
             {% endfor %}

@@ -65,7 +65,6 @@ class UserRole(models.TextChoices):
     VERIFICATION_OFFICER = "verification_officer", "Verification Officer"
     REFEREE             = "referee",             "Referee"
     TEAM_MANAGER        = "team_manager",        "Team Manager"
-    COUNTY_SPORTS_DIRECTOR = "county_sports_admin", "County Sports Admin"
     CEC_SPORTS_MEMBER = "cec_sports", "County CEC Member - Sports"
     TREASURER           = "treasurer",           "Treasurer"
     JURY_CHAIR          = "jury_chair",          "Chair of the Jury"
@@ -201,10 +200,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_referee(self): return self.role == UserRole.REFEREE
     @property
     def is_team_manager(self): return self.role == UserRole.TEAM_MANAGER
-    @property
-    def is_county_sports_director(self): return self.role == UserRole.COUNTY_SPORTS_DIRECTOR
-    @property
-    def is_county_sports_admin(self): return self.is_county_sports_director  # backwards compat
     @property
     def is_cec_sports_member(self): return self.role == UserRole.CEC_SPORTS_MEMBER
     @property

@@ -50,9 +50,6 @@
             {% if user.role == 'treasurer' %}
             <li><a href="{% url 'treasurer_dashboard' %}" class="{% if 'treasurer' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Treasurer</a></li>
             {% endif %}
-            {% if user.role == 'county_sports_admin' %}
-            <li><a href="{% url 'county_admin_dashboard' %}" class="{% if 'county_admin' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-geo-alt"></i> My Sub-County</a></li>
-            {% endif %}
             {% if user.role == 'team_manager' %}
             <li><a href="{% url 'team_manager_dashboard' %}" class="{% if 'team_manager' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people"></i> My Team</a></li>
             {% endif %}

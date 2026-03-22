@@ -28,7 +28,7 @@
                         </div>
                         <div class="col-md-6">
                             <strong>Date:</strong><br>
-                            {{ match.match_date|date:"M d, Y H:i" }}
+                            {{ match.match_date|date:"M d, Y" }}{% if match.kickoff_time %} {{ match.kickoff_time|time:"H:i" }}{% endif %}
                         </div>
                     </div>
                     <hr>

@@ -4,8 +4,8 @@
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
-        <a href="{% url 'county_admin_dashboard' %}">Dashboard</a>
-        <a href="{% url 'county_admin_discipline_players' discipline_pk=discipline.pk %}">{{ discipline.get_sport_type_display }}</a>
+        <a href="{% url 'subcounty_officer_dashboard' %}">Dashboard</a>
+        <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=discipline.pk %}">{{ discipline.get_sport_type_display }}</a>
         <span>Kit Colours</span>
     </div>
     <h1><i class="bi bi-palette"></i> Kit Colours</h1>
@@ -69,7 +69,7 @@
                 <button type="submit" class="btn btn-success" style="font-size:1rem;padding:.6rem 2rem">
                     <i class="bi bi-check-lg"></i> Save Kit Colours
                 </button>
-                <a href="{% url 'county_admin_discipline_players' discipline_pk=discipline.pk %}" class="btn btn-outline" style="font-size:1rem;padding:.6rem 1.5rem">
+                <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=discipline.pk %}" class="btn btn-outline" style="font-size:1rem;padding:.6rem 1.5rem">
                     Cancel
                 </a>
             </div>

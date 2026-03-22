@@ -288,7 +288,7 @@
                                             {% load tz %}
                                             {% if match_data.match.kickoff_time and match_data.match.match_date %}
                                                 {% timezone "Africa/Nairobi" %}
-                                                    {% if match_data.match.match_date|date:"Y-m-d" == "now"|date:"Y-m-d" and "now"|date:"H:i" >= match_data.match.kickoff_time %}
+                                                    {% if match_data.match.match_date|date:"Y-m-d" == "now"|date:"Y-m-d" %}
                                                         <a href="{% url 'teams:view_approved_squad' match_data.match.id %}" class="btn btn-sm btn-success">
                                                             <i class="fas fa-eye me-1"></i>View Approved Squad
                                                         </a>
@@ -538,7 +538,7 @@
                                 <span class="text-muted mx-1">vs</span>
                                 {% if item.match.away_team %}{{ item.match.away_team.display_name }}{% else %}TBD{% endif %}
                             </td>
-                            <td>{{ item.match.match_date|date:"d M Y, H:i" }}</td>
+                            <td>{{ item.match.match_date|date:"d M Y" }}{% if item.match.kickoff_time %}, {{ item.match.kickoff_time|time:"H:i" }}{% endif %}</td>
                             <td>{{ item.match.venue|default:"TBD" }}</td>
                             <td>
                                 {% if item.squad %}

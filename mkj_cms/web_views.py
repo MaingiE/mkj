@@ -24,6 +24,7 @@ from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or
 from competitions.models import (
     Competition, Fixture, SportType, EXHIBITION_SPORTS, COUNTY_REGISTRATION_FEE_CAP,
     CountyPayment, PaymentStatus, CompetitionStatus,
+    GenderChoice, CompetitionFormat, AgeGroup,
 )
 from teams.models import (
     Team, Player, VerificationStatus, RejectionReason, PLAYER_MIN_AGE, PLAYER_MAX_AGE,
@@ -176,6 +177,45 @@ def _discipline_queryset_for_user(user):
 
 def _get_managed_discipline(user, discipline_pk):
     return get_object_or_404(_discipline_queryset_for_user(user), pk=discipline_pk)
+
+
+def _ensure_competition_for_sport_type(sport_type):
+    """Auto-create a Competition for the given sport_type if none exists for the current season.
+    MKJ SUPA CUP *is* the competition — no manual creation step needed."""
+    import datetime
+    current_year = str(datetime.date.today().year)
+    existing = Competition.objects.filter(sport_type=sport_type, season=current_year).first()
+    if existing:
+        return existing
+
+    label = dict(SportType.choices).get(sport_type, sport_type)
+    gender_map = {
+        'men': GenderChoice.MEN, 'women': GenderChoice.WOMEN, 'mixed': GenderChoice.MIXED,
+    }
+    gender = GenderChoice.MEN
+    for key, val in gender_map.items():
+        if key in sport_type:
+            gender = val
+            break
+
+    today = datetime.date.today()
+    comp = Competition.objects.create(
+        name=f"MKJ SUPA CUP {current_year} — {label}",
+        sport_type=sport_type,
+        gender=gender,
+        format_type=CompetitionFormat.GROUP_AND_KNOCKOUT,
+        season=current_year,
+        age_group=AgeGroup.OPEN,
+        status=CompetitionStatus.REGISTRATION,
+        start_date=today,
+        end_date=today + datetime.timedelta(days=90),
+        max_teams=32,
+        teams_per_group=4,
+        qualify_from_group=2,
+        is_exhibition=sport_type in EXHIBITION_SPORTS,
+    )
+    logger.info("Auto-created competition '%s' for sport_type=%s", comp.name, sport_type)
+    return comp
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -783,9 +823,6 @@ def dashboard_view(request):
     if user.role == 'coordinator':
         return redirect('coordinator_dashboard')
 
-    if user.role == 'county_sports_admin':
-        return redirect('county_admin_dashboard')
-
     if user.role == 'cec_sports':
         return redirect('dashboard')
 
@@ -808,7 +845,7 @@ def dashboard_view(request):
         return redirect('subcounty_officer_dashboard')
 
     if user.role == 'chief_sports_officer':
-        return redirect('chief_officer_sports_dashboard')
+        return redirect('chief_sports_officer_dashboard')
 
     if user.role == 'director_sports':
         return redirect('director_sports_dashboard')
@@ -1190,13 +1227,13 @@ def change_password_view(request):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def team_register_view(request):
-    """Deprecated — team registration is now handled via county registration."""
-    return redirect('county_admin_register')
+    """Deprecated — team registration is handled via the portal."""
+    return redirect('web_login')
 
 
 def team_register_success_view(request):
-    """Deprecated — redirects to county registration."""
-    return redirect('county_admin_register')
+    """Deprecated — redirects to login."""
+    return redirect('web_login')
 
 
 def referee_register_view(request):
@@ -2613,12 +2650,51 @@ def coordinator_competitions_view(request):
 
 @role_required('coordinator', 'admin')
 def coordinator_create_competition_view(request):
-    """Coordinators manage the existing MKJ competition instead of creating new ones."""
+    """Redirect to competitions list — competitions are auto-created when disciplines are registered."""
     messages.info(
         request,
-        'Coordinators do not create competitions. Use your discipline portal to allocate registered teams to groups, auto-generate fixtures, reschedule matches, and appoint referees.',
+        'Competitions are automatically created when sub-county officers register disciplines. '
+        'Use your competitions list to manage pools, generate fixtures, and configure settings.',
     )
     return redirect('coordinator_competitions')
+
+
+@role_required('coordinator', 'admin')
+def coordinator_edit_competition_view(request, pk):
+    """Coordinators can edit competition settings (format, dates, age group, etc.)."""
+    from competitions.models import (
+        Competition, SportType, CompetitionFormat, AgeGroup, CompetitionStatus,
+    )
+    competition = get_object_or_404(Competition, pk=pk)
+
+    discipline = _coordinator_discipline(request.user)
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
+        messages.error(request, 'This competition is not in your discipline.')
+        return redirect('coordinator_dashboard')
+
+    if request.method == 'POST':
+        competition.format_type = request.POST.get('format_type', competition.format_type)
+        competition.age_group = request.POST.get('age_group', competition.age_group)
+        competition.start_date = request.POST.get('start_date') or competition.start_date
+        competition.end_date = request.POST.get('end_date') or competition.end_date
+        competition.max_teams = int(request.POST.get('max_teams', competition.max_teams) or competition.max_teams)
+        competition.teams_per_group = int(request.POST.get('teams_per_group', competition.teams_per_group) or competition.teams_per_group)
+        competition.qualify_from_group = int(request.POST.get('qualify_from_group', competition.qualify_from_group) or competition.qualify_from_group)
+        competition.description = request.POST.get('description', competition.description)
+        competition.rules = request.POST.get('rules', competition.rules)
+        new_status = request.POST.get('status', '')
+        if new_status in dict(CompetitionStatus.choices):
+            competition.status = new_status
+        competition.save()
+        messages.success(request, f'Competition "{competition.name}" updated successfully.')
+        return redirect('coordinator_competition_manage', pk=competition.pk)
+
+    return render(request, 'portal/coordinator/edit_competition.html', {
+        'competition': competition,
+        'format_choices': CompetitionFormat.choices,
+        'age_groups': AgeGroup.choices,
+        'status_choices': CompetitionStatus.choices,
+    })
 
 
 @role_required('coordinator', 'admin')
@@ -4144,67 +4220,13 @@ def cm_dashboard_view(request):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_create_competition_view(request):
-    """Create a new competition."""
-    from competitions.models import (
-        Competition, SportType, GenderChoice, CompetitionFormat,
-        AgeGroup, CompetitionStatus,
+    """Competitions are auto-created when sub-county officers register disciplines."""
+    messages.info(
+        request,
+        'Competitions are now auto-created when sub-county officers register disciplines. '
+        'Use the competitions list to manage existing competitions.',
     )
-
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        sport_type = request.POST.get('sport_type', SportType.FOOTBALL_MEN)
-        gender = request.POST.get('gender', GenderChoice.MEN)
-        format_type = request.POST.get('format_type', CompetitionFormat.GROUP_AND_KNOCKOUT)
-        season = request.POST.get('season', '2025')
-        age_group = request.POST.get('age_group', AgeGroup.U17)
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        max_teams = request.POST.get('max_teams', 16)
-        teams_per_group = request.POST.get('teams_per_group', 4)
-        qualify_from_group = request.POST.get('qualify_from_group', 2)
-        description = request.POST.get('description', '')
-        rules = request.POST.get('rules', '')
-
-        if not name or not start_date or not end_date:
-            messages.error(request, 'Name, start date, and end date are required.')
-        elif Competition.objects.filter(name=name).exists():
-            messages.error(request, f'A competition named "{name}" already exists.')
-        else:
-            comp = Competition.objects.create(
-                name=name,
-                sport_type=sport_type,
-                gender=gender,
-                format_type=format_type,
-                season=season,
-                age_group=age_group,
-                status=CompetitionStatus.REGISTRATION,
-                start_date=start_date,
-                end_date=end_date,
-                max_teams=int(max_teams),
-                teams_per_group=int(teams_per_group),
-                qualify_from_group=int(qualify_from_group),
-                description=description,
-                rules=rules,
-                created_by=request.user,
-            )
-            # Audit log
-            from admin_dashboard.models import ActivityLog
-            ActivityLog.objects.create(
-                user=request.user,
-                action='COMPETITION_CREATED',
-                description=f'{request.user.get_full_name()} created competition: {comp.name}',
-                object_repr=str(comp),
-                ip_address=request.META.get('REMOTE_ADDR', ''),
-            )
-            messages.success(request, f'Competition "{comp.name}" created successfully.')
-            return redirect('cm_competition_manage', pk=comp.pk)
-
-    return render(request, 'portal/cm/create_competition.html', {
-        'sport_types': SportType.choices,
-        'gender_choices': GenderChoice.choices,
-        'format_choices': CompetitionFormat.choices,
-        'age_groups': AgeGroup.choices,
-    })
+    return redirect('cm_dashboard')
 
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
@@ -4812,120 +4834,7 @@ def mpesa_stk_push_view(request):
         return JsonResponse({'success': False, 'error': 'Payment service unavailable. Please pay manually.'})
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS DIRECTOR — PUBLIC REGISTRATION
-# ══════════════════════════════════════════════════════════════════════════════
-
-def county_admin_register_view(request):
-    """Public county registration for MKJ SUPA CUP 4th Edition."""
-    # Build list of already-taken counties for the template
-    taken_counties = list(
-        CountyRegistration.objects.values_list('county', flat=True)
-    )
-
-    if request.method == 'POST':
-        form = CountyAdminRegistrationForm(request.POST)
-        if form.is_valid():
-            cd = form.cleaned_data
-            # Auto-generate a secure temporary password
-            temp_password = ''.join(
-                secrets.choice(string.ascii_letters + string.digits)
-                for _ in range(12)
-            )
-            user = User.objects.create_user(
-                email=cd['email'],
-                password=temp_password,
-                first_name=cd['first_name'],
-                last_name=cd['last_name'],
-                phone=cd['phone'],
-                county=cd['county'],
-                role=UserRole.COUNTY_SPORTS_DIRECTOR,
-            )
-            user.must_change_password = True
-            user.save(update_fields=['must_change_password'])
-
-            email_sent = True
-            try:
-                send_credentials_email(user, temp_password, 'Sub-County Sports Director')
-            except Exception:
-                email_sent = False
-
-            # ── Collect payment data from registration form ──
-            payment_method = request.POST.get('payment_method', '').strip()
-            mpesa_phone = request.POST.get('mpesa_phone', '').strip()
-            if mpesa_phone:
-                try:
-                    mpesa_phone = validate_kenya_phone_or_raise(mpesa_phone, 'M-Pesa phone number')
-                except ValidationError as exc:
-                    messages.error(request, str(exc))
-                    return redirect('public_county_admin_register')
-            mpesa_reference = request.POST.get('mpesa_reference', '').strip()
-            mpesa_checkout_id = request.POST.get('mpesa_checkout_id', '').strip()
-            bank_reference = request.POST.get('bank_reference', '').strip()
-            bank_slip = request.FILES.get('bank_slip')
-            payment_amount_str = request.POST.get('payment_amount', '').strip()
-
-            reg = CountyRegistration.objects.create(
-                user=user,
-                county=cd['county'],
-                director_name=cd['director_name'],
-                director_phone=cd['director_phone'],
-                status=CountyRegStatus.APPROVED,
-                approved_at=timezone.now(),
-                payment_method=payment_method,
-                mpesa_phone=mpesa_phone,
-                mpesa_reference=mpesa_reference,
-                mpesa_checkout_id=mpesa_checkout_id,
-                bank_reference=bank_reference,
-            )
-            if bank_slip:
-                reg.bank_slip = bank_slip
-            if payment_amount_str:
-                try:
-                    reg.payment_amount = float(payment_amount_str)
-                except (ValueError, TypeError):
-                    pass
-
-            reg.save()
-
-            messages.success(request, mark_safe(
-                f'<strong>County Registration Successful!</strong><br>'
-                f'County: <strong>{cd["county"]}</strong><br>'
-                f'Director of Sports: <strong>{cd["director_name"]}</strong><br><br>'
-                f'Your temporary password has been sent to <code>{cd["email"]}</code>.<br>'
-                f'Check your inbox and spam folder, then change the password on first login.<br><br>'
-                f'<strong>Next steps:</strong><br>'
-                f'1. Log in to the portal with your email and the temporary password from email<br>'
-                     f'2. Change your password when prompted<br>'
-                     f'3. Your registration is active immediately — add disciplines, players, and technical bench members'
-            ))
-            if not email_sent:
-                messages.warning(
-                    request,
-                    'Registration is saved, but we could not deliver the credentials email right now. Please contact MKJ SUPA CUP support to resend credentials.'
-                )
-            return redirect('county_admin_register_success')
-    else:
-        form = CountyAdminRegistrationForm()
-
-    return render(request, 'public/county_admin_register.html', {
-        'form': form,
-        'taken_counties': taken_counties,
-        'active_page': 'register',
-        'registration_fee': COUNTY_REGISTRATION_FEE_CAP,
-        'bank_name': django_settings.MKJ_BANK_NAME,
-        'bank_branch': django_settings.MKJ_BANK_BRANCH,
-        'bank_account_name': django_settings.MKJ_BANK_ACCOUNT_NAME,
-        'bank_account_no': django_settings.MKJ_BANK_ACCOUNT_NO,
-        'mpesa_paybill': django_settings.MKJ_MPESA_PAYBILL,
-        'mpesa_account_no': django_settings.MKJ_MPESA_ACCOUNT_NO,
-    })
-
-
-def county_admin_register_success_view(request):
-    return render(request, 'public/county_admin_register_success.html', {
-        'active_page': 'register',
-    })
+# (County admin public registration removed — county admin role deprecated)
 
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer', 'secretary_general', 'coordinator', 'verification_officer', 'cec_sports')
@@ -4944,156 +4853,26 @@ def cec_sports_portal_view(request):
     })
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS ADMIN — PORTAL DASHBOARD
-# ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('county_sports_admin', 'subcounty_sports_officer')
-def county_admin_dashboard_view(request):
-    """County admin home — registration status, payment, disciplines, players."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=True)
-    disciplines = reg.disciplines.all()
-    player_count = sum(d.player_count for d in disciplines)
-    delegation_members = reg.delegation_members.all().order_by('role', 'full_name')
-    delegation_count = delegation_members.count()
-    cecm_member = delegation_members.filter(role=CountyDelegationRole.CECM_SPORTS).first()
-
-    return render(request, 'portal/county_admin/dashboard.html', {
-        'reg': reg,
-        'disciplines': disciplines,
-        'player_count': player_count,
-        'delegation_count': delegation_count,
-        'cecm_member': cecm_member,
-        'registration_fee': COUNTY_REGISTRATION_FEE_CAP,
-    })
+# (County admin dashboard removed — use subcounty_officer_dashboard instead)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS ADMIN — PAYMENT SUBMISSION
+#   SUB-COUNTY OFFICER — PAYMENT SUBMISSION
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_payment_view(request):
-    """County admin submits payment proof (M-Pesa or bank slip)."""
+    """Sub-county officer payment page (MKJ SUPA CUP has no fee)."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
     reg.status = CountyRegStatus.APPROVED
     if not reg.approved_at:
         reg.approved_at = timezone.now()
     reg.save(update_fields=['status', 'approved_at'])
     messages.info(request, 'MKJ SUPA CUP does not charge a registration fee. Your registration remains active.')
-    return redirect('county_admin_dashboard')
+    return redirect('subcounty_officer_dashboard')
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS ADMIN — DISCIPLINE MANAGEMENT
-# ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('county_sports_admin', 'subcounty_sports_officer')
-def county_admin_add_discipline_view(request):
-    """County admin chooses which disciplines to participate in."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER)
-    if not reg:
-        messages.error(request, 'Assign a county before adding disciplines.')
-        return redirect('dashboard')
-
-    sub_county = request.user.sub_county if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER else ''
-
-    if not reg.is_approved:
-        messages.warning(request, 'You must be approved before adding disciplines.')
-        return redirect('county_admin_dashboard')
-
-    existing = set(reg.disciplines.filter(sub_county=sub_county).values_list('sport_type', flat=True))
-    available = [(k, v) for k, v in SQUAD_LIMITS.items() if k not in existing]
-
-    if request.method == 'POST':
-        sport = request.POST.get('sport_type', '')
-        if sport in dict(SQUAD_LIMITS) and sport not in existing:
-            CountyDiscipline.objects.create(registration=reg, sport_type=sport, sub_county=sub_county)
-            messages.success(request, f'{dict(SportType.choices).get(sport, sport)} added.')
-        else:
-            messages.error(request, 'Invalid discipline or already added.')
-        if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
-            return redirect('subcounty_officer_disciplines')
-        return redirect('county_admin_dashboard')
-
-    return render(request, 'portal/county_admin/add_discipline.html', {
-        'reg': reg,
-        'available': [(k, dict(SportType.choices).get(k, k), v) for k, v in available],
-    })
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS ADMIN — PLAYER MANAGEMENT
-# ══════════════════════════════════════════════════════════════════════════════
-
-@role_required('county_sports_admin', 'subcounty_sports_officer')
-def county_admin_discipline_players_view(request, discipline_pk):
-    """View players in a discipline and add new ones."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=True)
-    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
-    players = discipline.players.all()
-
-    return render(request, 'portal/county_admin/discipline_players.html', {
-        'reg': reg,
-        'discipline': discipline,
-        'players': players,
-    })
-
-
-@role_required('county_sports_admin', 'subcounty_sports_officer')
-def county_admin_add_player_view(request, discipline_pk):
-    """Add a player to a discipline."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=True)
-    discipline = get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
-
-    if not reg.is_approved:
-        messages.warning(request, 'Registration must be approved before adding players.')
-        return redirect('county_admin_dashboard')
-
-    if not discipline.can_add_player:
-        messages.error(
-            request,
-            f'Squad limit reached ({discipline.squad_limit}) for '
-            f'{discipline.get_sport_type_display()}.'
-        )
-        return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
-
-    disc_sc = getattr(discipline, 'sub_county', '') or ''
-    if request.method == 'POST':
-        form = CountyPlayerForm(request.POST, request.FILES, discipline_sub_county=disc_sc)
-        if form.is_valid():
-            player = form.save(commit=False)
-            player.discipline = discipline
-            player.save()
-            messages.success(
-                request,
-                f'{player.first_name} {player.last_name} registered '
-                f'({discipline.player_count}/{discipline.squad_limit}).'
-            )
-            return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
-    else:
-        form = CountyPlayerForm(discipline_sub_county=disc_sc)
-
-    return render(request, 'portal/county_admin/add_player.html', {
-        'form': form,
-        'discipline': discipline,
-        'reg': reg,
-        'wards_json': json.dumps(MAKUENI_SUBCOUNTY_WARDS),
-    })
-
-
-@role_required('county_sports_admin', 'subcounty_sports_officer')
-def county_admin_delete_player_view(request, player_pk):
-    """Remove a player from a discipline."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=True)
-    player = get_object_or_404(CountyPlayer, pk=player_pk, discipline__registration=reg)
-    discipline_pk = player.discipline.pk
-
-    if request.method == 'POST':
-        name = f'{player.first_name} {player.last_name}'
-        player.delete()
-        messages.success(request, f'{name} removed.')
-    return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+# (County admin discipline/player views removed — use subcounty_officer equivalents)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -5160,10 +4939,10 @@ def treasurer_county_registrations_view(request):
 #   COUNTY SPORTS DIRECTOR — TECHNICAL BENCH MANAGEMENT
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_add_bench_member_view(request, discipline_pk):
-    """County sports director adds a technical bench member to a discipline."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER)
+    """Sub-county officer adds a technical bench member to a discipline."""
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not reg:
         messages.error(request, 'Assign a county before managing technical bench members.')
         return redirect('dashboard')
@@ -5171,7 +4950,7 @@ def county_admin_add_bench_member_view(request, discipline_pk):
 
     if not reg.is_approved:
         messages.warning(request, 'Registration must be approved first.')
-        return redirect('county_admin_dashboard')
+        return redirect('subcounty_officer_dashboard')
 
     if request.method == 'POST':
         form = TechnicalBenchForm(request.POST, request.FILES)
@@ -5192,7 +4971,7 @@ def county_admin_add_bench_member_view(request, discipline_pk):
                     if existing_user and existing_user.technical_bench_profile:
                         messages.error(request, 'This Team Manager email is already linked to another technical bench profile.')
                         member.delete()
-                        return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+                        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
 
                     if existing_user and existing_user.role == UserRole.TEAM_MANAGER:
                         # Reuse existing Team Manager account and align profile details.
@@ -5237,13 +5016,11 @@ def county_admin_add_bench_member_view(request, discipline_pk):
                         except Exception as e:
                             member.delete()
                             messages.error(request, f'Team Manager account creation failed: {e}')
-                            return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+                            return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
                 else:
                     messages.success(request, f'{member.get_full_name} added as {member.get_role_display()}.')
 
-            if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
-                return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
-            return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+            return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
     else:
         form = TechnicalBenchForm()
 
@@ -5251,7 +5028,7 @@ def county_admin_add_bench_member_view(request, discipline_pk):
     filled_roles = set(existing_bench.values_list('role', flat=True))
     available_roles = [(k, v) for k, v in TechnicalBenchRole.choices if k not in filled_roles]
 
-    return render(request, 'portal/county_admin/add_bench_member.html', {
+    return render(request, 'portal/subcounty_officer/add_bench_member.html', {
         'form': form,
         'discipline': discipline,
         'reg': reg,
@@ -5260,10 +5037,10 @@ def county_admin_add_bench_member_view(request, discipline_pk):
     })
 
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_delete_bench_member_view(request, member_pk):
     """Remove a technical bench member."""
-    reg = _get_primary_registration_for_user(request.user, auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER)
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not reg:
         messages.error(request, 'Assign a county before managing technical bench members.')
         return redirect('dashboard')
@@ -5274,23 +5051,18 @@ def county_admin_delete_bench_member_view(request, member_pk):
         name = member.get_full_name
         member.delete()
         messages.success(request, f'{name} removed from technical bench.')
-    if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
-        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
-    return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+    return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
 
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_kit_colors_view(request, discipline_pk):
-    """County admin / sub-county officer edits kit colours for the discipline's linked team."""
-    reg = _get_primary_registration_for_user(
-        request.user,
-        auto_create=request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER,
-    )
+    """Sub-county officer edits kit colours for the discipline's linked team."""
+    reg = _get_primary_registration_for_user(request.user, auto_create=True)
     if not reg:
         messages.error(request, 'Assign a county before managing kits.')
         return redirect('dashboard')
 
-    discipline = _get_managed_discipline(request.user, discipline_pk) if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER else get_object_or_404(CountyDiscipline, pk=discipline_pk, registration=reg)
+    discipline = _get_managed_discipline(request.user, discipline_pk)
 
     # Ensure linked team exists
     team = getattr(discipline, 'linked_team', None)
@@ -5298,19 +5070,18 @@ def county_admin_kit_colors_view(request, discipline_pk):
         team = discipline.ensure_linked_team()
     if team is None:
         messages.error(request, 'Unable to resolve the linked team for this discipline.')
-        return redirect('county_admin_discipline_players', discipline_pk=discipline_pk)
+        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
 
     if request.method == 'POST':
         form = KitColorsForm(request.POST, request.FILES, instance=team)
         if form.is_valid():
             form.save()
             messages.success(request, 'Kit colours updated successfully.')
-            redir = 'subcounty_officer_discipline_players' if request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER else 'county_admin_discipline_players'
-            return redirect(redir, discipline_pk=discipline_pk)
+            return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
     else:
         form = KitColorsForm(instance=team)
 
-    return render(request, 'portal/county_admin/kit_colors.html', {
+    return render(request, 'portal/subcounty_officer/kit_colors.html', {
         'form': form,
         'discipline': discipline,
         'reg': reg,
@@ -5318,14 +5089,14 @@ def county_admin_kit_colors_view(request, discipline_pk):
     })
 
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_delegation_members_view(request):
-    """County sports director manages county-level delegation officials."""
+    """Sub-county officer manages county-level delegation officials."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
 
     if not reg.is_approved:
         messages.warning(request, 'Registration must be approved before adding delegation members.')
-        return redirect('county_admin_dashboard')
+        return redirect('subcounty_officer_dashboard')
 
     members = reg.delegation_members.select_related('user').order_by('role', 'full_name')
 
@@ -5375,11 +5146,11 @@ def county_admin_delegation_members_view(request):
                 else:
                     messages.success(request, f'{member.full_name} added as {member.get_role_display()}.')
 
-            return redirect('county_admin_delegation_members')
+            return redirect('subcounty_officer_delegation_members')
     else:
         form = CountyDelegationMemberForm()
 
-    return render(request, 'portal/county_admin/delegation_members.html', {
+    return render(request, 'portal/subcounty_officer/delegation_members.html', {
         'reg': reg,
         'form': form,
         'members': members,
@@ -5387,7 +5158,7 @@ def county_admin_delegation_members_view(request):
     })
 
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_delete_delegation_member_view(request, member_pk):
     """Remove a county-level delegation member and linked account if present."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
@@ -5401,18 +5172,18 @@ def county_admin_delete_delegation_member_view(request, member_pk):
             linked_user.delete()
         messages.success(request, f'{name} removed from county delegation.')
 
-    return redirect('county_admin_delegation_members')
+    return redirect('subcounty_officer_delegation_members')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 #   COUNTY SPORTS DIRECTOR — PLAYER VERIFICATION OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('county_sports_admin', 'subcounty_sports_officer')
+@role_required('subcounty_sports_officer', 'admin')
 def county_admin_verification_view(request):
-    """County sports director views verification status of all their players."""
+    """Sub-county officer views verification status of all their players."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
-    disciplines = reg.disciplines.prefetch_related('players').all()
+    disciplines = _discipline_queryset_for_user(request.user).prefetch_related('players')
 
     approved_players = []
     rejected_players = []
@@ -5431,7 +5202,7 @@ def county_admin_verification_view(request):
             else:
                 pending_players.append(entry)
 
-    return render(request, 'portal/county_admin/verification_status.html', {
+    return render(request, 'portal/subcounty_officer/verification_status.html', {
         'reg': reg,
         'approved_players': approved_players,
         'rejected_players': rejected_players,
@@ -5471,7 +5242,7 @@ def player_profile_view(request, player_pk):
     )
     if player_type == 'county':
         # County sports director can view their own county's players
-        if user.role in ('county_sports_admin', 'subcounty_sports_officer'):
+        if user.role == 'subcounty_sports_officer':
             reg = _get_primary_registration_for_user(user)
             if reg and player.discipline.registration == reg:
                 can_view = True
@@ -5938,10 +5709,11 @@ def team_list_pdf_view(request, discipline_pk):
         user.is_superuser or
         user.role in ('admin', 'competition_manager')
     )
-    if user.role in ('county_sports_admin', 'subcounty_sports_officer'):
+    if user.role == 'subcounty_sports_officer':
         reg = _get_primary_registration_for_user(user)
         if reg and discipline.registration == reg:
-            can_download = True
+            if discipline.sub_county == user.sub_county:
+                can_download = True
     if user.role == 'team_manager':
         try:
             bench = TechnicalBenchMember.objects.get(user=user)
@@ -6128,7 +5900,7 @@ def team_list_pdf_view(request, discipline_pk):
 
     except ImportError:
         messages.error(request, 'PDF generation requires the reportlab package. Install it with: pip install reportlab')
-        return redirect('county_admin_dashboard')
+        return redirect('subcounty_officer_dashboard')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -7083,6 +6855,7 @@ def subcounty_officer_disciplines_view(request):
                 sport_type=sport,
                 sub_county=request.user.sub_county,
             )
+            _ensure_competition_for_sport_type(sport)
             messages.success(request, f'{dict(SportType.choices).get(sport, sport)} added for {request.user.sub_county}.')
         else:
             messages.error(request, 'Invalid discipline or already added for this sub-county.')
@@ -7229,10 +7002,48 @@ def director_sports_dashboard_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   CHIEF OFFICER SPORTS PORTAL
+#   CHIEF SPORTS OFFICER PORTAL   (County-level sports oversight)
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('chief_officer_sports', 'chief_sports_officer', 'admin')
+@role_required('chief_sports_officer', 'admin')
+def chief_sports_officer_dashboard_view(request):
+    """Dashboard for Chief Sports Officer — county-level sports operations oversight."""
+    all_disciplines = CountyDiscipline.objects.select_related('registration').all()
+    stats = {
+        'teams': Team.objects.count(),
+        'players': CountyPlayer.objects.count(),
+        'referees': RefereeProfile.objects.filter(is_approved=True).count(),
+        'fixtures': Fixture.objects.count(),
+        'subcounties_active': all_disciplines.exclude(sub_county='').values('sub_county').distinct().count(),
+        'disciplines': all_disciplines.count(),
+        'pending_verifications': CountyPlayer.objects.filter(verification_status='pending').count(),
+    }
+
+    upcoming_fixtures = Fixture.objects.filter(
+        status__in=['scheduled', 'upcoming']
+    ).select_related('competition', 'home_team', 'away_team').order_by('match_date')[:8]
+
+    recent_results = Fixture.objects.filter(
+        status='completed'
+    ).select_related('competition', 'home_team', 'away_team').order_by('-match_date')[:8]
+
+    recent_players = CountyPlayer.objects.select_related(
+        'discipline__registration'
+    ).order_by('-registered_at')[:10]
+
+    return render(request, 'portal/chief_sports_officer/dashboard.html', {
+        'stats': stats,
+        'upcoming_fixtures': upcoming_fixtures,
+        'recent_results': recent_results,
+        'recent_players': recent_players,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   CHIEF OFFICER SPORTS PORTAL   (Executive / Government oversight)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('chief_officer_sports', 'admin')
 def chief_officer_sports_dashboard_view(request):
     """Dashboard for Chief Officer - Sports — executive oversight."""
     all_disciplines = CountyDiscipline.objects.select_related('registration').all()

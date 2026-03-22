@@ -124,7 +124,7 @@
                 <tbody>
                     {% for match in upcoming_fixtures %}
                     <tr>
-                        <td>{{ match.match_date|date:"d M Y, H:i" }}</td>
+                        <td>{{ match.match_date|date:"d M Y" }}{% if match.kickoff_time %}, {{ match.kickoff_time|time:"H:i" }}{% endif %}</td>
                         <td>{{ match.competition.name }}</td>
                         <td><strong>{{ match.home_team.name }}</strong></td>
                         <td style="text-align:center; font-weight:700; color:var(--primary);">vs</td>

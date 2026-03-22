@@ -14,9 +14,9 @@ env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
 # ── SECURITY ───────────────────────────────────────────────────────────────────
-SECRET_KEY = env("SECRET_KEY", default="django-insecure-mkj-supacup-change-me")
-DEBUG      = env("DEBUG", default=True)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+SECRET_KEY = env("SECRET_KEY")
+DEBUG      = env.bool("DEBUG", default=False)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 # ── APPS ───────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -261,3 +261,52 @@ MKJ_BANK_SWIFT_CODE   = env("MKJ_BANK_SWIFT_CODE", default="")
 MKJ_MPESA_PAYBILL     = env("MKJ_MPESA_PAYBILL", default="")       # Paybill number for manual payments
 MKJ_MPESA_ACCOUNT_NO  = env("MKJ_MPESA_ACCOUNT_NO", default="")    # Account number for Paybill
 IPRS_ENABLED     = env.bool("IPRS_ENABLED", default=True)
+
+# ── PRODUCTION SECURITY HARDENING ──────────────────────────────────────────────
+# These settings are enforced when DEBUG=False
+if not DEBUG:
+    # HTTPS enforcement
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000          # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
+
+# ── LOGGING ────────────────────────────────────────────────────────────────────
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": env("DJANGO_LOG_LEVEL", default="WARNING"),
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}

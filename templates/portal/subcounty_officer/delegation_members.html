@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
-        <a href="{% url 'county_admin_dashboard' %}">County Admin</a>
+        <a href="{% url 'subcounty_officer_dashboard' %}">Sub-County Portal</a>
         <span>Delegation Members</span>
     </div>
     <h1><i class="bi bi-person-badge"></i> County Delegation Members</h1>
@@ -88,7 +88,7 @@
                     <td>{{ m.email|default:'-' }}</td>
                     <td>{% if m.user %}<span style="color:#1565C0;font-weight:600">Active</span>{% else %}<span style="color:#757575">-</span>{% endif %}</td>
                     <td>
-                        <form method="post" action="{% url 'county_admin_delete_delegation_member' member_pk=m.pk %}" onsubmit="return confirm('Remove {{ m.full_name }} from county delegation?')" style="display:inline;">
+                        <form method="post" action="{% url 'subcounty_officer_delete_delegation_member' member_pk=m.pk %}" onsubmit="return confirm('Remove {{ m.full_name }} from county delegation?')" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828">Remove</button>
                         </form>

@@ -162,6 +162,8 @@ class Pool(models.Model):
     """A group/pool within a competition (e.g., Group A, Group B)."""
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="pools")
     name        = models.CharField(max_length=50, help_text="e.g., Group A, Group B, Pool 1")
+    venue       = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True, blank=True,
+                                    help_text="Default venue for fixtures in this pool")
     notes       = models.TextField(blank=True)
 
     class Meta:

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Edit Competition — {{ competition.name }}{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+    <div class="card" style="padding:1.5rem 2rem;">
+        <h2 style="margin-top:0;display:flex;align-items:center;gap:.5rem">
+            <i class="bi bi-gear" style="color:#1565C0"></i> Competition Settings
+        </h2>
+        <p style="color:#64748b;margin-bottom:1.25rem">{{ competition.name }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:grid;gap:1rem;">
+                <div>
+                    <label style="font-weight:600;font-size:.88rem">Format</label>
+                    <select name="format_type" class="form-control">
+                        {% for val, label in format_choices %}
+                        <option value="{{ val }}" {% if val == competition.format_type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:.88rem">Status</label>
+                    <select name="status" class="form-control">
+                        {% for val, label in status_choices %}
+                        <option value="{{ val }}" {% if val == competition.status %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:.88rem">Age Group</label>
+                    <select name="age_group" class="form-control">
+                        {% for val, label in age_groups %}
+                        <option value="{{ val }}" {% if val == competition.age_group %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <label style="font-weight:600;font-size:.88rem">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ competition.start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div>
+                        <label style="font-weight:600;font-size:.88rem">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ competition.end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                    <div>
+                        <label style="font-weight:600;font-size:.88rem">Max Teams</label>
+                        <input type="number" name="max_teams" class="form-control" value="{{ competition.max_teams }}" min="2">
+                    </div>
+                    <div>
+                        <label style="font-weight:600;font-size:.88rem">Teams per Group</label>
+                        <input type="number" name="teams_per_group" class="form-control" value="{{ competition.teams_per_group }}" min="2">
+                    </div>
+                    <div>
+                        <label style="font-weight:600;font-size:.88rem">Qualify per Group</label>
+                        <input type="number" name="qualify_from_group" class="form-control" value="{{ competition.qualify_from_group }}" min="1">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:.88rem">Description</label>
+                    <textarea name="description" class="form-control" rows="3">{{ competition.description }}</textarea>
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:.88rem">Rules</label>
+                    <textarea name="rules" class="form-control" rows="3">{{ competition.rules }}</textarea>
+                </div>
+            </div>
+            <div style="margin-top:1.5rem;display:flex;gap:.75rem;">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
