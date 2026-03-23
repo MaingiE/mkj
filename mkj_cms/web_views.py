@@ -140,7 +140,7 @@ def _coordinator_label(discipline):
 
 
 def _get_primary_registration_for_user(user, auto_create=False):
-    if user.role == UserRole.COUNTY_SPORTS_DIRECTOR:
+    if user.role == UserRole.DIRECTOR_SPORTS:
         return get_object_or_404(CountyRegistration, user=user)
 
     county = (getattr(user, "county", "") or "").strip()
@@ -164,7 +164,7 @@ def _get_primary_registration_for_user(user, auto_create=False):
 
 def _discipline_queryset_for_user(user):
     disciplines = CountyDiscipline.objects.select_related("registration", "linked_team")
-    if user.role == UserRole.COUNTY_SPORTS_DIRECTOR:
+    if user.role == UserRole.DIRECTOR_SPORTS:
         return disciplines.filter(registration__user=user)
     if user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
         return disciplines.filter(
