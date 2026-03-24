@@ -8,7 +8,7 @@
     .dc-hero {
         background: linear-gradient(135deg, #00695C 0%, #00897B 50%, #26A69A 100%);
         border-radius: 16px;
-        padding: 2rem 2.5rem;
+        padding: clamp(1.2rem, 3vw, 2rem) clamp(1.25rem, 4vw, 2.5rem);
         color: #fff;
         margin-bottom: 2rem;
         position: relative;
@@ -69,7 +69,7 @@
 
     .actions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 1rem;
         margin-bottom: 2rem;
     }

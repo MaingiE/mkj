@@ -39,7 +39,7 @@
 <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header"><h3>📊 Verification Pipeline</h3></div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem">
             <!-- Step 1: Documents -->
             <div style="padding:1rem;background:#f5f7f5;border-radius:10px;border-left:4px solid #FF9800">
                 <h4 style="margin:0 0 .5rem;color:#e65100">Step 1: Document Verification</h4>
@@ -93,7 +93,7 @@
 <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header"><h3>⚡ Bulk Operations</h3></div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem">
             <form method="post" action="{% url 'bulk_huduma_check' %}">
                 {% csrf_token %}
                 <div style="display:flex;gap:.75rem;align-items:end">

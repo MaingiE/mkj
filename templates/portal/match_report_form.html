@@ -33,13 +33,13 @@
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.home_team.name }}</label>
                 <input type="number" name="home_score" min="0" value="{{ report.home_score|default:0 }}"
-                       style="width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
+                       style="width:100%;max-width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
             </div>
             <div style="font-size:1.5rem;font-weight:bold;color:#999;">—</div>
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.away_team.name }}</label>
                 <input type="number" name="away_score" min="0" value="{{ report.away_score|default:0 }}"
-                       style="width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
+                       style="width:100%;max-width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
             </div>
         </div>
     </div>
@@ -51,6 +51,7 @@
     <div class="card-header"><h3>📊 {{ sport_cfg.period_label }} Scores</h3></div>
     <div class="card-body">
         <input type="hidden" name="period_count" value="{{ period_count }}">
+        <div class="table-responsive">
         <table style="width:100%;border-collapse:collapse;text-align:center;">
             <thead>
                 <tr style="border-bottom:2px solid #ddd;">
@@ -71,17 +72,18 @@
                     <td style="padding:.5rem;">
                         <input type="number" name="period_{{ p.number }}_home" min="0"
                                value="{{ p.home_score }}"
-                               style="width:70px;padding:.4rem;text-align:center;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;text-align:center;border:1px solid #ddd;border-radius:6px;">
                     </td>
                     <td style="padding:.5rem;">
                         <input type="number" name="period_{{ p.number }}_away" min="0"
                                value="{{ p.away_score }}"
-                               style="width:70px;padding:.4rem;text-align:center;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;text-align:center;border:1px solid #ddd;border-radius:6px;">
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endif %}
@@ -95,13 +97,13 @@
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.home_team.name }}</label>
                 <input type="number" name="home_sets" min="0" max="3" value="{{ report.home_sets|default:0 }}"
-                       style="width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
+                       style="width:100%;max-width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
             </div>
             <div style="font-size:1.2rem;font-weight:bold;color:#999;">—</div>
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.away_team.name }}</label>
                 <input type="number" name="away_sets" min="0" max="3" value="{{ report.away_sets|default:0 }}"
-                       style="width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
+                       style="width:100%;max-width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
             </div>
         </div>
     </div>
@@ -112,25 +114,25 @@
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header"><h3>🟨 Disciplinary</h3></div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;">
             <div>
                 <h4 style="margin-bottom:.5rem;">{{ fixture.home_team.name }}</h4>
                 <div style="display:flex;gap:1rem;flex-wrap:wrap;">
                     <div>
                         <label style="font-size:.85rem;color:#666;">Yellow Cards</label>
                         <input type="number" name="home_yellow_cards" min="0" value="{{ report.home_yellow_cards|default:0 }}"
-                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
                     </div>
                     <div>
                         <label style="font-size:.85rem;color:#666;">Red Cards</label>
                         <input type="number" name="home_red_cards" min="0" value="{{ report.home_red_cards|default:0 }}"
-                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
                     </div>
                     {% if sport_family == 'Handball' %}
                     <div>
                         <label style="font-size:.85rem;color:#666;">2-Min Suspensions</label>
                         <input type="number" name="home_suspensions" min="0" value="{{ report.home_suspensions|default:0 }}"
-                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
                     </div>
                     {% endif %}
                 </div>
@@ -141,18 +143,18 @@
                     <div>
                         <label style="font-size:.85rem;color:#666;">Yellow Cards</label>
                         <input type="number" name="away_yellow_cards" min="0" value="{{ report.away_yellow_cards|default:0 }}"
-                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
                     </div>
                     <div>
                         <label style="font-size:.85rem;color:#666;">Red Cards</label>
                         <input type="number" name="away_red_cards" min="0" value="{{ report.away_red_cards|default:0 }}"
-                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
                     </div>
                     {% if sport_family == 'Handball' %}
                     <div>
                         <label style="font-size:.85rem;color:#666;">2-Min Suspensions</label>
                         <input type="number" name="away_suspensions" min="0" value="{{ report.away_suspensions|default:0 }}"
-                               style="width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
+                               style="width:100%;max-width:70px;padding:.4rem;border:1px solid #ddd;border-radius:6px;">
                     </div>
                     {% endif %}
                 </div>
@@ -273,7 +275,7 @@
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header"><h3>👥 Approved Match Squads</h3></div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;">
             <!-- Home Team -->
             <div>
                 <h4 style="color:#1565C0;margin-bottom:.5rem;">{{ fixture.home_team.name }}</h4>

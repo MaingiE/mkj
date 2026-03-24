@@ -123,7 +123,7 @@
         <a href="{% url 'news_media:gallery_detail' album.slug %}" class="ga-card">
             <div class="ga-card-img">
                 {% if album.display_cover %}
-                    <img src="{{ album.display_cover }}" alt="{{ album.title }}">
+                    <img src="{{ album.display_cover }}" alt="{{ album.title }}" loading="lazy">
                 {% else %}
                     <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1A6FB5;">
                         <i class="bi bi-images" style="font-size:3rem;opacity:.3;"></i>

@@ -31,6 +31,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+ul, ol { padding-left: 0; list-style: none; }
 html { scroll-behavior: smooth; }
 
 body {
@@ -122,6 +123,9 @@ img { max-width: 100%; }
     font-weight: 600; letter-spacing: .3px; transition: all .3s;
 }
 .fkf-nav-btn:hover { background: #1A6FB5; color: #fff; }
+
+/* Login link inside mobile nav — hidden on desktop */
+.nav-login-mobile { display: none; }
 
 /* Navbar Dropdown */
 .nav-dropdown { position: relative; }
@@ -1995,6 +1999,13 @@ img { max-width: 100%; }
     .fkf-nav-links.open { display: flex; }
     .fkf-nav-links a { font-size: 1.4rem; padding: .85rem; color: #333; }
     .fkf-nav-actions { display: none; }
+    .nav-login-mobile { display: list-item; margin-top: .5rem; }
+    .nav-login-mobile a {
+        background: #1A6FB5; color: #fff !important;
+        border-radius: 8px; padding: .75rem 2rem !important;
+        font-weight: 700; font-size: 1.1rem !important;
+        text-align: center; display: block;
+    }
 
     .hero--dark .hero-title { font-size: 2.4rem; }
     .hero-logo-img { width: 150px; height: auto; }
@@ -2162,6 +2173,7 @@ img { max-width: 100%; }
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
     padding: 0 1.25rem;
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 1px 8px rgba(0,0,0,.18);
@@ -2892,11 +2904,51 @@ textarea.form-control { resize: vertical; min-height: 90px; }
     }
     .nav-dropdown-menu a { color: rgba(255,255,255,.8) !important; font-size: .8rem !important; }
     .nav-dropdown-menu a:hover { background: rgba(255,255,255,.1) !important; color: #fff !important; }
-    .navbar-nav li:hover > .nav-dropdown-menu { display: none; opacity: 1; visibility: visible; transform: none; }
-    .navbar-nav li.open > .nav-dropdown-menu { display: block; }
+    .navbar-nav li:hover > .nav-dropdown-menu { display: none; }
+    .navbar-nav li.open > .nav-dropdown-menu { display: block !important; }
     .navbar-user .role-badge { display: none; }
-    .sidebar { display: none; }
+    /* Sidebar — off-canvas drawer on mobile */
+    .sidebar {
+        position: fixed;
+        top: 50px;
+        left: 0;
+        bottom: 0;
+        width: 260px;
+        z-index: 999;
+        transform: translateX(-100%);
+        transition: transform .3s ease;
+        display: flex;
+        box-shadow: none;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0,0,0,.18);
+    }
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        top: 50px;
+        background: rgba(0,0,0,.4);
+        z-index: 998;
+    }
+    .sidebar-overlay.open { display: block; }
     .main-content { padding: .85rem; }
+    /* Breadcrumb — prominent on mobile since sidebar is hidden */
+    .breadcrumb {
+        flex-wrap: wrap;
+        font-size: .82rem;
+        gap: .3rem .45rem;
+        padding: .5rem .75rem;
+        background: #f5f7f5;
+        border-radius: 8px;
+        margin-bottom: .65rem;
+    }
+    .breadcrumb a {
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+    }
     .toolbar { flex-wrap: wrap; }
     .toolbar-search { flex: 1 1 100%; }
     .toolbar-select { flex: 1; min-width: 0; }
@@ -2919,6 +2971,90 @@ textarea.form-control { resize: vertical; min-height: 90px; }
     .stats-grid, .counter-grid { grid-template-columns: 1fr; }
     .quick-actions { grid-template-columns: 1fr; }
     .stat-card { flex-direction: row; }
+    .breadcrumb { font-size: .78rem; padding: .45rem .65rem; }
+    .page-header h1 { font-size: 1.05rem; }
+    .navbar-user span[style] { display: none; }
+    .navbar { padding: 0 .65rem; }
+}
+
+/* ── Mobile helper: sidebar toggle button ──────────────────────────── */
+.sidebar-toggle-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: .25rem .4rem;
+    border-radius: 6px;
+    transition: background .2s;
+    margin-right: .25rem;
+}
+.sidebar-toggle-btn:hover { background: rgba(255,255,255,.15); }
+@media (max-width: 768px) {
+    .sidebar-toggle-btn { display: inline-flex; align-items: center; }
+}
+
+/* ── Mobile-friendly inline grids ──────────────────────────────────── */
+@media (max-width: 768px) {
+    [style*="grid-template-columns"][style*="minmax"] {
+        grid-template-columns: 1fr !important;
+    }
+    [style*="display:flex"][style*="gap"],
+    [style*="display: flex"][style*="gap"] {
+        flex-wrap: wrap !important;
+    }
+    .card-header {
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+    .form-row {
+        flex-direction: column;
+    }
+    .form-row .form-group {
+        width: 100%;
+    }
+    /* Override inline min-width on filter form items */
+    [style*="min-width:180px"],
+    [style*="min-width:140px"],
+    [style*="min-width: 180px"],
+    [style*="min-width: 140px"] {
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+    }
+    /* Override inline fixed widths on search inputs */
+    input[style*="width: 250px"],
+    input[style*="width:250px"] {
+        width: 100% !important;
+    }
+    /* Ensure page-header with inline flex stacks properly */
+    .page-header[style*="display:flex"],
+    .page-header[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    /* Allow form controls in filters to be full width */
+    .card form[style*="display:flex"] .form-control,
+    .card form[style*="display: flex"] .form-control {
+        min-width: 0;
+    }
+    /* Button groups in admin panels */
+    .btn-group {
+        flex-wrap: wrap;
+    }
+}
+@media (max-width: 480px) {
+    /* Stack action buttons vertically on smallest screens */
+    [style*="display:flex"][style*="gap:0.5rem"],
+    [style*="display:flex"][style*="gap:.5rem"] {
+        flex-direction: column !important;
+        width: 100%;
+    }
+    [style*="display:flex"][style*="gap:0.5rem"] > .btn,
+    [style*="display:flex"][style*="gap:.5rem"] > .btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* ── Input Group (phone prefix +254 etc.) ─────────────────────────── */
@@ -2947,4 +3083,49 @@ textarea.form-control { resize: vertical; min-height: 90px; }
     width: 1%;
     min-width: 0;
     border-radius: 0 8px 8px 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Table Responsive ─────────────────────────────────────────────── */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: .5rem;
+}
+.table-responsive table {
+    min-width: 480px;
+}
+
+/* ── Touch Target Minimum ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .btn, .btn-action, a[style*="padding"][style*="border-radius"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* ── Responsive Images ────────────────────────────────────────────── */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ── Portal inline grid mobile overrides ──────────────────────────── */
+@media (max-width: 480px) {
+    [style*="grid-template-columns:1fr auto 1fr"] {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .5rem !important;
+    }
+    .page-header h1 { font-size: 1.05rem; }
+    .page-header p { font-size: .82rem; }
+    .card-header h3 { font-size: .95rem; }
 }

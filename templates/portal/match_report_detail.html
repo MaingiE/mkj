@@ -54,15 +54,15 @@
         </h3>
     </div>
     <div class="card-body" style="text-align:center;">
-        <div style="display:flex;justify-content:center;align-items:center;gap:2rem;">
+        <div style="display:flex;justify-content:center;align-items:center;gap:clamp(1rem,4vw,2rem);flex-wrap:wrap;">
             <div>
-                <div style="font-weight:600;margin-bottom:.5rem;">{{ report.fixture.home_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.home_score }}</div>
+                <div style="font-weight:600;margin-bottom:.5rem;font-size:clamp(.85rem,2.5vw,1rem);">{{ report.fixture.home_team.name }}</div>
+                <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#1565C0;">{{ report.home_score }}</div>
             </div>
-            <div style="font-size:2rem;color:#999;">—</div>
+            <div style="font-size:clamp(1.2rem,4vw,2rem);color:#999;">—</div>
             <div>
-                <div style="font-weight:600;margin-bottom:.5rem;">{{ report.fixture.away_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.away_score }}</div>
+                <div style="font-weight:600;margin-bottom:.5rem;font-size:clamp(.85rem,2.5vw,1rem);">{{ report.fixture.away_team.name }}</div>
+                <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#1565C0;">{{ report.away_score }}</div>
             </div>
         </div>
         {% if sport_cfg.label == 'Volleyball' and report.home_sets is not None %}
@@ -79,6 +79,7 @@
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header"><h3>📊 {{ sport_cfg.period_label }} Scores</h3></div>
     <div class="card-body">
+        <div class="table-responsive">
         <table style="width:100%;border-collapse:collapse;text-align:center;">
             <thead>
                 <tr style="border-bottom:2px solid #ddd;">
@@ -100,15 +101,17 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endif %}
 
 <!-- Disciplinary & Details -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem;">
     <div class="card">
         <div class="card-header"><h3>🟨 Disciplinary</h3></div>
         <div class="card-body">
+            <div class="table-responsive">
             <table style="width:100%;">
                 <tr><th></th><th>{{ report.fixture.home_team.name }}</th><th>{{ report.fixture.away_team.name }}</th></tr>
                 <tr><td>🟨 Yellow</td><td style="text-align:center;">{{ report.home_yellow_cards }}</td><td style="text-align:center;">{{ report.away_yellow_cards }}</td></tr>
@@ -117,12 +120,13 @@
                 <tr><td>⏱️ 2-Min Suspensions</td><td style="text-align:center;">{{ report.home_suspensions }}</td><td style="text-align:center;">{{ report.away_suspensions }}</td></tr>
                 {% endif %}
             </table>
+            </div>
         </div>
     </div>
     <div class="card">
         <div class="card-header"><h3>📊 Match Info</h3></div>
         <div class="card-body">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.9rem;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem;font-size:.9rem;">
                 {% if sport_cfg.default_duration %}
                 <div><strong>Duration:</strong></div><div>{{ report.match_duration }} mins</div>
                 {% endif %}

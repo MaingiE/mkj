@@ -93,6 +93,7 @@
 <form method="post">
     {% csrf_token %}
     <div class="alloc-card">
+        <div class="table-responsive">
         <table class="alloc-table">
             <thead>
                 <tr>
@@ -134,6 +135,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         <div class="btn-row">
             <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Venue Allocations</button>
             <a href="{% url 'cm_competition_manage' pk=competition.pk %}" class="btn btn-secondary">Cancel</a>

@@ -79,6 +79,12 @@
                 </ul>
             </li>
             <li><a href="{% url 'contact' %}" class="{% if active_page == 'contact' %}active{% endif %}">Contact</a></li>
+            <!-- Login/Portal link visible inside mobile nav -->
+            {% if user.is_authenticated %}
+                <li class="nav-login-mobile"><a href="{% url 'dashboard' %}">Portal</a></li>
+            {% else %}
+                <li class="nav-login-mobile"><a href="{% url 'web_login' %}">Staff Login</a></li>
+            {% endif %}
         </ul>
 
         <div class="fkf-nav-actions">
