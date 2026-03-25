@@ -497,10 +497,12 @@ def create_league_admin(request):
             user_obj.save(update_fields=['must_change_password'])
 
             # Send credentials email
+            email_sent = False
             try:
                 send_credentials_email(user_obj, password, dict(UserRole.choices).get(role, role))
+                email_sent = True
             except Exception:
-                messages.warning(request, 'User created but credential email failed.')
+                pass
 
             # Auto-create RefereeProfile when role is referee
             if role == 'referee':
@@ -515,13 +517,27 @@ def create_league_admin(request):
                     },
                 )
 
-            send_welcome_email(user_obj, password, role)
-            messages.success(request, mark_safe(
-                f'User created!<br>'
-                f'Email: <code>{email}</code><br>'
-                f'Role: {role}<br>'
-                f'Temporary password has been sent to the user\'s email.'
-            ))
+            if not email_sent:
+                try:
+                    send_welcome_email(user_obj, password, role)
+                    email_sent = True
+                except Exception:
+                    pass
+
+            if email_sent:
+                messages.success(request, mark_safe(
+                    f'User created!<br>'
+                    f'Email: <code>{email}</code><br>'
+                    f'Role: {role}<br>'
+                    f'Temporary password has been sent to the user\'s email.'
+                ))
+            else:
+                messages.warning(request, mark_safe(
+                    f'User created but email delivery failed.<br>'
+                    f'Email: <code>{email}</code><br>'
+                    f'Role: {role}<br>'
+                    f'Please reset their password manually or contact them directly.'
+                ))
         except Exception as e:
             messages.error(request, f"Error: {e}")
 

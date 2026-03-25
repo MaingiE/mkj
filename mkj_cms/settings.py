@@ -3,6 +3,7 @@ MKJ SUPA CUP Competition Management System — Django Settings
 """
 
 import environ
+import sentry_sdk
 from pathlib import Path
 from datetime import timedelta
 
@@ -180,12 +181,23 @@ STORAGES = {
 MEDIA_URL  = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# ── CACHE (local memory for dev; switch to Redis in production) ────────────────
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+# ── CACHE ──────────────────────────────────────────────────────────────────────
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
 
 # ── CELERY ─────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL        = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
@@ -242,6 +254,21 @@ SMILE_TIMEOUT    = env.int("SMILE_TIMEOUT", default=30)
 
 IPRS_ENABLED     = env.bool("IPRS_ENABLED", default=True)
 
+# ── SERVER ERROR EMAIL (Django emails ADMINS on 500 errors) ────────────────────
+ADMINS = [tuple(a.split(":")) for a in env.list("ADMINS", default=[])]
+SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+
+# ── SENTRY ERROR TRACKING ──────────────────────────────────────────────────────
+SENTRY_DSN = env("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=0.1,
+        profiles_sample_rate=0.1,
+        send_default_pii=False,
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+    )
+
 # ── PRODUCTION SECURITY HARDENING ──────────────────────────────────────────────
 # These settings are enforced when DEBUG=False
 if not DEBUG:
@@ -263,14 +290,25 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
             "style": "{",
+        },
+    },
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
         },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+            "include_html": True,
         },
     },
     "root": {
@@ -283,8 +321,13 @@ LOGGING = {
             "level": env("DJANGO_LOG_LEVEL", default="WARNING"),
             "propagate": False,
         },
+        "django.request": {
+            "handlers": ["console", "mail_admins"],
+            "level": "ERROR",
+            "propagate": False,
+        },
         "django.security": {
-            "handlers": ["console"],
+            "handlers": ["console", "mail_admins"],
             "level": "WARNING",
             "propagate": False,
         },
