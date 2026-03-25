@@ -7,8 +7,8 @@
         <a href="{% url 'dashboard' %}">Dashboard</a>
         <span>Matches</span>
     </div>
-    <h1><i class="bi bi-clipboard-data"></i> Matches & Fixtures</h1>
-    <p>Scheduled fixtures, results and match reports. This page auto-refreshes every 60 seconds.</p>
+    <h1><i class="bi bi-clipboard-data"></i> Fixtures & Results</h1>
+    <p>MKJ SUPA CUP 2026 County Finals — Group stage fixtures by discipline and pool</p>
 </div>
 
 <div class="card">
@@ -25,11 +25,15 @@
             </div>
             <select class="toolbar-select" id="matchStatusFilter" onchange="filterMatches()">
                 <option value="">All Status</option>
+                <option value="scheduled">Scheduled</option>
                 <option value="completed">Completed</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="live">Live</option>
                 <option value="postponed">Postponed</option>
                 <option value="cancelled">Cancelled</option>
+            </select>
+            <select class="toolbar-select" id="disciplineFilter" onchange="filterMatches()">
+                <option value="">All Disciplines</option>
             </select>
             <div class="toolbar-spacer"></div>
         </div>
@@ -39,7 +43,8 @@
                     <tr>
                         <th>Date</th>
                         <th>Time</th>
-                        <th>Competition</th>
+                        <th>Discipline</th>
+                        <th>Pool</th>
                         <th>Home</th>
                         <th></th>
                         <th>Away</th>
@@ -51,11 +56,12 @@
                 <tbody>
                     {% for fd in fixture_data %}
                     {% with f=fd.fixture %}
-                    <tr data-status="{{ f.status }}">
-                        <td>{{ f.match_date|date:"d M Y" }}</td>
-                        <td>{{ f.kickoff_time|time:"H:i" }}</td>
-                        <td>{{ f.competition.name }}</td>
-                        <td><strong>{{ f.home_team.name }}</strong></td>
+                    <tr data-status="{{ f.status }}" data-discipline="{{ f.competition.get_sport_type_display }}">
+                        <td style="white-space:nowrap;">{{ f.match_date|date:"d M" }}</td>
+                        <td style="white-space:nowrap;">{{ f.kickoff_time|time:"H:i"|default:"TBD" }}</td>
+                        <td style="font-size:.78rem;">{{ f.competition.get_sport_type_display }}</td>
+                        <td>{% if f.pool %}<span class="badge badge-info" style="font-size:.65rem;">{{ f.pool.name }}</span>{% endif %}</td>
+                        <td><strong>{{ f.home_team.sub_county }}</strong></td>
                         <td class="text-center">
                             {% if f.home_score is not None %}
                             <strong>{{ f.home_score }} - {{ f.away_score }}</strong>
@@ -63,8 +69,8 @@
                             vs
                             {% endif %}
                         </td>
-                        <td><strong>{{ f.away_team.name }}</strong></td>
-                        <td>{{ f.venue|default:"TBD" }}</td>
+                        <td><strong>{{ f.away_team.sub_county }}</strong></td>
+                        <td style="font-size:.78rem; color:var(--muted);">{{ f.venue.name|default:"TBD" }}</td>
                         <td>
                             {% if f.status == 'completed' %}
                             <span class="badge badge-success">Completed</span>
@@ -229,23 +235,32 @@
 function filterMatches() {
     const q = document.getElementById('matchSearch').value.toLowerCase();
     const status = document.getElementById('matchStatusFilter').value;
+    const discipline = document.getElementById('disciplineFilter').value;
     const rows = document.querySelectorAll('#matchesTable tbody tr');
     let visible = 0;
     rows.forEach(r => {
         const text = r.textContent.toLowerCase();
-        const show = (!q || text.includes(q)) && (!status || r.dataset.status === status);
+        const show = (!q || text.includes(q)) &&
+                     (!status || r.dataset.status === status) &&
+                     (!discipline || r.dataset.discipline === discipline);
         r.style.display = show ? '' : 'none';
         if (show) visible++;
     });
     document.getElementById('matchCount').textContent = visible + ' of ' + rows.length;
 }
-document.addEventListener('DOMContentLoaded', function() { filterMatches(); });
-
-setTimeout(function () {
-    if (!document.hidden) {
-        window.location.reload();
-    }
-}, 60000);
+document.addEventListener('DOMContentLoaded', function() {
+    const disciplines = new Set();
+    document.querySelectorAll('#matchesTable tbody tr').forEach(r => {
+        if (r.dataset.discipline) disciplines.add(r.dataset.discipline);
+    });
+    const sel = document.getElementById('disciplineFilter');
+    [...disciplines].sort().forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        sel.appendChild(o);
+    });
+    filterMatches();
+});
 </script>
 {% endblock %}
 {% endblock %}

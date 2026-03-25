@@ -115,7 +115,7 @@
         </div>
         {% for pt in pool.pool_teams.all %}
         <div class="pool-team-item">
-            <div>{{ pt.team.name }} <span class="county-tag">{{ pt.team.county }}</span></div>
+            <div><strong>{{ pt.team.sub_county }}</strong> <span class="county-tag">{{ pt.team.get_sport_type_display }}</span></div>
             <form method="post" style="margin:0;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="remove_team">
@@ -135,7 +135,7 @@
                 <input type="hidden" name="pool_id" value="{{ pool.pk }}">
                 <select name="team_id" class="form-select form-select-sm" required>
                     <option value="">Add team…</option>
-                    {% for t in eligible_teams %}<option value="{{ t.pk }}">{{ t.name }} ({{ t.county }})</option>{% endfor %}
+                    {% for t in eligible_teams %}<option value="{{ t.pk }}">{{ t.sub_county }}</option>{% endfor %}
                 </select>
                 <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
             </form>

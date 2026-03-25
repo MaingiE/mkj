@@ -1,30 +1,35 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Sub-County Sports Officer — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}{{ sub_county }} — MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-building"></i> Sub-County Sports Officer Portal</h1>
-    <p>{{ sub_county }} — {{ stats.county }}</p>
+    <h1><i class="bi bi-building"></i> {{ sub_county }} Sub-County</h1>
+    <p>MKJ SUPA CUP 2026 — County Finals — {{ stats.county }}</p>
 </div>
 
 <!-- Sub-County Badge -->
 <div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%); color: #fff; border: none;">
-    <div class="card-body" style="padding: 1.5rem;">
+    <div class="card-body" style="padding: 1.4rem;">
         <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-geo-alt-fill" style="font-size: 1.8rem;"></i>
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-geo-alt-fill" style="font-size: 1.6rem;"></i>
             </div>
-            <div>
-                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 1px;">{{ sub_county }}</h2>
-                <p style="margin: .25rem 0 0; opacity: .8; font-size: .85rem;">
-                    Governor Mutula Kilonzo Junior Super Cup — {{ stats.county }}
+            <div style="flex:1;">
+                <h2 style="margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: 1px;">{{ sub_county }}</h2>
+                <p style="margin: .25rem 0 0; opacity: .8; font-size: .82rem;">
+                    {{ stats.disciplines }} discipline{{ stats.disciplines|pluralize }} &bull;
+                    {{ stats.players }} player{{ stats.players|pluralize }} registered &bull;
+                    {{ stats.fixtures }} fixture{{ stats.fixtures|pluralize }} scheduled
                 </p>
             </div>
-            <div style="margin-left: auto;">
-                <span style="background: rgba(255,255,255,.16); color: #fff; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.25);">
+            <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                <span style="background: rgba(255,255,255,.14); padding: .3rem .7rem; border-radius: 50px; font-size: .68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.25);">
                     <i class="bi bi-shield-check"></i> MKJ SUPA CUP
+                </span>
+                <span style="background: rgba(255,255,255,.14); padding: .3rem .7rem; border-radius: 50px; font-size: .68rem; font-weight: 600;">
+                    Season 2026
                 </span>
             </div>
         </div>
@@ -41,7 +46,7 @@
         </div>
     </div>
     <div class="stat-card green">
-        <div class="stat-icon green"><i class="bi bi-people"></i></div>
+        <div class="stat-icon green"><i class="bi bi-diagram-3"></i></div>
         <div class="stat-info">
             <h3>{{ stats.disciplines }}</h3>
             <p>Disciplines</p>
@@ -62,13 +67,50 @@
         </div>
     </div>
     <div class="stat-card red">
-        <div class="stat-icon red"><i class="bi bi-clipboard-data"></i></div>
+        <div class="stat-icon red"><i class="bi bi-calendar-event"></i></div>
         <div class="stat-info">
             <h3>{{ stats.fixtures }}</h3>
             <p>Fixtures</p>
         </div>
     </div>
 </div>
+
+<!-- Pool Assignments -->
+{% if my_pool_teams %}
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-grid-3x3-gap"></i> Your Pool Assignments</h3></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Discipline</th>
+                        <th>Pool</th>
+                        <th style="text-align:center;">P</th>
+                        <th style="text-align:center;">W</th>
+                        <th style="text-align:center;">D</th>
+                        <th style="text-align:center;">L</th>
+                        <th style="text-align:center; font-weight:800;">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pt in my_pool_teams %}
+                    <tr>
+                        <td><strong>{{ pt.pool.competition.get_sport_type_display }}</strong></td>
+                        <td><span class="badge badge-info" style="font-size:.7rem;">{{ pt.pool.name }}</span></td>
+                        <td style="text-align:center;">{{ pt.played }}</td>
+                        <td style="text-align:center;">{{ pt.won }}</td>
+                        <td style="text-align:center;">{{ pt.drawn }}</td>
+                        <td style="text-align:center;">{{ pt.lost }}</td>
+                        <td style="text-align:center; font-weight:800; color:var(--primary);">{{ pt.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Quick Actions -->
 <div class="card mb-1">
@@ -78,27 +120,27 @@
             <a href="{% url 'subcounty_officer_disciplines' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-person-vcard"></i></div>
                 <h4>Manage Disciplines</h4>
-                <p>Add disciplines, players, and technical bench</p>
+                <p>Add disciplines, players & bench</p>
             </a>
             <a href="{% url 'competitions_list' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-trophy"></i></div>
-                <h4>View Competitions</h4>
-                <p>Browse all active competitions</p>
+                <h4>Competitions</h4>
+                <p>Pools & standings per discipline</p>
             </a>
             <a href="{% url 'teams_list' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-people"></i></div>
-                <h4>View Teams</h4>
-                <p>See registered teams</p>
+                <h4>Teams</h4>
+                <p>All registered teams</p>
             </a>
             <a href="{% url 'matches_list' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-calendar-event"></i></div>
-                <h4>Fixtures & Results</h4>
-                <p>Match schedule and results</p>
+                <h4>Fixtures</h4>
+                <p>Full fixture schedule</p>
             </a>
             <a href="{% url 'referees_list' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-flag"></i></div>
                 <h4>Referees</h4>
-                <p>View match officials</p>
+                <p>Match officials</p>
             </a>
         </div>
     </div>
@@ -107,16 +149,18 @@
 <!-- Upcoming Fixtures -->
 {% if upcoming_fixtures %}
 <div class="card">
-    <div class="card-header"><h3><i class="bi bi-calendar-week"></i> Upcoming Fixtures</h3></div>
+    <div class="card-header"><h3><i class="bi bi-calendar-week"></i> Your Upcoming Fixtures</h3></div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
+            <table>
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Competition</th>
+                        <th>Time</th>
+                        <th>Discipline</th>
+                        <th>Pool</th>
                         <th>Home</th>
-                        <th></th>
+                        <th style="text-align:center;"></th>
                         <th>Away</th>
                         <th>Venue</th>
                     </tr>
@@ -124,12 +168,14 @@
                 <tbody>
                     {% for match in upcoming_fixtures %}
                     <tr>
-                        <td>{{ match.match_date|date:"d M Y" }}{% if match.kickoff_time %}, {{ match.kickoff_time|time:"H:i" }}{% endif %}</td>
-                        <td>{{ match.competition.name }}</td>
-                        <td><strong>{{ match.home_team.name }}</strong></td>
-                        <td style="text-align:center; font-weight:700; color:var(--primary);">vs</td>
-                        <td><strong>{{ match.away_team.name }}</strong></td>
-                        <td>{{ match.venue.name|default:"TBD" }}</td>
+                        <td style="white-space:nowrap;">{{ match.match_date|date:"d M" }}</td>
+                        <td style="white-space:nowrap;">{{ match.kickoff_time|time:"H:i"|default:"TBD" }}</td>
+                        <td style="font-size:.78rem;">{{ match.competition.get_sport_type_display }}</td>
+                        <td>{% if match.pool %}<span class="badge badge-info" style="font-size:.65rem;">{{ match.pool.name }}</span>{% endif %}</td>
+                        <td style="font-weight:{% if match.home_team.sub_county == sub_county %}800{% else %}400{% endif %};">{{ match.home_team.sub_county }}</td>
+                        <td style="text-align:center; font-weight:800; color:var(--muted);">vs</td>
+                        <td style="font-weight:{% if match.away_team.sub_county == sub_county %}800{% else %}400{% endif %};">{{ match.away_team.sub_county }}</td>
+                        <td style="font-size:.78rem; color:var(--muted);">{{ match.venue.name|default:"TBD" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

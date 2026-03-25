@@ -977,6 +977,12 @@ def dashboard_view(request):
     if user.role == 'chief_officer_sports':
         return redirect('chief_officer_sports_dashboard')
 
+    if user.role == 'governor':
+        return redirect('governor_dashboard')
+
+    if user.role == 'waziri_sports':
+        return redirect('waziri_sports_dashboard')
+
     recent_fixtures = Fixture.objects.select_related(
         'competition', 'home_team', 'away_team'
     ).order_by('-match_date')[:10]
@@ -991,39 +997,68 @@ def dashboard_view(request):
 
 @login_required(login_url='web_login')
 def competitions_list_view(request):
-    """List all competitions — current (active) competitions shown first."""
-    from django.db.models import Case, When, IntegerField
-    competitions = Competition.objects.all().order_by(
+    """List all competitions — county finals with pooling per discipline."""
+    from django.db.models import Case, When, IntegerField, Prefetch
+    from competitions.models import Pool, PoolTeam
+
+    competitions = Competition.objects.all().prefetch_related(
+        Prefetch(
+            'pools',
+            queryset=Pool.objects.prefetch_related(
+                Prefetch(
+                    'pool_teams',
+                    queryset=PoolTeam.objects.select_related('team'),
+                )
+            ),
+        ),
+    ).order_by(
         Case(
-            When(status='active', then=0),
-            When(status='group_stage', then=1),
+            When(status='group_stage', then=0),
+            When(status='active', then=1),
             When(status='knockout', then=2),
             When(status='upcoming', then=3),
             default=4,
             output_field=IntegerField(),
         ),
-        '-season', 'sport_type',
+        'sport_type',
     )
     current_competitions = Competition.objects.filter(
         status__in=['active', 'group_stage', 'knockout'], season='2026',
     )
+
+    # Upcoming fixtures across all disciplines
+    upcoming_fixtures = Fixture.objects.filter(
+        status__in=['scheduled', 'pending'],
+        match_date__gte=timezone.now().date(),
+    ).select_related(
+        'competition', 'pool', 'home_team', 'away_team', 'venue',
+    ).order_by('match_date', 'kickoff_time')[:12]
+
     return render(request, 'competitions/list.html', {
         'competitions': competitions,
         'current_competitions': current_competitions,
+        'upcoming_fixtures': upcoming_fixtures,
     })
 
 
 @login_required(login_url='web_login')
 def competition_detail_view(request, pk):
-    """Competition detail with teams and fixtures."""
+    """Competition detail with pool standings and fixtures."""
+    from competitions.models import Pool, PoolTeam
+    from django.db.models import Prefetch
     competition = get_object_or_404(Competition, pk=pk)
-    teams = Team.objects.filter(competition=competition)
+    pools = Pool.objects.filter(competition=competition).prefetch_related(
+        Prefetch(
+            'pool_teams',
+            queryset=PoolTeam.objects.select_related('team').order_by('-won', '-goals_for'),
+        ),
+    ).select_related('venue').order_by('name')
     fixtures = Fixture.objects.filter(competition=competition).select_related(
-        'home_team', 'away_team', 'venue'
-    )
+        'home_team', 'away_team', 'venue', 'pool'
+    ).order_by('match_date', 'kickoff_time')
     return render(request, 'competitions/detail.html', {
         'competition': competition,
-        'teams': teams,
+        'pools': pools,
         'fixtures': fixtures,
     })
 
@@ -1277,18 +1312,18 @@ def matches_list_view(request):
         my_teams = Team.objects.filter(manager=user)
         fixtures = Fixture.objects.filter(
             Q(home_team__in=my_teams) | Q(away_team__in=my_teams)
-        ).select_related('competition', 'home_team', 'away_team', 'venue').order_by('-match_date')
+        ).select_related('competition', 'pool', 'home_team', 'away_team', 'venue').order_by('-match_date')
     elif user.role == 'referee':
         try:
             fixtures = Fixture.objects.filter(
                 referee_appointments__referee=user.referee_profile
-            ).select_related('competition', 'home_team', 'away_team', 'venue').order_by('-match_date')
+            ).select_related('competition', 'pool', 'home_team', 'away_team', 'venue').order_by('-match_date')
         except RefereeProfile.DoesNotExist:
             fixtures = Fixture.objects.none()
     else:
         fixtures = Fixture.objects.select_related(
-            'competition', 'home_team', 'away_team', 'venue'
-        ).order_by('-match_date')
+            'competition', 'pool', 'home_team', 'away_team', 'venue'
+        ).order_by('match_date', 'kickoff_time')
 
     # Annotate fixtures with squad / report info for template buttons
     now = timezone.now()
@@ -6734,8 +6769,18 @@ def subcounty_officer_dashboard_view(request):
     county_reg = _get_primary_registration_for_user(user, auto_create=True)
     disciplines = _discipline_queryset_for_user(user)
     players_count = CountyPlayer.objects.filter(discipline__in=disciplines).count()
-    teams_count = Team.objects.filter(source_discipline__in=disciplines).count()
+    teams = Team.objects.filter(source_discipline__in=disciplines)
+    teams_count = teams.count()
     bench_count = TechnicalBenchMember.objects.filter(discipline__in=disciplines).count()
+
+    # Scoped fixture count and competitions
+    team_ids = list(teams.values_list('id', flat=True))
+    my_fixtures = Fixture.objects.filter(
+        Q(home_team_id__in=team_ids) | Q(away_team_id__in=team_ids)
+    )
+    my_competitions = Competition.objects.filter(
+        teams__in=teams
+    ).distinct()
 
     stats = {
         'county': user.county or 'Unassigned',
@@ -6744,13 +6789,22 @@ def subcounty_officer_dashboard_view(request):
         'players': players_count,
         'teams': teams_count,
         'bench_members': bench_count,
-        'fixtures': Fixture.objects.count(),
-        'competitions': Competition.objects.count(),
+        'fixtures': my_fixtures.count(),
+        'competitions': my_competitions.count(),
     }
 
-    upcoming_fixtures = Fixture.objects.filter(
-        match_date__gte=timezone.now()
-    ).select_related('competition', 'home_team', 'away_team', 'venue').order_by('match_date')[:6]
+    upcoming_fixtures = my_fixtures.filter(
+        status__in=['scheduled', 'pending'],
+        match_date__gte=timezone.now().date(),
+    ).select_related(
+        'competition', 'pool', 'home_team', 'away_team', 'venue',
+    ).order_by('match_date', 'kickoff_time')[:8]
+
+    # Pools containing this subcounty's teams
+    from competitions.models import Pool, PoolTeam
+    my_pool_teams = PoolTeam.objects.filter(
+        team__in=teams
+    ).select_related('pool__competition', 'team')
 
     return render(request, 'portal/subcounty_officer/dashboard.html', {
         'stats': stats,
@@ -6758,6 +6812,7 @@ def subcounty_officer_dashboard_view(request):
         'sub_county': sub_county,
         'disciplines': disciplines,
         'county_reg': county_reg,
+        'my_pool_teams': my_pool_teams,
     })
 
 
@@ -7750,3 +7805,76 @@ def match_squad_pdf_view(request, squad_pk):
     except ImportError:
         messages.error(request, 'PDF generation requires the reportlab package.')
         return redirect('dashboard')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   GOVERNOR PORTAL   (Executive — full view access to everything)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('governor', 'admin')
+def governor_dashboard_view(request):
+    """Dashboard for H.E. The Governor — executive overview of all operations."""
+    all_disciplines = CountyDiscipline.objects.select_related('registration').all()
+    stats = {
+        'competitions': Competition.objects.count(),
+        'teams': Team.objects.count(),
+        'players': CountyPlayer.objects.count(),
+        'referees': RefereeProfile.objects.filter(is_approved=True).count(),
+        'fixtures': Fixture.objects.count(),
+        'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+        'subcounties_active': all_disciplines.exclude(sub_county='').values('sub_county').distinct().count(),
+        'staff': User.objects.count(),
+    }
+
+    active_comps = Competition.objects.filter(
+        status__in=['active', 'group_stage', 'knockout']
+    ).order_by('-start_date')[:5]
+
+    recent_results = Fixture.objects.filter(
+        status='completed'
+    ).select_related('competition', 'home_team', 'away_team').order_by('-match_date')[:8]
+
+    recent_teams = Team.objects.select_related('county').order_by('-registered_at')[:10]
+
+    return render(request, 'portal/governor/dashboard.html', {
+        'stats': stats,
+        'active_competitions': active_comps,
+        'recent_results': recent_results,
+        'recent_teams': recent_teams,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   WAZIRI SPORTS PORTAL   (Ministry — sports department oversight)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('waziri_sports', 'admin')
+def waziri_sports_dashboard_view(request):
+    """Dashboard for Waziri - Sports — department oversight."""
+    all_disciplines = CountyDiscipline.objects.select_related('registration').all()
+    stats = {
+        'competitions': Competition.objects.count(),
+        'teams': Team.objects.count(),
+        'players': CountyPlayer.objects.count(),
+        'referees': RefereeProfile.objects.filter(is_approved=True).count(),
+        'fixtures': Fixture.objects.count(),
+        'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+        'subcounties_active': all_disciplines.exclude(sub_county='').values('sub_county').distinct().count(),
+    }
+
+    active_comps = Competition.objects.filter(
+        status__in=['active', 'group_stage', 'knockout']
+    ).order_by('-start_date')[:5]
+
+    recent_results = Fixture.objects.filter(
+        status='completed'
+    ).select_related('competition', 'home_team', 'away_team').order_by('-match_date')[:8]
+
+    recent_teams = Team.objects.select_related('county').order_by('-registered_at')[:10]
+
+    return render(request, 'portal/waziri_sports/dashboard.html', {
+        'stats': stats,
+        'active_competitions': active_comps,
+        'recent_results': recent_results,
+        'recent_teams': recent_teams,
+    })

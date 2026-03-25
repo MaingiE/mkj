@@ -75,6 +75,8 @@ class UserRole(models.TextChoices):
     CHIEF_SPORTS_OFFICER = "chief_sports_officer", "Chief Sports Officer"
     DIRECTOR_SPORTS     = "director_sports",     "Director of Sports"
     CHIEF_OFFICER_SPORTS = "chief_officer_sports", "Chief Officer - Sports"
+    GOVERNOR            = "governor",            "Governor"
+    WAZIRI_SPORTS       = "waziri_sports",       "Waziri - Sports"
     ADMIN               = "admin",               "System Admin"
 
 

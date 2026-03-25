@@ -11,13 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --blue: #1565C0;
-            --blue-dark: #0D47A1;
-            --blue-deep: #0a3d91;
-            --blue-light: #42A5F5;
-            --gold: #FBC02D;
-            --gold-light: #FFD54F;
-            --green: #2E7D32;
+            --blue: #2563eb;
+            --blue-dark: #1d4ed8;
+            --blue-light: #3b82f6;
+            --gold: #f59e0b;
+            --gold-light: #fbbf24;
             --white: #ffffff;
             --gray-50: #f8fafc;
             --gray-100: #f1f5f9;
@@ -29,8 +27,6 @@
             --gray-700: #334155;
             --gray-800: #1e293b;
             --gray-900: #0f172a;
-            --error: #ef4444;
-            --success: #22c55e;
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
         }
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,117 +40,129 @@
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
 
-        /* ═══ SPLIT LAYOUT ═══ */
-        .login-split { display: flex; min-height: 100vh; }
+        .login-page {
+            display: flex; min-height: 100vh;
+            align-items: center; justify-content: center;
+            padding: 2rem;
+            background:
+                linear-gradient(135deg, #f0f4ff 0%, var(--gray-50) 50%, #fefce8 100%);
+        }
 
-        /* ═══ LEFT PANEL — BRANDING ═══ */
-        .login-hero {
-            flex: 0 0 50%;
-            background: linear-gradient(150deg, var(--blue-dark) 0%, var(--blue) 40%, var(--blue-deep) 100%);
+        .login-card {
+            display: flex; width: 100%; max-width: 960px;
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,.05), 0 20px 50px -12px rgba(0,0,0,.08);
+            overflow: hidden;
+            animation: card-in .5s var(--ease) both;
+        }
+        @keyframes card-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LEFT — BRANDING */
+        .login-brand {
+            flex: 0 0 42%; padding: 3rem 2.5rem;
+            background: linear-gradient(160deg, #f8faff 0%, #eef2ff 100%);
+            border-right: 1px solid var(--gray-100);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            padding: 3rem; position: relative; overflow: hidden;
+            text-align: center;
         }
-        .login-hero::before {
-            content: ''; position: absolute; inset: 0;
-            background:
-                radial-gradient(circle at 20% 80%, rgba(251,192,45,.12) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(66,165,245,.15) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(255,255,255,.03) 0%, transparent 70%);
-        }
-        .login-hero::after {
-            content: ''; position: absolute; inset: 0;
-            background-image:
-                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
-        /* Animated shapes */
-        .shape { position: absolute; border-radius: 50%; opacity: .08; animation: shape-float 20s ease-in-out infinite; }
-        .shape--1 { width: 400px; height: 400px; border: 2px solid var(--gold); top: -100px; left: -100px; animation-duration: 25s; }
-        .shape--2 { width: 300px; height: 300px; border: 2px solid var(--blue-light); bottom: -80px; right: -80px; animation-duration: 18s; animation-delay: -5s; }
-        .shape--3 { width: 200px; height: 200px; background: rgba(251,192,45,.08); top: 20%; right: 10%; animation-duration: 22s; animation-delay: -10s; }
-        .shape--4 { width: 150px; height: 150px; background: rgba(66,165,245,.06); bottom: 20%; left: 10%; animation-duration: 28s; animation-delay: -3s; }
-        @keyframes shape-float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(20px, -30px) rotate(90deg); }
-            50% { transform: translate(-10px, 20px) rotate(180deg); }
-            75% { transform: translate(15px, 10px) rotate(270deg); }
-        }
-        .hero-content { position: relative; z-index: 1; text-align: center; max-width: 420px; }
-        .hero-logo {
-            width: 110px; height: 110px; border-radius: 50%;
-            object-fit: cover; background: var(--white);
-            border: 4px solid rgba(255,255,255,.2);
-            box-shadow: 0 20px 60px rgba(0,0,0,.3), 0 0 80px rgba(251,192,45,.15);
-            margin: 0 auto 2rem;
-            animation: hero-logo-in .8s var(--ease) both .2s;
-        }
-        @keyframes hero-logo-in { from { opacity: 0; transform: scale(.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .hero-title {
-            font-family: 'Outfit', sans-serif; font-size: 2.4rem; font-weight: 900;
-            color: var(--white); letter-spacing: 6px; margin-bottom: .5rem;
-            animation: hero-text-in .6s var(--ease) both .4s;
-        }
-        .hero-sub {
-            font-size: .8rem; color: rgba(255,255,255,.5);
-            text-transform: uppercase; letter-spacing: 4px; font-weight: 600;
-            margin-bottom: 2rem; animation: hero-text-in .6s var(--ease) both .5s;
-        }
-        @keyframes hero-text-in { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .hero-divider {
-            width: 60px; height: 3px;
-            background: linear-gradient(90deg, var(--gold), var(--gold-light));
-            border-radius: 3px; margin: 0 auto 2rem;
-            animation: hero-text-in .6s var(--ease) both .6s;
-        }
-        .hero-motto {
-            font-size: .95rem; color: rgba(255,255,255,.65);
-            line-height: 1.7; font-weight: 400; font-style: italic;
-            animation: hero-text-in .6s var(--ease) both .7s;
-        }
-        .hero-motto strong { color: var(--gold); font-weight: 700; font-style: normal; }
-        .hero-badge {
-            position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); z-index: 1;
-            display: flex; align-items: center; gap: .6rem;
-            padding: .5rem 1.2rem;
-            background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-            border-radius: 50px; backdrop-filter: blur(10px);
-            animation: hero-text-in .6s var(--ease) both .9s;
-        }
-        .hero-badge svg { color: var(--gold); flex-shrink: 0; }
-        .hero-badge span { font-size: .7rem; color: rgba(255,255,255,.6); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
 
-        /* ═══ RIGHT PANEL — FORM ═══ */
-        .login-form-panel {
-            flex: 0 0 50%; display: flex; align-items: center; justify-content: center;
-            padding: 3rem 2rem; background: var(--white); position: relative;
+        .logo-pair {
+            display: flex; align-items: center; justify-content: center;
+            gap: 1.5rem; margin-bottom: 2rem;
+            animation: fade-up .5s var(--ease) both .1s;
         }
-        .form-wrap { width: 100%; max-width: 400px; animation: form-in .6s var(--ease) both .3s; }
-        @keyframes form-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .logo-pair img {
+            width: 72px; height: 72px;
+            object-fit: contain;
+            border-radius: 18px;
+            background: var(--white);
+            padding: 6px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+            transition: transform .2s;
+        }
+        .logo-pair img:hover { transform: scale(1.05); }
+        .logo-divider {
+            width: 1px; height: 40px;
+            background: var(--gray-200);
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 900;
+            color: var(--gray-900); letter-spacing: -.5px; margin-bottom: .35rem;
+            animation: fade-up .5s var(--ease) both .2s;
+        }
+        .brand-title span { color: var(--blue); }
+        .brand-sub {
+            font-size: .78rem; color: var(--gray-500); font-weight: 500;
+            margin-bottom: .6rem; line-height: 1.5;
+            animation: fade-up .5s var(--ease) both .3s;
+        }
+        .brand-motto {
+            font-size: .75rem; color: var(--blue); font-weight: 600;
+            font-style: italic; margin-bottom: 2rem;
+            animation: fade-up .5s var(--ease) both .35s;
+        }
+
+        .brand-stats {
+            display: flex; gap: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            animation: fade-up .5s var(--ease) both .4s;
+        }
+        .brand-stat { text-align: center; }
+        .brand-stat-val {
+            font-family: 'Outfit', sans-serif; font-size: 1.25rem;
+            font-weight: 800; color: var(--gray-900); display: block;
+        }
+        .brand-stat-lbl {
+            font-size: .6rem; color: var(--gray-400);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            font-weight: 600; margin-top: .15rem;
+        }
+
+        .brand-footer {
+            margin-top: 2rem;
+            display: flex; align-items: center; gap: .4rem;
+            animation: fade-up .5s var(--ease) both .5s;
+        }
+        .brand-footer .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+        .brand-footer span { font-size: .65rem; color: var(--gray-400); font-weight: 600; letter-spacing: .5px; }
+
+        @keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* RIGHT — FORM */
+        .login-form-side {
+            flex: 1; padding: 3rem 2.5rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .form-wrap { width: 100%; max-width: 360px; animation: fade-up .5s var(--ease) both .2s; }
 
         .back-link {
-            display: inline-flex; align-items: center; gap: .4rem;
-            font-size: .78rem; color: var(--gray-400); text-decoration: none;
-            font-weight: 500; transition: color .2s; margin-bottom: 2.5rem;
+            display: inline-flex; align-items: center; gap: .35rem;
+            font-size: .76rem; color: var(--gray-400); text-decoration: none;
+            font-weight: 500; transition: color .2s; margin-bottom: 2rem;
         }
         .back-link:hover { color: var(--blue); }
-        .back-link svg { width: 16px; height: 16px; }
+        .back-link svg { width: 15px; height: 15px; transition: transform .2s; }
+        .back-link:hover svg { transform: translateX(-3px); }
 
-        .form-header { margin-bottom: 2rem; }
+        .form-header { margin-bottom: 1.75rem; }
         .form-header h1 {
-            font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 800;
-            color: var(--gray-900); margin-bottom: .4rem; letter-spacing: -.5px;
+            font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800;
+            color: var(--gray-900); margin-bottom: .3rem; letter-spacing: -.5px;
         }
-        .form-header p { font-size: .88rem; color: var(--gray-500); font-weight: 400; }
+        .form-header p { font-size: .85rem; color: var(--gray-500); line-height: 1.5; }
 
         /* Messages */
         .msg {
-            padding: .75rem 1rem; border-radius: 10px; font-size: .82rem; font-weight: 500;
-            margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: .5rem;
-            animation: msg-in .4s var(--ease); line-height: 1.5;
+            padding: .7rem .9rem; border-radius: 10px; font-size: .8rem; font-weight: 500;
+            margin-bottom: 1rem; display: flex; align-items: flex-start; gap: .45rem;
+            animation: msg-in .3s var(--ease); line-height: 1.5;
         }
-        @keyframes msg-in { from { opacity: 0; transform: translateY(-8px); } }
+        @keyframes msg-in { from { opacity: 0; transform: translateY(-6px); } }
         .msg svg { flex-shrink: 0; margin-top: 1px; }
         .msg--danger { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
         .msg--success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
@@ -162,259 +170,245 @@
         .msg--info { background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; }
 
         /* Fields */
-        .fields { display: flex; flex-direction: column; gap: 1.25rem; }
+        .fields { display: flex; flex-direction: column; gap: 1.1rem; }
         .field-group { position: relative; }
-        .field-lbl { display: block; font-size: .78rem; font-weight: 600; color: var(--gray-700); margin-bottom: .5rem; }
+        .field-lbl { display: block; font-size: .76rem; font-weight: 600; color: var(--gray-700); margin-bottom: .4rem; }
         .input-wrap { position: relative; display: flex; align-items: center; }
-        .input-wrap__icon { position: absolute; left: .875rem; color: var(--gray-400); pointer-events: none; transition: color .2s; display: flex; }
-        .input-wrap__icon svg { width: 18px; height: 18px; }
+        .input-wrap__icon { position: absolute; left: .8rem; color: var(--gray-400); pointer-events: none; transition: color .2s; display: flex; }
+        .input-wrap__icon svg { width: 17px; height: 17px; }
         .input-field {
-            width: 100%; padding: .75rem 1rem .75rem 2.75rem;
+            width: 100%; padding: .75rem .9rem .75rem 2.6rem;
             border: 1.5px solid var(--gray-200); border-radius: 10px;
-            font-size: .88rem; font-family: inherit; color: var(--gray-900);
-            background: var(--white); outline: none; transition: all .2s var(--ease); font-weight: 500;
+            font-size: .85rem; font-family: inherit; color: var(--gray-900);
+            background: var(--white); outline: none;
+            transition: all .2s var(--ease); font-weight: 500;
         }
         .input-field::placeholder { color: var(--gray-400); font-weight: 400; }
         .input-field:hover { border-color: var(--gray-300); }
-        .input-field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(21,101,192,.1); }
+        .input-field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.06); }
         .input-field:focus ~ .input-wrap__icon { color: var(--blue); }
 
         .eye-toggle {
-            position: absolute; right: .75rem; background: none; border: none;
-            cursor: pointer; color: var(--gray-400); padding: 4px;
+            position: absolute; right: .7rem; background: none; border: none;
+            cursor: pointer; color: var(--gray-400); padding: 3px;
             border-radius: 6px; display: flex; transition: all .2s;
         }
-        .eye-toggle:hover { color: var(--gray-600); background: var(--gray-100); }
-        .eye-toggle svg { width: 18px; height: 18px; }
+        .eye-toggle:hover { color: var(--gray-600); background: var(--gray-50); }
+        .eye-toggle svg { width: 17px; height: 17px; }
 
-        .options-row { display: flex; align-items: center; justify-content: space-between; margin-top: .1rem; }
-        .check-wrap { display: flex; align-items: center; gap: .5rem; }
-        .check-wrap input[type="checkbox"] { width: 16px; height: 16px; border-radius: 4px; cursor: pointer; accent-color: var(--blue); }
-        .check-wrap label { font-size: .8rem; color: var(--gray-500); cursor: pointer; user-select: none; }
-        .forgot-link { font-size: .8rem; color: var(--blue); text-decoration: none; font-weight: 600; transition: color .2s; }
+        .options-row { display: flex; align-items: center; justify-content: space-between; }
+        .check-wrap { display: flex; align-items: center; gap: .45rem; }
+        .check-wrap input[type="checkbox"] { width: 15px; height: 15px; border-radius: 4px; cursor: pointer; accent-color: var(--blue); }
+        .check-wrap label { font-size: .78rem; color: var(--gray-500); cursor: pointer; user-select: none; }
+        .forgot-link { font-size: .78rem; color: var(--blue); text-decoration: none; font-weight: 600; transition: color .2s; }
         .forgot-link:hover { color: var(--blue-dark); text-decoration: underline; }
 
         .submit-btn {
-            width: 100%; margin-top: .5rem; padding: .85rem; border: none;
+            width: 100%; margin-top: .4rem; padding: .82rem; border: none;
             border-radius: 10px; font-family: 'Outfit', sans-serif;
-            font-size: .92rem; font-weight: 700; color: var(--white); cursor: pointer;
-            background: var(--blue); box-shadow: 0 2px 12px rgba(21,101,192,.25);
-            transition: all .25s var(--ease); letter-spacing: .3px;
+            font-size: .9rem; font-weight: 700; color: var(--white); cursor: pointer;
+            background: var(--blue);
+            box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(37,99,235,.18);
+            transition: all .2s var(--ease); letter-spacing: .2px;
             position: relative; overflow: hidden;
         }
-        .submit-btn:hover { background: var(--blue-dark); box-shadow: 0 4px 20px rgba(21,101,192,.35); transform: translateY(-1px); }
+        .submit-btn:hover { background: var(--blue-dark); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(37,99,235,.25); transform: translateY(-1px); }
         .submit-btn:active { transform: translateY(0); }
         .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
         .submit-btn.loading { pointer-events: none; }
-        .submit-btn .btn-text { transition: opacity .2s; }
+        .submit-btn .btn-text { transition: opacity .2s; position: relative; }
         .submit-btn.loading .btn-text { opacity: 0; }
         .submit-btn .spinner {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.3);
+            width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
             border-top-color: var(--white); border-radius: 50%;
             animation: spin .6s linear infinite; opacity: 0;
         }
         .submit-btn.loading .spinner { opacity: 1; }
         @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
-        .form-divider { display: flex; align-items: center; gap: .8rem; margin: 1.5rem 0; }
+        .form-divider { display: flex; align-items: center; gap: .7rem; margin: 1.25rem 0; }
         .form-divider::before, .form-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
-        .form-divider span { font-size: .72rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .form-divider span { font-size: .68rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 
-        .form-footer { text-align: center; font-size: .82rem; color: var(--gray-500); }
-        .form-footer a { color: var(--blue); font-weight: 600; text-decoration: none; transition: color .2s; }
+        .form-footer { text-align: center; font-size: .8rem; color: var(--gray-500); }
+        .form-footer a { color: var(--blue); font-weight: 600; text-decoration: none; }
         .form-footer a:hover { text-decoration: underline; }
-        .form-copy { text-align: center; font-size: .68rem; color: var(--gray-400); margin-top: 2rem; letter-spacing: .3px; }
+        .form-copy { text-align: center; font-size: .65rem; color: var(--gray-400); margin-top: 1.5rem; }
 
-        /* ═══ FORGOT MODAL ═══ */
+        /* FORGOT MODAL */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(15,23,42,.6);
-            backdrop-filter: blur(8px); display: none;
+            position: fixed; inset: 0; background: rgba(15,23,42,.5);
+            backdrop-filter: blur(6px); display: none;
             align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-overlay.active { display: flex; }
         .modal {
-            background: var(--white); border-radius: 16px; padding: 2rem;
-            max-width: 420px; width: 90%;
-            box-shadow: 0 25px 60px rgba(0,0,0,.15);
+            background: var(--white); border-radius: 18px; padding: 2rem;
+            max-width: 400px; width: 90%;
+            box-shadow: 0 25px 50px rgba(0,0,0,.12);
             animation: modal-in .3s var(--ease); position: relative;
         }
-        @keyframes modal-in { from { opacity: 0; transform: translateY(15px) scale(.97); } }
+        @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
         .modal-close {
-            position: absolute; top: 1rem; right: 1rem;
+            position: absolute; top: .8rem; right: .8rem;
             background: none; border: none; cursor: pointer;
-            color: var(--gray-400); padding: .4rem; border-radius: 8px; transition: all .2s;
+            color: var(--gray-400); padding: .35rem; border-radius: 6px; transition: all .2s;
         }
         .modal-close:hover { background: var(--gray-100); color: var(--gray-600); }
         .modal-icon {
             width: 48px; height: 48px; background: #eff6ff; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 1.25rem; color: var(--blue);
+            margin: 0 auto 1rem; color: var(--blue);
         }
-        .modal h3 { font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--gray-900); margin-bottom: .5rem; text-align: center; }
-        .modal p { color: var(--gray-500); font-size: .85rem; line-height: 1.6; margin-bottom: 1.5rem; text-align: center; }
-        .modal-actions { display: flex; gap: .75rem; }
-        .modal-btn { flex: 1; padding: .7rem; border-radius: 10px; font-weight: 600; font-size: .82rem; cursor: pointer; transition: all .2s; border: none; text-align: center; }
+        .modal h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--gray-900); margin-bottom: .4rem; text-align: center; }
+        .modal p { color: var(--gray-500); font-size: .82rem; line-height: 1.6; margin-bottom: 1.25rem; text-align: center; }
+        .modal-actions { display: flex; gap: .6rem; }
+        .modal-btn { flex: 1; padding: .65rem; border-radius: 10px; font-weight: 600; font-size: .8rem; cursor: pointer; transition: all .2s; border: none; text-align: center; }
         .modal-btn-primary { background: var(--blue); color: var(--white); text-decoration: none; display: block; }
         .modal-btn-primary:hover { background: var(--blue-dark); }
         .modal-btn-secondary { background: var(--gray-100); color: var(--gray-600); }
         .modal-btn-secondary:hover { background: var(--gray-200); }
 
-        /* ═══ RESPONSIVE ═══ */
-        @media (max-width: 900px) {
-            .login-hero { display: none; }
-            .login-form-panel { flex: 1; }
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .login-page { padding: 1rem; }
+            .login-card { flex-direction: column; max-width: 440px; }
+            .login-brand {
+                flex: none; padding: 2rem 2rem 1.5rem;
+                border-right: none; border-bottom: 1px solid var(--gray-100);
+            }
+            .logo-pair img { width: 56px; height: 56px; border-radius: 14px; }
+            .brand-title { font-size: 1.3rem; }
+            .brand-stats { gap: 1.5rem; }
+            .brand-footer { display: none; }
+            .login-form-side { padding: 2rem 1.5rem; }
+            .back-link { margin-bottom: 1.25rem; }
         }
-        @media (max-width: 480px) {
-            .login-form-panel { padding: 2rem 1.25rem; }
-            .form-header h1 { font-size: 1.5rem; }
-            .options-row { flex-direction: column; align-items: flex-start; gap: .5rem; }
+        @media (max-width: 400px) {
+            .login-form-side { padding: 1.5rem 1.25rem; }
+            .form-header h1 { font-size: 1.35rem; }
+            .options-row { flex-direction: column; align-items: flex-start; gap: .4rem; }
         }
     </style>
 </head>
 <body>
-    <div class="login-split">
-        <!-- ═══ LEFT — BRANDING HERO ═══ -->
-        <div class="login-hero">
-            <div class="shape shape--1"></div>
-            <div class="shape shape--2"></div>
-            <div class="shape shape--3"></div>
-            <div class="shape shape--4"></div>
-            <div class="hero-content">
-                                <div class="logo-row">
-                                    <img src="{% static 'img/GOVT.jpeg' %}" alt="Government of Kenya" class="govt-logo" />
-                                    <img src="{% static 'img/TINA.jpeg' %}" alt="MKJ SUPA CUP Logo" class="main-logo" />
-                                    <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo" class="makueni-logo" />
-                                </div>
-                                <div style="font-size:.95rem;color:#FFD54F;font-weight:700;margin-bottom:.7rem;">Government of Kenya &nbsp;|&nbsp; Makueni County Government</div>
-                                <h2 class="hero-title">MKJ SUPA CUP</h2>
-                                <p class="hero-sub">Governor Mutula Kilonzo Junior Super Cup</p>
-                                <div class="hero-divider"></div>
-                                <p class="hero-motto">
-                                        <strong>The official youth sports championship for Makueni County</strong><br>
-                                        Empowering the next generation through fair play, unity, and excellence.
-                                </p>
-                    .logo-row {
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        gap: 1.2rem;
-                        margin-bottom: 1.2rem;
-                    }
-                    .logo-row .govt-logo {
-                        width: 60px;
-                        height: 60px;
-                        border-radius: 16px;
-                        object-fit: cover;
-                        border: 2px solid #fff;
-                        background: #fff;
-                    }
-                    .logo-row .main-logo {
-                        width: 90px;
-                        height: 90px;
-                        border-radius: 50%;
-                        object-fit: cover;
-                        border: 4px solid #fff;
-                        background: #fff;
-                    }
-                    .logo-row .makueni-logo {
-                        width: 60px;
-                        height: 60px;
-                        border-radius: 16px;
-                        object-fit: cover;
-                        border: 2px solid #fff;
-                        background: #fff;
-                    }
+    <div class="login-page">
+        <div class="login-card">
+            <!-- LEFT — BRANDING -->
+            <div class="login-brand">
+                <div class="logo-pair">
+                    <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County">
+                    <div class="logo-divider"></div>
+                    <img src="{% static 'img/TINA.jpeg' %}" alt="MKJ SUPA CUP">
+                </div>
+                <h2 class="brand-title">MKJ <span>SUPA CUP</span></h2>
+                <p class="brand-sub">Governor Mutula Kilonzo Junior<br>Super Cup — Makueni County</p>
+                <p class="brand-motto">"Wauni wa kwika nesa na ulungalu"</p>
+                <div class="brand-stats">
+                    <div class="brand-stat">
+                        <span class="brand-stat-val">6</span>
+                        <span class="brand-stat-lbl">Sub-Counties</span>
+                    </div>
+                    <div class="brand-stat">
+                        <span class="brand-stat-val">5+</span>
+                        <span class="brand-stat-lbl">Disciplines</span>
+                    </div>
+                    <div class="brand-stat">
+                        <span class="brand-stat-val">4th</span>
+                        <span class="brand-stat-lbl">Edition</span>
+                    </div>
+                </div>
+                <div class="brand-footer">
+                    <span class="dot"></span>
+                    <span>Season 2026 Active</span>
+                </div>
             </div>
-            <div class="hero-badge">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>Makueni County, Kenya</span>
-            </div>
-        </div>
 
-        <!-- ═══ RIGHT — FORM ═══ -->
-        <div class="login-form-panel">
-            <div class="form-wrap">
-                <a href="{% url 'home' %}" class="back-link">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
-                    Back to website
-                </a>
-                <div class="form-header">
-                    <h1>Welcome back</h1>
-                    <p>Sign in to your MKJ SUPA CUP portal</p>
-                </div>
-
-                {% if messages %}
-                {% for message in messages %}
-                <div class="msg msg--{{ message.tags }}" role="alert">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <span>{{ message }}</span>
-                </div>
-                {% endfor %}
-                {% endif %}
-
-                {% if error %}
-                <div class="msg msg--danger" role="alert">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                    </svg>
-                    <span>{{ error }}</span>
-                </div>
-                {% endif %}
-
-                <form method="post" action="{% url 'web_login' %}" class="fields" id="loginForm" novalidate>
-                    {% csrf_token %}
-                    <div class="field-group">
-                        <label for="email" class="field-lbl">Email address</label>
-                        <div class="input-wrap">
-                            <input type="email" id="email" name="email" class="input-field"
-                                placeholder="you@example.com" required autofocus autocomplete="email"
-                                value="{{ email|default:'' }}">
-                            <span class="input-wrap__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                    <polyline points="22,6 12,13 2,6"/>
-                                </svg>
-                            </span>
-                        </div>
+            <!-- RIGHT — FORM -->
+            <div class="login-form-side">
+                <div class="form-wrap">
+                    <a href="{% url 'home' %}" class="back-link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+                        Back to website
+                    </a>
+                    <div class="form-header">
+                        <h1>Welcome back</h1>
+                        <p>Sign in to the MKJ SUPA CUP portal</p>
                     </div>
-                    <div class="field-group">
-                        <label for="password" class="field-lbl">Password</label>
-                        <div class="input-wrap">
-                            <input type="password" id="password" name="password" class="input-field"
-                                placeholder="Enter your password" required autocomplete="current-password">
-                            <span class="input-wrap__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                </svg>
-                            </span>
-                            <button type="button" class="eye-toggle" id="togglePw" aria-label="Show password">
-                                <svg id="eyeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="options-row">
-                        <div class="check-wrap">
-                            <input type="checkbox" id="remember" name="remember" value="1">
-                            <label for="remember">Remember me</label>
-                        </div>
-                        <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
-                    </div>
-                    <button type="submit" class="submit-btn" id="submitBtn">
-                        <span class="btn-text">Sign in</span>
-                        <span class="spinner" aria-hidden="true"></span>
-                    </button>
-                </form>
 
-                <div class="form-divider"><span>Need help?</span></div>
-                <p class="form-footer">
-                    Contact your <a href="{% url 'contact' %}">MKJ SUPA CUP administrator</a> for account access.
-                </p>
-                <p class="form-copy">&copy; 2026 Governor Mutula Kilonzo Junior Super Cup. All rights reserved.</p>
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="msg msg--{{ message.tags }}" role="alert">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if error %}
+                    <div class="msg msg--danger" role="alert">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                        <span>{{ error }}</span>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'web_login' %}" class="fields" id="loginForm" novalidate>
+                        {% csrf_token %}
+                        <div class="field-group">
+                            <label for="email" class="field-lbl">Email address</label>
+                            <div class="input-wrap">
+                                <input type="email" id="email" name="email" class="input-field"
+                                    placeholder="you@example.com" required autofocus autocomplete="email"
+                                    value="{{ email|default:'' }}">
+                                <span class="input-wrap__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                        <polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label for="password" class="field-lbl">Password</label>
+                            <div class="input-wrap">
+                                <input type="password" id="password" name="password" class="input-field"
+                                    placeholder="Enter your password" required autocomplete="current-password">
+                                <span class="input-wrap__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                </span>
+                                <button type="button" class="eye-toggle" id="togglePw" aria-label="Show password">
+                                    <svg id="eyeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="options-row">
+                            <div class="check-wrap">
+                                <input type="checkbox" id="remember" name="remember" value="1">
+                                <label for="remember">Remember me</label>
+                            </div>
+                            <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+                        </div>
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span class="btn-text">Sign in</span>
+                            <span class="spinner" aria-hidden="true"></span>
+                        </button>
+                    </form>
+
+                    <div class="form-divider"><span>Need help?</span></div>
+                    <p class="form-footer">
+                        Contact your <a href="{% url 'contact' %}">MKJ SUPA CUP administrator</a> for access.
+                    </p>
+                    <p class="form-copy">&copy; 2026 Governor Mutula Kilonzo Junior Super Cup. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -423,12 +417,12 @@
     <div class="modal-overlay" id="forgotModal">
         <div class="modal">
             <button class="modal-close" id="closeModal" aria-label="Close">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
             </button>
             <div class="modal-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
                 </svg>
             </div>

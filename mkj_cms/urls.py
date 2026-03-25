@@ -161,6 +161,8 @@ from .web_views import (
     director_sports_dashboard_view,
     chief_officer_sports_dashboard_view,
     chief_sports_officer_dashboard_view,
+    governor_dashboard_view,
+    waziri_sports_dashboard_view,
     # Verification Officer portal
     vo_dashboard_view,
     vo_verify_county_player_view,
@@ -390,6 +392,12 @@ urlpatterns = [
 
     # ── CHIEF SPORTS OFFICER PORTAL ───────────────────────────────────────
     path("portal/chief-sports-officer/", chief_sports_officer_dashboard_view, name="chief_sports_officer_dashboard"),
+
+    # ── GOVERNOR PORTAL ───────────────────────────────────────────────────
+    path("portal/governor/", governor_dashboard_view, name="governor_dashboard"),
+
+    # ── WAZIRI SPORTS PORTAL ──────────────────────────────────────────────
+    path("portal/waziri-sports/", waziri_sports_dashboard_view, name="waziri_sports_dashboard"),
 
     # ── VERIFICATION OFFICER PORTAL ───────────────────────────────────────
     path("portal/verification-officer/", vo_dashboard_view, name="vo_dashboard"),

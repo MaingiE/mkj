@@ -1,154 +1,305 @@
 {% extends 'base.html' %}
-{% block title %}Competitions — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}County Finals — MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cf-hero {
+        background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .cf-hero::before {
+        content: "";
+        position: absolute;
+        top: -40%; right: -5%;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .cf-hero::after {
+        content: "";
+        position: absolute;
+        bottom: -50%; left: 10%;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(232,185,30,.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .cf-hero__badge {
+        display: inline-block;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: .15rem .7rem;
+        border-radius: 20px;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: .4rem;
+    }
+    .cf-hero h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem; font-weight: 800;
+        margin-bottom: .2rem; position: relative;
+    }
+    .cf-hero p { opacity: .8; font-size: .85rem; position: relative; margin: 0; }
+    .cf-hero__stats {
+        display: flex; gap: 1.5rem; margin-top: .8rem;
+        position: relative;
+    }
+    .cf-hero__stat { text-align: center; }
+    .cf-hero__stat-num {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem; font-weight: 900;
+        line-height: 1.1;
+    }
+    .cf-hero__stat-lbl {
+        font-size: .65rem; opacity: .65;
+        text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    .disc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .disc-card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid #eef2f6;
+        overflow: hidden;
+        transition: all .3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        position: relative;
+    }
+    .disc-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(0,0,0,.1);
+        border-color: transparent;
+    }
+    .disc-card__accent {
+        position: absolute; top: 0; left: 0;
+        width: 4px; height: 100%;
+        border-radius: 4px 0 0 4px;
+    }
+    .disc-card__accent--football { background: linear-gradient(180deg, #1565C0, #42A5F5); }
+    .disc-card__accent--volleyball { background: linear-gradient(180deg, #E65100, #FB8C00); }
+    .disc-card__accent--basketball { background: linear-gradient(180deg, #BF360C, #FF7043); }
+    .disc-card__accent--basketball3x3 { background: linear-gradient(180deg, #7B1FA2, #CE93D8); }
+    .disc-card__accent--handball { background: linear-gradient(180deg, #2E7D32, #66BB6A); }
+    .disc-card__body { padding: 1rem 1.15rem 1rem 1.4rem; }
+    .disc-card__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: .6rem;
+    }
+    .disc-card__sport {
+        display: flex; align-items: center; gap: .6rem;
+    }
+    .disc-card__icon {
+        width: 42px; height: 42px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.15rem; flex-shrink: 0;
+    }
+    .disc-card__icon--football { background: #E3F2FD; color: #1565C0; }
+    .disc-card__icon--volleyball { background: #FFF3E0; color: #E65100; }
+    .disc-card__icon--basketball { background: #FBE9E7; color: #BF360C; }
+    .disc-card__icon--basketball3x3 { background: #F3E5F5; color: #7B1FA2; }
+    .disc-card__icon--handball { background: #E8F5E9; color: #2E7D32; }
+    .disc-card__name {
+        font-size: .95rem; font-weight: 700; color: #1a1a1a;
+        line-height: 1.2;
+    }
+    .disc-card__meta {
+        display: flex; gap: .8rem;
+        font-size: .72rem; color: #888; font-weight: 500;
+        margin-bottom: .5rem;
+    }
+    .disc-card__meta span {
+        display: inline-flex; align-items: center; gap: .25rem;
+    }
+    .disc-card__pools {
+        display: flex; gap: .35rem; flex-wrap: wrap;
+    }
+    .disc-card__pool-tag {
+        font-size: .65rem; font-weight: 600;
+        padding: .15rem .55rem; border-radius: 5px;
+        background: #f0f4f8; color: #455A64;
+    }
+    .disc-card__pool-tag--a { background: #E3F2FD; color: #0D47A1; }
+    .disc-card__pool-tag--b { background: #FFF3E0; color: #E65100; }
+    .disc-card__empty {
+        font-size: .72rem; color: #bbb;
+        font-style: italic;
+    }
+    .disc-card__arrow {
+        position: absolute;
+        right: 1rem; top: 50%; transform: translateY(-50%);
+        font-size: .9rem; color: #ccc;
+        transition: all .25s;
+    }
+    .disc-card:hover .disc-card__arrow {
+        color: var(--primary); transform: translateY(-50%) translateX(3px);
+    }
+
+    .fix-card {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .65rem .9rem;
+        border-bottom: 1px solid #f2f2f2;
+        transition: background .15s;
+    }
+    .fix-card:last-child { border-bottom: none; }
+    .fix-card:hover { background: #f8fbff; }
+    .fix-card__date {
+        font-size: .72rem; color: #888;
+        min-width: 55px; font-weight: 600;
+        text-align: center;
+        line-height: 1.3;
+    }
+    .fix-card__date span { display: block; font-size: .6rem; color: #bbb; font-weight: 500; }
+    .fix-card__disc {
+        font-size: .68rem; color: #555; font-weight: 600;
+        min-width: 100px;
+    }
+    .fix-card__teams {
+        flex: 1;
+        display: flex; align-items: center; gap: .4rem;
+        font-size: .82rem;
+    }
+    .fix-card__team { font-weight: 600; color: #1a1a1a; }
+    .fix-card__vs {
+        font-size: .65rem; font-weight: 800; color: #ccc;
+        padding: 0 .15rem;
+    }
+    .fix-card__pool {
+        font-size: .6rem; font-weight: 700;
+        padding: .1rem .4rem; border-radius: 4px;
+        background: #E3F2FD; color: #1565C0;
+        text-transform: uppercase;
+    }
+    .fix-card__venue {
+        font-size: .68rem; color: #aaa;
+        min-width: 60px; text-align: right;
+    }
+
+    @media (max-width: 768px) {
+        .cf-hero { padding: 1.2rem 1.25rem; }
+        .cf-hero h1 { font-size: 1.2rem; }
+        .cf-hero__stats { gap: 1rem; }
+        .disc-grid { grid-template-columns: 1fr; }
+        .fix-card { flex-wrap: wrap; gap: .4rem; }
+        .fix-card__disc { min-width: auto; }
+        .fix-card__venue { text-align: left; min-width: auto; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="breadcrumb">
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <span>Competitions</span>
+<!-- Hero Banner -->
+<div class="cf-hero">
+    <span class="cf-hero__badge"><i class="bi bi-trophy-fill"></i> County Finals</span>
+    <h1>MKJ SUPA CUP 2026</h1>
+    <p>Makueni County Governor Mutula Kilonzo Junior Super Cup — Group Stage</p>
+    <div class="cf-hero__stats">
+        <div class="cf-hero__stat">
+            <div class="cf-hero__stat-num">{{ competitions|length }}</div>
+            <div class="cf-hero__stat-lbl">Disciplines</div>
+        </div>
+        <div class="cf-hero__stat">
+            <div class="cf-hero__stat-num">6</div>
+            <div class="cf-hero__stat-lbl">Sub-Counties</div>
+        </div>
+        <div class="cf-hero__stat">
+            <div class="cf-hero__stat-num">{{ upcoming_fixtures|length }}</div>
+            <div class="cf-hero__stat-lbl">Upcoming</div>
+        </div>
     </div>
-    <h1><i class="bi bi-trophy"></i> Competitions</h1>
-    <p>Manage all MKJ SUPA CUP competitions and tournaments</p>
 </div>
 
-{% if current_competitions %}
-<div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%); color: #fff; border: none;">
-    <div class="card-body" style="padding: 1.25rem;">
-        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-trophy-fill" style="font-size: 1.4rem;"></i>
+<!-- Disciplines -->
+<div class="disc-grid">
+    {% for comp in competitions %}
+    <a href="{% url 'competition_detail' comp.pk %}" class="disc-card">
+        <div class="disc-card__accent disc-card__accent--{% if 'football' in comp.sport_type %}football{% elif 'volleyball' in comp.sport_type %}volleyball{% elif 'basketball_3x3' in comp.sport_type %}basketball3x3{% elif 'basketball' in comp.sport_type %}basketball{% elif 'handball' in comp.sport_type %}handball{% else %}football{% endif %}"></div>
+        <div class="disc-card__body">
+            <div class="disc-card__top">
+                <div class="disc-card__sport">
+                    <div class="disc-card__icon disc-card__icon--{% if 'football' in comp.sport_type %}football{% elif 'volleyball' in comp.sport_type %}volleyball{% elif 'basketball_3x3' in comp.sport_type %}basketball3x3{% elif 'basketball' in comp.sport_type %}basketball{% elif 'handball' in comp.sport_type %}handball{% else %}football{% endif %}">
+                        <i class="bi bi-{% if 'football' in comp.sport_type %}dribbble{% elif 'volleyball' in comp.sport_type %}trophy{% elif 'basketball' in comp.sport_type %}circle-fill{% elif 'handball' in comp.sport_type %}hand-index-fill{% else %}trophy{% endif %}"></i>
+                    </div>
+                    <div class="disc-card__name">{{ comp.get_sport_type_display }}</div>
+                </div>
+                {% if comp.status == 'group_stage' %}
+                <span class="badge-info" style="font-size:.6rem; padding:.15rem .45rem; border-radius:4px; font-weight:700;">GROUP</span>
+                {% elif comp.status == 'knockout' %}
+                <span class="badge-warning" style="font-size:.6rem; padding:.15rem .45rem; border-radius:4px; font-weight:700;">K/O</span>
+                {% elif comp.status == 'completed' %}
+                <span class="badge-gray" style="font-size:.6rem; padding:.15rem .45rem; border-radius:4px; font-weight:700;">DONE</span>
+                {% endif %}
             </div>
-            <div>
-                <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800;">MKJ SUPA CUP 2026 — Current Competition</h2>
-                <p style="margin: .25rem 0 0; opacity: .85; font-size: .82rem;">
-                    {{ current_competitions.count }} active discipline{{ current_competitions.count|pluralize }}: 
-                    {% for comp in current_competitions %}{{ comp.get_sport_type_display }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                </p>
+            <div class="disc-card__meta">
+                <span><i class="bi bi-people-fill"></i> {{ comp.teams.count }} teams</span>
+                <span><i class="bi bi-grid-3x3-gap-fill"></i> {{ comp.pools.count }} pools</span>
+                <span><i class="bi bi-calendar-event-fill"></i> {{ comp.fixtures.count }} fixtures</span>
             </div>
-            <div style="margin-left: auto;">
-                <span style="background: rgba(255,255,255,.2); color: #fff; padding: .35rem .75rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.3);">
-                    <i class="bi bi-lightning-fill"></i> ACTIVE
+            {% if comp.pools.all %}
+            <div class="disc-card__pools">
+                {% for pool in comp.pools.all %}
+                <span class="disc-card__pool-tag {% if 'A' in pool.name %}disc-card__pool-tag--a{% elif 'B' in pool.name %}disc-card__pool-tag--b{% endif %}">
+                    {{ pool.name }} · {{ pool.pool_teams.count }} teams
                 </span>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="disc-card__empty">Pools pending allocation</div>
+            {% endif %}
         </div>
+        <i class="bi bi-chevron-right disc-card__arrow"></i>
+    </a>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align:center; padding:3rem; color:#bbb;">
+        <i class="bi bi-trophy" style="font-size:2.5rem; opacity:.3;"></i>
+        <p style="margin-top:.5rem;">No competitions created yet.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Upcoming Fixtures -->
+{% if upcoming_fixtures %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-calendar-event"></i> Upcoming Fixtures</h3>
+        <span style="font-size:.72rem; color:#999;">Next {{ upcoming_fixtures|length }} match{{ upcoming_fixtures|length|pluralize:"es" }}</span>
+    </div>
+    <div style="padding: 0;">
+        {% for fix in upcoming_fixtures %}
+        <div class="fix-card">
+            <div class="fix-card__date">
+                {{ fix.match_date|date:"d M" }}
+                <span>{% if fix.kickoff_time %}{{ fix.kickoff_time|time:"H:i" }}{% endif %}</span>
+            </div>
+            <div class="fix-card__disc">{{ fix.competition.get_sport_type_display }}</div>
+            <div class="fix-card__teams">
+                <span class="fix-card__team">{{ fix.home_team.sub_county }}</span>
+                <span class="fix-card__vs">VS</span>
+                <span class="fix-card__team">{{ fix.away_team.sub_county }}</span>
+            </div>
+            {% if fix.pool %}
+            <span class="fix-card__pool">{{ fix.pool.name }}</span>
+            {% endif %}
+            <div class="fix-card__venue"><i class="bi bi-geo-alt"></i> {{ fix.venue.name|default:"TBD" }}</div>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endif %}
-
-<div class="card">
-    <div class="card-header">
-        <h3>All Competitions</h3>
-        <span class="toolbar-count" id="compCount"></span>
-    </div>
-    <div class="card-body">
-        {% if competitions %}
-        <div class="toolbar">
-            <div class="toolbar-search">
-                <i class="bi bi-search"></i>
-                <input type="text" id="compSearch" placeholder="Search..." oninput="filterComps()">
-            </div>
-            <select class="toolbar-select" id="sportFilter" onchange="filterComps()">
-                <option value="">All Sports</option>
-            </select>
-            <select class="toolbar-select" id="compStatusFilter" onchange="filterComps()">
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="group_stage">Group Stage</option>
-                <option value="knockout">Knockout</option>
-                <option value="completed">Completed</option>
-            </select>
-            <div class="toolbar-spacer"></div>
-        </div>
-        <div class="table-responsive">
-            <table id="compsTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Sport</th>
-                        <th>Season</th>
-                        <th>Age</th>
-                        <th>Status</th>
-                        <th>Start</th>
-                        <th>Teams</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for comp in competitions %}
-                    <tr data-sport="{{ comp.get_sport_type_display }}" data-status="{{ comp.status }}">
-                        <td><strong>{{ comp.name }}</strong></td>
-                        <td style="font-size:.78rem">{{ comp.get_sport_type_display }}</td>
-                        <td>{{ comp.season }}</td>
-                        <td>{{ comp.get_age_group_display }}</td>
-                        <td>
-                            {% if comp.status == 'active' %}
-                            <span class="badge badge-success">Active</span>
-                            {% elif comp.status == 'upcoming' %}
-                            <span class="badge badge-warning">Upcoming</span>
-                            {% elif comp.status == 'completed' %}
-                            <span class="badge badge-gray">Completed</span>
-                            {% elif comp.status == 'group_stage' %}
-                            <span class="badge badge-info">Group Stage</span>
-                            {% elif comp.status == 'knockout' %}
-                            <span class="badge badge-warning">Knockout</span>
-                            {% else %}
-                            <span class="badge badge-danger">{{ comp.get_status_display }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ comp.start_date|date:"d M 'y" }}</td>
-                        <td>{{ comp.teams.count }}/{{ comp.max_teams }}</td>
-                        <td class="text-nowrap">
-                            <a href="{% url 'competition_detail' comp.pk %}" class="btn btn-outline btn-xs">View</a>
-                            {% if user.role == 'competition_manager' or user.role == 'admin' or user.is_superuser %}
-                            <a href="{% url 'competition_standings' comp.pk %}" class="btn btn-outline btn-xs btn-blue">Standings</a>
-                            <a href="{% url 'competition_reports' comp.pk %}" class="btn btn-outline btn-xs btn-purple">Reports</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="icon"><i class="bi bi-trophy"></i></div>
-            <h3>No competitions yet</h3>
-            <p>Competitions will appear here once created.</p>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-{% block extra_js_content %}
-<script>
-function filterComps() {
-    const q = document.getElementById('compSearch').value.toLowerCase();
-    const sport = document.getElementById('sportFilter').value;
-    const status = document.getElementById('compStatusFilter').value;
-    const rows = document.querySelectorAll('#compsTable tbody tr');
-    let visible = 0;
-    rows.forEach(r => {
-        const text = r.textContent.toLowerCase();
-        const show = (!q || text.includes(q)) && (!sport || r.dataset.sport === sport) && (!status || r.dataset.status === status);
-        r.style.display = show ? '' : 'none';
-        if (show) visible++;
-    });
-    document.getElementById('compCount').textContent = visible + ' of ' + rows.length;
-}
-document.addEventListener('DOMContentLoaded', function() {
-    const sports = new Set();
-    document.querySelectorAll('#compsTable tbody tr').forEach(r => {
-        if (r.dataset.sport) sports.add(r.dataset.sport);
-    });
-    const sel = document.getElementById('sportFilter');
-    [...sports].sort().forEach(s => {
-        const o = document.createElement('option');
-        o.value = s; o.textContent = s;
-        sel.appendChild(o);
-    });
-    filterComps();
-});
-</script>
-{% endblock %}
 {% endblock %}

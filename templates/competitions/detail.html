@@ -1,139 +1,344 @@
 {% extends 'base.html' %}
-{% block title %}{{ competition.name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}{{ competition.get_sport_type_display }} — MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cd-hero {
+        border-radius: 16px;
+        padding: 1.3rem 1.8rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .cd-hero--football { background: linear-gradient(135deg, #0D47A1 0%, #1976D2 60%, #42A5F5 100%); }
+    .cd-hero--volleyball { background: linear-gradient(135deg, #E65100 0%, #F57C00 60%, #FFB74D 100%); }
+    .cd-hero--basketball { background: linear-gradient(135deg, #BF360C 0%, #E64A19 60%, #FF8A65 100%); }
+    .cd-hero--basketball3x3 { background: linear-gradient(135deg, #6A1B9A 0%, #8E24AA 60%, #CE93D8 100%); }
+    .cd-hero--handball { background: linear-gradient(135deg, #1B5E20 0%, #388E3C 60%, #66BB6A 100%); }
+    .cd-hero::before {
+        content: "";
+        position: absolute; top: -40%; right: -5%;
+        width: 250px; height: 250px;
+        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .cd-hero__badge {
+        display: inline-block;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: .12rem .6rem; border-radius: 20px;
+        font-size: .62rem; font-weight: 700;
+        letter-spacing: 1px; text-transform: uppercase;
+        margin-bottom: .3rem;
+    }
+    .cd-hero h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.4rem; font-weight: 800;
+        margin-bottom: .1rem; position: relative;
+    }
+    .cd-hero p { opacity: .8; font-size: .82rem; position: relative; margin: 0; }
+    .cd-hero__row {
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: .75rem; position: relative;
+    }
+    .cd-hero__actions {
+        display: flex; gap: .4rem;
+    }
+    .cd-hero__btn {
+        display: inline-flex; align-items: center; gap: .3rem;
+        padding: .35rem .75rem; border-radius: 8px;
+        font-size: .72rem; font-weight: 600;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.3);
+        color: #fff; text-decoration: none;
+        transition: all .2s;
+    }
+    .cd-hero__btn:hover {
+        background: rgba(255,255,255,.25); color: #fff;
+    }
+
+    /* Pool Standings */
+    .pool-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .pool-card {
+        background: #fff;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,.06);
+        border: 1px solid #eef2f6;
+    }
+    .pool-head {
+        padding: .7rem 1rem;
+        display: flex; align-items: center; justify-content: space-between;
+        font-weight: 700; font-size: .85rem; color: #fff;
+    }
+    .pool-head--a { background: linear-gradient(135deg, #0D47A1, #1976D2); }
+    .pool-head--b { background: linear-gradient(135deg, #E65100, #FB8C00); }
+    .pool-head__venue { font-size: .65rem; opacity: .75; font-weight: 500; }
+    .pool-table { width: 100%; border-collapse: collapse; }
+    .pool-table thead th {
+        background: #f8fafc;
+        padding: .5rem .5rem;
+        text-align: center;
+        font-size: .62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: #78909C;
+        border-bottom: 2px solid #eef2f6;
+    }
+    .pool-table thead th:nth-child(2) { text-align: left; }
+    .pool-table tbody td {
+        padding: .55rem .5rem;
+        text-align: center;
+        font-size: .8rem;
+        border-bottom: 1px solid #f5f5f5;
+        color: #333;
+    }
+    .pool-table tbody td:nth-child(2) {
+        text-align: left;
+        font-weight: 600;
+    }
+    .pool-table tbody tr:hover { background: #f8fbff; }
+    .pool-table .qualify-row { background: #E8F5E9; }
+    .pool-table .qualify-row:hover { background: #C8E6C9; }
+    .pool-table .pos { color: #aaa; font-weight: 700; font-size: .72rem; }
+    .pool-table .pts { font-weight: 800; color: var(--primary); }
+    .pool-legend {
+        padding: .35rem .75rem;
+        background: #f9faf9;
+        border-top: 1px solid #eef2f6;
+        font-size: .62rem; color: #aaa;
+        display: flex; align-items: center; gap: .3rem;
+    }
+    .pool-legend__dot {
+        width: 8px; height: 8px; border-radius: 2px;
+        background: #C8E6C9; display: inline-block;
+    }
+
+    /* Fixture List */
+    .fix-row {
+        display: flex; align-items: center;
+        padding: .6rem .9rem; gap: .6rem;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background .15s;
+    }
+    .fix-row:last-child { border-bottom: none; }
+    .fix-row:hover { background: #f8fbff; }
+    .fix-row__date {
+        min-width: 70px;
+        text-align: center;
+    }
+    .fix-row__date-d {
+        font-size: .78rem; font-weight: 700; color: #333;
+        line-height: 1.1;
+    }
+    .fix-row__date-t {
+        font-size: .6rem; color: #aaa; font-weight: 500;
+    }
+    .fix-row__pool {
+        font-size: .55rem; font-weight: 700;
+        padding: .1rem .4rem; border-radius: 4px;
+        text-transform: uppercase; letter-spacing: .3px;
+        min-width: 48px; text-align: center;
+    }
+    .fix-row__pool--a { background: #E3F2FD; color: #0D47A1; }
+    .fix-row__pool--b { background: #FFF3E0; color: #E65100; }
+    .fix-row__matchup {
+        flex: 1;
+        display: flex; align-items: center;
+        gap: .3rem;
+    }
+    .fix-row__team {
+        font-weight: 600; font-size: .85rem; color: #1a1a1a;
+        min-width: 80px;
+    }
+    .fix-row__team--home { text-align: right; }
+    .fix-row__team--away { text-align: left; }
+    .fix-row__vs {
+        font-size: .55rem; font-weight: 800;
+        color: #ccc; padding: 0 .2rem;
+        flex-shrink: 0;
+    }
+    .fix-row__score {
+        min-width: 50px; text-align: center;
+        font-weight: 700; font-size: .85rem;
+    }
+    .fix-row__venue {
+        font-size: .65rem; color: #aaa;
+        min-width: 55px; text-align: right;
+    }
+    .fix-row__status {
+        min-width: 58px; text-align: center;
+    }
+    .fix-row__edit {
+        font-size: .65rem; font-weight: 600;
+        padding: .2rem .5rem; border-radius: 6px;
+        background: #f0f4f8; color: #555;
+        text-decoration: none; transition: all .2s;
+        display: inline-flex; align-items: center; gap: .2rem;
+    }
+    .fix-row__edit:hover { background: var(--primary); color: #fff; }
+
+    .empty-state {
+        text-align: center; padding: 2.5rem 1rem;
+        color: #bbb;
+    }
+    .empty-state i { font-size: 2rem; opacity: .3; display: block; margin-bottom: .5rem; }
+
+    @media (max-width: 768px) {
+        .cd-hero { padding: 1rem 1.25rem; }
+        .cd-hero h1 { font-size: 1.15rem; }
+        .pool-grid { grid-template-columns: 1fr; }
+        .fix-row { flex-wrap: wrap; gap: .3rem; }
+        .fix-row__date { min-width: auto; }
+        .fix-row__venue { text-align: left; min-width: auto; }
+        .fix-row__matchup { min-width: 100%; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="breadcrumb">
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <span><a href="{% url 'competitions_list' %}">Competitions</a></span>
-        <span>{{ competition.name }}</span>
-    </div>
-    <h1>{{ competition.name }}</h1>
-    <p>{{ competition.get_age_group_display }} — Season {{ competition.season }}</p>
-</div>
-
-<div class="stats-grid">
-    <div class="stat-card green">
-        <div class="stat-icon green"><i class="bi bi-people"></i></div>
-        <div class="stat-info">
-            <h3>{{ competition.teams.count }}</h3>
-            <p>Registered Teams</p>
+<!-- Hero -->
+<div class="cd-hero cd-hero--{% if 'football' in competition.sport_type %}football{% elif 'volleyball' in competition.sport_type %}volleyball{% elif 'basketball_3x3' in competition.sport_type %}basketball3x3{% elif 'basketball' in competition.sport_type %}basketball{% elif 'handball' in competition.sport_type %}handball{% else %}football{% endif %}">
+    <div class="cd-hero__row">
+        <div>
+            <span class="cd-hero__badge"><i class="bi bi-trophy-fill"></i> {{ competition.get_status_display }}</span>
+            <h1>{{ competition.get_sport_type_display }}</h1>
+            <p>MKJ SUPA CUP 2026 · {{ competition.teams.count }} teams · {{ pools|length }} pools · {{ fixtures.count }} fixtures</p>
         </div>
-    </div>
-    <div class="stat-card blue">
-        <div class="stat-icon blue"><i class="bi bi-calendar-event"></i></div>
-        <div class="stat-info">
-            <h3>{{ competition.fixtures.count }}</h3>
-            <p>Fixtures</p>
+        {% if user.role == 'coordinator' or user.role == 'admin' or user.is_superuser %}
+        <div class="cd-hero__actions">
+            <a href="{% url 'coordinator_manage_pools' pk=competition.pk %}" class="cd-hero__btn">
+                <i class="bi bi-grid-3x3-gap"></i> Manage Pools
+            </a>
+            <a href="{% url 'coordinator_generate_fixtures' pk=competition.pk %}" class="cd-hero__btn">
+                <i class="bi bi-calendar-plus"></i> Fixtures
+            </a>
         </div>
-    </div>
-    <div class="stat-card yellow">
-        <div class="stat-icon yellow"><i class="bi bi-grid-3x3"></i></div>
-        <div class="stat-info">
-            <h3>{{ competition.pools.count }}</h3>
-            <p>Pools / Groups</p>
-        </div>
-    </div>
-    <div class="stat-card red">
-        <div class="stat-icon red"><i class="bi bi-bar-chart-line"></i></div>
-        <div class="stat-info">
-            <h3>
-                {% if competition.status == 'active' %}Active
-                {% elif competition.status == 'completed' %}Done
-                {% else %}{{ competition.get_status_display }}
-                {% endif %}
-            </h3>
-            <p>Status</p>
-        </div>
+        {% endif %}
     </div>
 </div>
 
-{% if user.role == 'competition_manager' or user.role == 'admin' or user.is_superuser %}
-<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
-    <a href="{% url 'competition_standings' competition.pk %}" class="btn btn--primary" style="padding:.6rem 1.5rem">
-        <i class="bi bi-bar-chart-line"></i> Standings &amp; Statistics
-    </a>
-    <a href="{% url 'competition_reports' competition.pk %}" class="btn btn--primary" style="padding:.6rem 1.5rem;background:#1565c0">
-        <i class="bi bi-clipboard-data"></i> Match Reports
-    </a>
+<!-- Pool Standings -->
+{% if pools %}
+<div class="pool-grid">
+    {% for pool in pools %}
+    <div class="pool-card">
+        <div class="pool-head {% if 'A' in pool.name %}pool-head--a{% else %}pool-head--b{% endif %}">
+            <span><i class="bi bi-grid-3x3-gap-fill"></i> {{ pool.name }}</span>
+            {% if pool.venue %}
+            <span class="pool-head__venue"><i class="bi bi-geo-alt-fill"></i> {{ pool.venue.name }}</span>
+            {% endif %}
+        </div>
+        <table class="pool-table">
+            <thead>
+                <tr>
+                    <th style="width:28px;">#</th>
+                    <th>Sub-County</th>
+                    <th style="width:30px;">P</th>
+                    <th style="width:30px;">W</th>
+                    <th style="width:30px;">D</th>
+                    <th style="width:30px;">L</th>
+                    <th style="width:30px;">GF</th>
+                    <th style="width:30px;">GA</th>
+                    <th style="width:30px;">GD</th>
+                    <th style="width:36px;">PTS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pt in pool.pool_teams.all %}
+                <tr {% if forloop.counter <= competition.qualify_from_group %}class="qualify-row"{% endif %}>
+                    <td class="pos">{{ forloop.counter }}</td>
+                    <td>{{ pt.team.sub_county }}</td>
+                    <td>{{ pt.played }}</td>
+                    <td>{{ pt.won }}</td>
+                    <td>{{ pt.drawn }}</td>
+                    <td>{{ pt.lost }}</td>
+                    <td>{{ pt.goals_for }}</td>
+                    <td>{{ pt.goals_against }}</td>
+                    <td>{{ pt.goal_difference }}</td>
+                    <td class="pts">{{ pt.points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="pool-legend">
+            <span class="pool-legend__dot"></span> Qualifies for knockout
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="empty-state">
+        <i class="bi bi-grid-3x3-gap"></i>
+        <p>Pools not yet configured for this discipline.</p>
+        {% if user.role == 'coordinator' or user.role == 'admin' or user.is_superuser %}
+        <a href="{% url 'coordinator_manage_pools' pk=competition.pk %}" class="btn btn-sm btn-primary" style="margin-top:.5rem;">
+            <i class="bi bi-plus"></i> Set Up Pools
+        </a>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
 
-<div class="grid-2">
-    <!-- Competition Details -->
-    <div class="card">
-        <div class="card-header"><h3>Details</h3></div>
-        <div class="card-body">
-            <table>
-                <tr><td><strong>Start Date</strong></td><td>{{ competition.start_date|date:"d M Y" }}</td></tr>
-                <tr><td><strong>End Date</strong></td><td>{{ competition.end_date|date:"d M Y" }}</td></tr>
-                <tr><td><strong>Max Teams</strong></td><td>{{ competition.max_teams }}</td></tr>
-                <tr><td><strong>Created By</strong></td><td>{{ competition.created_by }}</td></tr>
-                {% if competition.description %}
-                <tr><td><strong>Description</strong></td><td>{{ competition.description }}</td></tr>
-                {% endif %}
-            </table>
-        </div>
+<!-- Fixtures -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-calendar-event"></i> Fixtures</h3>
+        <span style="font-size:.72rem; color:#999; font-weight:500;">{{ fixtures.count }} match{{ fixtures.count|pluralize:"es" }}</span>
     </div>
-
-    <!-- Teams in Competition -->
-    <div class="card">
-        <div class="card-header"><h3>Teams</h3></div>
-        <div class="card-body">
-            {% if teams %}
-            <table>
-                <thead><tr><th>Team</th><th>County</th><th>Status</th></tr></thead>
-                <tbody>
-                    {% for team in teams %}
-                    <tr>
-                        <td><a href="{% url 'team_detail' team.pk %}">{{ team.name }}</a></td>
-                        <td>{{ team.county }}</td>
-                        <td>
-                            {% if team.status == 'registered' %}
-                            <span class="badge badge-success">Registered</span>
-                            {% else %}
-                            <span class="badge badge-warning">{{ team.get_status_display }}</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p style="color:#757575;">No teams registered yet.</p>
+    {% if fixtures %}
+    <div>
+        {% for f in fixtures %}
+        <div class="fix-row">
+            <div class="fix-row__date">
+                <div class="fix-row__date-d">{{ f.match_date|date:"d M" }}</div>
+                <div class="fix-row__date-t">{{ f.kickoff_time|time:"H:i" }}</div>
+            </div>
+            {% if f.pool %}
+            <span class="fix-row__pool {% if 'A' in f.pool.name %}fix-row__pool--a{% else %}fix-row__pool--b{% endif %}">{{ f.pool.name }}</span>
+            {% endif %}
+            <div class="fix-row__matchup">
+                <span class="fix-row__team fix-row__team--home">{{ f.home_team.sub_county }}</span>
+                <span class="fix-row__vs">VS</span>
+                <span class="fix-row__team fix-row__team--away">{{ f.away_team.sub_county }}</span>
+            </div>
+            <div class="fix-row__score">
+                {% if f.home_score is not None %}
+                {{ f.home_score }} - {{ f.away_score }}
+                {% else %}
+                —
+                {% endif %}
+            </div>
+            <div class="fix-row__status">
+                <span class="badge-{% if f.status == 'completed' %}success{% elif f.status == 'live' %}danger{% elif f.status == 'confirmed' %}info{% else %}gray{% endif %}" style="font-size:.55rem; padding:.12rem .4rem; border-radius:4px;">
+                    {{ f.get_status_display }}
+                </span>
+            </div>
+            <div class="fix-row__venue"><i class="bi bi-geo-alt"></i> {{ f.venue.name|default:"TBD" }}</div>
+            {% if user.role == 'coordinator' or user.role == 'admin' or user.is_superuser %}
+            <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" class="fix-row__edit">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
             {% endif %}
         </div>
+        {% endfor %}
     </div>
-</div>
-
-<!-- Fixtures -->
-<div class="card" style="margin-top:1.5rem;">
-    <div class="card-header"><h3>Fixtures</h3></div>
-    <div class="card-body">
-        {% if fixtures %}
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr><th>Date</th><th>Time</th><th>Home</th><th>Away</th><th>Venue</th><th>Status</th><th>Score</th></tr>
-                </thead>
-                <tbody>
-                    {% for f in fixtures %}
-                    <tr>
-                        <td>{{ f.match_date|date:"d M Y" }}</td>
-                        <td>{{ f.kickoff_time|time:"H:i" }}</td>
-                        <td><strong>{{ f.home_team.name }}</strong></td>
-                        <td><strong>{{ f.away_team.name }}</strong></td>
-                        <td>{{ f.venue|default:"TBD" }}</td>
-                        <td><span class="badge badge-{% if f.status == 'completed' %}success{% elif f.status == 'live' %}danger{% elif f.status == 'confirmed' %}info{% else %}gray{% endif %}">{{ f.get_status_display }}</span></td>
-                        <td>{% if f.home_score is not None %}<strong>{{ f.home_score }} - {{ f.away_score }}</strong>{% else %}—{% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p style="color:#757575;">No fixtures scheduled yet.</p>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-calendar-x"></i>
+        <p>No fixtures scheduled yet.</p>
+        {% if user.role == 'coordinator' or user.role == 'admin' or user.is_superuser %}
+        <p style="font-size:.78rem; margin-top:.3rem;">Assign teams to pools — fixtures are auto-generated.</p>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}
