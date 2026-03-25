@@ -8,7 +8,7 @@
         <span>Matches</span>
     </div>
     <h1><i class="bi bi-clipboard-data"></i> Matches & Fixtures</h1>
-    <p>Scheduled fixtures, results and match reports</p>
+    <p>Scheduled fixtures, results and match reports. This page auto-refreshes every 60 seconds.</p>
 </div>
 
 <div class="card">
@@ -240,6 +240,12 @@ function filterMatches() {
     document.getElementById('matchCount').textContent = visible + ' of ' + rows.length;
 }
 document.addEventListener('DOMContentLoaded', function() { filterMatches(); });
+
+setTimeout(function () {
+    if (!document.hidden) {
+        window.location.reload();
+    }
+}, 60000);
 </script>
 {% endblock %}
 {% endblock %}

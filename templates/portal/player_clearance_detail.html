@@ -181,7 +181,7 @@
         </div>
     </div>
 
-    <!-- ── STEP 3: FIFA Connect Higher-League Check ── -->
+    <!-- ── STEP 3: FIFA Connect Higher-League Check (LEFT/RIGHT LAYOUT) ── -->
     <div class="card" style="border-left:4px solid {% if clearance.fifa_connect.passed %}#42A5F5{% elif player.fifa_connect_status == 'flagged' %}#C62828{% else %}#1565C0{% endif %}">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
             <h3>
@@ -193,101 +193,183 @@
             </span>
         </div>
         <div class="card-body">
-            <p style="color:#666;font-size:.9rem;margin-bottom:.75rem">
-                Checks FIFA Connect registry for registration in higher-level leagues:
-                <strong>Regional League, Division Two, Division One, National Super League, Kenya FKF Premier League</strong>.
-                Players found (current or former) in these leagues <strong>cannot participate</strong> in county competition.
-            </p>
+            <!-- LEFT/RIGHT GRID LAYOUT -->
+            <div id="fifa-connect-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem">
+                
+                <!-- LEFT COLUMN: CLEARANCE STATUS & ACTIONS -->
+                <div>
+                    <p style="color:#666;font-size:.9rem;margin-bottom:1rem">
+                        Checks FIFA Connect registry for registration in higher-level leagues:
+                        <strong>Regional League, Division Two, Division One, National Super League, Kenya FKF Premier League</strong>.
+                        Players found (current or former) in these leagues <strong>cannot participate</strong> in county competition.
+                    </p>
 
-            {% if player.fifa_connect_status == 'flagged' and player.fifa_connect_leagues %}
-            <div style="margin-bottom:1rem;padding:1rem;background:#fce4ec;border-radius:8px;border-left:4px solid #C62828">
-                <h4 style="margin:0 0 .5rem;color:#C62828">🚩 Higher League Registration(s) Found:</h4>
-                {% for league in player.fifa_connect_leagues %}
-                <div style="margin-bottom:.25rem;font-size:.9rem">
-                    <strong>{{ league.league }}</strong>
-                    {% if league.season %} — Season {{ league.season }}{% endif %}
-                    {% if league.club %} ({{ league.club }}){% endif %}
-                    {% if league.status %}<span style="color:#888"> [{{ league.status }}]</span>{% endif %}
+                    <!-- Flagged Leagues Alert -->
+                    {% if player.fifa_connect_status == 'flagged' and player.fifa_connect_leagues %}
+                    <div style="margin-bottom:1rem;padding:1rem;background:#fce4ec;border-radius:8px;border-left:4px solid #C62828">
+                        <h4 style="margin:0 0 .5rem;color:#C62828">🚩 Higher League Registration(s) Found:</h4>
+                        {% for league in player.fifa_connect_leagues %}
+                        <div style="margin-bottom:.25rem;font-size:.9rem">
+                            <strong>{{ league.league }}</strong>
+                            {% if league.season %} — Season {{ league.season }}{% endif %}
+                            {% if league.club %} ({{ league.club }}){% endif %}
+                            {% if league.status %}<span style="color:#888"> [{{ league.status }}]</span>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Notes -->
+                    {% if player.fifa_connect_notes %}
+                    <div style="margin-bottom:1rem;padding:.5rem 1rem;background:#f5f7f5;border-radius:6px;font-size:.85rem">
+                        <strong>Notes:</strong> {{ player.fifa_connect_notes }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Checked By Info -->
+                    {% if player.fifa_connect_checked_by %}
+                    <p style="font-size:.85rem;color:#888;margin-bottom:1.5rem">Checked by {{ player.fifa_connect_checked_by.get_full_name }} on {{ player.fifa_connect_checked_at|date:"d M Y H:i" }}</p>
+                    {% endif %}
+
+                    <!-- ACTION BUTTONS (Always Visible) -->
+                    <div style="display:flex;flex-direction:column;gap:.75rem">
+                        <!-- Auto Check via API -->
+                        <form class="fifa-action-form" method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:flex;gap:.5rem;align-items:end">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="auto_check">
+                            <div style="flex:1">
+                                <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">Player Name (auto-populated):</label>
+                                <input type="text" name="player_name" value="{{ player.first_name }} {{ player.last_name }}" readonly style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;width:100%;font-size:.85rem;background:#f5f5f5">
+                            </div>
+                            <button type="submit" style="padding:.4rem 1rem;background:#1565C0;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;white-space:nowrap">⚽ Auto Check</button>
+                        </form>
+
+                        <!-- Manual Clear -->
+                        {% if player.fifa_connect_status != 'clear' %}
+                        <button onclick="document.getElementById('fifa-clear-form').style.display='block'" style="padding:.4rem 1rem;background:#42A5F5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;text-align:center">✅ Manual Clear</button>
+                        {% endif %}
+
+                        <!-- Manual Flag -->
+                        {% if player.fifa_connect_status != 'flagged' %}
+                        <button onclick="document.getElementById('fifa-flag-form').style.display='block'" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;text-align:center">🚩 Manual Flag</button>
+                        {% endif %}
+
+                        <!-- Reset -->
+                        {% if player.fifa_connect_status != 'not_checked' %}
+                        <form method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reset">
+                            <button type="submit" style="padding:.4rem 1rem;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;width:100%">🔄 Reset</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endfor %}
+
+                <!-- RIGHT COLUMN: PLAYER PHOTO & PARTICULARS -->
+                <div style="display:flex;flex-direction:column;align-items:center;padding:1rem;background:#f9f9f9;border-radius:8px">
+                    <!-- Player Photo -->
+                    {% if player.photo %}
+                    <img id="fifa-player-photo" src="{{ player.photo.url }}" alt="{{ player.get_full_name }}" style="width:150px;height:150px;border-radius:8px;object-fit:cover;border:2px solid #ddd;margin-bottom:1rem">
+                    {% elif player.iprs_photo %}
+                    <img id="fifa-player-photo" src="{{ player.iprs_photo.url }}" alt="{{ player.get_full_name }} (IPRS)" style="width:150px;height:150px;border-radius:8px;object-fit:cover;border:2px solid #ddd;margin-bottom:1rem">
+                    {% else %}
+                    <div style="width:150px;height:150px;border-radius:8px;background:#ddd;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:#999;font-size:3rem">📷</div>
+                    {% endif %}
+
+                    <!-- Player Details -->
+                    <div style="width:100%;text-align:center">
+                        <h4 style="margin:0 0 .5rem;color:#1565C0">{{ player.get_full_name }}</h4>
+                        
+                        <div style="font-size:.85rem;margin-bottom:1rem;padding:1rem;background:#fff;border-radius:6px">
+                            {% if player.date_of_birth %}
+                            <div style="margin-bottom:.5rem">
+                                <strong>Date of Birth:</strong><br>
+                                <span style="color:#666">{{ player.date_of_birth|date:"d M Y" }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if player.phone %}
+                            <div style="margin-bottom:.5rem">
+                                <strong>Phone:</strong><br>
+                                <span style="color:#666">{{ player.phone }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if player.national_id %}
+                            <div>
+                                <strong>National ID:</strong><br>
+                                <span style="color:#666">{{ player.national_id }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Player Status Badge -->
+                        <div style="padding:.5rem;background:{% if player.status == 'eligible' %}#e8f5e9;color:#1565C0{% elif player.status == 'under_review' %}#fff3e0;color:#FF9800{% else %}#f5f5f5;color:#888{% endif %};border-radius:6px;font-size:.8rem;font-weight:600">
+                            {% if player.status == 'eligible' %}✅ Eligible{% elif player.status == 'under_review' %}⏳ Under Review{% else %}🔒 Not Eligible{% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
-            {% endif %}
 
-            {% if player.fifa_connect_notes %}
-            <div style="margin-bottom:1rem;padding:.5rem 1rem;background:#f5f7f5;border-radius:6px;font-size:.85rem">
-                <strong>Notes:</strong> {{ player.fifa_connect_notes }}
-            </div>
-            {% endif %}
-
-            {% if player.fifa_connect_checked_by %}
-            <p style="font-size:.85rem;color:#888;margin-bottom:1rem">Checked by {{ player.fifa_connect_checked_by.get_full_name }} on {{ player.fifa_connect_checked_at|date:"d M Y H:i" }}</p>
-            {% endif %}
-
-            <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
-                <!-- Auto Check via API -->
-                <form method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:flex;gap:.5rem;align-items:end">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="auto_check">
-                    <input type="text" name="fifa_connect_id" value="{{ player.fifa_connect_id }}" placeholder="FIFA Connect ID (optional)" style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;width:200px;font-size:.85rem">
-                    <button type="submit" style="padding:.4rem 1rem;background:#1565C0;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">⚽ Run FIFA Check</button>
-                </form>
-
-                <!-- Manual Clear -->
-                {% if player.fifa_connect_status != 'clear' %}
-                <button onclick="document.getElementById('fifa-clear-form').style.display='block'" style="padding:.4rem 1rem;background:#42A5F5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">✅ Manual Clear</button>
-                {% endif %}
-
-                <!-- Manual Flag -->
-                {% if player.fifa_connect_status != 'flagged' %}
-                <button onclick="document.getElementById('fifa-flag-form').style.display='block'" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">🚩 Manual Flag</button>
-                {% endif %}
-
-                <!-- Reset -->
-                {% if player.fifa_connect_status != 'not_checked' %}
-                <form method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="reset">
-                    <button type="submit" style="padding:.4rem 1rem;background:#757575;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">🔄 Reset</button>
-                </form>
-                {% endif %}
-            </div>
-
-            <!-- Manual Clear Form (hidden) -->
+            <!-- MANUAL CLEAR FORM (Hidden) -->
             <form id="fifa-clear-form" method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:none;margin-top:1rem;padding:1rem;background:#f5f7f5;border-radius:8px">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="manual_clear">
-                <h4 style="margin:0 0 .75rem;color:#1565C0">Manual FIFA Connect Clearance</h4>
+                <h4 style="margin:0 0 .75rem;color:#1565C0">✅ Manual FIFA Connect Clearance</h4>
+                <p style="font-size:.85rem;color:#666;margin-bottom:1rem">Override the automatic check and manually clear this player from higher league registration.</p>
                 <div style="margin-bottom:.75rem">
                     <label style="font-size:.85rem;font-weight:600">FIFA Connect ID</label>
                     <input type="text" name="fifa_connect_id" value="{{ player.fifa_connect_id }}" style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem">
                 </div>
                 <div style="margin-bottom:.75rem">
                     <label style="font-size:.85rem;font-weight:600">Notes</label>
-                    <textarea name="notes" rows="2" placeholder="Reason for manual clearance..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
+                    <textarea name="notes" rows="2" placeholder="Reason for manual clearance (e.g., verified no higher league registration)..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
                 </div>
-                <button type="submit" style="padding:.4rem 1rem;background:#42A5F5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Confirm Clear</button>
+                <div style="display:flex;gap:.75rem">
+                    <button type="submit" style="padding:.4rem 1rem;background:#42A5F5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">✓ Confirm Clear</button>
+                    <button type="button" onclick="document.getElementById('fifa-clear-form').style.display='none'" style="padding:.4rem 1rem;background:#ddd;color:#666;border:none;border-radius:6px;cursor:pointer;font-weight:600">Cancel</button>
+                </div>
             </form>
 
-            <!-- Manual Flag Form (hidden) -->
+            <!-- MANUAL FLAG FORM (Hidden) -->
             <form id="fifa-flag-form" method="post" action="{% url 'fifa_connect_check_player' player_pk=player.pk %}" style="display:none;margin-top:1rem;padding:1rem;background:#fce4ec;border-radius:8px">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="manual_flag">
-                <h4 style="margin:0 0 .75rem;color:#C62828">Flag Player — Higher League</h4>
+                <h4 style="margin:0 0 .75rem;color:#C62828">🚩 Flag Player — Higher League Registration</h4>
+                <p style="font-size:.85rem;color:#666;margin-bottom:1rem">Manually flag this player as having a higher league registration, preventing participation.</p>
                 <div style="margin-bottom:.75rem">
                     <label style="font-size:.85rem;font-weight:600">Select League(s)</label>
-                    <div style="display:flex;flex-direction:column;gap:.25rem;margin-top:.25rem">
-                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Regional League"> Regional League</label>
-                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Division Two"> Division Two</label>
-                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Division One"> Division One</label>
-                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="National Super League"> National Super League</label>
-                        <label style="font-size:.85rem;cursor:pointer"><input type="checkbox" name="flagged_leagues" value="Kenya FKF Premier League"> Kenya FKF Premier League</label>
+                    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem;padding:1rem;background:#fff;border-radius:6px">
+                        <label style="font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:.5rem">
+                            <input type="checkbox" name="flagged_leagues" value="Regional League" style="cursor:pointer">
+                            <strong>Regional League</strong>
+                        </label>
+                        <label style="font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:.5rem">
+                            <input type="checkbox" name="flagged_leagues" value="Division Two" style="cursor:pointer">
+                            <strong>Division Two</strong>
+                        </label>
+                        <label style="font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:.5rem">
+                            <input type="checkbox" name="flagged_leagues" value="Division One" style="cursor:pointer">
+                            <strong>Division One</strong>
+                        </label>
+                        <label style="font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:.5rem">
+                            <input type="checkbox" name="flagged_leagues" value="National Super League" style="cursor:pointer">
+                            <strong>National Super League</strong>
+                        </label>
+                        <label style="font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:.5rem">
+                            <input type="checkbox" name="flagged_leagues" value="Kenya FKF Premier League" style="cursor:pointer">
+                            <strong>Kenya FKF Premier League</strong>
+                        </label>
                     </div>
                 </div>
                 <div style="margin-bottom:.75rem">
-                    <label style="font-size:.85rem;font-weight:600">Notes</label>
-                    <textarea name="notes" rows="2" required placeholder="Evidence / reason for flagging..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
+                    <label style="font-size:.85rem;font-weight:600">Evidence / Reason</label>
+                    <textarea name="notes" rows="3" required placeholder="Detailed evidence or reason for flagging (e.g., found in FKF database, confirmed via FIFA API, etc.)..." style="width:100%;padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;margin-top:.25rem"></textarea>
                 </div>
-                <button type="submit" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Flag Player</button>
+                <div style="display:flex;gap:.75rem">
+                    <button type="submit" style="padding:.4rem 1rem;background:#C62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;flex:1">✓ Flag Player</button>
+                    <button type="button" onclick="document.getElementById('fifa-flag-form').style.display='none'" style="padding:.4rem 1rem;background:#ddd;color:#666;border:none;border-radius:6px;cursor:pointer;font-weight:600">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
@@ -397,4 +479,45 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+/* Make FIFA Connect grid responsive */
+@media (max-width: 768px) {
+    #fifa-connect-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+}
+
+@media (min-width: 769px) {
+    #fifa-connect-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 2rem !important;
+    }
+}
+
+/* Ensure player photo scales well */
+#fifa-player-photo {
+    width: 100%;
+    max-width: 150px;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    margin-bottom: 1rem;
+}
+
+/* Better button responsiveness for mobile */
+@media (max-width: 576px) {
+    .fifa-action-form {
+        flex-direction: column !important;
+    }
+    
+    .fifa-action-form input {
+        width: 100% !important;
+    }
+}
+</style>
 {% endblock %}

@@ -181,6 +181,28 @@ STORAGES = {
 MEDIA_URL  = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ── AWS S3 (media storage in production) ──────────────────────────────────────
+AWS_ACCESS_KEY_ID       = env("AWS_ACCESS_KEY_ID",       default="")
+AWS_SECRET_ACCESS_KEY   = env("AWS_SECRET_ACCESS_KEY",   default="")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="")
+AWS_S3_REGION_NAME      = env("AWS_S3_REGION_NAME",      default="af-south-1")
+AWS_S3_CUSTOM_DOMAIN    = env("AWS_S3_CUSTOM_DOMAIN",    default="")
+AWS_S3_FILE_OVERWRITE   = False
+AWS_DEFAULT_ACL         = None
+AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+
+_use_s3 = not DEBUG and bool(AWS_ACCESS_KEY_ID and AWS_STORAGE_BUCKET_NAME)
+if _use_s3:
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "region_name": AWS_S3_REGION_NAME,
+            "custom_domain": AWS_S3_CUSTOM_DOMAIN or None,
+            "location": "media",
+        },
+    }
+
 # ── CACHE ──────────────────────────────────────────────────────────────────────
 if DEBUG:
     CACHES = {

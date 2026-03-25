@@ -176,6 +176,12 @@ class PlayerRegistrationForm(forms.ModelForm):
     Includes document upload fields and age validation.
     """
 
+    def __init__(self, *args, **kwargs):
+        include_shirt_number = kwargs.pop('include_shirt_number', True)
+        super().__init__(*args, **kwargs)
+        if not include_shirt_number:
+            self.fields.pop('shirt_number', None)
+
     class Meta:
         model = Player
         fields = [
@@ -427,7 +433,7 @@ class CountyPlayerForm(forms.ModelForm):
             'first_name', 'last_name', 'date_of_birth',
             'national_id_number', 'huduma_number', 'phone',
             'sub_county', 'ward',
-            'position', 'jersey_number',
+            'position',
             'photo', 'id_document', 'birth_certificate',
         ]
         widgets = {
@@ -438,7 +444,6 @@ class CountyPlayerForm(forms.ModelForm):
             'national_id_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 12345678', 'pattern': '\\d{5,10}', 'minlength': '5', 'maxlength': '10', 'inputmode': 'numeric'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric'}),
             'position': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. GK, CB, CM, ST'}),
-            'jersey_number': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '99'}),
             'photo': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'id_document': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.pdf'}),
             'birth_certificate': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.pdf'}),
@@ -453,7 +458,6 @@ class CountyPlayerForm(forms.ModelForm):
             'sub_county': 'Sub-County *',
             'ward': 'Ward *',
             'position': 'Position',
-            'jersey_number': 'Jersey Number',
             'photo': 'Passport Photo *',
             'id_document': 'Copy of National ID *',
             'birth_certificate': 'Birth Certificate (optional)',

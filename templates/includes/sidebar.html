@@ -278,6 +278,19 @@
         </div>
     </div>
 
+    {% elif user.role == 'verification_officer' %}
+    <!-- VERIFICATION OFFICER SIDEBAR -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>Verification Officer</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'vo_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'vo_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-check"></i></span> Dashboard</a>
+            <a href="{% url 'vo_dashboard' %}?tab=in_progress" class="sidebar-link"><span class="icon"><i class="bi bi-hourglass-split"></i></span> In Progress</a>
+            <a href="{% url 'vo_dashboard' %}?tab=verified" class="sidebar-link"><span class="icon"><i class="bi bi-patch-check-fill"></i></span> Fully Verified</a>
+            <a href="{% url 'vo_dashboard' %}?tab=rejected" class="sidebar-link"><span class="icon"><i class="bi bi-x-circle"></i></span> Rejected Players</a>
+            <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
+        </div>
+    </div>
+
     {% elif user.role == 'subcounty_sports_officer' %}
     <!-- SUB-COUNTY SPORTS OFFICER SIDEBAR -->
     <div class="sidebar-section">
@@ -300,6 +313,7 @@
         <div class="sidebar-section-toggle"><h4>Chief Sports Officer</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'chief_sports_officer_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chief_sports_officer_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-check"></i></span> Dashboard</a>
+            <a href="{% url 'player_verification_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'player_verification_list' %}active{% endif %}"><span class="icon"><i class="bi bi-person-check"></i></span> Player Verification</a>
             <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
             <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>
             <a href="{% url 'referees_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'referees_list' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
@@ -314,6 +328,7 @@
         <div class="sidebar-section-body">
             <a href="{% url 'director_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-shaded"></i></span> Dashboard</a>
             <a href="{% url 'director_sports_verified_players' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_verified_players' %}active{% endif %}"><span class="icon"><i class="bi bi-patch-check-fill"></i></span> Verified Players</a>
+            <a href="{% url 'director_sports_shortlist_requests' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_shortlist_requests' %}active{% endif %}"><span class="icon"><i class="bi bi-pencil-square"></i></span> Scout Edit Requests</a>
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
             <a href="{% url 'teams_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}"><span class="icon"><i class="bi bi-people"></i></span> Teams</a>
             <a href="{% url 'matches_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'matches_list' %}active{% endif %}"><span class="icon"><i class="bi bi-clipboard-data"></i></span> Fixtures</a>

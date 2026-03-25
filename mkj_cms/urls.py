@@ -138,6 +138,8 @@ from .web_views import (
     scout_dashboard_view,
     scout_players_view,
     scout_shortlist_view,
+    scout_submit_shortlist_view,
+    scout_request_shortlist_edit_view,
     scout_add_to_shortlist_view,
     scout_edit_shortlist_view,
     scout_remove_from_shortlist_view,
@@ -159,10 +161,15 @@ from .web_views import (
     director_sports_dashboard_view,
     chief_officer_sports_dashboard_view,
     chief_sports_officer_dashboard_view,
+    # Verification Officer portal
+    vo_dashboard_view,
+    vo_verify_county_player_view,
     # Verified player lists
     subcounty_verified_players_view,
     team_manager_verified_players_view,
     director_sports_verified_players_view,
+    director_sports_shortlist_requests_view,
+    director_sports_review_shortlist_request_view,
     verified_players_pdf_view,
     # Match day squad PDF
     match_squad_pdf_view,
@@ -346,6 +353,8 @@ urlpatterns = [
     path("portal/scout/",                              scout_dashboard_view,              name="scout_dashboard"),
     path("portal/scout/players/",                      scout_players_view,                name="scout_players"),
     path("portal/scout/shortlist/",                    scout_shortlist_view,              name="scout_shortlist"),
+    path("portal/scout/shortlist/submit/",             scout_submit_shortlist_view,       name="scout_submit_shortlist"),
+    path("portal/scout/shortlist/request-edit/",       scout_request_shortlist_edit_view, name="scout_request_shortlist_edit"),
     path("portal/scout/shortlist/add/<int:player_pk>/",scout_add_to_shortlist_view,       name="scout_add_to_shortlist"),
     path("portal/scout/shortlist/<int:pk>/edit/",      scout_edit_shortlist_view,         name="scout_edit_shortlist"),
     path("portal/scout/shortlist/<int:pk>/remove/",    scout_remove_from_shortlist_view,  name="scout_remove_from_shortlist"),
@@ -373,12 +382,18 @@ urlpatterns = [
     # ── DIRECTOR OF SPORTS PORTAL ─────────────────────────────────────────
     path("portal/director-sports/", director_sports_dashboard_view, name="director_sports_dashboard"),
     path("portal/director-sports/verified-players/", director_sports_verified_players_view, name="director_sports_verified_players"),
+    path("portal/director-sports/scout-shortlist-requests/", director_sports_shortlist_requests_view, name="director_sports_shortlist_requests"),
+    path("portal/director-sports/scout-shortlist-requests/<int:pk>/review/", director_sports_review_shortlist_request_view, name="director_sports_review_shortlist_request"),
 
     # ── CHIEF OFFICER SPORTS PORTAL ───────────────────────────────────────
     path("portal/chief-officer-sports/", chief_officer_sports_dashboard_view, name="chief_officer_sports_dashboard"),
 
     # ── CHIEF SPORTS OFFICER PORTAL ───────────────────────────────────────
     path("portal/chief-sports-officer/", chief_sports_officer_dashboard_view, name="chief_sports_officer_dashboard"),
+
+    # ── VERIFICATION OFFICER PORTAL ───────────────────────────────────────
+    path("portal/verification-officer/", vo_dashboard_view, name="vo_dashboard"),
+    path("portal/verification-officer/player/<int:player_pk>/verify/", vo_verify_county_player_view, name="vo_verify_county_player"),
 
     # ── LEADERSHIP SCOUTING REPORTS ───────────────────────────────────────
     path("portal/leadership/scout-reports/",            leadership_scout_reports_view,       name="leadership_scout_reports"),

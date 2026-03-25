@@ -697,6 +697,12 @@
     } else {
         revealElements.forEach(function(el){ el.classList.add('visible'); });
     }
+
+    setTimeout(function () {
+        if (!document.hidden) {
+            window.location.reload();
+        }
+    }, 60000);
 })();
 </script>
 {% endblock %}

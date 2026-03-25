@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Scout Edit Requests — Director of Sports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
+        <span>Scout Edit Requests</span>
+    </div>
+    <h1><i class="bi bi-pencil-square"></i> Scout Edit Requests</h1>
+    <p>Review submitted scout shortlist edit-access requests.</p>
+</div>
+
+<div class="d-flex gap-3 mb-3 flex-wrap">
+    <div class="card p-3 text-center" style="min-width:160px;background:#FFF8E1;">
+        <div style="font-size:1.6rem;font-weight:700;color:#E65100;">{{ pending_count }}</div>
+        <div style="font-size:.8rem;font-weight:600;color:#8D6E63;">Pending Requests</div>
+    </div>
+    <div class="card p-3 text-center" style="min-width:160px;background:#E3F2FD;">
+        <div style="font-size:1.6rem;font-weight:700;color:#1565C0;">{{ submissions|length }}</div>
+        <div style="font-size:.8rem;font-weight:600;color:#1565C0;">Tracked Submissions</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if submissions %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead style="background:#f5f5f5;">
+                    <tr>
+                        <th>Scout</th>
+                        <th>Discipline</th>
+                        <th>Entries</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Request Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for submission in submissions %}
+                    <tr>
+                        <td>
+                            <strong>{{ submission.scout.get_full_name }}</strong><br>
+                            <span style="font-size:.8rem;color:#777;">{{ submission.scout.email }}</span>
+                        </td>
+                        <td>{{ submission.scout.assigned_discipline|default:"—"|title }}</td>
+                        <td>{{ submission.shortlist_count }}</td>
+                        <td>
+                            <span class="badge {% if submission.status == 'edit_requested' %}bg-warning text-dark{% elif submission.status == 'edit_approved' %}bg-success{% elif submission.status == 'edit_denied' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ submission.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ submission.final_submitted_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td style="max-width:260px;">
+                            {% if submission.edit_request_reason %}
+                            <span title="{{ submission.edit_request_reason }}">{{ submission.edit_request_reason|truncatechars:90 }}</span>
+                            {% else %}
+                            <span style="color:#888;">—</span>
+                            {% endif %}
+                            {% if submission.review_notes %}
+                            <div style="font-size:.8rem;color:#555;margin-top:.25rem;"><strong>Note:</strong> {{ submission.review_notes|truncatechars:70 }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="min-width:250px;">
+                            {% if submission.status == 'edit_requested' %}
+                            <form method="post" action="{% url 'director_sports_review_shortlist_request' pk=submission.pk %}">
+                                {% csrf_token %}
+                                <textarea name="review_notes" rows="2" placeholder="Optional review note" style="width:100%;padding:.45rem;border:1px solid #d9d9d9;border-radius:6px;margin-bottom:.5rem;"></textarea>
+                                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                                    <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">Approve Edit</button>
+                                    <button type="submit" name="action" value="deny" class="btn btn-sm btn-danger">Deny</button>
+                                </div>
+                            </form>
+                            {% else %}
+                            <span style="font-size:.85rem;color:#888;">Reviewed{% if submission.reviewed_by %} by {{ submission.reviewed_by.get_full_name }}{% endif %}</span>
+                        {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#888;text-align:center;padding:2rem;margin:0;">No scout shortlist submissions or edit requests yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

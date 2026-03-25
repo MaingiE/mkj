@@ -32,3 +32,4 @@ nul
 
 # Compiled/build
 staticfiles/
+node_modules

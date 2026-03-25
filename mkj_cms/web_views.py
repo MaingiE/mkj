@@ -12,7 +12,8 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Count, Q
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings as django_settings
@@ -31,6 +32,7 @@ from teams.models import (
     CountyRegistration, CountyRegStatus, CountyDiscipline, CountyPlayer, SQUAD_LIMITS,
     TechnicalBenchMember, TechnicalBenchRole, PlayerStatus,
     CountyDelegationMember, CountyDelegationRole,
+    ScoutShortlistSubmission, ScoutShortlistSubmissionStatus,
 )
 from teams.forms import (
     PlayerRegistrationForm,
@@ -139,6 +141,118 @@ def _coordinator_label(discipline):
     return dict(COORDINATOR_DISCIPLINE_CHOICES).get(normalized, normalized or "Not Assigned")
 
 
+COUNTY_FINAL_POOL_PRESETS = {
+    SportType.FOOTBALL_MEN: {
+        "Group A": ["Makueni", "Kibwezi West", "Kaiti"],
+        "Group B": ["Kibwezi East", "Kilome", "Mbooni"],
+    },
+    SportType.FOOTBALL_WOMEN: {
+        "Group A": ["Makueni", "Kibwezi West", "Kibwezi East"],
+        "Group B": ["Mbooni", "Kilome", "Kaiti"],
+    },
+    SportType.VOLLEYBALL_MEN: {
+        "Group A": ["Kilome", "Makueni", "Mbooni"],
+        "Group B": ["Kibwezi East", "Kaiti", "Kibwezi West"],
+    },
+    SportType.VOLLEYBALL_WOMEN: {
+        "Group A": ["Kibwezi West", "Kaiti", "Kilome"],
+        "Group B": ["Makueni", "Mbooni", "Kibwezi East"],
+    },
+    SportType.BASKETBALL_MEN: {
+        "Group A": ["Kilome", "Makueni", "Kibwezi East"],
+        "Group B": ["Kibwezi West", "Mbooni", "Kaiti"],
+    },
+    SportType.BASKETBALL_WOMEN: {
+        "Group A": ["Makueni", "Kibwezi West", "Mbooni"],
+        "Group B": ["Kaiti", "Kibwezi East", "Kilome"],
+    },
+    SportType.BASKETBALL_3X3_MEN: {
+        "Group A": ["Makueni", "Mbooni", "Kibwezi East"],
+        "Group B": ["Kaiti", "Kilome", "Kibwezi West"],
+    },
+    SportType.BASKETBALL_3X3_WOMEN: {
+        "Group A": ["Mbooni", "Kaiti", "Kilome"],
+        "Group B": ["Kibwezi West", "Makueni", "Kibwezi East"],
+    },
+    SportType.HANDBALL_MEN: {
+        "Group A": ["Kilome", "Mbooni", "Kibwezi West"],
+        "Group B": ["Kibwezi East", "Kaiti", "Makueni"],
+    },
+    SportType.HANDBALL_WOMEN: {
+        "Group A": ["Kaiti", "Mbooni", "Kibwezi West"],
+        "Group B": ["Kilome", "Makueni", "Kibwezi East"],
+    },
+}
+
+
+def _get_county_final_pool_preset(sport_type):
+    return COUNTY_FINAL_POOL_PRESETS.get(sport_type, {})
+
+
+def _ensure_coordinator_competitions(discipline):
+    for sport_type in _coordinator_variants(discipline):
+        _ensure_competition_for_sport_type(sport_type)
+
+
+def _apply_county_final_pool_preset(competition, user):
+    from competitions.models import Fixture, Pool, PoolTeam
+
+    preset = _get_county_final_pool_preset(competition.sport_type)
+    if not preset:
+        raise ValueError("No current county-finals pool preset exists for this competition.")
+
+    teams = list(
+        Team.objects.filter(
+            status='registered',
+            sport_type=competition.sport_type,
+        ).select_related('county').order_by('county__name', 'name')
+    )
+    if not teams:
+        raise ValueError("No registered teams are available for this competition yet.")
+
+    assigned_team_ids = set()
+    assigned_counties = set()
+    missing_counties = []
+    generated_fixtures = 0
+
+    with transaction.atomic():
+        Fixture.objects.filter(competition=competition, is_knockout=False).delete()
+        Pool.objects.filter(competition=competition).delete()
+
+        for pool_name, counties in preset.items():
+            pool = Pool.objects.create(competition=competition, name=pool_name)
+            for county_name in counties:
+                team = next(
+                    (
+                        candidate for candidate in teams
+                        if candidate.pk not in assigned_team_ids
+                        and candidate.county.name.lower() == county_name.lower()
+                    ),
+                    None,
+                )
+                if team is None:
+                    missing_counties.append(county_name)
+                    continue
+                PoolTeam.objects.create(pool=pool, team=team)
+                assigned_team_ids.add(team.pk)
+                assigned_counties.add(county_name)
+
+            generated_fixtures += len(_auto_generate_pool_fixtures(pool, competition, user))
+
+    return {
+        'pool_count': len(preset),
+        'assigned_count': len(assigned_team_ids),
+        'assigned_counties': sorted(assigned_counties),
+        'missing_counties': missing_counties,
+        'generated_fixtures': generated_fixtures,
+    }
+
+
+def _get_scout_shortlist_submission(user):
+    submission, _ = ScoutShortlistSubmission.objects.get_or_create(scout=user)
+    return submission
+
+
 def _get_primary_registration_for_user(user, auto_create=False):
     if user.role == UserRole.DIRECTOR_SPORTS:
         return get_object_or_404(CountyRegistration, user=user)
@@ -160,6 +274,16 @@ def _get_primary_registration_for_user(user, auto_create=False):
         approved_by=user if user.is_superuser else None,
         approved_at=timezone.now(),
     )
+
+
+def _next_available_shirt_number(team):
+    used_numbers = set(
+        Player.objects.filter(team=team).values_list('shirt_number', flat=True)
+    )
+    for shirt_number in range(1, 100):
+        if shirt_number not in used_numbers:
+            return shirt_number
+    return None
 
 
 def _discipline_queryset_for_user(user):
@@ -818,7 +942,7 @@ def dashboard_view(request):
         return redirect('cm_dashboard')
 
     if user.role == 'verification_officer':
-        return redirect('vo_registered_counties')
+        return redirect('vo_dashboard')
 
     if user.role == 'coordinator':
         return redirect('coordinator_dashboard')
@@ -867,10 +991,25 @@ def dashboard_view(request):
 
 @login_required(login_url='web_login')
 def competitions_list_view(request):
-    """List all competitions."""
-    competitions = Competition.objects.all()
+    """List all competitions — current (active) competitions shown first."""
+    from django.db.models import Case, When, IntegerField
+    competitions = Competition.objects.all().order_by(
+        Case(
+            When(status='active', then=0),
+            When(status='group_stage', then=1),
+            When(status='knockout', then=2),
+            When(status='upcoming', then=3),
+            default=4,
+            output_field=IntegerField(),
+        ),
+        '-season', 'sport_type',
+    )
+    current_competitions = Competition.objects.filter(
+        status__in=['active', 'group_stage', 'knockout'], season='2026',
+    )
     return render(request, 'competitions/list.html', {
         'competitions': competitions,
+        'current_competitions': current_competitions,
     })
 
 
@@ -944,14 +1083,14 @@ def add_player_view(request, team_pk):
     from teams.forms import PlayerRegistrationForm
 
     if request.method == 'POST':
-        form = PlayerRegistrationForm(request.POST, request.FILES)
+        form = PlayerRegistrationForm(request.POST, request.FILES, include_shirt_number=False)
         if form.is_valid():
             player = form.save(commit=False)
             player.team = team
+            player.shirt_number = _next_available_shirt_number(team)
 
-            # Check jersey number uniqueness within team
-            if Player.objects.filter(team=team, shirt_number=player.shirt_number).exists():
-                messages.error(request, f'Shirt number {player.shirt_number} is already taken in this team.')
+            if player.shirt_number is None:
+                messages.error(request, 'All shirt numbers from 1 to 99 are already used in this team. Reassign an existing player number before adding another player.')
             elif player.national_id_number and Player.objects.filter(national_id_number=player.national_id_number).exists():
                 messages.error(request, f'A player with National ID {player.national_id_number} is already registered.')
             else:
@@ -1015,16 +1154,17 @@ def add_player_view(request, team_pk):
                 else:
                     messages.success(request, (
                         f'{player.get_full_name()} added to {team.name}. '
-                        f'Documents submitted — pending admin verification.'
+                        f'Documents submitted — pending admin verification. '
+                        f'Shirt number #{player.shirt_number} was reserved temporarily and can be updated later by the team manager.'
                     ))
 
                 action = request.POST.get('action', 'add_more')
                 if action == 'finish':
                     return redirect('team_detail', pk=team.pk)
                 # Reset form for another player
-                form = PlayerRegistrationForm()
+                form = PlayerRegistrationForm(include_shirt_number=False)
     else:
-        form = PlayerRegistrationForm()
+        form = PlayerRegistrationForm(include_shirt_number=False)
 
     existing_players = Player.objects.filter(team=team).order_by('shirt_number')
 
@@ -1302,12 +1442,13 @@ def pending_referees_view(request):
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer', 'secretary_general', 'verification_officer')
 def player_verification_list_view(request):
-    """Canonical player verification entry — uses county player verification queue."""
+    """Canonical player verification entry — routes per role."""
     if request.user.role == 'secretary_general':
         messages.info(request, 'Use the Secretary General verification view for read-only verification summaries.')
         return redirect('sg_verifications')
-
-    return redirect('county_player_verification_list')
+    if request.user.role == 'verification_officer':
+        return redirect('vo_dashboard')
+    return redirect('player_clearance_dashboard')
 
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer', 'verification_officer')
@@ -2500,6 +2641,8 @@ def coordinator_dashboard_view(request):
     discipline_label = _coordinator_label(discipline)
     coordinator_name = request.user.get_full_name() or request.user.email
     discipline_variants = _coordinator_variants(discipline)
+    if discipline_variants:
+        _ensure_coordinator_competitions(discipline)
 
     if not discipline:
         messages.warning(request, 'Your account has no discipline assigned. Contact an administrator.')
@@ -2563,6 +2706,8 @@ def coordinator_competitions_view(request):
     from competitions.models import Competition, SportType, CompetitionStatus
 
     discipline = _coordinator_discipline(request.user)
+    if discipline:
+        _ensure_coordinator_competitions(discipline)
     competitions = Competition.objects.filter(
         sport_type__in=_coordinator_variants(discipline)
     ).order_by('-start_date') if discipline else Competition.objects.none()
@@ -2767,6 +2912,20 @@ def coordinator_manage_pools_view(request, pk):
             except PoolTeam.DoesNotExist:
                 messages.error(request, 'Team assignment not found.')
 
+        elif action == 'apply_preset':
+            try:
+                result = _apply_county_final_pool_preset(competition, request.user)
+                messages.success(
+                    request,
+                    f"Current county-finals pools applied: {result['pool_count']} pools, "
+                    f"{result['assigned_count']} teams assigned, {result['generated_fixtures']} fixtures generated."
+                )
+                if result['missing_counties']:
+                    missing = ', '.join(sorted(set(result['missing_counties'])))
+                    messages.warning(request, f'These counties had no registered team to assign yet: {missing}.')
+            except ValueError as exc:
+                messages.error(request, str(exc))
+
         return redirect('coordinator_manage_pools', pk=competition.pk)
 
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').select_related('venue').order_by('name')
@@ -2781,6 +2940,7 @@ def coordinator_manage_pools_view(request, pk):
         'pools': pools,
         'eligible_teams': eligible_teams,
         'venues': venues,
+        'pool_preset_available': bool(_get_county_final_pool_preset(competition.sport_type)),
     })
 
 
@@ -2987,6 +3147,7 @@ def coordinator_allocate_venue_view(request, pk):
 def coordinator_edit_fixture_view(request, pk, fixture_pk):
     """Coordinator: Edit a specific fixture."""
     from competitions.models import Competition, Fixture, Venue, FixtureStatus
+    from matches.stats_engine import recalculate_pool_standings
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
@@ -3046,6 +3207,12 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
         if away_score != '':
             fixture.away_score = int(away_score)
 
+        if (
+            fixture.home_score is not None and fixture.away_score is not None
+            and fixture.status in [FixtureStatus.PENDING, FixtureStatus.CONFIRMED, FixtureStatus.LIVE]
+        ):
+            fixture.status = FixtureStatus.COMPLETED
+
         score_changed = (
             fixture.home_score != original_home_score or
             fixture.away_score != original_away_score
@@ -3062,6 +3229,8 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
                 return redirect('coordinator_edit_fixture', pk=pk, fixture_pk=fixture_pk)
 
         fixture.save()
+        if fixture.pool_id and (score_changed or status_changed):
+            recalculate_pool_standings(fixture.pool)
         if score_changed or status_changed:
             from admin_dashboard.models import ActivityLog
             ActivityLog.objects.create(
@@ -3274,7 +3443,13 @@ def coordinator_squads_view(request):
 def coordinator_statistics_view(request, pk):
     """Coordinator: View and manage statistics for a competition (top scorers, etc.)."""
     from competitions.models import Competition, Pool, PoolTeam
-    from matches.stats_engine import get_top_scorers, get_top_assisters, get_disciplinary_table, get_fair_play_table
+    from matches.stats_engine import (
+        get_clean_sheet_leaders,
+        get_disciplinary_table,
+        get_fair_play_table,
+        get_top_assisters,
+        get_top_scorers,
+    )
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
@@ -3285,6 +3460,7 @@ def coordinator_statistics_view(request, pk):
     top_scorers = get_top_scorers(competition)
     top_assisters = get_top_assisters(competition)
     disciplinary = get_disciplinary_table(competition)
+    clean_sheets = get_clean_sheet_leaders(competition)
     fair_play_table = get_fair_play_table(competition)
 
     # Standings per pool
@@ -3304,6 +3480,7 @@ def coordinator_statistics_view(request, pk):
         'top_scorers': top_scorers,
         'top_assisters': top_assisters,
         'disciplinary': disciplinary,
+        'clean_sheets': clean_sheets,
         'fair_play_table': fair_play_table,
         'pool_data': pool_data,
     })
@@ -6025,7 +6202,9 @@ def scout_dashboard_view(request):
 
     user = request.user
     discipline = user.assigned_discipline
-    discipline_label = dict(SportType.choices).get(discipline, discipline or 'Not Assigned')
+    discipline_label = _coordinator_label(discipline)
+    discipline_variants = _coordinator_variants(discipline)
+    submission = _get_scout_shortlist_submission(user)
 
     shortlist = ScoutShortlist.objects.filter(scout=user).select_related(
         'player', 'player__discipline', 'player__discipline__registration',
@@ -6033,8 +6212,8 @@ def scout_dashboard_view(request):
 
     # Scope total players to scout's assigned discipline if set
     player_qs = CountyPlayer.objects.filter(verification_status='verified')
-    if discipline:
-        player_qs = player_qs.filter(discipline__sport_type=discipline)
+    if discipline_variants:
+        player_qs = player_qs.filter(discipline__sport_type__in=discipline_variants)
     total_players = player_qs.count()
 
     return render(request, 'portal/scout/dashboard.html', {
@@ -6044,6 +6223,7 @@ def scout_dashboard_view(request):
         'shortlist_count': shortlist.count(),
         'total_players': total_players,
         'top_rated': shortlist.filter(rating__gte=4).count(),
+        'submission': submission,
     })
 
 
@@ -6052,13 +6232,10 @@ def scout_players_view(request):
     """Browse verified players for scouting — defaults to scout's assigned discipline."""
     from teams.models import ScoutShortlist, CountyPlayer, CountyDiscipline, CountyRegistration
 
-    discipline_filter = request.GET.get('discipline', '')
     county_filter = request.GET.get('county', '')
     search_query = request.GET.get('q', '').strip()
-
-    # Default to the scout's assigned discipline if no filter explicitly set
-    if not discipline_filter and 'discipline' not in request.GET and request.user.assigned_discipline:
-        discipline_filter = request.user.assigned_discipline
+    discipline_variants = _coordinator_variants(request.user.assigned_discipline)
+    submission = _get_scout_shortlist_submission(request.user)
 
     players = CountyPlayer.objects.filter(
         verification_status='verified',
@@ -6066,8 +6243,8 @@ def scout_players_view(request):
         'discipline', 'discipline__registration',
     ).order_by('last_name', 'first_name')
 
-    if discipline_filter:
-        players = players.filter(discipline__sport_type=discipline_filter)
+    if discipline_variants:
+        players = players.filter(discipline__sport_type__in=discipline_variants)
     if county_filter:
         players = players.filter(discipline__registration__county=county_filter)
     if search_query:
@@ -6081,19 +6258,17 @@ def scout_players_view(request):
         ScoutShortlist.objects.filter(scout=request.user).values_list('player_id', flat=True)
     )
 
-    disc_values = CountyDiscipline.objects.values_list('sport_type', flat=True).distinct().order_by('sport_type')
-    disciplines = [(st, dict(SportType.choices).get(st, st)) for st in disc_values]
     counties = CountyRegistration.objects.values_list('county', flat=True).distinct().order_by('county')
 
     return render(request, 'portal/scout/players.html', {
         'players': players,
         'shortlisted_ids': shortlisted_ids,
-        'disciplines': disciplines,
         'counties': counties,
-        'discipline_filter': discipline_filter,
         'county_filter': county_filter,
         'search_query': search_query,
         'total': players.count(),
+        'discipline_label': _coordinator_label(request.user.assigned_discipline),
+        'submission': submission,
     })
 
 
@@ -6105,6 +6280,7 @@ def scout_shortlist_view(request):
     shortlist = ScoutShortlist.objects.filter(scout=request.user).select_related(
         'player', 'player__discipline', 'player__discipline__registration',
     )
+    submission = _get_scout_shortlist_submission(request.user)
 
     rating_filter = request.GET.get('rating', '')
     if rating_filter:
@@ -6114,6 +6290,8 @@ def scout_shortlist_view(request):
         'shortlist': shortlist,
         'rating_filter': rating_filter,
         'total': shortlist.count(),
+        'submission': submission,
+        'discipline_label': _coordinator_label(request.user.assigned_discipline),
     })
 
 
@@ -6124,6 +6302,11 @@ def scout_add_to_shortlist_view(request, player_pk):
 
     if request.method != 'POST':
         return redirect('scout_players')
+
+    submission = _get_scout_shortlist_submission(request.user)
+    if not submission.can_edit:
+        messages.error(request, 'Your final shortlist has been submitted. Request edit access from the Director of Sports before making changes.')
+        return redirect('scout_shortlist')
 
     player = get_object_or_404(CountyPlayer, pk=player_pk, verification_status='verified')
     rating = int(request.POST.get('rating', 3))
@@ -6147,6 +6330,11 @@ def scout_edit_shortlist_view(request, pk):
     from teams.models import ScoutShortlist
 
     entry = get_object_or_404(ScoutShortlist, pk=pk, scout=request.user)
+    submission = _get_scout_shortlist_submission(request.user)
+
+    if not submission.can_edit:
+        messages.error(request, 'Your final shortlist is locked. Request edit access from the Director of Sports before editing entries.')
+        return redirect('scout_shortlist')
 
     if request.method == 'POST':
         entry.rating = max(1, min(5, int(request.POST.get('rating', entry.rating))))
@@ -6164,11 +6352,75 @@ def scout_remove_from_shortlist_view(request, pk):
     from teams.models import ScoutShortlist
 
     entry = get_object_or_404(ScoutShortlist, pk=pk, scout=request.user)
+    submission = _get_scout_shortlist_submission(request.user)
     if request.method == 'POST':
+        if not submission.can_edit:
+            messages.error(request, 'Your final shortlist is locked. Request edit access from the Director of Sports before removing players.')
+            return redirect('scout_shortlist')
         name = f'{entry.player.first_name} {entry.player.last_name}'
         entry.delete()
         messages.success(request, f'{name} removed from your shortlist.')
     return redirect('scout_shortlist')
+
+
+@role_required('scout', 'admin')
+@require_POST
+def scout_submit_shortlist_view(request):
+    """Lock the scout shortlist as the final submitted list."""
+    from teams.models import ScoutShortlist
+
+    shortlist = ScoutShortlist.objects.filter(scout=request.user)
+    if not shortlist.exists():
+        messages.error(request, 'Add at least one player before submitting your final shortlist.')
+        return redirect('scout_shortlist')
+
+    submission = _get_scout_shortlist_submission(request.user)
+    if submission.status == ScoutShortlistSubmissionStatus.EDIT_REQUESTED:
+        messages.error(request, 'Your shortlist is awaiting an edit-access decision from the Director of Sports.')
+        return redirect('scout_shortlist')
+
+    submission.status = ScoutShortlistSubmissionStatus.SUBMITTED
+    submission.final_submitted_at = timezone.now()
+    submission.reviewed_at = None
+    submission.reviewed_by = None
+    submission.review_notes = ''
+    submission.save(update_fields=[
+        'status', 'final_submitted_at', 'reviewed_at', 'reviewed_by', 'review_notes', 'updated_at',
+    ])
+    messages.success(request, 'Your final shortlist has been submitted. It is now locked until edit access is approved.')
+    return redirect('scout_shortlist')
+
+
+@role_required('scout', 'admin')
+def scout_request_shortlist_edit_view(request):
+    """Allow a scout to request edit access after final shortlist submission."""
+    submission = _get_scout_shortlist_submission(request.user)
+    if not submission.can_request_edit:
+        messages.error(request, 'You can request edit access only after submitting your final shortlist.')
+        return redirect('scout_shortlist')
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '').strip()
+        if len(reason) < 12:
+            messages.error(request, 'Provide a clear reason of at least 12 characters for the edit request.')
+            return redirect('scout_request_shortlist_edit')
+
+        submission.status = ScoutShortlistSubmissionStatus.EDIT_REQUESTED
+        submission.edit_requested_at = timezone.now()
+        submission.edit_request_reason = reason
+        submission.reviewed_at = None
+        submission.reviewed_by = None
+        submission.review_notes = ''
+        submission.save(update_fields=[
+            'status', 'edit_requested_at', 'edit_request_reason', 'reviewed_at', 'reviewed_by', 'review_notes', 'updated_at',
+        ])
+        messages.success(request, 'Your edit-access request has been submitted to the Director of Sports.')
+        return redirect('scout_shortlist')
+
+    return render(request, 'portal/scout/request_shortlist_edit.html', {
+        'submission': submission,
+        'discipline_label': _coordinator_label(request.user.assigned_discipline),
+    })
 
 
 # ── Scout: Live Matches for Scouting ─────────────────────────────────────────
@@ -6657,6 +6909,7 @@ def director_sports_dashboard_view(request):
         'referees': RefereeProfile.objects.filter(is_approved=True).count(),
         'fixtures': Fixture.objects.count(),
         'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+        'pending_shortlist_requests': ScoutShortlistSubmission.objects.filter(status=ScoutShortlistSubmissionStatus.EDIT_REQUESTED).count(),
     }
 
     active_comps = Competition.objects.filter(
@@ -6752,6 +7005,241 @@ def chief_officer_sports_dashboard_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#   VERIFICATION OFFICER PORTAL
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('verification_officer', 'admin')
+def vo_dashboard_view(request):
+    """Verification Officer dashboard — 3-step sequential verification."""
+    tab = request.GET.get('tab', 'in_progress')
+    discipline_filter = request.GET.get('discipline', '')
+
+    players = CountyPlayer.objects.select_related(
+        'discipline', 'discipline__registration',
+    ).order_by('-registered_at', 'last_name')
+
+    if discipline_filter:
+        players = players.filter(discipline__sport_type=discipline_filter)
+
+    # Fully verified = ALL 3 steps passed
+    fully_verified = players.filter(
+        doc_status='verified',
+        iprs_age_status='verified',
+        higher_league_status='clear',
+    )
+
+    # Rejected = any step failed / rejected / flagged
+    rejected = players.filter(
+        Q(doc_status='rejected')
+        | Q(iprs_age_status='failed')
+        | Q(higher_league_status='flagged')
+    )
+
+    # In progress = everything else (not fully verified AND not rejected)
+    in_progress = players.exclude(
+        pk__in=fully_verified.values_list('pk', flat=True)
+    ).exclude(
+        pk__in=rejected.values_list('pk', flat=True)
+    )
+
+    disciplines = (
+        CountyDiscipline.objects.values_list('sport_type', flat=True)
+        .distinct().order_by('sport_type')
+    )
+    discipline_choices = [(st, dict(SportType.choices).get(st, st)) for st in disciplines]
+
+    # Sub-county registration summary
+    registrations = CountyRegistration.objects.select_related('user').order_by('county')
+    subcounties = CountyDiscipline.objects.exclude(sub_county='').values(
+        'sub_county', 'registration__county',
+    ).annotate(
+        discipline_count=Count('id'),
+        player_count=Count('players'),
+    ).order_by('registration__county', 'sub_county')
+
+    # Current competitions
+    current_competitions = Competition.objects.filter(
+        season='2026',
+    ).order_by('sport_type')
+
+    return render(request, 'portal/verification_officer/dashboard.html', {
+        'tab': tab,
+        'in_progress_players': in_progress,
+        'verified_players': fully_verified,
+        'rejected_players': rejected,
+        'disciplines': discipline_choices,
+        'discipline_filter': discipline_filter,
+        'registrations': registrations,
+        'subcounties': subcounties,
+        'current_competitions': current_competitions,
+        'stats': {
+            'in_progress': in_progress.count(),
+            'verified': fully_verified.count(),
+            'rejected': rejected.count(),
+            'total_registrations': registrations.count(),
+            'total_subcounties': subcounties.count(),
+            'total_disciplines': CountyDiscipline.objects.count(),
+        },
+    })
+
+
+@role_required('verification_officer', 'admin')
+def vo_verify_county_player_view(request, player_pk):
+    """
+    3-Step Sequential Verification for a CountyPlayer.
+    Step 1: Document Verification (photo, ID, birth cert)
+    Step 2: Age Verification (IPRS)
+    Step 3: Higher Leagues Check (National Teams, KUSF, FIFA Connect)
+    Each step must pass before the next step unlocks.
+    """
+    player = get_object_or_404(CountyPlayer, pk=player_pk)
+    step = player.current_verification_step  # 1–4
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        now = timezone.now()
+
+        # ── Step 1: Document Verification ────────────────────────────
+        if action == 'doc_verify' and step == 1:
+            player.doc_status = 'verified'
+            player.doc_verified_at = now
+            player.doc_rejection_reason = ''
+            player.update_overall_status()
+            player.save()
+            messages.success(request, f'📄 Step 1 — Documents verified for {player.get_full_name}.')
+
+        elif action == 'doc_reject' and step == 1:
+            reason = request.POST.get('doc_rejection_reason', '').strip()
+            player.doc_status = 'rejected'
+            player.doc_rejection_reason = reason or 'Documents not acceptable'
+            player.update_overall_status()
+            player.rejection_reason = f'Step 1 — Documents: {player.doc_rejection_reason}'
+            player.save()
+            messages.warning(request, f'❌ Step 1 — Documents rejected for {player.get_full_name}.')
+
+        # ── Step 2: Age Verification (IPRS) ──────────────────────────
+        elif action == 'iprs_verify' and step == 2:
+            notes = request.POST.get('iprs_age_notes', '').strip()
+            player.iprs_age_status = 'verified'
+            player.iprs_age_verified_at = now
+            player.iprs_age_notes = notes
+            player.huduma_status = 'verified'
+            player.huduma_verified_at = now
+            player.update_overall_status()
+            player.save()
+            messages.success(request, f'🪪 Step 2 — Age verified for {player.get_full_name}.')
+
+        elif action == 'iprs_fail' and step == 2:
+            notes = request.POST.get('iprs_age_notes', '').strip()
+            player.iprs_age_status = 'failed'
+            player.iprs_age_notes = notes or 'Age verification failed'
+            player.iprs_age_verified_at = now
+            player.update_overall_status()
+            player.rejection_reason = f'Step 2 — Age Verification: {player.iprs_age_notes}'
+            player.save()
+            messages.warning(request, f'❌ Step 2 — Age verification failed for {player.get_full_name}.')
+
+        # ── Step 3: Higher Leagues Check ─────────────────────────────
+        elif action == 'league_clear' and step == 3:
+            details = request.POST.get('higher_league_details', '').strip()
+            player.higher_league_status = 'clear'
+            player.higher_league_details = details
+            player.higher_league_checked_at = now
+            player.update_overall_status()
+            player.save()
+            if player.is_verified:
+                messages.success(request, f'🎉 All 3 steps complete! {player.get_full_name} is FULLY VERIFIED.')
+            else:
+                messages.success(request, f'🏆 Step 3 — Higher Leagues check clear for {player.get_full_name}.')
+
+        elif action == 'league_flag' and step == 3:
+            details = request.POST.get('higher_league_details', '').strip()
+            player.higher_league_status = 'flagged'
+            player.higher_league_details = details or 'Player found in higher league / national team'
+            player.higher_league_checked_at = now
+            player.update_overall_status()
+            player.rejection_reason = f'Step 3 — Higher Leagues: {player.higher_league_details}'
+            player.save()
+            messages.warning(request, f'🚩 Step 3 — Player flagged in higher league for {player.get_full_name}.')
+
+        # ── Reset a failed step (back to not_checked) ────────────────
+        elif action == 'reset_step':
+            reset_target = request.POST.get('reset_target', '')
+            if reset_target == '1':
+                player.doc_status = 'not_checked'
+                player.doc_rejection_reason = ''
+                player.doc_verified_at = None
+                # Cascade reset downstream steps
+                player.iprs_age_status = 'not_checked'
+                player.iprs_age_verified_at = None
+                player.iprs_age_notes = ''
+                player.huduma_status = 'not_checked'
+                player.huduma_verified_at = None
+                player.huduma_notes = ''
+                player.higher_league_status = 'not_checked'
+                player.higher_league_details = ''
+                player.higher_league_checked_at = None
+            elif reset_target == '2':
+                player.iprs_age_status = 'not_checked'
+                player.iprs_age_verified_at = None
+                player.iprs_age_notes = ''
+                player.huduma_status = 'not_checked'
+                player.huduma_verified_at = None
+                player.huduma_notes = ''
+                player.higher_league_status = 'not_checked'
+                player.higher_league_details = ''
+                player.higher_league_checked_at = None
+            elif reset_target == '3':
+                player.higher_league_status = 'not_checked'
+                player.higher_league_details = ''
+                player.higher_league_checked_at = None
+            player.rejection_reason = ''
+            player.update_overall_status()
+            player.save()
+            messages.info(request, f'🔄 Step {reset_target} and downstream steps reset for {player.get_full_name}.')
+
+        return redirect('vo_verify_county_player', player_pk=player.pk)
+
+    # ── Build step statuses for template ─────────────────────────────
+    steps = [
+        {
+            'num': 1, 'title': 'Document Verification',
+            'icon': '📄',
+            'status': player.doc_status,
+            'passed': player.doc_status == 'verified',
+            'failed': player.doc_status == 'rejected',
+            'active': step == 1,
+            'locked': False,
+        },
+        {
+            'num': 2, 'title': 'Age Verification',
+            'icon': '🪪',
+            'status': player.iprs_age_status,
+            'passed': player.iprs_age_status == 'verified',
+            'failed': player.iprs_age_status == 'failed',
+            'active': step == 2,
+            'locked': step < 2,
+        },
+        {
+            'num': 3, 'title': 'Higher Leagues',
+            'icon': '🏆',
+            'status': player.higher_league_status,
+            'passed': player.higher_league_status == 'clear',
+            'failed': player.higher_league_status == 'flagged',
+            'active': step == 3,
+            'locked': step < 3,
+        },
+    ]
+
+    return render(request, 'portal/verification_officer/verify_player.html', {
+        'player': player,
+        'steps': steps,
+        'current_step': step,
+        'is_fully_verified': step == 4,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #   VERIFIED PLAYER LISTS — Sub-County Officer / Team Manager / Director
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -6818,9 +7306,58 @@ def team_manager_verified_players_view(request):
 
 
 @role_required('director_sports', 'admin')
+def director_sports_shortlist_requests_view(request):
+    """Director of Sports: review scout shortlist edit-access requests."""
+    submissions = ScoutShortlistSubmission.objects.select_related('scout', 'reviewed_by').annotate(
+        shortlist_count=Count('scout__scout_shortlists')
+    ).filter(
+        status__in=[
+            ScoutShortlistSubmissionStatus.EDIT_REQUESTED,
+            ScoutShortlistSubmissionStatus.SUBMITTED,
+            ScoutShortlistSubmissionStatus.EDIT_APPROVED,
+            ScoutShortlistSubmissionStatus.EDIT_DENIED,
+        ]
+    ).order_by('status', '-updated_at', 'scout__first_name', 'scout__last_name')
+
+    return render(request, 'portal/director_sports/shortlist_requests.html', {
+        'submissions': submissions,
+        'pending_count': submissions.filter(status=ScoutShortlistSubmissionStatus.EDIT_REQUESTED).count(),
+    })
+
+
+@role_required('director_sports', 'admin')
+@require_POST
+def director_sports_review_shortlist_request_view(request, pk):
+    """Approve or reject a scout shortlist edit-access request."""
+    submission = get_object_or_404(ScoutShortlistSubmission.objects.select_related('scout'), pk=pk)
+    action = request.POST.get('action', '').strip()
+    review_notes = request.POST.get('review_notes', '').strip()
+
+    if submission.status != ScoutShortlistSubmissionStatus.EDIT_REQUESTED:
+        messages.error(request, 'This shortlist request is no longer pending review.')
+        return redirect('director_sports_shortlist_requests')
+
+    if action == 'approve':
+        submission.status = ScoutShortlistSubmissionStatus.EDIT_APPROVED
+        message = f'Edit access approved for {submission.scout.get_full_name()}.'
+    elif action == 'deny':
+        submission.status = ScoutShortlistSubmissionStatus.EDIT_DENIED
+        message = f'Edit access denied for {submission.scout.get_full_name()}.'
+    else:
+        messages.error(request, 'Invalid review action.')
+        return redirect('director_sports_shortlist_requests')
+
+    submission.reviewed_at = timezone.now()
+    submission.reviewed_by = request.user
+    submission.review_notes = review_notes
+    submission.save(update_fields=['status', 'reviewed_at', 'reviewed_by', 'review_notes', 'updated_at'])
+    messages.success(request, message)
+    return redirect('director_sports_shortlist_requests')
+
+
+@role_required('director_sports', 'admin')
 def director_sports_verified_players_view(request):
-    """Director of Sports: view all verified players across all disciplines."""
-    discipline_filter = request.GET.get('discipline', '')
+    """Director of Sports: view all verified players with county-only filtering."""
     county_filter = request.GET.get('county', '')
 
     players = CountyPlayer.objects.filter(
@@ -6829,20 +7366,14 @@ def director_sports_verified_players_view(request):
         'discipline__sport_type', 'discipline__registration__county', 'last_name',
     )
 
-    if discipline_filter:
-        players = players.filter(discipline__sport_type=discipline_filter)
     if county_filter:
         players = players.filter(discipline__registration__county=county_filter)
 
-    disc_values = CountyDiscipline.objects.values_list('sport_type', flat=True).distinct().order_by('sport_type')
-    disc_choices = [(st, dict(SportType.choices).get(st, st)) for st in disc_values]
     counties = CountyRegistration.objects.values_list('county', flat=True).distinct().order_by('county')
 
     return render(request, 'portal/director_sports/verified_players.html', {
         'players': players,
-        'disciplines': disc_choices,
         'counties': counties,
-        'discipline_filter': discipline_filter,
         'county_filter': county_filter,
         'total': players.count(),
     })
@@ -6955,9 +7486,10 @@ def verified_players_pdf_view(request):
         for p in players:
             row_num += 1
             photo_cell = ''
-            if p.photo and hasattr(p.photo, 'path'):
+            photo_file = p.photo or p.iprs_photo
+            if photo_file and hasattr(photo_file, 'path'):
                 try:
-                    photo_path = p.photo.path
+                    photo_path = photo_file.path
                     if os.path.exists(photo_path):
                         photo_cell = RLImage(photo_path, width=18 * mm, height=22 * mm)
                 except Exception:

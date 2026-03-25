@@ -392,3 +392,13 @@
 </section>
 
 {% endblock %}
+
+{% block extra_js %}
+<script>
+setTimeout(function () {
+    if (!document.hidden) {
+        window.location.reload();
+    }
+}, 60000);
+</script>
+{% endblock %}

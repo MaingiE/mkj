@@ -3,16 +3,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kenya Youth Interschool Sports Association — Competition Management System" />
+    <meta name="description" content="Governor Mutula Kilonzo Junior Super Cup — Official Portal" />
     <meta name="theme-color" content="#0a0a0a" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/jpeg" href="/static/img/TINA.jpeg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>MKJ SUPA CUP — Governor Mutula Kilonzo Junior Super Cup</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="hero">
+      <div class="logo-row">
+        <img src="/static/img/GOVT.jpeg" alt="Government of Kenya" class="govt" />
+        <img src="/static/img/TINA.jpeg" alt="MKJ SUPA CUP Logo" class="logo main-logo" />
+        <img src="/static/img/Makueni%20logo.png" alt="Makueni County Logo" class="makueni-logo" />
+      </div>
+      <div class="govt-label">Government of Kenya &nbsp;|&nbsp; Makueni County Government</div>
+      <h1>MKJ SUPA CUP</h1>
+      <h2>Governor Mutula Kilonzo Junior Super Cup</h2>
+      <div class="desc">The official youth sports championship for Makueni County, empowering the next generation through fair play, unity, and excellence.</div>
+      <p>Welcome to the digital home of the MKJ SUPA CUP. Register, manage teams, and follow the action — all in one place.</p>
+      <a href="/accounts/login/" class="cta-btn">Login to Portal</a>
+    </div>
+          .logo-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.2rem;
+          }
+          .logo-row .govt {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid #fff;
+            background: #fff;
+          }
+          .logo-row .main-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            background: #fff;
+          }
+          .logo-row .makueni-logo {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid #fff;
+            background: #fff;
+          }
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%);
+        font-family: 'Inter', Arial, sans-serif;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .hero {
+        background: rgba(255,255,255,0.08);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(13,71,161,0.18);
+        padding: 2.5rem 2rem 2rem 2rem;
+        max-width: 480px;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .hero img.logo {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #fff;
+        margin-bottom: 1.2rem;
+        background: #fff;
+      }
+      .hero img.govt {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        object-fit: cover;
+        border: 2px solid #fff;
+        margin-bottom: 1.2rem;
+        background: #fff;
+      }
+      .hero h1 {
+        font-size: 2.2rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+        margin-bottom: .5rem;
+      }
+      .hero h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #FFD54F;
+        margin-bottom: 1.2rem;
+        letter-spacing: 2px;
+      }
+      .hero p {
+        font-size: 1.05rem;
+        color: #e3e3e3;
+        margin-bottom: 1.5rem;
+      }
+      .hero .desc {
+        font-size: 1.1rem;
+        color: #fff;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+      }
+      .hero .govt-label {
+        font-size: .95rem;
+        color: #FFD54F;
+        font-weight: 700;
+        margin-bottom: .5rem;
+      }
+      .cta-btn {
+        display: inline-block;
+        padding: .85rem 2.2rem;
+        background: #FFD54F;
+        color: #0D47A1;
+        font-weight: 800;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 2px 12px rgba(21,101,192,.18);
+        transition: background .2s, color .2s;
+      }
+      .cta-btn:hover {
+        background: #fff;
+        color: #1565C0;
+      }
+      @media (max-width: 600px) {
+        .hero { padding: 1.2rem .5rem; }
+        .hero h1 { font-size: 1.3rem; }
+      }
+    </style>
   </body>
 </html>

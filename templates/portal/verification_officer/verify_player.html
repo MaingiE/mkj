@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Player — MKJ SUPA CUP Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'vo_dashboard' %}">Verification Dashboard</a>
+        <span>Review Player</span>
+    </div>
+    <h1>Review Player — {{ player.first_name }} {{ player.last_name }}</h1>
+</div>
+
+<!-- Player Summary -->
+<div class="stats-grid" style="margin-bottom:1.5rem">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:{% if is_fully_verified %}#e8f5e9;color:#2E7D32{% elif player.verification_status == 'rejected' %}#fce4ec;color:#C62828{% else %}#fff3e0;color:#e65100{% endif %}">
+            {% if is_fully_verified %}✅{% elif player.verification_status == 'rejected' %}❌{% else %}⏳{% endif %}
+        </div>
+        <div class="stat-info">
+            <h3>{% if is_fully_verified %}Fully Verified{% elif player.verification_status == 'rejected' %}Rejected{% else %}Step {{ current_step }}/3{% endif %}</h3>
+            <p>{% if is_fully_verified %}All Steps Complete{% elif player.verification_status == 'rejected' %}{{ player.rejection_reason|truncatewords:8 }}{% else %}{{ player.step_label }}{% endif %}</p>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-person"></i></div>
+        <div class="stat-info"><h3>{{ player.age }}</h3><p>Age</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-geo-alt"></i></div>
+        <div class="stat-info"><h3>{{ player.discipline.sub_county|default:"—" }}</h3><p>Sub-County</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-trophy"></i></div>
+        <div class="stat-info"><h3>{{ player.discipline.get_sport_type_display }}</h3><p>Discipline</p></div>
+    </div>
+</div>
+
+<!-- Step Progress Bar -->
+<div class="card mb-1">
+    <div class="card-body" style="padding:1.5rem 1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;position:relative">
+            <div style="position:absolute;top:24px;left:60px;right:60px;height:3px;background:#e0e0e0;z-index:0"></div>
+            {% for s in steps %}
+            <div style="display:flex;flex-direction:column;align-items:center;z-index:1;flex:1;position:relative">
+                <div style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;
+                    {% if s.passed %}background:#2E7D32;color:#fff;border:3px solid #2E7D32;
+                    {% elif s.failed %}background:#C62828;color:#fff;border:3px solid #C62828;
+                    {% elif s.active %}background:#1565C0;color:#fff;border:3px solid #1565C0;box-shadow:0 0 0 4px rgba(21,101,192,.2);
+                    {% else %}background:#f5f5f5;color:#bbb;border:3px solid #e0e0e0;{% endif %}">
+                    {% if s.passed %}✓{% elif s.failed %}✗{% else %}{{ s.num }}{% endif %}
+                </div>
+                <p style="margin:.5rem 0 0;font-size:.75rem;font-weight:{% if s.active or s.passed or s.failed %}700{% else %}400{% endif %};color:{% if s.passed %}#2E7D32{% elif s.failed %}#C62828{% elif s.active %}#1565C0{% else %}#bbb{% endif %};text-align:center;line-height:1.2">
+                    {{ s.title }}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if is_fully_verified %}
+<div class="card mb-1" style="border:2px solid #2E7D32;background:#e8f5e9">
+    <div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:3rem">🎉</div>
+        <h2 style="color:#2E7D32;margin:.5rem 0">Player Fully Verified</h2>
+        <p style="color:#555">{{ player.first_name }} {{ player.last_name }} is now eligible for competition selection.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Player Details -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-person-vcard"></i> Player Details</h3></div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+                <p><strong>Full Name:</strong> {{ player.first_name }} {{ player.last_name }}</p>
+                <p><strong>Date of Birth:</strong> {{ player.date_of_birth|date:"d M Y" }}</p>
+                <p><strong>National ID:</strong> {{ player.national_id_number|default:"—" }}</p>
+            </div>
+            <div>
+                <p><strong>County:</strong> {{ player.discipline.registration.county }}</p>
+                <p><strong>Sub-County:</strong> {{ player.discipline.sub_county|default:"—" }}</p>
+                <p><strong>Ward:</strong> {{ player.ward|default:"—" }}</p>
+                <p><strong>Phone:</strong> {{ player.phone|default:"—" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ STEP 1: DOCUMENT VERIFICATION ═══════ -->
+<div class="card mb-1" id="step1" style="border-left:4px solid {% if steps.0.passed %}#2E7D32{% elif steps.0.failed %}#C62828{% elif steps.0.active %}#1565C0{% else %}#e0e0e0{% endif %}">
+    <div class="card-header" style="display:flex;align-items:center;gap:.75rem">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.8rem;font-weight:800;
+            {% if steps.0.passed %}background:#2E7D32;color:#fff{% elif steps.0.failed %}background:#C62828;color:#fff{% elif steps.0.active %}background:#1565C0;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
+            {% if steps.0.passed %}✓{% elif steps.0.failed %}✗{% else %}1{% endif %}
+        </span>
+        <h3 style="margin:0">📄 Step 1 — Document Verification</h3>
+        {% if steps.0.passed %}<span style="margin-left:auto;background:#e8f5e9;color:#2E7D32;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">PASSED</span>{% endif %}
+        {% if steps.0.failed %}<span style="margin-left:auto;background:#fce4ec;color:#C62828;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">REJECTED</span>{% endif %}
+    </div>
+    <div class="card-body">
+        <!-- Documents Grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1rem;margin-bottom:1.5rem">
+            <div style="text-align:center;padding:1rem;background:#f8f9fa;border-radius:8px">
+                <p style="font-weight:700;margin-bottom:.5rem">📸 Photo</p>
+                {% if player.photo %}
+                <a href="{{ player.photo.url }}" target="_blank">
+                    <img src="{{ player.photo.url }}" alt="Player Photo" style="max-width:120px;max-height:150px;border-radius:4px;border:1px solid #ddd">
+                </a>
+                {% else %}
+                <span style="color:#C62828;font-weight:600">Missing</span>
+                {% endif %}
+            </div>
+            <div style="text-align:center;padding:1rem;background:#f8f9fa;border-radius:8px">
+                <p style="font-weight:700;margin-bottom:.5rem">🪪 ID Document</p>
+                {% if player.id_document %}
+                <a href="{{ player.id_document.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View Document</a>
+                {% else %}
+                <span style="color:#C62828;font-weight:600">Missing</span>
+                {% endif %}
+            </div>
+            <div style="text-align:center;padding:1rem;background:#f8f9fa;border-radius:8px">
+                <p style="font-weight:700;margin-bottom:.5rem">📜 Birth Certificate</p>
+                {% if player.birth_certificate %}
+                <a href="{{ player.birth_certificate.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View Document</a>
+                {% else %}
+                <span style="color:#888">Not uploaded</span>
+                {% endif %}
+            </div>
+            {% if player.iprs_photo %}
+            <div style="text-align:center;padding:1rem;background:#f8f9fa;border-radius:8px">
+                <p style="font-weight:700;margin-bottom:.5rem">🏛️ IPRS Photo</p>
+                <a href="{{ player.iprs_photo.url }}" target="_blank">
+                    <img src="{{ player.iprs_photo.url }}" alt="IPRS Photo" style="max-width:120px;max-height:150px;border-radius:4px;border:1px solid #ddd">
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if steps.0.active %}
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="doc_verify">
+                <button type="submit" style="padding:.6rem 1.5rem;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">✅ Documents Verified</button>
+            </form>
+            <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="doc_reject">
+                <div>
+                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">Rejection Reason</label>
+                    <input type="text" name="doc_rejection_reason" placeholder="e.g. Blurry ID photo" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                </div>
+                <button type="submit" style="padding:.6rem 1.5rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">❌ Reject Documents</button>
+            </form>
+        </div>
+        {% elif steps.0.failed %}
+        <div style="padding:.75rem 1rem;background:#fce4ec;border-radius:8px;margin-bottom:1rem">
+            <strong style="color:#C62828">Rejection Reason:</strong> {{ player.doc_rejection_reason|default:"—" }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset_step">
+            <input type="hidden" name="reset_target" value="1">
+            <button type="submit" style="padding:.5rem 1.2rem;background:#fff;color:#1565C0;border:1px solid #1565C0;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">🔄 Reset Step 1</button>
+        </form>
+        {% elif steps.0.passed %}
+        <div style="padding:.75rem 1rem;background:#e8f5e9;border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+            <span><strong style="color:#2E7D32">✓ Documents verified</strong>{% if player.doc_verified_at %} — {{ player.doc_verified_at|date:"d M Y H:i" }}{% endif %}</span>
+            <form method="post" style="margin:0">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reset_step">
+                <input type="hidden" name="reset_target" value="1">
+                <button type="submit" style="padding:.3rem .8rem;background:transparent;color:#888;border:1px solid #ccc;border-radius:4px;font-size:.75rem;cursor:pointer" onclick="return confirm('This will reset ALL steps. Continue?')">🔄 Reset</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ═══════ STEP 2: AGE VERIFICATION ═══════ -->
+<div class="card mb-1" id="step2" style="border-left:4px solid {% if steps.1.passed %}#2E7D32{% elif steps.1.failed %}#C62828{% elif steps.1.active %}#1565C0{% else %}#e0e0e0{% endif %};{% if steps.1.locked %}opacity:.5{% endif %}">
+    <div class="card-header" style="display:flex;align-items:center;gap:.75rem">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.8rem;font-weight:800;
+            {% if steps.1.passed %}background:#2E7D32;color:#fff{% elif steps.1.failed %}background:#C62828;color:#fff{% elif steps.1.active %}background:#1565C0;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
+            {% if steps.1.passed %}✓{% elif steps.1.failed %}✗{% else %}2{% endif %}
+        </span>
+        <h3 style="margin:0">🪪 Step 2 — Age Verification</h3>
+        {% if steps.1.passed %}<span style="margin-left:auto;background:#e8f5e9;color:#2E7D32;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">VERIFIED</span>{% endif %}
+        {% if steps.1.failed %}<span style="margin-left:auto;background:#fce4ec;color:#C62828;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">FAILED</span>{% endif %}
+        {% if steps.1.locked %}<span style="margin-left:auto;color:#bbb;font-size:.8rem"><i class="bi bi-lock-fill"></i> Complete Step 1 first</span>{% endif %}
+    </div>
+    {% if not steps.1.locked %}
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div style="padding:.75rem 1rem;background:#f8f9fa;border-radius:8px;text-align:center">
+                <p style="font-size:.75rem;color:#888;margin:0">Date of Birth</p>
+                <p style="font-weight:700;margin:.25rem 0 0;font-size:1.1rem">{{ player.date_of_birth|date:"d M Y" }}</p>
+            </div>
+            <div style="padding:.75rem 1rem;background:#f8f9fa;border-radius:8px;text-align:center">
+                <p style="font-size:.75rem;color:#888;margin:0">Calculated Age</p>
+                <p style="font-weight:700;margin:.25rem 0 0;font-size:1.1rem">{{ player.age }} years</p>
+            </div>
+            <div style="padding:.75rem 1rem;background:#f8f9fa;border-radius:8px;text-align:center">
+                <p style="font-size:.75rem;color:#888;margin:0">National ID</p>
+                <p style="font-weight:700;margin:.25rem 0 0;font-size:1.1rem">{{ player.national_id_number|default:"—" }}</p>
+            </div>
+        </div>
+
+        {% if steps.1.active %}
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+            <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="iprs_verify">
+                <div>
+                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">Notes (optional)</label>
+                    <input type="text" name="iprs_age_notes" placeholder="e.g. DOB confirmed" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px">
+                </div>
+                <button type="submit" style="padding:.6rem 1.5rem;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">✅ Age Verified</button>
+            </form>
+            <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="iprs_fail">
+                <div>
+                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">Reason for failure</label>
+                    <input type="text" name="iprs_age_notes" placeholder="e.g. DOB mismatch" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                </div>
+                <button type="submit" style="padding:.6rem 1.5rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">❌ Age Verification Failed</button>
+            </form>
+        </div>
+        {% elif steps.1.failed %}
+        <div style="padding:.75rem 1rem;background:#fce4ec;border-radius:8px;margin-bottom:1rem">
+            <strong style="color:#C62828">Failure Reason:</strong> {{ player.iprs_age_notes|default:"—" }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset_step">
+            <input type="hidden" name="reset_target" value="2">
+            <button type="submit" style="padding:.5rem 1.2rem;background:#fff;color:#1565C0;border:1px solid #1565C0;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">🔄 Reset Step 2</button>
+        </form>
+        {% elif steps.1.passed %}
+        <div style="padding:.75rem 1rem;background:#e8f5e9;border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+            <span><strong style="color:#2E7D32">✓ Age verified</strong>{% if player.iprs_age_verified_at %} — {{ player.iprs_age_verified_at|date:"d M Y H:i" }}{% endif %}{% if player.iprs_age_notes %} ({{ player.iprs_age_notes }}){% endif %}</span>
+            <form method="post" style="margin:0">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reset_step">
+                <input type="hidden" name="reset_target" value="2">
+                <button type="submit" style="padding:.3rem .8rem;background:transparent;color:#888;border:1px solid #ccc;border-radius:4px;font-size:.75rem;cursor:pointer" onclick="return confirm('This will reset Steps 2-3. Continue?')">🔄 Reset</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ═══════ STEP 3: HIGHER LEAGUES CHECK ═══════ -->
+<div class="card mb-1" id="step3" style="border-left:4px solid {% if steps.2.passed %}#2E7D32{% elif steps.2.failed %}#C62828{% elif steps.2.active %}#1565C0{% else %}#e0e0e0{% endif %};{% if steps.2.locked %}opacity:.5{% endif %}">
+    <div class="card-header" style="display:flex;align-items:center;gap:.75rem">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.8rem;font-weight:800;
+            {% if steps.2.passed %}background:#2E7D32;color:#fff{% elif steps.2.failed %}background:#C62828;color:#fff{% elif steps.2.active %}background:#1565C0;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
+            {% if steps.2.passed %}✓{% elif steps.2.failed %}✗{% else %}3{% endif %}
+        </span>
+        <h3 style="margin:0">🏆 Step 3 — Higher Leagues (National Teams, KUSF, FIFA Connect)</h3>
+        {% if steps.2.passed %}<span style="margin-left:auto;background:#e8f5e9;color:#2E7D32;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">CLEAR</span>{% endif %}
+        {% if steps.2.failed %}<span style="margin-left:auto;background:#fce4ec;color:#C62828;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">FLAGGED</span>{% endif %}
+        {% if steps.2.locked %}<span style="margin-left:auto;color:#bbb;font-size:.8rem"><i class="bi bi-lock-fill"></i> Complete Step 2 first</span>{% endif %}
+    </div>
+    {% if not steps.2.locked %}
+    <div class="card-body">
+        {% if steps.2.active %}
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+            <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="league_clear">
+                <div>
+                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">Notes (optional)</label>
+                    <input type="text" name="higher_league_details" placeholder="e.g. Checked FKF, KUSF, FIFA Connect — clear" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px">
+                </div>
+                <button type="submit" style="padding:.6rem 1.5rem;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">✅ Player is Clear</button>
+            </form>
+            <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="league_flag">
+                <div>
+                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">League / Team details</label>
+                    <input type="text" name="higher_league_details" placeholder="e.g. KPL — Gor Mahia FC" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                </div>
+                <button type="submit" style="padding:.6rem 1.5rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">🚩 Flag — Higher League</button>
+            </form>
+        </div>
+        {% elif steps.2.failed %}
+        <div style="padding:.75rem 1rem;background:#fce4ec;border-radius:8px;margin-bottom:1rem">
+            <strong style="color:#C62828">Flagged:</strong> {{ player.higher_league_details|default:"—" }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset_step">
+            <input type="hidden" name="reset_target" value="3">
+            <button type="submit" style="padding:.5rem 1.2rem;background:#fff;color:#1565C0;border:1px solid #1565C0;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">🔄 Reset Step 3</button>
+        </form>
+        {% elif steps.2.passed %}
+        <div style="padding:.75rem 1rem;background:#e8f5e9;border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+            <span><strong style="color:#2E7D32">✓ Higher Leagues check clear</strong>{% if player.higher_league_checked_at %} — {{ player.higher_league_checked_at|date:"d M Y H:i" }}{% endif %}{% if player.higher_league_details %} ({{ player.higher_league_details }}){% endif %}</span>
+            <form method="post" style="margin:0">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reset_step">
+                <input type="hidden" name="reset_target" value="3">
+                <button type="submit" style="padding:.3rem .8rem;background:transparent;color:#888;border:1px solid #ccc;border-radius:4px;font-size:.75rem;cursor:pointer" onclick="return confirm('This will reset Step 3. Continue?')">🔄 Reset</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top:1.5rem;display:flex;align-items:center;gap:1rem">
+    <a href="{% url 'vo_dashboard' %}" style="color:#1565C0;font-weight:600;text-decoration:none">← Back to Verification Dashboard</a>
+    {% if is_fully_verified %}
+    <span style="margin-left:auto;background:#2E7D32;color:#fff;padding:.5rem 1.2rem;border-radius:6px;font-weight:700;font-size:.9rem">🎉 ALL STEPS COMPLETE</span>
+    {% endif %}
+</div>
+{% endblock %}

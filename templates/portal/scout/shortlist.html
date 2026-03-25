@@ -12,6 +12,44 @@
     <p>{{ total }} players in your shortlist.</p>
 </div>
 
+<div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;{% if submission.status == 'submitted' %}background:#FFF8E1;border-left:4px solid #F9A825;{% elif submission.status == 'edit_requested' %}background:#E3F2FD;border-left:4px solid #1565C0;{% elif submission.status == 'edit_approved' %}background:#E8F5E9;border-left:4px solid #2E7D32;{% elif submission.status == 'edit_denied' %}background:#FFEBEE;border-left:4px solid #C62828;{% else %}background:#f9f9f9;border-left:4px solid #1565C0;{% endif %}">
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+            <div style="font-weight:700;margin-bottom:.2rem;">{{ submission.get_status_display }}</div>
+            <div style="font-size:.9rem;color:#666;max-width:760px;">
+                {% if submission.status == 'submitted' %}
+                Your final shortlist for {{ discipline_label }} was submitted on {{ submission.final_submitted_at|date:"d M Y H:i" }}. It is locked until edit access is approved.
+                {% elif submission.status == 'edit_requested' %}
+                Your request for shortlist edit access is pending Director of Sports approval.
+                {% elif submission.status == 'edit_approved' %}
+                Edit access has been approved. Make your updates, then resubmit your final shortlist.
+                {% elif submission.status == 'edit_denied' %}
+                Edit access was denied. You may submit a new request with more detail.
+                {% else %}
+                Build your final shortlist for {{ discipline_label }}, then submit it to lock the final version.
+                {% endif %}
+            </div>
+            {% if submission.edit_request_reason %}
+            <div style="margin-top:.5rem;font-size:.85rem;color:#444;"><strong>Latest request reason:</strong> {{ submission.edit_request_reason }}</div>
+            {% endif %}
+            {% if submission.review_notes %}
+            <div style="margin-top:.35rem;font-size:.85rem;color:#444;"><strong>Director note:</strong> {{ submission.review_notes }}</div>
+            {% endif %}
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            {% if submission.can_edit and shortlist %}
+            <form method="post" action="{% url 'scout_submit_shortlist' %}" onsubmit="return confirm('Submit this shortlist as your final list? You will not be able to edit it until edit access is approved.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:#1565C0;color:#fff;border:none;">Submit Final List</button>
+            </form>
+            {% endif %}
+            {% if submission.can_request_edit %}
+            <a href="{% url 'scout_request_shortlist_edit' %}" class="btn btn-sm btn-warning">Request Edit Access</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 <!-- Rating Filter -->
 <div class="card" style="margin-bottom:1rem;padding:.75rem 1.25rem;">
     <form method="get" style="display:flex;gap:1rem;align-items:center;">
@@ -77,6 +115,7 @@
                         </td>
                         <td><small>{{ entry.created_at|date:"d M Y" }}</small></td>
                         <td style="white-space:nowrap;">
+                            {% if submission.can_edit %}
                             <a href="{% url 'scout_edit_shortlist' pk=entry.pk %}" class="btn btn-outline btn-sm" style="padding:.25rem .5rem;font-size:.78rem;margin-right:.25rem;" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
@@ -86,6 +125,9 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
+                            {% else %}
+                            <span style="color:#888;font-size:.8rem;">Locked</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

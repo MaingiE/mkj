@@ -40,7 +40,7 @@
             {% elif competition.format_type == 'group_stage' %}
                 <i class="bi bi-info-circle"></i> Group stage only — create pools below, add teams, and fixtures auto-generate.
             {% else %}
-                <i class="bi bi-info-circle"></i> Group stage + Knockout — create pools, add teams (fixtures auto-generate), knockout bracket generated after groups.
+                <i class="bi bi-info-circle"></i> Group stage + Knockout — create pools, add teams (fixtures auto-generate), and tables update automatically once final results are entered.
             {% endif %}
         </div>
         <div style="margin-left:auto;font-size:.8rem;color:#999;">
@@ -50,6 +50,22 @@
 </div>
 
 {% if competition.format_type != 'knockout' %}
+{% if pool_preset_available %}
+<div class="card mb-3" style="border-left:4px solid #1565C0;">
+    <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div>
+            <div style="font-weight:700;margin-bottom:.2rem;">Apply Current County Finals Pooling</div>
+            <div style="font-size:.85rem;color:#666;">Load the agreed 2026 grouping for this competition now. After that, the discipline coordinator can keep managing pools here normally.</div>
+        </div>
+        <form method="post" onsubmit="return confirm('Replace the current pool setup for this competition with the agreed county-finals grouping? Existing group fixtures will be regenerated.');" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="apply_preset">
+            <button type="submit" class="btn btn-sm btn-primary">Apply Current Pooling</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <!-- Create Pool -->
 <div class="card mb-3">
     <div class="card-body">

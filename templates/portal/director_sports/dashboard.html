@@ -75,6 +75,13 @@
             <p>Sub-Counties Registered</p>
         </div>
     </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-pencil-square"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.pending_shortlist_requests }}</h3>
+            <p>Scout Edit Requests</p>
+        </div>
+    </div>
 </div>
 
 <!-- Quick Actions -->
@@ -106,6 +113,11 @@
                 <div class="action-icon"><i class="bi bi-briefcase"></i></div>
                 <h4>Appeals</h4>
                 <p>View filed appeals</p>
+            </a>
+            <a href="{% url 'director_sports_shortlist_requests' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-pencil-square"></i></div>
+                <h4>Scout Edit Requests</h4>
+                <p>Approve or reject shortlist edit access</p>
             </a>
         </div>
     </div>

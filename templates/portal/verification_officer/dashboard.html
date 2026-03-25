@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verification Officer — MKJ SUPA CUP Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-shield-check"></i> Verification Officer Portal</h1>
+    <p>Governor Mutula Kilonzo Junior Super Cup — Player Verification</p>
+</div>
+
+<!-- Officer Banner -->
+<div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%); color: #fff; border: none;">
+    <div class="card-body" style="padding: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-shield-check" style="font-size: 1.8rem;"></i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800;">Verification Officer</h2>
+                <p style="margin: .25rem 0 0; opacity: .8; font-size: .85rem;">
+                    Documents → Age Verification → Higher Leagues
+                </p>
+            </div>
+            <div style="margin-left: auto;">
+                <span style="background: rgba(255,255,255,.16); color: #fff; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.3);">
+                    <i class="bi bi-shield-fill-check"></i> VERIFICATION
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card" style="border-left:4px solid #1565C0">
+        <div class="stat-icon" style="background:#e3f2fd;color:#1565C0"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.in_progress }}</h3>
+            <p>In Progress</p>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="bi bi-patch-check-fill"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.verified }}</h3>
+            <p>Fully Verified</p>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #C62828">
+        <div class="stat-icon" style="background:#fce4ec;color:#C62828"><i class="bi bi-x-circle"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.rejected }}</h3>
+            <p>Rejected / Failed</p>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-grid"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.total_disciplines }}</h3>
+            <p>Disciplines</p>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-diagram-3"></i></div>
+        <div class="stat-info">
+            <h3>{{ stats.total_subcounties }}</h3>
+            <p>Active Sub-Counties</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filter by Discipline -->
+<div class="card mb-1">
+    <div class="card-body" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <label style="font-weight:700;font-size:.85rem"><i class="bi bi-funnel"></i> Filter by Discipline:</label>
+        <a href="{% url 'vo_dashboard' %}?tab={{ tab }}" class="btn btn-outline btn-sm {% if not discipline_filter %}btn-active{% endif %}" style="padding:.3rem .8rem;font-size:.8rem">All</a>
+        {% for code, label in disciplines %}
+        <a href="{% url 'vo_dashboard' %}?tab={{ tab }}&discipline={{ code }}" class="btn btn-outline btn-sm {% if discipline_filter == code %}btn-active{% endif %}" style="padding:.3rem .8rem;font-size:.8rem">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Verification Tabs -->
+<div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0">
+    <a href="{% url 'vo_dashboard' %}?tab=in_progress{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'in_progress' %}#1565C0{% else %}transparent{% endif %};color:{% if tab == 'in_progress' %}#1565C0{% else %}#888{% endif %};margin-bottom:-2px">
+        ⏳ In Progress ({{ stats.in_progress }})
+    </a>
+    <a href="{% url 'vo_dashboard' %}?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#2E7D32{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#2E7D32{% else %}#888{% endif %};margin-bottom:-2px">
+        ✅ Fully Verified ({{ stats.verified }})
+    </a>
+    <a href="{% url 'vo_dashboard' %}?tab=rejected{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px">
+        ❌ Rejected ({{ stats.rejected }})
+    </a>
+</div>
+
+<!-- Tab Content -->
+<div class="card" style="border-top-left-radius:0;border-top-right-radius:0">
+    <div class="card-body">
+
+        {% if tab == 'in_progress' %}
+        {% if in_progress_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Sub-County</th>
+                        <th>Discipline</th>
+                        <th>Age</th>
+                        <th>Current Step</th>
+                        <th style="text-align:center">📄</th>
+                        <th style="text-align:center">🪪</th>
+                        <th style="text-align:center">🏆</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in in_progress_players %}
+                    <tr>
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.sub_county|default:"—" }}</td>
+                        <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
+                        <td>{{ p.age }}</td>
+                        <td>
+                            <span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e3f2fd;color:#1565C0">
+                                Step {{ p.current_verification_step }}/3 — {{ p.step_label }}
+                            </span>
+                        </td>
+                        <td style="text-align:center">{% if p.doc_status == 'verified' %}<span style="color:#2E7D32">✓</span>{% elif p.doc_status == 'rejected' %}<span style="color:#C62828">✗</span>{% else %}<span style="color:#bbb">○</span>{% endif %}</td>
+                        <td style="text-align:center">{% if p.iprs_age_status == 'verified' %}<span style="color:#2E7D32">✓</span>{% elif p.iprs_age_status == 'failed' %}<span style="color:#C62828">✗</span>{% else %}<span style="color:#bbb">○</span>{% endif %}</td>
+                        <td style="text-align:center">{% if p.higher_league_status == 'clear' %}<span style="color:#2E7D32">✓</span>{% elif p.higher_league_status == 'flagged' %}<span style="color:#C62828">✗</span>{% else %}<span style="color:#bbb">○</span>{% endif %}</td>
+                        <td>
+                            <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">🎉</div>
+            <h3>No players in progress</h3>
+            <p style="color:#888">All players have been fully verified or are in the rejected tab.</p>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'verified' %}
+        {% if verified_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Sub-County</th>
+                        <th>Discipline</th>
+                        <th>Age</th>
+                        <th>National ID</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in verified_players %}
+                    <tr style="background:#f1f8e9">
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.sub_county|default:"—" }}</td>
+                        <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
+                        <td>{{ p.age }}</td>
+                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td><span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e8f5e9;color:#2E7D32">✅ 3/3 Complete</span></td>
+                        <td>
+                            <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">📋</div>
+            <h3>No fully verified players yet</h3>
+            <p style="color:#888">Players will appear here once all 3 verification steps pass.</p>
+        </div>
+        {% endif %}
+
+        {% elif tab == 'rejected' %}
+        {% if rejected_players %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Sub-County</th>
+                        <th>Discipline</th>
+                        <th>Failed Step</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in rejected_players %}
+                    <tr style="background:#fce4ec">
+                        <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
+                        <td>{{ p.discipline.sub_county|default:"—" }}</td>
+                        <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
+                        <td>
+                            <span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#fce4ec;color:#C62828">
+                                Step {{ p.current_verification_step }}/3 — {{ p.step_label }}
+                            </span>
+                        </td>
+                        <td><small>{{ p.rejection_reason|default:"—"|truncatewords:15 }}</small></td>
+                        <td>
+                            <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:3rem;text-align:center">
+            <div style="font-size:3rem">✅</div>
+            <h3>No rejected players</h3>
+            <p style="color:#888">Rejected players will appear here.</p>
+        </div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+</div>
+
+
+{% if subcounties %}
+<!-- Sub-County Registration Summary -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-diagram-3"></i> Sub-County Registration Summary</h3></div>
+    <div class="card-body">
+        <p style="font-size:.85rem;color:#888;margin-bottom:1rem"><i class="bi bi-info-circle"></i> Sub-counties are auto-registered when disciplines are created. No manual registration is needed.</p>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>County</th>
+                        <th>Sub-County</th>
+                        <th>Disciplines</th>
+                        <th>Players</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sc in subcounties %}
+                    <tr>
+                        <td>{{ sc.registration__county }}</td>
+                        <td><strong>{{ sc.sub_county }}</strong></td>
+                        <td>{{ sc.discipline_count }}</td>
+                        <td>{{ sc.player_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

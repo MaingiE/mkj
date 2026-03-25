@@ -11,6 +11,30 @@
     <p>Manage all MKJ SUPA CUP competitions and tournaments</p>
 </div>
 
+{% if current_competitions %}
+<div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%); color: #fff; border: none;">
+    <div class="card-body" style="padding: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-trophy-fill" style="font-size: 1.4rem;"></i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800;">MKJ SUPA CUP 2026 — Current Competition</h2>
+                <p style="margin: .25rem 0 0; opacity: .85; font-size: .82rem;">
+                    {{ current_competitions.count }} active discipline{{ current_competitions.count|pluralize }}: 
+                    {% for comp in current_competitions %}{{ comp.get_sport_type_display }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </p>
+            </div>
+            <div style="margin-left: auto;">
+                <span style="background: rgba(255,255,255,.2); color: #fff; padding: .35rem .75rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.3);">
+                    <i class="bi bi-lightning-fill"></i> ACTIVE
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="card">
     <div class="card-header">
         <h3>All Competitions</h3>

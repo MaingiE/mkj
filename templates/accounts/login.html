@@ -281,15 +281,50 @@
             <div class="shape shape--3"></div>
             <div class="shape shape--4"></div>
             <div class="hero-content">
-                <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo" class="hero-logo">
-                <h2 class="hero-title">MKJ SUPA CUP</h2>
-                <p class="hero-sub">Competition Management System</p>
-                <div class="hero-divider"></div>
-                <p class="hero-motto">
-                    <strong>Wauni wa Kwika Nesa na Ulungalu</strong><br>
-                    Governor Mutula Kilonzo Junior Super Cup,<br>
-                    empowering Makueni County youth through sports.
-                </p>
+                                <div class="logo-row">
+                                    <img src="{% static 'img/GOVT.jpeg' %}" alt="Government of Kenya" class="govt-logo" />
+                                    <img src="{% static 'img/TINA.jpeg' %}" alt="MKJ SUPA CUP Logo" class="main-logo" />
+                                    <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo" class="makueni-logo" />
+                                </div>
+                                <div style="font-size:.95rem;color:#FFD54F;font-weight:700;margin-bottom:.7rem;">Government of Kenya &nbsp;|&nbsp; Makueni County Government</div>
+                                <h2 class="hero-title">MKJ SUPA CUP</h2>
+                                <p class="hero-sub">Governor Mutula Kilonzo Junior Super Cup</p>
+                                <div class="hero-divider"></div>
+                                <p class="hero-motto">
+                                        <strong>The official youth sports championship for Makueni County</strong><br>
+                                        Empowering the next generation through fair play, unity, and excellence.
+                                </p>
+                    .logo-row {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 1.2rem;
+                        margin-bottom: 1.2rem;
+                    }
+                    .logo-row .govt-logo {
+                        width: 60px;
+                        height: 60px;
+                        border-radius: 16px;
+                        object-fit: cover;
+                        border: 2px solid #fff;
+                        background: #fff;
+                    }
+                    .logo-row .main-logo {
+                        width: 90px;
+                        height: 90px;
+                        border-radius: 50%;
+                        object-fit: cover;
+                        border: 4px solid #fff;
+                        background: #fff;
+                    }
+                    .logo-row .makueni-logo {
+                        width: 60px;
+                        height: 60px;
+                        border-radius: 16px;
+                        object-fit: cover;
+                        border: 2px solid #fff;
+                        background: #fff;
+                    }
             </div>
             <div class="hero-badge">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>

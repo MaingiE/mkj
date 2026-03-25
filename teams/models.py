@@ -251,7 +251,14 @@ class CountyPlayer(models.Model):
         help_text="Copy of Birth Certificate (optional)",
     )
 
-    # ── Verification workflow ─────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════════════
+    #  4-STEP SEQUENTIAL VERIFICATION WORKFLOW
+    #  Step 1: Document Verification  →  Step 2: Huduma Check
+    #  Step 3: Higher Leagues Check   →  Step 4: IPRS Age Verification
+    #  Each step must pass before the next one unlocks.
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── Overall status (auto-computed from the 4 steps) ───────────────────
     verification_status = models.CharField(
         max_length=20,
         choices=[
@@ -264,7 +271,21 @@ class CountyPlayer(models.Model):
     )
     rejection_reason = models.TextField(blank=True, default="")
 
-    # ── Huduma Kenya Age Verification ─────────────────────────────────────
+    # ── Step 1: Document Verification ─────────────────────────────────────
+    doc_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("not_checked", "Not Checked"),
+            ("verified", "Verified"),
+            ("rejected", "Rejected"),
+        ],
+        default="not_checked",
+        help_text="Step 1 — manual review of photo, ID document & birth certificate",
+    )
+    doc_verified_at = models.DateTimeField(null=True, blank=True)
+    doc_rejection_reason = models.TextField(blank=True, default="")
+
+    # ── Step 2: Huduma Kenya Check ────────────────────────────────────────
     huduma_status = models.CharField(
         max_length=20,
         choices=[
@@ -275,8 +296,9 @@ class CountyPlayer(models.Model):
         default="not_checked",
     )
     huduma_verified_at = models.DateTimeField(null=True, blank=True)
+    huduma_notes = models.TextField(blank=True, default="")
 
-    # ── Higher League / National Team Check (non-football disciplines) ────
+    # ── Step 3: Higher League / National Team Check ───────────────────────
     higher_league_status = models.CharField(
         max_length=20,
         choices=[
@@ -285,12 +307,27 @@ class CountyPlayer(models.Model):
             ("flagged", "Flagged — Higher League / National Team"),
         ],
         default="not_checked",
-        help_text="For non-football disciplines: check if player is in higher league or national team",
+        help_text="Check if player is registered in a higher league or national team",
     )
     higher_league_details = models.TextField(
         blank=True, default="",
         help_text="Details of higher league / national team participation if flagged",
     )
+    higher_league_checked_at = models.DateTimeField(null=True, blank=True)
+
+    # ── Step 4: IPRS Age Verification (manual now, auto when API ready) ──
+    iprs_age_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("not_checked", "Not Checked"),
+            ("verified", "Age Verified"),
+            ("failed", "Age Mismatch / Failed"),
+        ],
+        default="not_checked",
+        help_text="Step 4 — verify age via IPRS (manual now, automated when API available)",
+    )
+    iprs_age_verified_at = models.DateTimeField(null=True, blank=True)
+    iprs_age_notes = models.TextField(blank=True, default="")
 
     registered_at = models.DateTimeField(auto_now_add=True)
 
@@ -309,7 +346,42 @@ class CountyPlayer(models.Model):
 
     @property
     def is_verified(self):
-        return self.verification_status == "verified"
+        """True only when ALL 3 verification steps have passed."""
+        return (
+            self.doc_status == "verified"
+            and self.iprs_age_status == "verified"
+            and self.higher_league_status == "clear"
+        )
+
+    @property
+    def current_verification_step(self):
+        """Return the step number the player is currently on (1-3), or 4 if done."""
+        if self.doc_status != "verified":
+            return 1
+        if self.iprs_age_status != "verified":
+            return 2
+        if self.higher_league_status != "clear":
+            return 3
+        return 4  # Fully verified
+
+    @property
+    def step_label(self):
+        labels = {1: "Documents", 2: "Age Verification", 3: "Higher Leagues", 4: "Complete"}
+        return labels.get(self.current_verification_step, "")
+
+    def update_overall_status(self):
+        """Recompute verification_status from the 3 step statuses."""
+        if self.is_verified:
+            self.verification_status = "verified"
+            self.rejection_reason = ""
+        elif (
+            self.doc_status == "rejected"
+            or self.iprs_age_status == "failed"
+            or self.higher_league_status == "flagged"
+        ):
+            self.verification_status = "rejected"
+        else:
+            self.verification_status = "pending"
 
     @property
     def is_football(self):
@@ -973,6 +1045,70 @@ class ScoutShortlist(models.Model):
 
     def __str__(self):
         return f"{self.scout.get_full_name()} → {self.player.first_name} {self.player.last_name} ({self.rating}★)"
+
+
+class ScoutShortlistSubmissionStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    SUBMITTED = "submitted", "Final List Submitted"
+    EDIT_REQUESTED = "edit_requested", "Edit Access Requested"
+    EDIT_APPROVED = "edit_approved", "Edit Access Approved"
+    EDIT_DENIED = "edit_denied", "Edit Access Denied"
+
+
+class ScoutShortlistSubmission(models.Model):
+    """Tracks final shortlist submission state for each scout."""
+
+    scout = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="scout_shortlist_submission",
+        limit_choices_to={"role": "scout"},
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=ScoutShortlistSubmissionStatus.choices,
+        default=ScoutShortlistSubmissionStatus.DRAFT,
+    )
+    final_submitted_at = models.DateTimeField(null=True, blank=True)
+    edit_requested_at = models.DateTimeField(null=True, blank=True)
+    edit_request_reason = models.TextField(blank=True, default="")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scout_shortlist_reviews",
+    )
+    review_notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Scout Shortlist Submission"
+        verbose_name_plural = "Scout Shortlist Submissions"
+
+    def __str__(self):
+        return f"{self.scout.get_full_name()} — {self.get_status_display()}"
+
+    @property
+    def can_edit(self):
+        return self.status in {
+            ScoutShortlistSubmissionStatus.DRAFT,
+            ScoutShortlistSubmissionStatus.EDIT_APPROVED,
+        }
+
+    @property
+    def is_locked(self):
+        return not self.can_edit
+
+    @property
+    def can_request_edit(self):
+        return self.status in {
+            ScoutShortlistSubmissionStatus.SUBMITTED,
+            ScoutShortlistSubmissionStatus.EDIT_DENIED,
+        }
 
 
 # ══════════════════════════════════════════════════════════════════════════════

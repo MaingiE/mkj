@@ -8,7 +8,7 @@
         <span>Verified Players</span>
     </div>
     <h1><i class="bi bi-patch-check-fill"></i> Verified Players</h1>
-    <p>All verified players across disciplines and counties (read-only)</p>
+    <p>Verified players list with county filtering and downloadable photos.</p>
 </div>
 
 <!-- Stats -->
@@ -23,27 +23,18 @@
 <div class="card p-3 mb-3" style="background:#f9f9f9;">
     <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
         <div>
-            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Discipline</label>
-            <select name="discipline" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">All Disciplines</option>
-                {% for val, label in disciplines %}
-                <option value="{{ val }}" {% if val == discipline_filter %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
             <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">County</label>
             <select name="county" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">All Counties</option>
+                <option value="">Select County</option>
                 {% for c in counties %}
                 <option value="{{ c }}" {% if c == county_filter %}selected{% endif %}>{{ c }}</option>
                 {% endfor %}
             </select>
         </div>
-        {% if discipline_filter or county_filter %}
+        {% if county_filter %}
         <a href="{% url 'director_sports_verified_players' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear</a>
         {% endif %}
-        <a href="{% url 'verified_players_pdf' %}?{% if discipline_filter %}discipline={{ discipline_filter }}&{% endif %}{% if county_filter %}county={{ county_filter }}{% endif %}" class="btn btn-sm btn-success" style="margin-bottom:2px;">
+        <a href="{% url 'verified_players_pdf' %}?{% if county_filter %}county={{ county_filter }}{% endif %}" class="btn btn-sm btn-success" style="margin-bottom:2px;">
             <i class="bi bi-download"></i> Download PDF
         </a>
     </form>
@@ -55,6 +46,7 @@
             <thead style="background:#f5f5f5;">
                 <tr>
                     <th>#</th>
+                    <th>Photo</th>
                     <th>Player Name</th>
                     <th>County</th>
                     <th>Discipline</th>
@@ -67,6 +59,15 @@
                 {% for p in players %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
+                    <td>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" alt="{{ p.first_name }} {{ p.last_name }}" style="width:34px;height:42px;object-fit:cover;border-radius:4px;">
+                        {% elif p.iprs_photo %}
+                        <img src="{{ p.iprs_photo.url }}" alt="{{ p.first_name }} {{ p.last_name }}" style="width:34px;height:42px;object-fit:cover;border-radius:4px;">
+                        {% else %}
+                        <span style="color:#999;">—</span>
+                        {% endif %}
+                    </td>
                     <td>{{ p.first_name }} {{ p.last_name }}</td>
                     <td>{{ p.discipline.registration.county|default:"—" }}</td>
                     <td>{{ p.discipline.get_sport_type_display }}</td>
@@ -77,7 +78,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-muted text-center">No verified players found</td></tr>
+                <tr><td colspan="8" class="text-muted text-center">No verified players found</td></tr>
                 {% endfor %}
             </tbody>
         </table>

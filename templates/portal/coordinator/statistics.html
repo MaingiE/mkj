@@ -24,6 +24,10 @@
     <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
 </div>
 
+<div class="alert alert-info" style="font-size:.86rem;">
+    Pool tables refresh from completed results. Top scorers, discipline, fair play, and clean sheets use the approved match-report logic already in the system.
+</div>
+
 <div class="stats-grid">
     <!-- Top Scorers -->
     <div class="stat-card">
@@ -61,6 +65,24 @@
             <div style="text-align:center;padding:1rem;color:#999;">No assists recorded yet.</div>
             {% endif %}
         </div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <div class="card-header"><h3><i class="bi bi-shield-check"></i> Clean Sheets</h3></div>
+    <div class="card-body">
+        {% if clean_sheets %}
+        <table class="tbl">
+            <thead><tr><th>#</th><th>Goalkeeper</th><th>Team</th><th>Clean Sheets</th></tr></thead>
+            <tbody>
+                {% for row in clean_sheets %}
+                <tr><td>{{ forloop.counter }}</td><td>{{ row.player_name }}</td><td>{{ row.team_name }}</td><td><strong>{{ row.clean_sheets }}</strong></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:1rem;color:#999;">No clean sheets recorded yet.</div>
+        {% endif %}
     </div>
 </div>
 
