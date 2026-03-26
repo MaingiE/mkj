@@ -148,18 +148,21 @@ img { max-width: 100%; }
 /* Hamburger */
 .fkf-nav-toggle {
     display: none; background: none; border: none; cursor: pointer;
-    width: 26px; height: 20px; position: relative; z-index: 10;
+    width: 32px; height: 24px; position: relative; z-index: 10002;
+    padding: 4px;
+    -webkit-tap-highlight-color: transparent;
 }
 .fkf-nav-toggle span {
     display: block; width: 100%; height: 2px; background: #1A6FB5;
     position: absolute; left: 0; transition: all .3s;
 }
-.fkf-nav-toggle span:nth-child(1) { top: 0; }
-.fkf-nav-toggle span:nth-child(2) { top: 9px; }
-.fkf-nav-toggle span:nth-child(3) { top: 18px; }
-.fkf-nav-toggle.open span:nth-child(1) { top: 9px; transform: rotate(45deg); }
+.fkf-nav-toggle span:nth-child(1) { top: 2px; }
+.fkf-nav-toggle span:nth-child(2) { top: 11px; }
+.fkf-nav-toggle span:nth-child(3) { top: 20px; }
+.fkf-nav-toggle.open span { background: #1A6FB5; }
+.fkf-nav-toggle.open span:nth-child(1) { top: 11px; transform: rotate(45deg); }
 .fkf-nav-toggle.open span:nth-child(2) { opacity: 0; }
-.fkf-nav-toggle.open span:nth-child(3) { top: 9px; transform: rotate(-45deg); }
+.fkf-nav-toggle.open span:nth-child(3) { top: 11px; transform: rotate(-45deg); }
 
 /* ──────────────────────────────────────────────────────────────────────────
    HERO — DARK CINEMATIC
@@ -1994,18 +1997,29 @@ img { max-width: 100%; }
         background: rgba(255,255,255,.98); backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         flex-direction: column; justify-content: center;
-        align-items: center; gap: .5rem; z-index: 5;
+        align-items: center; gap: .5rem; z-index: 10001;
+        padding-top: 60px;
     }
     .fkf-nav-links.open { display: flex; }
     .fkf-nav-links a { font-size: 1.4rem; padding: .85rem; color: #333; }
-    .fkf-nav-actions { display: flex; margin-left: auto; margin-right: .5rem; }
-    .fkf-nav-btn { font-size: .72rem; padding: .35rem .75rem; }
-    .nav-login-mobile { display: list-item; margin-top: .5rem; }
+    .fkf-nav-actions { display: none; }
+    .nav-login-mobile { display: list-item; margin-top: 1rem; }
     .nav-login-mobile a {
         background: #1A6FB5; color: #fff !important;
         border-radius: 8px; padding: .75rem 2rem !important;
         font-weight: 700; font-size: 1.1rem !important;
         text-align: center; display: block;
+    }
+    /* Mobile dropdown */
+    .nav-dropdown .dropdown-menu {
+        position: static; box-shadow: none;
+        background: transparent; padding: 0;
+        margin-top: 0;
+    }
+    .nav-dropdown.open .dropdown-menu { display: block; }
+    .nav-dropdown .dropdown-menu a {
+        font-size: 1.1rem !important; padding: .6rem 1.2rem;
+        color: #555;
     }
 
     .hero--dark .hero-title { font-size: 2.4rem; }
