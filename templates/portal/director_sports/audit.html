@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}User Audit &amp; Reports &mdash; Director of Sports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
+        <span>User Audit &amp; Reports</span>
+    </div>
+    <h1><i class="bi bi-journal-text"></i> User Audit &amp; Reports</h1>
+    <p>All system user actions &mdash; filter by user, action type, or date range (read-only)</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <div class="card p-3 text-center">
+            <div style="font-size:1.6rem;font-weight:700;color:#0d6efd;">{{ total_logs }}</div>
+            <div style="font-size:.82rem;color:#666;">Total Log Entries</div>
+        </div>
+    </div>
+    {% for stat in action_stats %}
+    <div class="col-sm-6 col-md-3">
+        <div class="card p-3 text-center">
+            <div style="font-size:1.4rem;font-weight:700;">{{ stat.count }}</div>
+            <div style="font-size:.82rem;color:#666;">{{ stat.action }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3" style="background:#f9f9f9;">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">User</label>
+            <select name="user" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Users</option>
+                {% for u in users %}
+                <option value="{{ u.pk }}" {% if u.pk|stringformat:"s" == user_filter %}selected{% endif %}>{{ u.get_full_name }} ({{ u.get_role_display }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Action Type</label>
+            <select name="action" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Actions</option>
+                {% for val, label in action_choices %}
+                <option value="{{ val }}" {% if val == action_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">From</label>
+            <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}" onchange="this.form.submit()">
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">To</label>
+            <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}" onchange="this.form.submit()">
+        </div>
+        {% if user_filter or action_filter or date_from or date_to %}
+        <a href="{% url 'director_sports_audit' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Logs Table -->
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>Date / Time</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size:.82rem;white-space:nowrap;">{{ log.timestamp|date:"d M Y H:i" }}</td>
+                    <td>{{ log.user.get_full_name|default:"System" }}</td>
+                    <td style="font-size:.82rem;">{{ log.user.get_role_display|default:"—" }}</td>
+                    <td><span class="badge bg-{{ log.action_class }}">{{ log.get_action_display }}</span></td>
+                    <td style="font-size:.85rem;">{{ log.description|truncatechars:80 }}</td>
+                    <td style="font-size:.82rem;">{{ log.ip_address|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted text-center">No activity logs found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if logs|length >= 200 %}
+    <p class="text-muted mt-2 mb-0" style="font-size:.82rem;"><em>Showing most recent 200 entries. Use filters to narrow results.</em></p>
+    {% endif %}
+</div>
+{% endblock %}

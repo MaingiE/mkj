@@ -329,6 +329,30 @@ class CountyPlayer(models.Model):
     iprs_age_verified_at = models.DateTimeField(null=True, blank=True)
     iprs_age_notes = models.TextField(blank=True, default="")
 
+    # ── Director of Sports Final Approval ─────────────────────────────────
+    director_approved = models.BooleanField(
+        default=False,
+        help_text="Final approval by Director of Sports",
+    )
+    director_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="director_approved_players",
+    )
+    director_approved_at = models.DateTimeField(null=True, blank=True)
+    director_disapproved = models.BooleanField(
+        default=False,
+        help_text="Disapproved by Director of Sports",
+    )
+    director_disapproval_reason = models.TextField(
+        blank=True, default="",
+        help_text="Reason for disapproval",
+    )
+    director_locked = models.BooleanField(
+        default=False,
+        help_text="Locked by Director of Sports — no further edits except by Director",
+    )
+    director_locked_at = models.DateTimeField(null=True, blank=True)
+
     registered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

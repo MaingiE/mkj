@@ -7081,6 +7081,11 @@ def subcounty_officer_add_player_view(request, discipline_pk):
 
     discipline = _get_managed_discipline(request.user, discipline_pk)
 
+    # Check if any players in this discipline are locked by Director of Sports
+    if CountyPlayer.objects.filter(discipline=discipline, director_locked=True).exists():
+        messages.error(request, 'This discipline\'s player list has been locked by the Director of Sports. No changes can be made.')
+        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
+
     if not discipline.can_add_player:
         messages.error(
             request,
@@ -7123,6 +7128,10 @@ def subcounty_officer_delete_player_view(request, player_pk):
 
     player = get_object_or_404(CountyPlayer, pk=player_pk, discipline__in=_discipline_queryset_for_user(request.user))
     discipline_pk = player.discipline.pk
+
+    if player.director_locked:
+        messages.error(request, 'This player is locked by the Director of Sports and cannot be removed.')
+        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
 
     if request.method == 'POST':
         name = f'{player.first_name} {player.last_name}'
@@ -7419,6 +7428,11 @@ def vo_verify_county_player_view(request, player_pk):
     Each step must pass before the next step unlocks.
     """
     player = get_object_or_404(CountyPlayer, pk=player_pk)
+
+    if player.director_locked:
+        messages.error(request, 'This player has been locked by the Director of Sports. No verification changes can be made.')
+        return redirect('vo_dashboard')
+
     step = player.current_verification_step  # 1–4
 
     if request.method == 'POST':
@@ -7600,9 +7614,8 @@ def subcounty_verified_players_view(request):
 
 @role_required('team_manager', 'admin')
 def team_manager_verified_players_view(request):
-    """Team manager: view verified players for their discipline."""
+    """Team manager: view director-approved players for their discipline only."""
     user = request.user
-    discipline_filter = request.GET.get('discipline', '')
 
     try:
         bench = TechnicalBenchMember.objects.select_related(
@@ -7615,19 +7628,25 @@ def team_manager_verified_players_view(request):
     if discipline:
         players = CountyPlayer.objects.filter(
             verification_status='verified',
+            director_approved=True,
             discipline=discipline,
         ).select_related('discipline', 'discipline__registration').order_by('last_name')
         disc_choices = [(discipline.sport_type, dict(SportType.choices).get(discipline.sport_type, discipline.sport_type))]
+        is_locked = CountyPlayer.objects.filter(
+            discipline=discipline,
+            director_locked=True,
+        ).exists()
     else:
         players = CountyPlayer.objects.none()
         disc_choices = []
+        is_locked = False
 
     return render(request, 'portal/team_manager/verified_players.html', {
         'players': players,
         'disciplines': disc_choices,
-        'discipline_filter': discipline_filter,
         'total': players.count(),
         'discipline': discipline,
+        'is_locked': is_locked,
     })
 
 
@@ -7683,8 +7702,10 @@ def director_sports_review_shortlist_request_view(request, pk):
 
 @role_required('director_sports', 'admin')
 def director_sports_verified_players_view(request):
-    """Director of Sports: view all verified players with county-only filtering."""
+    """Director of Sports: view all verified players with filtering, approve/disapprove/lock."""
     county_filter = request.GET.get('county', '')
+    discipline_filter = request.GET.get('discipline', '')
+    approval_filter = request.GET.get('approval', '')
 
     players = CountyPlayer.objects.filter(
         verification_status='verified',
@@ -7694,14 +7715,328 @@ def director_sports_verified_players_view(request):
 
     if county_filter:
         players = players.filter(discipline__registration__county=county_filter)
+    if discipline_filter:
+        players = players.filter(discipline__sport_type=discipline_filter)
+    if approval_filter == 'approved':
+        players = players.filter(director_approved=True)
+    elif approval_filter == 'disapproved':
+        players = players.filter(director_disapproved=True)
+    elif approval_filter == 'pending':
+        players = players.filter(director_approved=False, director_disapproved=False)
+    elif approval_filter == 'locked':
+        players = players.filter(director_locked=True)
 
     counties = CountyRegistration.objects.values_list('county', flat=True).distinct().order_by('county')
+    disciplines = SportType.choices
+
+    all_verified = CountyPlayer.objects.filter(verification_status='verified')
+    stats = {
+        'total': players.count(),
+        'approved': all_verified.filter(director_approved=True).count(),
+        'disapproved': all_verified.filter(director_disapproved=True).count(),
+        'pending': all_verified.filter(director_approved=False, director_disapproved=False).count(),
+        'locked': all_verified.filter(director_locked=True).count(),
+    }
 
     return render(request, 'portal/director_sports/verified_players.html', {
         'players': players,
         'counties': counties,
+        'disciplines': disciplines,
         'county_filter': county_filter,
-        'total': players.count(),
+        'discipline_filter': discipline_filter,
+        'approval_filter': approval_filter,
+        'stats': stats,
+    })
+
+
+@role_required('director_sports', 'admin')
+@require_POST
+def director_sports_approve_player_view(request, pk):
+    """Director of Sports: approve a verified player."""
+    player = get_object_or_404(CountyPlayer, pk=pk, verification_status='verified')
+    player.director_approved = True
+    player.director_disapproved = False
+    player.director_disapproval_reason = ''
+    player.director_approved_by = request.user
+    player.director_approved_at = timezone.now()
+    player.save(update_fields=[
+        'director_approved', 'director_disapproved', 'director_disapproval_reason',
+        'director_approved_by', 'director_approved_at',
+    ])
+    messages.success(request, f'{player.first_name} {player.last_name} has been approved.')
+    return redirect(request.META.get('HTTP_REFERER', 'director_sports_verified_players'))
+
+
+@role_required('director_sports', 'admin')
+@require_POST
+def director_sports_disapprove_player_view(request, pk):
+    """Director of Sports: disapprove a verified player."""
+    player = get_object_or_404(CountyPlayer, pk=pk, verification_status='verified')
+    reason = request.POST.get('reason', '').strip()
+    if not reason:
+        messages.error(request, 'Please provide a reason for disapproval.')
+        return redirect(request.META.get('HTTP_REFERER', 'director_sports_verified_players'))
+    player.director_approved = False
+    player.director_disapproved = True
+    player.director_disapproval_reason = reason
+    player.director_approved_by = None
+    player.director_approved_at = None
+    player.save(update_fields=[
+        'director_approved', 'director_disapproved', 'director_disapproval_reason',
+        'director_approved_by', 'director_approved_at',
+    ])
+    messages.success(request, f'{player.first_name} {player.last_name} has been disapproved.')
+    return redirect(request.META.get('HTTP_REFERER', 'director_sports_verified_players'))
+
+
+@role_required('director_sports', 'admin')
+@require_POST
+def director_sports_bulk_approve_view(request):
+    """Director of Sports: bulk approve all verified players matching filter."""
+    county_filter = request.POST.get('county', '')
+    discipline_filter = request.POST.get('discipline', '')
+
+    players = CountyPlayer.objects.filter(
+        verification_status='verified',
+        director_approved=False,
+        director_disapproved=False,
+    )
+    if county_filter:
+        players = players.filter(discipline__registration__county=county_filter)
+    if discipline_filter:
+        players = players.filter(discipline__sport_type=discipline_filter)
+
+    count = players.update(
+        director_approved=True,
+        director_disapproved=False,
+        director_disapproval_reason='',
+        director_approved_by=request.user,
+        director_approved_at=timezone.now(),
+    )
+    messages.success(request, f'{count} player(s) approved.')
+    return redirect('director_sports_verified_players')
+
+
+@role_required('director_sports', 'admin')
+@require_POST
+def director_sports_lock_list_view(request):
+    """Director of Sports: lock all approved players — no further edits except by Director."""
+    county_filter = request.POST.get('county', '')
+    discipline_filter = request.POST.get('discipline', '')
+
+    players = CountyPlayer.objects.filter(
+        verification_status='verified',
+        director_approved=True,
+    )
+    if county_filter:
+        players = players.filter(discipline__registration__county=county_filter)
+    if discipline_filter:
+        players = players.filter(discipline__sport_type=discipline_filter)
+
+    count = players.update(
+        director_locked=True,
+        director_locked_at=timezone.now(),
+    )
+    messages.success(request, f'{count} player(s) locked. The list is now finalised.')
+    return redirect('director_sports_verified_players')
+
+
+@role_required('director_sports', 'admin')
+@require_POST
+def director_sports_unlock_list_view(request):
+    """Director of Sports: unlock locked players for further edits."""
+    county_filter = request.POST.get('county', '')
+    discipline_filter = request.POST.get('discipline', '')
+
+    players = CountyPlayer.objects.filter(
+        verification_status='verified',
+        director_locked=True,
+    )
+    if county_filter:
+        players = players.filter(discipline__registration__county=county_filter)
+    if discipline_filter:
+        players = players.filter(discipline__sport_type=discipline_filter)
+
+    count = players.update(
+        director_locked=False,
+        director_locked_at=None,
+    )
+    messages.success(request, f'{count} player(s) unlocked.')
+    return redirect('director_sports_verified_players')
+
+
+# ── Director of Sports: Audit & Reports ──────────────────────────────────────
+@role_required('director_sports', 'admin')
+def director_sports_audit_view(request):
+    """Director of Sports: view all user activity logs — filterable by user, action, and date."""
+    from admin_dashboard.models import ActivityLog
+
+    user_filter = request.GET.get('user', '')
+    action_filter = request.GET.get('action', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+
+    logs = ActivityLog.objects.select_related('user').exclude(
+        action__in=['LOGIN', 'LOGOUT']
+    ).order_by('-timestamp')
+
+    if user_filter:
+        logs = logs.filter(user_id=user_filter)
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+    if date_from:
+        logs = logs.filter(timestamp__date__gte=date_from)
+    if date_to:
+        logs = logs.filter(timestamp__date__lte=date_to)
+
+    users = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    action_choices = [
+        (code, label) for code, label in ActivityLog.ACTION_CHOICES
+        if code not in ('LOGIN', 'LOGOUT')
+    ]
+
+    # Summary stats
+    from django.db.models import Count as DbCount
+    action_stats = (
+        ActivityLog.objects.exclude(action__in=['LOGIN', 'LOGOUT'])
+        .values('action').annotate(count=DbCount('id')).order_by('-count')[:8]
+    )
+    total_logs = ActivityLog.objects.exclude(action__in=['LOGIN', 'LOGOUT']).count()
+
+    return render(request, 'portal/director_sports/audit.html', {
+        'logs': logs[:200],
+        'users': users,
+        'action_choices': action_choices,
+        'user_filter': user_filter,
+        'action_filter': action_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'action_stats': action_stats,
+        'total_logs': total_logs,
+    })
+
+
+# ── Director of Sports: System Users & Roles ─────────────────────────────────
+@role_required('director_sports', 'admin')
+def director_sports_system_users_view(request):
+    """Director of Sports: read-only overview of all system users and their roles."""
+    role_filter = request.GET.get('role', '')
+    status_filter = request.GET.get('status', '')
+    search_q = request.GET.get('q', '').strip()
+
+    users_qs = User.objects.all().order_by('role', 'first_name', 'last_name')
+
+    if role_filter:
+        users_qs = users_qs.filter(role=role_filter)
+    if status_filter == 'active':
+        users_qs = users_qs.filter(is_active=True)
+    elif status_filter == 'inactive':
+        users_qs = users_qs.filter(is_active=False)
+    if search_q:
+        users_qs = users_qs.filter(
+            Q(first_name__icontains=search_q) |
+            Q(last_name__icontains=search_q) |
+            Q(email__icontains=search_q)
+        )
+
+    role_choices = UserRole.choices
+    role_breakdown = (
+        User.objects.values('role').annotate(count=Count('id')).order_by('-count')
+    )
+    total_users = User.objects.count()
+    active_users = User.objects.filter(is_active=True).count()
+
+    return render(request, 'portal/director_sports/system_users.html', {
+        'system_users': users_qs,
+        'role_choices': role_choices,
+        'role_filter': role_filter,
+        'status_filter': status_filter,
+        'search_q': search_q,
+        'role_breakdown': role_breakdown,
+        'total_users': total_users,
+        'active_users': active_users,
+    })
+
+
+# ── Director of Sports: Delegations ──────────────────────────────────────────
+@role_required('director_sports', 'admin')
+def director_sports_delegations_view(request):
+    """Director of Sports: view all county delegation members across counties."""
+    county_filter = request.GET.get('county', '')
+    role_filter = request.GET.get('role', '')
+
+    members = CountyDelegationMember.objects.select_related(
+        'registration'
+    ).order_by('registration__county', 'role')
+
+    if county_filter:
+        members = members.filter(registration__county=county_filter)
+    if role_filter:
+        members = members.filter(role=role_filter)
+
+    county_choices = (
+        CountyRegistration.objects.filter(status='approved')
+        .values_list('county', flat=True).distinct().order_by('county')
+    )
+    role_choices = CountyDelegationRole.choices
+    total_members = CountyDelegationMember.objects.count()
+    counties_with_delegations = (
+        CountyDelegationMember.objects.values('registration__county').distinct().count()
+    )
+
+    return render(request, 'portal/director_sports/delegations.html', {
+        'members': members,
+        'county_choices': county_choices,
+        'role_choices': role_choices,
+        'county_filter': county_filter,
+        'role_filter': role_filter,
+        'total_members': total_members,
+        'counties_with_delegations': counties_with_delegations,
+    })
+
+
+# ── Director of Sports: Technical Bench Members ──────────────────────────────
+@role_required('director_sports', 'admin')
+def director_sports_technical_bench_view(request):
+    """Director of Sports: view all technical bench members across all teams."""
+    county_filter = request.GET.get('county', '')
+    discipline_filter = request.GET.get('discipline', '')
+    role_filter = request.GET.get('role', '')
+
+    bench = TechnicalBenchMember.objects.select_related(
+        'discipline__registration'
+    ).order_by('discipline__registration__county', 'discipline__sport_type', 'role')
+
+    if county_filter:
+        bench = bench.filter(discipline__registration__county=county_filter)
+    if discipline_filter:
+        bench = bench.filter(discipline__sport_type=discipline_filter)
+    if role_filter:
+        bench = bench.filter(role=role_filter)
+
+    county_choices = (
+        CountyRegistration.objects.filter(status='approved')
+        .values_list('county', flat=True).distinct().order_by('county')
+    )
+    discipline_choices = (
+        CountyDiscipline.objects.values_list('sport_type', flat=True).distinct().order_by('sport_type')
+    )
+    role_choices = TechnicalBenchRole.choices
+    total_bench = TechnicalBenchMember.objects.count()
+    teams_with_bench = (
+        TechnicalBenchMember.objects.values('discipline').distinct().count()
+    )
+
+    return render(request, 'portal/director_sports/technical_bench.html', {
+        'bench_members': bench,
+        'county_choices': county_choices,
+        'discipline_choices': discipline_choices,
+        'role_choices': role_choices,
+        'county_filter': county_filter,
+        'discipline_filter': discipline_filter,
+        'role_filter': role_filter,
+        'total_bench': total_bench,
+        'teams_with_bench': teams_with_bench,
     })
 
 

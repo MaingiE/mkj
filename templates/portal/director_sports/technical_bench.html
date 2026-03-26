@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Technical Bench &mdash; Director of Sports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
+        <span>Technical Bench</span>
+    </div>
+    <h1><i class="bi bi-clipboard-check"></i> Technical Bench Members</h1>
+    <p>All team technical bench officials across counties and disciplines (read-only)</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <div class="card p-3 text-center">
+            <div style="font-size:1.6rem;font-weight:700;color:#0d6efd;">{{ total_bench }}</div>
+            <div style="font-size:.82rem;color:#666;">Total Bench Members</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="card p-3 text-center">
+            <div style="font-size:1.6rem;font-weight:700;color:#198754;">{{ teams_with_bench }}</div>
+            <div style="font-size:.82rem;color:#666;">Teams with Bench Staff</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3" style="background:#f9f9f9;">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">County</label>
+            <select name="county" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Counties</option>
+                {% for c in county_choices %}
+                <option value="{{ c }}" {% if c == county_filter %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Discipline</label>
+            <select name="discipline" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Disciplines</option>
+                {% for d in discipline_choices %}
+                <option value="{{ d }}" {% if d == discipline_filter %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Role</label>
+            <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Roles</option>
+                {% for val, label in role_choices %}
+                <option value="{{ val }}" {% if val == role_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if county_filter or discipline_filter or role_filter %}
+        <a href="{% url 'director_sports_technical_bench' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Technical Bench Table -->
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>#</th>
+                    <th>County</th>
+                    <th>Discipline</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>National ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bench_members %}
+                <tr>
+                    <td style="font-size:.82rem;">{{ forloop.counter }}</td>
+                    <td>{{ b.discipline.registration.county }}</td>
+                    <td>{{ b.discipline.sport_type }}</td>
+                    <td>{{ b.first_name }} {{ b.last_name }}</td>
+                    <td><span class="badge bg-primary">{{ b.get_role_display }}</span></td>
+                    <td style="font-size:.85rem;">{{ b.phone|default:"—" }}</td>
+                    <td style="font-size:.85rem;">{{ b.email|default:"—" }}</td>
+                    <td style="font-size:.82rem;">{{ b.national_id_number|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-muted text-center">No technical bench members found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

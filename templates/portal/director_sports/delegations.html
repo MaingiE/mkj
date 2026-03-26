@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}County Delegations &mdash; Director of Sports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
+        <span>County Delegations</span>
+    </div>
+    <h1><i class="bi bi-person-badge"></i> County Delegation Members</h1>
+    <p>All delegation officials across participating counties (read-only)</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <div class="card p-3 text-center">
+            <div style="font-size:1.6rem;font-weight:700;color:#0d6efd;">{{ total_members }}</div>
+            <div style="font-size:.82rem;color:#666;">Total Delegation Members</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="card p-3 text-center">
+            <div style="font-size:1.6rem;font-weight:700;color:#198754;">{{ counties_with_delegations }}</div>
+            <div style="font-size:.82rem;color:#666;">Counties with Delegations</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3" style="background:#f9f9f9;">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">County</label>
+            <select name="county" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Counties</option>
+                {% for c in county_choices %}
+                <option value="{{ c }}" {% if c == county_filter %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Role</label>
+            <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Roles</option>
+                {% for val, label in role_choices %}
+                <option value="{{ val }}" {% if val == role_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if county_filter or role_filter %}
+        <a href="{% url 'director_sports_delegations' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Delegation Members Table -->
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>#</th>
+                    <th>County</th>
+                    <th>Full Name</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>National ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in members %}
+                <tr>
+                    <td style="font-size:.82rem;">{{ forloop.counter }}</td>
+                    <td>{{ m.registration.county }}</td>
+                    <td>{{ m.full_name }}</td>
+                    <td><span class="badge bg-info text-dark">{{ m.get_role_display }}</span></td>
+                    <td style="font-size:.85rem;">{{ m.phone|default:"—" }}</td>
+                    <td style="font-size:.85rem;">{{ m.email|default:"—" }}</td>
+                    <td style="font-size:.82rem;">{{ m.national_id_number|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-muted text-center">No delegation members found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

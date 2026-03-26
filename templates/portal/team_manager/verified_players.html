@@ -8,14 +8,24 @@
         <span>Verified Players</span>
     </div>
     <h1><i class="bi bi-patch-check-fill"></i> Verified Players</h1>
-    <p>Verified players for your discipline{% if discipline %} &mdash; {{ discipline.get_sport_type_display }}{% endif %}</p>
+    <p>Director-approved players for your discipline{% if discipline %} &mdash; {{ discipline.get_sport_type_display }}{% endif %}</p>
 </div>
+
+{% if is_locked %}
+<div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-lock-fill" style="font-size:1.2rem;"></i>
+    <div>
+        <strong>This player list has been finalised and locked by the Director of Sports.</strong>
+        No changes can be made to this list.
+    </div>
+</div>
+{% endif %}
 
 <!-- Stats -->
 <div class="d-flex gap-3 mb-3 flex-wrap">
     <div class="card p-3 text-center" style="min-width:140px;background:#d1e7dd;">
         <div style="font-size:1.6rem;font-weight:700;color:#0f5132;">{{ total }}</div>
-        <div style="font-size:.8rem;font-weight:600;color:#0f5132;">Total Verified</div>
+        <div style="font-size:.8rem;font-weight:600;color:#0f5132;">Approved Players</div>
     </div>
 </div>
 
@@ -39,7 +49,7 @@
                     <th>National ID</th>
                     <th>Position</th>
                     <th>Jersey</th>
-                    <th>Registered</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -51,12 +61,16 @@
                     <td style="font-size:.85rem;">{{ p.national_id_number }}</td>
                     <td>{{ p.position|default:"—" }}</td>
                     <td>{{ p.jersey_number|default:"—" }}</td>
-                    <td style="font-size:.82rem;white-space:nowrap;">
-                        {{ p.registered_at|date:"d M Y H:i"|default:"—" }}
+                    <td>
+                        {% if p.director_locked %}
+                            <span class="badge bg-primary"><i class="bi bi-lock-fill"></i> Locked</span>
+                        {% else %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Approved</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-muted text-center">No verified players found</td></tr>
+                <tr><td colspan="7" class="text-muted text-center">No approved players for your discipline yet. The Director of Sports must approve verified players before they appear here.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
