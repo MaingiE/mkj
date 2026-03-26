@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}Create Match — {{ competition.name }} — MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:.5rem; }
+    .page-header h2 { font-size:1.3rem; font-weight:700; }
+    .create-card { background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:1.75rem; max-width:680px; }
+    .form-group { margin-bottom:1.1rem; }
+    .form-group label { font-size:.82rem; font-weight:600; color:#374151; display:block; margin-bottom:.35rem; }
+    .form-group .req { color:#ef4444; margin-left:.15rem; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:600px){ .form-row{ grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-plus-circle"></i> Create Match</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<div class="create-card">
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Match type -->
+        <div class="form-group">
+            <label>Match Type</label>
+            <div style="display:flex;gap:1.5rem;margin-top:.25rem;">
+                <label style="display:flex;align-items:center;gap:.4rem;font-weight:400;cursor:pointer;">
+                    <input type="radio" name="is_knockout" value="0" id="typeGroup" checked onchange="toggleKnockout(false)"> Group Stage
+                </label>
+                <label style="display:flex;align-items:center;gap:.4rem;font-weight:400;cursor:pointer;">
+                    <input type="radio" name="is_knockout" value="1" id="typeKnockout" onchange="toggleKnockout(true)"> Knockout
+                </label>
+            </div>
+        </div>
+
+        <!-- Teams -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="home_team_id">Home Team <span class="req">*</span></label>
+                <select name="home_team_id" id="home_team_id" class="form-select form-select-sm" required>
+                    <option value="">Select home team</option>
+                    {% for team in teams %}
+                    <option value="{{ team.pk }}">{{ team.name }} ({{ team.sub_county|default:"" }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="away_team_id">Away Team <span class="req">*</span></label>
+                <select name="away_team_id" id="away_team_id" class="form-select form-select-sm" required>
+                    <option value="">Select away team</option>
+                    {% for team in teams %}
+                    <option value="{{ team.pk }}">{{ team.name }} ({{ team.sub_county|default:"" }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="match_date">Match Date <span class="req">*</span></label>
+                <input type="date" name="match_date" id="match_date" class="form-control form-control-sm" required>
+            </div>
+            <div class="form-group">
+                <label for="kickoff_time">Kick-off Time</label>
+                <input type="time" name="kickoff_time" id="kickoff_time" class="form-control form-control-sm" value="10:00">
+            </div>
+        </div>
+
+        <!-- Venue -->
+        <div class="form-group">
+            <label for="venue_name">Venue</label>
+            <input type="text" name="venue_name" id="venue_name" class="form-control form-control-sm" placeholder="Type venue name" list="venue-list">
+            <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
+        </div>
+
+        <!-- Pool (group stage only) -->
+        <div class="form-group" id="poolWrap">
+            <label for="pool_id">Pool / Group</label>
+            <select name="pool_id" id="pool_id" class="form-select form-select-sm">
+                <option value="">No pool</option>
+                {% for pool in pools %}
+                <option value="{{ pool.pk }}">{{ pool.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Knockout round (knockout only, hidden initially) -->
+        <div class="form-group" id="koRoundWrap" style="display:none;">
+            <label for="knockout_round">Knockout Round</label>
+            <select name="knockout_round" id="knockout_round" class="form-select form-select-sm">
+                <option value="">Select round</option>
+                {% for val, label in knockout_rounds %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Match</button>
+            <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleKnockout(isKO) {
+    document.getElementById('poolWrap').style.display = isKO ? 'none' : '';
+    document.getElementById('koRoundWrap').style.display = isKO ? '' : 'none';
+}
+// Pre-select knockout if URL param present
+if (new URLSearchParams(location.search).get('knockout') === '1') {
+    document.getElementById('typeKnockout').checked = true;
+    toggleKnockout(true);
+}
+</script>
+{% endblock %}

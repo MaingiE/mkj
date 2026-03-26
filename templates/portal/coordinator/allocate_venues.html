@@ -12,6 +12,7 @@
 
 <form method="post">
     {% csrf_token %}
+    <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
     <div class="card">
         <div class="card-body" style="overflow-x:auto;">
             <table class="table table-sm" style="font-size:.85rem;">
@@ -24,10 +25,7 @@
                         <td>{{ fx.away_team.name }}</td>
                         <td>{{ fx.venue.name|default:"—" }}</td>
                         <td>
-                            <select name="venue_{{ fx.pk }}" class="form-select form-select-sm">
-                                <option value="">— None —</option>
-                                {% for v in venues %}<option value="{{ v.pk }}" {% if fx.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>{% endfor %}
-                            </select>
+                            <input type="text" name="venue_{{ fx.pk }}" class="form-control form-control-sm" placeholder="Type venue name" value="{{ fx.venue.name|default:'' }}" list="venue-list">
                         </td>
                     </tr>
                     {% endfor %}

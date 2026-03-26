@@ -13,7 +13,7 @@ from django.conf import settings as django_settings
 from accounts.models import User, UserRole, KenyaCounty, MakueniSubCounty, validate_kenya_phone_or_raise
 from teams.models import Team, Player
 from referees.models import RefereeProfile, RefereeAppointment
-from competitions.models import Competition, Fixture
+from competitions.models import Competition, Fixture, SportType
 from matches.models import MatchReport
 from .models import ActivityLog
 
@@ -23,6 +23,19 @@ COORDINATOR_DISCIPLINE_CHOICES = [
     ("volleyball", "Volleyball"),
     ("basketball", "Basketball"),
     ("handball", "Handball"),
+]
+
+SCOUT_DISCIPLINE_CHOICES = [
+    (SportType.FOOTBALL_MEN, "Soccer (Men)"),
+    (SportType.FOOTBALL_WOMEN, "Soccer (Women)"),
+    (SportType.VOLLEYBALL_MEN, "Volleyball (Men)"),
+    (SportType.VOLLEYBALL_WOMEN, "Volleyball (Women)"),
+    (SportType.BASKETBALL_MEN, "Basketball 5x5 (Men)"),
+    (SportType.BASKETBALL_WOMEN, "Basketball 5x5 (Women)"),
+    (SportType.BASKETBALL_3X3_MEN, "Basketball 3x3 (Men)"),
+    (SportType.BASKETBALL_3X3_WOMEN, "Basketball 3x3 (Women)"),
+    (SportType.HANDBALL_MEN, "Handball (Men)"),
+    (SportType.HANDBALL_WOMEN, "Handball (Women)"),
 ]
 
 
@@ -427,6 +440,7 @@ def manage_league_admins(request):
         'sport_coordinator_rows': sport_coordinator_rows,
         'unassigned_coordinators': unassigned_coordinators,
         'coordinator_discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
+        'scout_discipline_choices': SCOUT_DISCIPLINE_CHOICES,
         'county_choices': KenyaCounty.choices,
         'subcounty_choices': MakueniSubCounty.choices,
     }
@@ -473,9 +487,66 @@ def create_league_admin(request):
                 messages.error(request, f'A Sub-County Sports Officer already exists for {sub_county}. Only one is allowed per sub-county.')
                 return redirect('manage_league_admins')
 
-        if role == UserRole.COORDINATOR and not assigned_discipline:
-            messages.error(request, 'Choose a sport family for the coordinator.')
+        if role in (UserRole.COORDINATOR, UserRole.SCOUT) and not assigned_discipline:
+            if role == UserRole.COORDINATOR:
+                messages.error(request, 'Choose a coordinator sport.')
+            else:
+                messages.error(request, 'Choose a scout sport and gender.')
             return redirect('manage_league_admins')
+
+        if role == UserRole.COORDINATOR and assigned_discipline:
+            valid_coordinator_codes = {code for code, _ in COORDINATOR_DISCIPLINE_CHOICES}
+            if assigned_discipline not in valid_coordinator_codes:
+                messages.error(request, 'Invalid coordinator sport selection.')
+                return redirect('manage_league_admins')
+
+        if role == UserRole.SCOUT and assigned_discipline:
+            valid_scout_codes = {code for code, _ in SCOUT_DISCIPLINE_CHOICES}
+            if assigned_discipline not in valid_scout_codes:
+                messages.error(request, 'Invalid scout sport/gender selection.')
+                return redirect('manage_league_admins')
+
+        # ── One-user-per-role / per-discipline uniqueness checks ──────────
+        # Roles with global uniqueness (only one person per system)
+        SINGLETON_ROLES = {
+            UserRole.COMPETITION_MANAGER,
+            UserRole.TREASURER,
+            UserRole.VERIFICATION_OFFICER,
+            UserRole.SECRETARY_GENERAL,
+            UserRole.MEDIA_MANAGER,
+            UserRole.JURY_CHAIR,
+        }
+        if role in SINGLETON_ROLES:
+            role_label = dict(UserRole.choices).get(role, role)
+            if User.objects.filter(role=role, is_active=True).exists():
+                messages.error(
+                    request,
+                    f'A user with the "{role_label}" role already exists. '
+                    f'Deactivate the existing user before creating a new one.'
+                )
+                return redirect('manage_league_admins')
+
+        # Coordinator: unique per assigned discipline
+        if role == UserRole.COORDINATOR and assigned_discipline:
+            if User.objects.filter(role=UserRole.COORDINATOR, assigned_discipline=assigned_discipline, is_active=True).exists():
+                disc_label = dict(COORDINATOR_DISCIPLINE_CHOICES).get(assigned_discipline, assigned_discipline)
+                messages.error(
+                    request,
+                    f'A Coordinator for "{disc_label}" already exists. '
+                    f'Deactivate the existing coordinator first.'
+                )
+                return redirect('manage_league_admins')
+
+        # Scout: unique per assigned discipline (sport + gender)
+        if role == UserRole.SCOUT and assigned_discipline:
+            if User.objects.filter(role=UserRole.SCOUT, assigned_discipline=assigned_discipline, is_active=True).exists():
+                disc_label = dict(SCOUT_DISCIPLINE_CHOICES).get(assigned_discipline, assigned_discipline)
+                messages.error(
+                    request,
+                    f'A Scout for "{disc_label}" already exists. '
+                    f'Deactivate the existing scout first.'
+                )
+                return redirect('manage_league_admins')
 
         try:
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
@@ -621,6 +692,16 @@ def edit_user_roles(request, user_id):
         # Assign discipline for scout / coordinator roles
         update_fields = ['role', 'is_staff']
         if new_role in ('scout', 'coordinator'):
+            if new_role == 'coordinator':
+                valid_codes = {code for code, _ in COORDINATOR_DISCIPLINE_CHOICES}
+                if new_discipline and new_discipline not in valid_codes:
+                    messages.error(request, 'Invalid coordinator sport selection.')
+                    return redirect('edit_user_roles', user_id=user_obj.id)
+            if new_role == 'scout':
+                valid_codes = {code for code, _ in SCOUT_DISCIPLINE_CHOICES}
+                if new_discipline and new_discipline not in valid_codes:
+                    messages.error(request, 'Invalid scout sport/gender selection.')
+                    return redirect('edit_user_roles', user_id=user_obj.id)
             user_obj.assigned_discipline = new_discipline
             update_fields.append('assigned_discipline')
         elif old_role in ('scout', 'coordinator') and new_role not in ('scout', 'coordinator'):
@@ -671,6 +752,7 @@ def edit_user_roles(request, user_id):
         'edit_user': user_obj,
         'role_choices': UserRole.choices,
         'sport_type_choices': COORDINATOR_DISCIPLINE_CHOICES,
+        'scout_sport_type_choices': SCOUT_DISCIPLINE_CHOICES,
         'county_choices': KenyaCounty.choices,
         'subcounty_choices': MakueniSubCounty.choices,
     }

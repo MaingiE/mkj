@@ -96,6 +96,25 @@
                                 {{ field.label }}
                             </label>
                             {{ field }}
+                            <div style="margin-top:.55rem;display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="startCameraCapture('{{ field.id_for_label }}')" style="padding:.35rem .8rem;">
+                                    <i class="bi bi-camera"></i> Capture with Camera
+                                </button>
+                                <small style="color:#666;font-size:.78rem">You can upload a file or capture a fresh photo.</small>
+                            </div>
+                            <div id="{{ field.id_for_label }}_capture_box" style="display:none;margin-top:.65rem;padding:.6rem;background:#fff;border:1px solid #d6dee5;border-radius:8px;">
+                                <video id="{{ field.id_for_label }}_video" autoplay playsinline muted style="width:100%;max-width:320px;border-radius:8px;background:#111;"></video>
+                                <canvas id="{{ field.id_for_label }}_canvas" style="display:none"></canvas>
+                                <img id="{{ field.id_for_label }}_preview" alt="Captured preview" style="display:none;width:100%;max-width:320px;margin-top:.5rem;border-radius:8px;border:1px solid #d6dee5;">
+                                <div style="display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.6rem;">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="captureFromCamera('{{ field.id_for_label }}')">
+                                        <i class="bi bi-camera-fill"></i> Capture
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="stopCameraCapture('{{ field.id_for_label }}')">
+                                        <i class="bi bi-x-circle"></i> Close Camera
+                                    </button>
+                                </div>
+                            </div>
                             {% if field.help_text %}<small style="color:#888;font-size:.8rem">{{ field.help_text }}</small>{% endif %}
                             {% for error in field.errors %}<div style="color:#C62828;font-size:.85rem;margin-top:.2rem">{{ error }}</div>{% endfor %}
                         </div>
@@ -294,5 +313,83 @@ function escapeHtml(text) {
     d.textContent = text;
     return d.innerHTML;
 }
+
+const activeCaptureStreams = {};
+
+function startCameraCapture(fieldId) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Camera capture is not supported on this device/browser. Please upload a file instead.');
+        return;
+    }
+
+    const box = document.getElementById(fieldId + '_capture_box');
+    const video = document.getElementById(fieldId + '_video');
+    const preview = document.getElementById(fieldId + '_preview');
+    if (!box || !video) return;
+
+    stopCameraCapture(fieldId);
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(stream => {
+            activeCaptureStreams[fieldId] = stream;
+            video.srcObject = stream;
+            box.style.display = 'block';
+            preview.style.display = 'none';
+            preview.src = '';
+        })
+        .catch(() => {
+            alert('Unable to access camera. Please allow camera permission or upload a file.');
+        });
+}
+
+function captureFromCamera(fieldId) {
+    const input = document.getElementById(fieldId);
+    const video = document.getElementById(fieldId + '_video');
+    const canvas = document.getElementById(fieldId + '_canvas');
+    const preview = document.getElementById(fieldId + '_preview');
+    if (!input || !video || !canvas || !video.videoWidth) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(function(blob) {
+        if (!blob) return;
+        const filename = fieldId + '-capture-' + Date.now() + '.jpg';
+        const file = new File([blob], filename, { type: 'image/jpeg' });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+
+        stopCameraCapture(fieldId);
+    }, 'image/jpeg', 0.92);
+}
+
+function stopCameraCapture(fieldId) {
+    const stream = activeCaptureStreams[fieldId];
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        delete activeCaptureStreams[fieldId];
+    }
+    const video = document.getElementById(fieldId + '_video');
+    if (video) video.srcObject = null;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    ['id_photo', 'id_id_document', 'id_birth_certificate'].forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.setAttribute('accept', 'image/*');
+            input.setAttribute('capture', 'environment');
+        }
+    });
+});
+
+window.addEventListener('beforeunload', function() {
+    Object.keys(activeCaptureStreams).forEach(stopCameraCapture);
+});
 </script>
 {% endblock %}

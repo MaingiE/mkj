@@ -40,10 +40,8 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Venue</label>
-                    <select name="venue_id" class="form-select">
-                        <option value="">— None —</option>
-                        {% for v in venues %}<option value="{{ v.pk }}" {% if fixture.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>{% endfor %}
-                    </select>
+                    <input type="text" name="venue_name" class="form-control" placeholder="Type venue name" value="{{ fixture.venue.name|default:'' }}" list="venue-list">
+                    <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
                 </div>
             </div>
             <div class="row g-3 mb-3">
@@ -73,14 +71,14 @@
                 <div class="col-md-6">
                     <label class="form-label">Home Team</label>
                     <select name="home_team_id" class="form-select">
-                        <option value="">— TBA —</option>
+                        <option value="">TBA</option>
                         {% for t in teams %}<option value="{{ t.pk }}" {% if fixture.home_team_id == t.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Away Team</label>
                     <select name="away_team_id" class="form-select">
-                        <option value="">— TBA —</option>
+                        <option value="">TBA</option>
                         {% for t in teams %}<option value="{{ t.pk }}" {% if fixture.away_team_id == t.pk %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
                     </select>
                 </div>

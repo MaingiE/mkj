@@ -46,6 +46,10 @@ class RefereeProfile(models.Model):
         default=RefereeType.REFEREE,
         help_text="Whether this official is a Referee or Assistant Referee",
     )
+    discipline      = models.CharField(
+        max_length=30, blank=True, default="",
+        help_text="Sport discipline family e.g. football, volleyball, basketball, handball",
+    )
     bio            = models.TextField(blank=True)
     years_experience = models.PositiveIntegerField(default=0)
 

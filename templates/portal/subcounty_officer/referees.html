@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Referees — {{ user_sub_county }} — MKJ SUPA CUP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ref-card { background:#fff; border-radius:12px; padding:1rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:.75rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; }
+    .ref-card h4 { font-size:.95rem; font-weight:600; margin:0; }
+    .ref-card .meta { font-size:.8rem; color:#757575; }
+    .disc-badge { font-size:.72rem; font-weight:600; padding:.15rem .5rem; border-radius:6px; display:inline-block; }
+    .disc-soccer { background:#E8F5E9; color:#2E7D32; }
+    .disc-volleyball { background:#E3F2FD; color:#1565C0; }
+    .disc-basketball { background:#FFF3E0; color:#E65100; }
+    .disc-handball { background:#FCE4EC; color:#C62828; }
+    .tally-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
+    .tally-card { background:#fff; border-radius:10px; padding:.75rem 1rem; box-shadow:0 2px 6px rgba(0,0,0,.05); text-align:center; }
+    .tally-card .count { font-size:1.5rem; font-weight:700; color:#00695C; }
+    .tally-card .label { font-size:.78rem; color:#757575; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'subcounty_officer_dashboard' %}">Dashboard</a>
+        <span>Referees</span>
+    </div>
+    <h1><i class="bi bi-flag"></i> Referees — {{ user_sub_county }}</h1>
+    <p>Add match officials per discipline. Credentials are sent to their email and they appear in the coordinator's portal.</p>
+</div>
+
+<!-- Tally per discipline -->
+<div class="tally-grid">
+    {% for code, info in discipline_counts.items %}
+    <div class="tally-card">
+        <div class="count">{{ info.count }}</div>
+        <div class="label">{{ info.label }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Referee -->
+<div class="card mb-3" style="border-left:4px solid #1565C0;">
+    <div class="card-header" style="background:#E3F2FD;">
+        <h3 style="margin:0;font-size:1rem;color:#1565C0;"><i class="bi bi-person-plus"></i> Add Referee</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_referee">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;">
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">First Name <span style="color:#e53935;">*</span></label>
+                    <input type="text" name="first_name" class="form-control form-control-sm" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Last Name <span style="color:#e53935;">*</span></label>
+                    <input type="text" name="last_name" class="form-control form-control-sm" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Email <span style="color:#e53935;">*</span></label>
+                    <input type="email" name="email" class="form-control form-control-sm" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Phone</label>
+                    <input type="text" name="phone" class="form-control form-control-sm" placeholder="07xxxxxxxx">
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Discipline <span style="color:#e53935;">*</span></label>
+                    <select name="discipline" class="form-select form-select-sm" required>
+                        <option value="">Select discipline</option>
+                        {% for code, label in discipline_choices %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Level</label>
+                    <select name="level" class="form-select form-select-sm">
+                        {% for lv in levels %}<option value="{{ lv.0 }}">{{ lv.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Type</label>
+                    <select name="referee_type" class="form-select form-select-sm">
+                        {% for rt in referee_types %}<option value="{{ rt.0 }}">{{ rt.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary mt-2"><i class="bi bi-plus-circle"></i> Add Referee</button>
+        </form>
+    </div>
+</div>
+
+<!-- Referees list grouped by discipline -->
+{% for code, label in discipline_choices %}
+{% with disc_refs=my_referees|dictsortreversed:"discipline" %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 style="margin:0;font-size:1rem;">
+            <span class="disc-badge disc-{{ label|lower }}">{{ label }}</span>
+            Referees
+        </h3>
+    </div>
+    <div class="card-body">
+        {% for ref in my_referees %}
+        {% if ref.discipline == code %}
+        <div class="ref-card">
+            <div>
+                <h4>{{ ref.user.get_full_name }}</h4>
+                <div class="meta">
+                    {{ ref.user.email }} &middot;
+                    Level: {{ ref.get_level_display }} &middot;
+                    Type: {{ ref.get_referee_type_display }}
+                </div>
+            </div>
+            <span class="disc-badge disc-{{ label|lower }}">{{ label }}</span>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% if not discipline_counts|dictsort:code %}
+        {% endif %}
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+
+{% endblock %}

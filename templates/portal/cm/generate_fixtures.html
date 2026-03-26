@@ -151,13 +151,13 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="venue_id">Default Venue (optional)</label>
-                <select name="venue_id" id="venue_id">
-                    <option value="">-- No default venue --</option>
+                <label for="venue_name">Default Venue (optional)</label>
+                <input type="text" name="venue_name" id="venue_name" placeholder="Type venue name" list="venue-list">
+                <datalist id="venue-list">
                     {% for venue in venues %}
-                    <option value="{{ venue.pk }}">{{ venue.name }} ({{ venue.county }})</option>
+                    <option value="{{ venue.name }}">
                     {% endfor %}
-                </select>
+                </datalist>
                 <div class="help">Applied to all generated fixtures. Can be overridden per-fixture.</div>
             </div>
             <div class="form-group">

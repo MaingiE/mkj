@@ -92,6 +92,7 @@
 {% if fixtures %}
 <form method="post">
     {% csrf_token %}
+    <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
     <div class="alloc-card">
         <div class="table-responsive">
         <table class="alloc-table">
@@ -124,12 +125,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <select name="venue_{{ f.pk }}">
-                            <option value="">-- No venue --</option>
-                            {% for v in venues %}
-                            <option value="{{ v.pk }}" {% if f.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>
-                            {% endfor %}
-                        </select>
+                        <input type="text" name="venue_{{ f.pk }}" placeholder="Type venue name" value="{{ f.venue.name|default:'' }}" list="venue-list">
                     </td>
                 </tr>
                 {% endfor %}

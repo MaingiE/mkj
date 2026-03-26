@@ -38,10 +38,8 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Default Venue</label>
-                    <select name="venue_id" class="form-select">
-                        <option value="">— No default —</option>
-                        {% for v in venues %}<option value="{{ v.pk }}">{{ v.name }} ({{ v.county }})</option>{% endfor %}
-                    </select>
+                    <input type="text" name="venue_name" class="form-control" placeholder="Type venue name" list="venue-list">
+                    <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
                 </div>
             </div>
             <div class="row g-3 mb-3">

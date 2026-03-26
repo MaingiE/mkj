@@ -11,7 +11,58 @@
 {% endblock %}
 
 {% block content %}
-<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-flag"></i> Referees ({{ stats.total }})</h2>
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-flag"></i> Referees{% if discipline_label %} &mdash; {{ discipline_label }}{% endif %} ({{ stats.total }})</h2>
+
+<!-- Add Referee -->
+<div class="card mb-3" style="border-left:4px solid #1565C0;">
+    <div class="card-header" style="background:#E3F2FD;">
+        <h3 style="margin:0;font-size:1rem;color:#1565C0;"><i class="bi bi-person-plus"></i> Add Referee</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_referee">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;">
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">First Name <span style="color:#e53935;">*</span></label>
+                    <input type="text" name="first_name" class="form-control form-control-sm" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Last Name <span style="color:#e53935;">*</span></label>
+                    <input type="text" name="last_name" class="form-control form-control-sm" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Email <span style="color:#e53935;">*</span></label>
+                    <input type="email" name="email" class="form-control form-control-sm" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Phone</label>
+                    <input type="text" name="phone" class="form-control form-control-sm" placeholder="07xxxxxxxx">
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Sub-County <span style="color:#e53935;">*</span></label>
+                    <select name="sub_county" class="form-select form-select-sm" required>
+                        <option value="">Select</option>
+                        {% for sc in sub_counties %}<option value="{{ sc.0 }}">{{ sc.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Level</label>
+                    <select name="level" class="form-select form-select-sm">
+                        {% for lv in levels %}<option value="{{ lv.0 }}">{{ lv.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">Type</label>
+                    <select name="referee_type" class="form-select form-select-sm">
+                        {% for rt in referee_types %}<option value="{{ rt.0 }}">{{ rt.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary mt-2"><i class="bi bi-plus-circle"></i> Add Referee</button>
+        </form>
+    </div>
+</div>
 
 <!-- Pending Approvals -->
 {% if pending %}
@@ -27,8 +78,9 @@
                 <div class="meta">
                     {{ ref.user.email }} &middot;
                     Level: {{ ref.get_level_display }} &middot;
-                    County: {{ ref.county }} &middot;
-                    License: {{ ref.license_number|default:"—" }}
+                    Sub-County: {{ ref.county }} &middot;
+                    License: {{ ref.license_number|default:"N/A" }}
+                    {% if ref.approved_by %}&middot; Added by: {{ ref.approved_by.get_full_name }}{% endif %}
                 </div>
             </div>
             <div style="display:flex;gap:.35rem;">
@@ -54,9 +106,10 @@
                 <div class="meta">
                     {{ ref.user.email }} &middot;
                     Level: {{ ref.get_level_display }} &middot;
-                    County: {{ ref.county }} &middot;
+                    Sub-County: {{ ref.county }} &middot;
                     Matches: {{ ref.total_matches }} &middot;
                     Rating: {{ ref.avg_rating|floatformat:1 }}
+                    {% if ref.approved_by %}&middot; Added by: {{ ref.approved_by.get_full_name }}{% endif %}
                 </div>
             </div>
             <span class="status-badge" style="background:#E8F5E9;color:#1565C0;">Approved</span>

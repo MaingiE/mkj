@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Discipline Coordinator Dashboard &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Soccer Coordinator Dashboard &mdash; MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
     .dc-hero {
         background: linear-gradient(135deg, #00695C 0%, #00897B 50%, #26A69A 100%);
-        border-radius: 16px;
-        padding: clamp(1.2rem, 3vw, 2rem) clamp(1.25rem, 4vw, 2.5rem);
+        border-radius: 12px;
+        padding: .75rem 1.25rem;
         color: #fff;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         position: relative;
         overflow: hidden;
     }
@@ -19,41 +19,41 @@
         position: absolute;
         top: -50%;
         right: -10%;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%);
         border-radius: 50%;
     }
-    .dc-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
-    .dc-hero p { opacity: .85; font-size: .95rem; position: relative; }
+    .dc-hero h1 { font-size: 1rem; font-weight: 700; margin-bottom: 0; position: relative; }
+    .dc-hero p { opacity: .85; font-size: .75rem; position: relative; margin: 0; }
     .dc-hero .hero-badge {
         display: inline-block;
         background: rgba(255,255,255,.15);
         border: 1px solid rgba(255,255,255,.25);
-        padding: .2rem .8rem;
+        padding: .1rem .5rem;
         border-radius: 20px;
-        font-size: .75rem;
+        font-size: .6rem;
         letter-spacing: .5px;
         text-transform: uppercase;
-        margin-bottom: .5rem;
+        margin-bottom: .2rem;
     }
     .stat-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: .4rem;
+        margin-bottom: 1rem;
     }
     .dc-stat {
         background: #fff;
-        border-radius: 12px;
-        padding: 1.1rem 1.25rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,.06);
-        border-left: 4px solid transparent;
-        transition: all .25s ease;
+        border-radius: 8px;
+        padding: .45rem .65rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        border-left: 3px solid transparent;
+        transition: all .2s ease;
     }
-    .dc-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
-    .dc-stat .num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
-    .dc-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; }
+    .dc-stat:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+    .dc-stat .num { font-size: 1rem; font-weight: 800; line-height: 1.1; }
+    .dc-stat .lbl { font-size: .62rem; color: #757575; font-weight: 500; }
     .dc-stat.teal   { border-left-color: #00695C; }
     .dc-stat.teal .num { color: #00695C; }
     .dc-stat.green  { border-left-color: #1565C0; }
@@ -69,61 +69,61 @@
 
     .actions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: .5rem;
+        margin-bottom: 1rem;
     }
     .action-tile {
         background: #fff;
-        border-radius: 12px;
-        padding: 1.25rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        border-radius: 8px;
+        padding: .65rem .8rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
         text-decoration: none;
         color: #212121;
-        transition: all .25s ease;
+        transition: all .2s ease;
         display: flex;
         align-items: flex-start;
-        gap: 1rem;
+        gap: .6rem;
         border: 1px solid transparent;
     }
     .action-tile:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0,0,0,.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
         border-color: #00695C;
         color: #00695C;
     }
     .action-tile .tile-icon {
-        width: 44px; height: 44px; border-radius: 10px;
+        width: 32px; height: 32px; border-radius: 7px;
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.3rem; flex-shrink: 0;
+        font-size: 1rem; flex-shrink: 0;
     }
-    .action-tile .tile-text h4 { font-size: .9rem; font-weight: 600; margin-bottom: .15rem; }
-    .action-tile .tile-text p { font-size: .78rem; color: #757575; margin: 0; line-height: 1.35; }
+    .action-tile .tile-text h4 { font-size: .78rem; font-weight: 600; margin-bottom: 0; }
+    .action-tile .tile-text p { font-size: .68rem; color: #757575; margin: 0; line-height: 1.3; }
     .action-tile .tile-badge {
         background: #C62828;
         color: #fff;
-        font-size: .7rem;
+        font-size: .62rem;
         font-weight: 700;
-        padding: .1rem .45rem;
+        padding: .05rem .4rem;
         border-radius: 10px;
-        margin-left: .4rem;
+        margin-left: .3rem;
     }
 
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .recent-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: .65rem 0;
+        padding: .5rem 0;
         border-bottom: 1px solid #f0f0f0;
     }
     .recent-item:last-child { border-bottom: none; }
-    .recent-item .ri-main { font-weight: 600; font-size: .88rem; }
-    .recent-item .ri-sub { font-size: .78rem; color: #999; }
+    .recent-item .ri-main { font-weight: 600; font-size: .82rem; }
+    .recent-item .ri-sub { font-size: .72rem; color: #999; }
     .ri-badge {
-        font-size: .75rem;
+        font-size: .7rem;
         font-weight: 600;
-        padding: .2rem .6rem;
+        padding: .15rem .5rem;
         border-radius: 6px;
         white-space: nowrap;
     }
@@ -131,6 +131,13 @@
     @media (max-width: 768px) {
         .two-col { grid-template-columns: 1fr; }
         .actions-grid { grid-template-columns: 1fr; }
+        .stat-row { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .stat-row { grid-template-columns: repeat(2, 1fr); }
+        .stat-card .stat-value { font-size: .9rem; }
+        .dc-hero h1 { font-size: .9rem; }
+        .dc-hero p { font-size: .7rem; }
     }
 </style>
 {% endblock %}
@@ -138,9 +145,9 @@
 {% block content %}
 <!-- Hero -->
 <div class="dc-hero">
-    <span class="hero-badge">Discipline Coordinator</span>
-    <h1><i class="bi bi-clipboard2-pulse"></i> {{ discipline_label }} Coordinator: {{ coordinator_name }}</h1>
-    <p>Manage competitions, fixtures, pools, referees, match reports and statistics for your discipline</p>
+    <span class="hero-badge">Soccer Coordinator Portal</span>
+    <h1><i class="bi bi-clipboard2-pulse"></i> Soccer Coordinator: {{ coordinator_name }}</h1>
+    <p>Manage soccer competitions, fixtures, pools, referees, match reports and statistics.</p>
 </div>
 
 <!-- Stats -->
@@ -183,18 +190,55 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="card" style="margin-bottom:2rem;">
-    <div class="card-header" style="background:linear-gradient(135deg,#00695C,#00897B);color:#fff;">
-        <h3 style="color:#fff;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+<!-- Quick Discipline Pool Allocation -->
+{% if all_competitions %}
+<div class="card" style="margin-bottom:1rem;border-left:3px solid #00695C;">
+    <div class="card-header" style="background:#E0F2F1;padding:.55rem 1rem;">
+        <h3 style="color:#00695C;font-size:.88rem;margin:0;"><i class="bi bi-grid-3x3-gap"></i> Quick Pool &amp; Fixture Access</h3>
     </div>
-    <div class="card-body">
+    <div class="card-body" style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.7rem 1rem;">
+        <div style="flex:1;min-width:220px;">
+            <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem;">Select Soccer Competition</label>
+            <select id="quickCompSelect" class="form-select form-select-sm" style="max-width:360px;">
+                <option value="">Select competition</option>
+                {% for comp in all_competitions %}
+                <option value="{{ comp.pk }}" data-pool="{% url 'coordinator_manage_pools' pk=comp.pk %}" data-manage="{% url 'coordinator_competition_manage' pk=comp.pk %}" data-create="{% url 'coordinator_create_fixture' pk=comp.pk %}">
+                    {{ comp.get_sport_type_display }} ({{ comp.get_status_display }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;">
+            <button class="btn btn-sm btn-primary" onclick="goQuick('pool')" style="margin-top:auto;"><i class="bi bi-grid-3x3-gap"></i> Allocate Pools</button>
+            <button class="btn btn-sm btn-outline-primary" onclick="goQuick('create')" style="margin-top:auto;"><i class="bi bi-plus-lg"></i> Create Match</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="goQuick('manage')" style="margin-top:auto;"><i class="bi bi-gear"></i> Manage</button>
+        </div>
+    </div>
+</div>
+<script>
+function goQuick(type) {
+    const sel = document.getElementById('quickCompSelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt.value) { alert('Please select a competition first.'); return; }
+    if (type === 'pool') window.location = opt.dataset.pool;
+    else if (type === 'create') window.location = opt.dataset.create;
+    else window.location = opt.dataset.manage;
+}
+</script>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header" style="background:linear-gradient(135deg,#00695C,#00897B);color:#fff;padding:.55rem 1rem;">
+        <h3 style="color:#fff;font-size:.88rem;margin:0;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+    </div>
+    <div class="card-body" style="padding:.75rem 1rem;">
         <div class="actions-grid">
             <a href="{% url 'coordinator_competitions' %}" class="action-tile">
                 <div class="tile-icon" style="background:#E0F2F1;color:#00695C;"><i class="bi bi-trophy"></i></div>
                 <div class="tile-text">
-                    <h4>My Competitions</h4>
-                    <p>View &amp; manage your discipline competitions</p>
+                    <h4>Soccer Competitions</h4>
+                    <p>View and manage all soccer competitions</p>
                 </div>
             </a>
             <a href="{% url 'coordinator_appointments' %}" class="action-tile">
@@ -310,7 +354,7 @@
 
 <!-- Recent Results -->
 {% if recent_results %}
-<div class="card" style="margin-top:1.5rem;">
+<div class="card" style="margin-top:1rem;">
     <div class="card-header">
         <h3><i class="bi bi-bar-chart-line"></i> Recent Results</h3>
     </div>

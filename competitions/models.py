@@ -149,7 +149,7 @@ class Venue(models.Model):
     longitude  = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     class Meta:
-        ordering = ["county", "name"]
+        ordering = ["name"]
 
     def __str__(self):
         return f"{self.name}, {self.county}"

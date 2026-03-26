@@ -61,7 +61,7 @@ def validate_national_id_or_raise(raw_id: str, label: str = 'ID number') -> str:
 
 class UserRole(models.TextChoices):
     COMPETITION_MANAGER = "competition_manager", "Organising Secretary"
-    COORDINATOR         = "coordinator",         "Discipline Coordinator"
+    COORDINATOR         = "coordinator",         "Soccer Coordinator"
     VERIFICATION_OFFICER = "verification_officer", "Verification Officer"
     REFEREE             = "referee",             "Referee"
     TEAM_MANAGER        = "team_manager",        "Team Manager"

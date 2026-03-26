@@ -109,13 +109,9 @@
         </div>
 
         <div class="form-group">
-            <label for="venue_id">Venue</label>
-            <select name="venue_id" id="venue_id">
-                <option value="">-- No venue --</option>
-                {% for v in venues %}
-                <option value="{{ v.pk }}" {% if fixture.venue_id == v.pk %}selected{% endif %}>{{ v.name }} ({{ v.county }})</option>
-                {% endfor %}
-            </select>
+            <label for="venue_name">Venue</label>
+            <input type="text" name="venue_name" id="venue_name" placeholder="Type venue name" value="{{ fixture.venue.name|default:'' }}" list="venue-list">
+            <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
         </div>
 
         <div class="form-group">

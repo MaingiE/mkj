@@ -162,15 +162,21 @@
 
                 <!-- Discipline assignment for Scout / Coordinator -->
                 <div id="discipline-section" style="display:none;margin-bottom:1.25rem;padding:1rem;background:#F5F5F5;border-radius:10px;border:1px solid #E0E0E0;">
-                    <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:.5rem;">
+                    <label id="discipline-label" style="font-weight:600;font-size:.9rem;display:block;margin-bottom:.5rem;">
                         <i class="bi bi-bullseye"></i> Assigned Discipline
                     </label>
-                    <p style="color:#757575;font-size:.82rem;margin-bottom:.6rem;">
-                        Scouts and Coordinators are scoped to a sport family and will cover both men and women in that discipline.
+                    <p id="discipline-hint" style="color:#757575;font-size:.82rem;margin-bottom:.6rem;">
+                        Coordinators are scoped to a sport family and cover both men and women.
                     </p>
-                    <select name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
+                    <select id="coordinator-discipline-select" name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;display:none;" disabled>
                         <option value="">— Not Assigned —</option>
                         {% for val, label in sport_type_choices %}
+                        <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="scout-discipline-select" name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;display:none;" disabled>
+                        <option value="">— Not Assigned —</option>
+                        {% for val, label in scout_sport_type_choices %}
                         <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
@@ -208,6 +214,10 @@
 function toggleRoleSections() {
     var checked = document.querySelector('input[name="role"]:checked');
     var disciplineSection = document.getElementById('discipline-section');
+    var disciplineLabel = document.getElementById('discipline-label');
+    var disciplineHint = document.getElementById('discipline-hint');
+    var coordinatorSelect = document.getElementById('coordinator-discipline-select');
+    var scoutSelect = document.getElementById('scout-discipline-select');
     var subcountySection = document.getElementById('subcounty-section');
     var value = checked ? checked.value : '';
 
@@ -216,6 +226,33 @@ function toggleRoleSections() {
 
     disciplineSection.style.display = isDisciplineRole ? 'block' : 'none';
     subcountySection.style.display = isSubcountyRole ? 'block' : 'none';
+
+    if (disciplineLabel && disciplineHint && coordinatorSelect && scoutSelect) {
+        if (value === 'coordinator') {
+            disciplineLabel.innerHTML = '<i class="bi bi-bullseye"></i> Coordinator Sport';
+            disciplineHint.textContent = 'Coordinator covers both men and women in one sport family.';
+            coordinatorSelect.style.display = 'block';
+            coordinatorSelect.disabled = false;
+            scoutSelect.style.display = 'none';
+            scoutSelect.disabled = true;
+            scoutSelect.value = '';
+        } else if (value === 'scout') {
+            disciplineLabel.innerHTML = '<i class="bi bi-bullseye"></i> Scout Sport + Gender';
+            disciplineHint.textContent = 'Scout is assigned to one sport discipline and one gender category.';
+            scoutSelect.style.display = 'block';
+            scoutSelect.disabled = false;
+            coordinatorSelect.style.display = 'none';
+            coordinatorSelect.disabled = true;
+            coordinatorSelect.value = '';
+        } else {
+            coordinatorSelect.style.display = 'none';
+            coordinatorSelect.disabled = true;
+            coordinatorSelect.value = '';
+            scoutSelect.style.display = 'none';
+            scoutSelect.disabled = true;
+            scoutSelect.value = '';
+        }
+    }
 }
 document.querySelectorAll('input[name="role"]').forEach(function(r) {
     r.addEventListener('change', toggleRoleSections);

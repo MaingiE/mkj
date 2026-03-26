@@ -54,10 +54,10 @@
 <div class="card mb-3" style="border-left:4px solid #1565C0;">
     <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
         <div>
-            <div style="font-weight:700;margin-bottom:.2rem;">Apply Current County Finals Pooling</div>
-            <div style="font-size:.85rem;color:#666;">Load the agreed 2026 grouping for this competition now. After that, the discipline coordinator can keep managing pools here normally.</div>
+            <div style="font-weight:700;margin-bottom:.2rem;">Apply Sub-County Finals Pooling</div>
+            <div style="font-size:.85rem;color:#666;">Load the agreed 2026 grouping for this competition. The coordinator can adjust pools afterwards.</div>
         </div>
-        <form method="post" onsubmit="return confirm('Replace the current pool setup for this competition with the agreed county-finals grouping? Existing group fixtures will be regenerated.');" style="margin:0;">
+        <form method="post" onsubmit="return confirm('Replace the current pool setup with the agreed sub-county grouping? Existing group fixtures will be regenerated.');" style="margin:0;">
             {% csrf_token %}
             <input type="hidden" name="action" value="apply_preset">
             <button type="submit" class="btn btn-sm btn-primary">Apply Current Pooling</button>
@@ -78,10 +78,8 @@
             </div>
             <div>
                 <label class="form-label" style="font-size:.8rem;">Venue</label>
-                <select name="venue_id" class="form-select form-select-sm">
-                    <option value="">— No venue —</option>
-                    {% for v in venues %}<option value="{{ v.pk }}">{{ v.name }} ({{ v.county }})</option>{% endfor %}
-                </select>
+                <input type="text" name="venue_name" class="form-control form-control-sm" placeholder="Type venue name" list="venue-list">
+                <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
             </div>
             <button type="submit" class="btn btn-sm btn-primary">Create Pool</button>
         </form>

@@ -72,16 +72,20 @@ def role_required(*roles):
 
 def send_credentials_email(user, temporary_password, role_label):
     """Send login credentials to the registrant's email address and print to terminal."""
+    from django.contrib.sites.shortcuts import get_current_site
     subject = f'MKJ SUPA CUP Portal Access - {role_label}'
+    site_url = getattr(django_settings, 'SITE_URL', 'https://mksupacup.go.ke')
     text_content = (
         f'Dear {user.first_name} {user.last_name},\n\n'
-        f'Your MKJ SUPA CUP portal account is ready.\n\n'
+        f'Your MKJ SUPA CUP portal account has been created.\n\n'
         f'Login Email: {user.email}\n'
         f'Temporary Password: {temporary_password}\n'
         f'Role: {role_label}\n\n'
-        f'Login URL: /portal/login/\n\n'
-        f'Please change your password immediately after first login.\n\n'
-        f'MKJ SUPA CUP Administration'
+        f'Login here: {site_url}/portal/login/\n\n'
+        f'You will be required to change your password on first login.\n\n'
+        f'Regards,\n'
+        f'MKJ SUPA CUP Administration\n'
+        f'Makueni County Sports Department'
     )
     print("\n=== NEW USER ACCOUNT EMAIL ===\n" + text_content + "\n============================\n")
     try:
@@ -139,6 +143,47 @@ def _coordinator_variants(discipline):
 def _coordinator_label(discipline):
     normalized = _normalize_coordinator_discipline(discipline)
     return dict(COORDINATOR_DISCIPLINE_CHOICES).get(normalized, normalized or "Not Assigned")
+
+
+def _discipline_variants_for_user(user):
+    """Resolve assigned discipline into sport_type variants based on the user's role.
+
+    Scouts may be assigned a specific sport+gender value (e.g. football_men),
+    while coordinators are assigned a sport family (e.g. football).
+    """
+    raw_value = (getattr(user, 'assigned_discipline', '') or '').strip()
+    if not raw_value:
+        return []
+
+    if user.role == UserRole.SCOUT and raw_value in {choice[0] for choice in SportType.choices}:
+        return [raw_value]
+
+    return _coordinator_variants(raw_value)
+
+
+def _discipline_label_for_user(user):
+    raw_value = (getattr(user, 'assigned_discipline', '') or '').strip()
+    if not raw_value:
+        return "Not Assigned"
+
+    if user.role == UserRole.SCOUT and raw_value in {choice[0] for choice in SportType.choices}:
+        return dict(SportType.choices).get(raw_value, raw_value)
+
+    return _coordinator_label(raw_value)
+
+
+def _resolve_venue_by_name(name_str):
+    """Return a Venue for the given name, creating a new one if needed.
+    Returns None if name_str is blank/empty."""
+    from competitions.models import Venue
+    name_str = (name_str or '').strip()
+    if not name_str:
+        return None
+    venue, _created = Venue.objects.get_or_create(
+        name__iexact=name_str,
+        defaults={'name': name_str, 'county': 'Makueni', 'city': 'Makueni'},
+    )
+    return venue
 
 
 COUNTY_FINAL_POOL_PRESETS = {
@@ -205,45 +250,45 @@ def _apply_county_final_pool_preset(competition, user):
         Team.objects.filter(
             status='registered',
             sport_type=competition.sport_type,
-        ).select_related('county').order_by('county__name', 'name')
+        ).order_by('sub_county', 'name')
     )
     if not teams:
         raise ValueError("No registered teams are available for this competition yet.")
 
     assigned_team_ids = set()
-    assigned_counties = set()
-    missing_counties = []
+    assigned_subcounties = set()
+    missing_subcounties = []
     generated_fixtures = 0
 
     with transaction.atomic():
         Fixture.objects.filter(competition=competition, is_knockout=False).delete()
         Pool.objects.filter(competition=competition).delete()
 
-        for pool_name, counties in preset.items():
+        for pool_name, subcounties in preset.items():
             pool = Pool.objects.create(competition=competition, name=pool_name)
-            for county_name in counties:
+            for sc_name in subcounties:
                 team = next(
                     (
                         candidate for candidate in teams
                         if candidate.pk not in assigned_team_ids
-                        and candidate.county.name.lower() == county_name.lower()
+                        and (candidate.sub_county or '').lower() == sc_name.lower()
                     ),
                     None,
                 )
                 if team is None:
-                    missing_counties.append(county_name)
+                    missing_subcounties.append(sc_name)
                     continue
                 PoolTeam.objects.create(pool=pool, team=team)
                 assigned_team_ids.add(team.pk)
-                assigned_counties.add(county_name)
+                assigned_subcounties.add(sc_name)
 
             generated_fixtures += len(_auto_generate_pool_fixtures(pool, competition, user))
 
     return {
         'pool_count': len(preset),
         'assigned_count': len(assigned_team_ids),
-        'assigned_counties': sorted(assigned_counties),
-        'missing_counties': missing_counties,
+        'assigned_subcounties': sorted(assigned_subcounties),
+        'missing_subcounties': missing_subcounties,
         'generated_fixtures': generated_fixtures,
     }
 
@@ -323,7 +368,7 @@ def _ensure_competition_for_sport_type(sport_type):
 
     today = datetime.date.today()
     comp = Competition.objects.create(
-        name=f"MKJ SUPA CUP {current_year} — {label}",
+        name=f"MKJ SUPA CUP {current_year} {label}",
         sport_type=sport_type,
         gender=gender,
         format_type=CompetitionFormat.GROUP_AND_KNOCKOUT,
@@ -2730,6 +2775,7 @@ def coordinator_dashboard_view(request):
         'coordinator_name': coordinator_name,
         'active_competitions': active,
         'upcoming_competitions': upcoming,
+        'all_competitions': competitions,
         'recent_results': recent_results,
         'pending_reports': pending_reports,
     })
@@ -2840,7 +2886,7 @@ def coordinator_competition_manage_view(request, pk):
         status='registered', sport_type=competition.sport_type,
     ).exclude(
         pk__in=PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
-    ).order_by('county', 'name')
+    ).order_by('sub_county', 'name')
 
     teams_in_comp = Team.objects.filter(pool_memberships__pool__competition=competition).distinct()
 
@@ -2853,7 +2899,7 @@ def coordinator_competition_manage_view(request, pk):
         competition=competition, is_knockout=True
     ).select_related('home_team', 'away_team', 'venue', 'winner').order_by('knockout_round', 'bracket_position')
 
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
 
     pending_reports = MatchReport.objects.filter(
         fixture__competition=competition, status='submitted'
@@ -2891,18 +2937,13 @@ def coordinator_manage_pools_view(request, pk):
 
         if action == 'create_pool':
             pool_name = request.POST.get('pool_name', '').strip()
-            venue_id = request.POST.get('venue_id', '')
+            venue_name = request.POST.get('venue_name', '').strip()
             if not pool_name:
                 messages.error(request, 'Pool name is required.')
             elif Pool.objects.filter(competition=competition, name=pool_name).exists():
                 messages.error(request, f'Pool "{pool_name}" already exists.')
             else:
-                venue = None
-                if venue_id:
-                    try:
-                        venue = Venue.objects.get(pk=venue_id)
-                    except Venue.DoesNotExist:
-                        pass
+                venue = _resolve_venue_by_name(venue_name)
                 Pool.objects.create(competition=competition, name=pool_name, venue=venue)
                 messages.success(request, f'Pool "{pool_name}" created.')
 
@@ -2952,12 +2993,12 @@ def coordinator_manage_pools_view(request, pk):
                 result = _apply_county_final_pool_preset(competition, request.user)
                 messages.success(
                     request,
-                    f"Current county-finals pools applied: {result['pool_count']} pools, "
+                    f"Sub-county pools applied: {result['pool_count']} pools, "
                     f"{result['assigned_count']} teams assigned, {result['generated_fixtures']} fixtures generated."
                 )
-                if result['missing_counties']:
-                    missing = ', '.join(sorted(set(result['missing_counties'])))
-                    messages.warning(request, f'These counties had no registered team to assign yet: {missing}.')
+                if result['missing_subcounties']:
+                    missing = ', '.join(sorted(set(result['missing_subcounties'])))
+                    messages.warning(request, f'These sub-counties had no registered team to assign yet: {missing}.')
             except ValueError as exc:
                 messages.error(request, str(exc))
 
@@ -2967,8 +3008,8 @@ def coordinator_manage_pools_view(request, pk):
     assigned_ids = PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
     eligible_teams = Team.objects.filter(
         status='registered', sport_type=competition.sport_type,
-    ).exclude(pk__in=assigned_ids).order_by('county', 'name')
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    ).exclude(pk__in=assigned_ids).order_by('sub_county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
 
     return render(request, 'portal/coordinator/manage_pools.html', {
         'competition': competition,
@@ -3001,7 +3042,7 @@ def coordinator_generate_fixtures_view(request, pk):
             kickoff_time_str = request.POST.get('kickoff_time', '14:00')
             group_interval = int(request.POST.get('group_interval', 7))
             knockout_interval = int(request.POST.get('knockout_interval', 3))
-            venue_id = request.POST.get('venue_id', '')
+            venue_name = request.POST.get('venue_name', '').strip()
             knockout_teams = request.POST.get('knockout_teams', '')
 
             from datetime import datetime
@@ -3016,12 +3057,7 @@ def coordinator_generate_fixtures_view(request, pk):
             except (ValueError, TypeError):
                 kickoff_time = datetime.strptime('14:00', '%H:%M').time()
 
-            venue = None
-            if venue_id:
-                try:
-                    venue = Venue.objects.get(pk=venue_id)
-                except Venue.DoesNotExist:
-                    pass
+            venue = _resolve_venue_by_name(venue_name)
 
             ko_teams = int(knockout_teams) if knockout_teams else None
 
@@ -3057,7 +3093,7 @@ def coordinator_generate_fixtures_view(request, pk):
             messages.warning(request, f'{count} fixtures deleted.')
             return redirect('coordinator_generate_fixtures', pk=pk)
 
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams')
     total_pool_teams = sum(p.pool_teams.count() for p in pools)
 
@@ -3149,18 +3185,10 @@ def coordinator_allocate_venue_view(request, pk):
         fixtures = Fixture.objects.filter(competition=competition)
         updated = 0
         for fixture in fixtures:
-            venue_id = request.POST.get(f'venue_{fixture.pk}', '')
-            if venue_id:
-                try:
-                    venue = Venue.objects.get(pk=venue_id)
-                    if fixture.venue != venue:
-                        fixture.venue = venue
-                        fixture.save(update_fields=['venue'])
-                        updated += 1
-                except Venue.DoesNotExist:
-                    pass
-            elif fixture.venue:
-                fixture.venue = None
+            venue_name = request.POST.get(f'venue_{fixture.pk}', '').strip()
+            new_venue = _resolve_venue_by_name(venue_name)
+            if fixture.venue != new_venue:
+                fixture.venue = new_venue
                 fixture.save(update_fields=['venue'])
                 updated += 1
         messages.success(request, f'{updated} fixture venue(s) updated.')
@@ -3169,7 +3197,7 @@ def coordinator_allocate_venue_view(request, pk):
     fixtures = Fixture.objects.filter(competition=competition).select_related(
         'home_team', 'away_team', 'venue', 'pool'
     ).order_by('match_date', 'kickoff_time')
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
 
     return render(request, 'portal/coordinator/allocate_venues.html', {
         'competition': competition,
@@ -3206,14 +3234,8 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
             except ValueError:
                 pass
 
-        venue_id = request.POST.get('venue_id', '')
-        if venue_id:
-            try:
-                fixture.venue = Venue.objects.get(pk=venue_id)
-            except Venue.DoesNotExist:
-                pass
-        else:
-            fixture.venue = None
+        venue_name = request.POST.get('venue_name', '').strip()
+        fixture.venue = _resolve_venue_by_name(venue_name)
 
         status = request.POST.get('status', fixture.status)
         if status:
@@ -3293,7 +3315,7 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
         messages.success(request, f'Fixture updated: {fixture}')
         return redirect('coordinator_competition_manage', pk=pk)
 
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
     teams = Team.objects.filter(status='registered').order_by('name')
 
     return render(request, 'portal/coordinator/edit_fixture.html', {
@@ -3303,6 +3325,120 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
         'teams': teams,
         'status_choices': FixtureStatus.choices,
     })
+
+
+@role_required('coordinator', 'admin')
+def coordinator_create_fixture_view(request, pk):
+    """Coordinator: Manually create a fixture for a competition."""
+    from competitions.models import Competition, Pool, Venue, FixtureStatus
+    from datetime import datetime
+
+    competition = get_object_or_404(Competition, pk=pk)
+    discipline = _coordinator_discipline(request.user)
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
+        messages.error(request, 'This competition is not in your discipline.')
+        return redirect('coordinator_dashboard')
+
+    if request.method == 'POST':
+        home_id = request.POST.get('home_team_id', '').strip()
+        away_id = request.POST.get('away_team_id', '').strip()
+        match_date_str = request.POST.get('match_date', '').strip()
+        kickoff_time_str = request.POST.get('kickoff_time', '10:00').strip()
+        venue_name = request.POST.get('venue_name', '').strip()
+        pool_id = request.POST.get('pool_id', '').strip()
+        is_knockout = request.POST.get('is_knockout') == '1'
+        knockout_round = request.POST.get('knockout_round', '').strip()
+
+        errors = []
+        if not home_id or not away_id:
+            errors.append('Both home and away teams are required.')
+        if home_id == away_id:
+            errors.append('Home and away teams must be different.')
+        if not match_date_str:
+            errors.append('Match date is required.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return redirect('coordinator_competition_manage', pk=pk)
+
+        try:
+            match_date = datetime.strptime(match_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Invalid date format.')
+            return redirect('coordinator_competition_manage', pk=pk)
+
+        try:
+            kickoff_time = datetime.strptime(kickoff_time_str, '%H:%M').time()
+        except ValueError:
+            from datetime import time as dt_time
+            kickoff_time = dt_time(10, 0)
+
+        try:
+            home_team = Team.objects.get(pk=home_id)
+            away_team = Team.objects.get(pk=away_id)
+        except Team.DoesNotExist:
+            messages.error(request, 'Team not found.')
+            return redirect('coordinator_competition_manage', pk=pk)
+
+        venue = _resolve_venue_by_name(venue_name)
+
+        pool = None
+        if pool_id:
+            try:
+                pool = Pool.objects.get(pk=pool_id, competition=competition)
+            except Pool.DoesNotExist:
+                pass
+
+        from competitions.models import KnockoutRound as KR
+        fixture = Fixture.objects.create(
+            competition=competition,
+            home_team=home_team,
+            away_team=away_team,
+            match_date=match_date,
+            kickoff_time=kickoff_time,
+            venue=venue,
+            pool=pool,
+            is_knockout=is_knockout,
+            knockout_round=knockout_round if knockout_round else '',
+            status=FixtureStatus.PENDING,
+            created_by=request.user,
+        )
+        messages.success(request, f'Match created: {fixture}')
+        return redirect('coordinator_competition_manage', pk=pk)
+
+    # GET — show form
+    pools = Pool.objects.filter(competition=competition).order_by('name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
+    teams = Team.objects.filter(status='registered', sport_type=competition.sport_type).order_by('name')
+    from competitions.models import KnockoutRound
+
+    return render(request, 'portal/coordinator/create_fixture.html', {
+        'competition': competition,
+        'pools': pools,
+        'venues': venues,
+        'teams': teams,
+        'knockout_rounds': KnockoutRound.choices,
+    })
+
+
+@role_required('coordinator', 'admin')
+@require_POST
+def coordinator_delete_fixture_view(request, pk, fixture_pk):
+    """Coordinator: Manually delete a specific fixture."""
+    from competitions.models import Competition
+
+    competition = get_object_or_404(Competition, pk=pk)
+    discipline = _coordinator_discipline(request.user)
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
+        messages.error(request, 'This competition is not in your discipline.')
+        return redirect('coordinator_dashboard')
+
+    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
+    label = str(fixture)
+    fixture.delete()
+    messages.success(request, f'Match deleted: {label}')
+    return redirect('coordinator_competition_manage', pk=pk)
 
 
 @role_required('coordinator', 'admin')
@@ -3523,13 +3659,74 @@ def coordinator_statistics_view(request, pk):
 
 @role_required('coordinator', 'admin')
 def coordinator_referees_view(request):
-    """Coordinator: View all referees and manage pending approvals."""
-    pending = RefereeProfile.objects.filter(is_approved=False).select_related('user').order_by('-created_at')
-    approved = RefereeProfile.objects.filter(is_approved=True).select_related('user').order_by('user__last_name')
+    """Coordinator: View all referees and manage pending approvals, filtered by discipline."""
+    from accounts.models import MakueniSubCounty
+    from referees.models import RefereeLevel, RefereeType
+
+    discipline = _coordinator_discipline(request.user)
+    ref_qs = RefereeProfile.objects.select_related('user')
+    if discipline and not request.user.is_superuser:
+        ref_qs = ref_qs.filter(discipline=discipline)
+
+    pending = ref_qs.filter(is_approved=False).order_by('-created_at')
+    approved = ref_qs.filter(is_approved=True).order_by('user__last_name')
 
     if request.method == 'POST':
-        profile_id = request.POST.get('profile_id')
         action = request.POST.get('action')
+
+        if action == 'add_referee':
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            sub_county = request.POST.get('sub_county', '').strip()
+            level = request.POST.get('level', 'County')
+            referee_type = request.POST.get('referee_type', 'referee')
+
+            if not first_name or not last_name or not email or not sub_county:
+                messages.error(request, 'First name, last name, email, and sub-county are required.')
+            elif User.objects.filter(email=email).exists():
+                messages.error(request, f'A user with email {email} already exists.')
+            else:
+                username = email.split('@')[0]
+                base_username = username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f'{base_username}{counter}'
+                    counter += 1
+
+                temp_pw = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+                user = User.objects.create_user(
+                    username=username, email=email,
+                    first_name=first_name, last_name=last_name,
+                    password=temp_pw,
+                )
+                user.role = UserRole.REFEREE
+                user.phone = phone
+                user.must_change_password = True
+                user.is_active = True
+                user.save()
+
+                RefereeProfile.objects.create(
+                    user=user,
+                    county=sub_county,
+                    level=level,
+                    referee_type=referee_type,
+                    discipline=discipline or '',
+                    is_approved=True,
+                    approved_by=request.user,
+                    approved_at=timezone.now(),
+                )
+
+                try:
+                    send_credentials_email(user, temp_pw, 'Referee')
+                    messages.success(request, f'Referee {user.get_full_name()} added. Login credentials sent to {email}.')
+                except Exception:
+                    messages.warning(request, f'Referee {user.get_full_name()} added but credential email failed. Temp password: {temp_pw}')
+
+            return redirect('coordinator_referees')
+
+        profile_id = request.POST.get('profile_id')
         profile = get_object_or_404(RefereeProfile, pk=profile_id)
 
         if action == 'approve':
@@ -3565,6 +3762,10 @@ def coordinator_referees_view(request):
             'approved': approved.count(),
             'total': pending.count() + approved.count(),
         },
+        'discipline_label': _coordinator_label(discipline) if discipline else '',
+        'sub_counties': MakueniSubCounty.choices,
+        'levels': RefereeLevel.choices,
+        'referee_types': RefereeType.choices,
     })
 
 
@@ -4295,7 +4496,7 @@ def cm_competition_manage_view(request, pk):
         pk__in=PoolTeam.objects.filter(
             pool__competition=competition
         ).values_list('team_id', flat=True)
-    ).order_by('county', 'name')
+    ).order_by('sub_county', 'name')
 
     # All teams already in this competition
     teams_in_comp = Team.objects.filter(
@@ -4314,7 +4515,7 @@ def cm_competition_manage_view(request, pk):
     )
 
     # Venues
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
 
     # Match reports
     pending_reports = MatchReport.objects.filter(
@@ -4418,7 +4619,7 @@ def cm_manage_pools_view(request, pk):
         status='registered',
         payment_confirmed=True,
         sport_type=competition.sport_type,
-    ).exclude(pk__in=assigned_ids).order_by('county', 'name')
+    ).exclude(pk__in=assigned_ids).order_by('sub_county', 'name')
 
     return render(request, 'portal/cm/manage_pools.html', {
         'competition': competition,
@@ -4446,7 +4647,7 @@ def cm_generate_fixtures_view(request, pk):
             kickoff_time_str = request.POST.get('kickoff_time', '14:00')
             group_interval = int(request.POST.get('group_interval', 7))
             knockout_interval = int(request.POST.get('knockout_interval', 3))
-            venue_id = request.POST.get('venue_id', '')
+            venue_name = request.POST.get('venue_name', '').strip()
             knockout_teams = request.POST.get('knockout_teams', '')
 
             from datetime import datetime
@@ -4461,12 +4662,7 @@ def cm_generate_fixtures_view(request, pk):
             except (ValueError, TypeError):
                 kickoff_time = datetime.strptime('14:00', '%H:%M').time()
 
-            venue = None
-            if venue_id:
-                try:
-                    venue = Venue.objects.get(pk=venue_id)
-                except Venue.DoesNotExist:
-                    pass
+            venue = _resolve_venue_by_name(venue_name)
 
             ko_teams = int(knockout_teams) if knockout_teams else None
 
@@ -4507,7 +4703,7 @@ def cm_generate_fixtures_view(request, pk):
             messages.warning(request, f'{count} fixtures deleted.')
             return redirect('cm_generate_fixtures', pk=pk)
 
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams')
     total_pool_teams = sum(p.pool_teams.count() for p in pools)
 
@@ -4600,18 +4796,10 @@ def cm_allocate_venue_view(request, pk):
         fixtures = Fixture.objects.filter(competition=competition)
         updated = 0
         for fixture in fixtures:
-            venue_id = request.POST.get(f'venue_{fixture.pk}', '')
-            if venue_id:
-                try:
-                    venue = Venue.objects.get(pk=venue_id)
-                    if fixture.venue != venue:
-                        fixture.venue = venue
-                        fixture.save(update_fields=['venue'])
-                        updated += 1
-                except Venue.DoesNotExist:
-                    pass
-            elif fixture.venue:
-                fixture.venue = None
+            venue_name = request.POST.get(f'venue_{fixture.pk}', '').strip()
+            new_venue = _resolve_venue_by_name(venue_name)
+            if fixture.venue != new_venue:
+                fixture.venue = new_venue
                 fixture.save(update_fields=['venue'])
                 updated += 1
 
@@ -4624,7 +4812,7 @@ def cm_allocate_venue_view(request, pk):
         'home_team', 'away_team', 'venue', 'pool'
     ).order_by('match_date', 'kickoff_time')
 
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
 
     return render(request, 'portal/cm/allocate_venues.html', {
         'competition': competition,
@@ -4727,14 +4915,8 @@ def cm_edit_fixture_view(request, pk, fixture_pk):
                 fixture.kickoff_time = datetime.strptime(kickoff, '%H:%M').time()
             except ValueError:
                 pass
-        venue_id = request.POST.get('venue_id', '')
-        if venue_id:
-            try:
-                fixture.venue = Venue.objects.get(pk=venue_id)
-            except Venue.DoesNotExist:
-                pass
-        else:
-            fixture.venue = None
+        venue_name = request.POST.get('venue_name', '').strip()
+        fixture.venue = _resolve_venue_by_name(venue_name)
 
         status = request.POST.get('status', fixture.status)
         if status:
@@ -4759,7 +4941,7 @@ def cm_edit_fixture_view(request, pk, fixture_pk):
         messages.success(request, f'Fixture updated: {fixture}')
         return redirect('cm_competition_manage', pk=pk)
 
-    venues = Venue.objects.filter(is_active=True).order_by('county', 'name')
+    venues = Venue.objects.filter(is_active=True).order_by('name')
     from competitions.models import FixtureStatus
     teams = Team.objects.filter(
         status='registered', payment_confirmed=True
@@ -6237,8 +6419,8 @@ def scout_dashboard_view(request):
 
     user = request.user
     discipline = user.assigned_discipline
-    discipline_label = _coordinator_label(discipline)
-    discipline_variants = _coordinator_variants(discipline)
+    discipline_label = _discipline_label_for_user(user)
+    discipline_variants = _discipline_variants_for_user(user)
     submission = _get_scout_shortlist_submission(user)
 
     shortlist = ScoutShortlist.objects.filter(scout=user).select_related(
@@ -6269,7 +6451,7 @@ def scout_players_view(request):
 
     county_filter = request.GET.get('county', '')
     search_query = request.GET.get('q', '').strip()
-    discipline_variants = _coordinator_variants(request.user.assigned_discipline)
+    discipline_variants = _discipline_variants_for_user(request.user)
     submission = _get_scout_shortlist_submission(request.user)
 
     players = CountyPlayer.objects.filter(
@@ -6302,7 +6484,7 @@ def scout_players_view(request):
         'county_filter': county_filter,
         'search_query': search_query,
         'total': players.count(),
-        'discipline_label': _coordinator_label(request.user.assigned_discipline),
+        'discipline_label': _discipline_label_for_user(request.user),
         'submission': submission,
     })
 
@@ -6326,7 +6508,7 @@ def scout_shortlist_view(request):
         'rating_filter': rating_filter,
         'total': shortlist.count(),
         'submission': submission,
-        'discipline_label': _coordinator_label(request.user.assigned_discipline),
+        'discipline_label': _discipline_label_for_user(request.user),
     })
 
 
@@ -6454,7 +6636,7 @@ def scout_request_shortlist_edit_view(request):
 
     return render(request, 'portal/scout/request_shortlist_edit.html', {
         'submission': submission,
-        'discipline_label': _coordinator_label(request.user.assigned_discipline),
+        'discipline_label': _discipline_label_for_user(request.user),
     })
 
 
@@ -6465,16 +6647,15 @@ def scout_live_matches_view(request):
     """Scout: List fixtures (today/upcoming/past) with squad lists for live scouting."""
     user = request.user
     discipline = user.assigned_discipline
+    discipline_variants = _discipline_variants_for_user(user)
     today = date.today()
     filter_status = request.GET.get('status', 'today')
 
     fixtures_qs = Fixture.objects.select_related(
         'competition', 'home_team', 'away_team', 'venue',
     )
-    if discipline:
-        variants = _coordinator_variants(discipline)
-        if variants:
-            fixtures_qs = fixtures_qs.filter(competition__sport_type__in=variants)
+    if discipline_variants:
+        fixtures_qs = fixtures_qs.filter(competition__sport_type__in=discipline_variants)
 
     if filter_status == 'today':
         fixtures_qs = fixtures_qs.filter(match_date=today)
@@ -6497,7 +6678,7 @@ def scout_live_matches_view(request):
             'away_squad_approved': bool(away_squad),
         })
 
-    discipline_label = _coordinator_label(discipline) if discipline else 'All Disciplines'
+    discipline_label = _discipline_label_for_user(user) if discipline else 'All Disciplines'
 
     return render(request, 'portal/scout/live_matches.html', {
         'fixture_data': fixture_data,
@@ -6948,6 +7129,96 @@ def subcounty_officer_delete_player_view(request, player_pk):
         player.delete()
         messages.success(request, f'{name} removed.')
     return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def subcounty_officer_referees_view(request):
+    """Sub-county officer: Add referees per discipline for their sub-county."""
+    from referees.models import RefereeLevel, RefereeType
+
+    user_sub_county = (request.user.sub_county or '').strip()
+    if not user_sub_county:
+        messages.warning(request, 'Your sub-county is not set. Contact admin.')
+        return redirect('subcounty_officer_dashboard')
+
+    # Referees added by this sub-county
+    my_referees = RefereeProfile.objects.filter(
+        county=user_sub_county,
+    ).select_related('user').order_by('discipline', 'user__last_name')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'add_referee':
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            discipline = request.POST.get('discipline', '').strip()
+            level = request.POST.get('level', 'County')
+            referee_type = request.POST.get('referee_type', 'referee')
+
+            if not first_name or not last_name or not email or not discipline:
+                messages.error(request, 'First name, last name, email, and discipline are required.')
+            elif User.objects.filter(email=email).exists():
+                messages.error(request, f'A user with email {email} already exists.')
+            elif discipline not in dict(COORDINATOR_DISCIPLINE_CHOICES):
+                messages.error(request, 'Invalid discipline selected.')
+            else:
+                username = email.split('@')[0]
+                base_username = username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f'{base_username}{counter}'
+                    counter += 1
+
+                temp_pw = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+                user = User.objects.create_user(
+                    username=username, email=email,
+                    first_name=first_name, last_name=last_name,
+                    password=temp_pw,
+                )
+                user.role = UserRole.REFEREE
+                user.phone = phone
+                user.must_change_password = True
+                user.is_active = True
+                user.save()
+
+                RefereeProfile.objects.create(
+                    user=user,
+                    county=user_sub_county,
+                    level=level,
+                    referee_type=referee_type,
+                    discipline=discipline,
+                    is_approved=True,
+                    approved_by=request.user,
+                    approved_at=timezone.now(),
+                )
+
+                try:
+                    send_credentials_email(user, temp_pw, 'Referee')
+                    messages.success(request, f'Referee {user.get_full_name()} added for {dict(COORDINATOR_DISCIPLINE_CHOICES)[discipline]}. Credentials sent to {email}.')
+                except Exception:
+                    messages.warning(request, f'Referee {user.get_full_name()} added but email failed. Temp password: {temp_pw}')
+
+            return redirect('subcounty_officer_referees')
+
+    # Tally per discipline
+    discipline_counts = {}
+    for d_code, d_label in COORDINATOR_DISCIPLINE_CHOICES:
+        discipline_counts[d_code] = {
+            'label': d_label,
+            'count': my_referees.filter(discipline=d_code).count(),
+        }
+
+    return render(request, 'portal/subcounty_officer/referees.html', {
+        'my_referees': my_referees,
+        'discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
+        'discipline_counts': discipline_counts,
+        'levels': RefereeLevel.choices,
+        'referee_types': RefereeType.choices,
+        'user_sub_county': user_sub_county,
+    })
 
 
 # ══════════════════════════════════════════════════════════════════════════════

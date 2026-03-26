@@ -13,48 +13,49 @@
   </head>
   <body>
     <div class="hero">
-      <div class="logo-row">
-        <img src="/static/img/GOVT.jpeg" alt="Government of Kenya" class="govt" />
-        <img src="/static/img/TINA.jpeg" alt="MKJ SUPA CUP Logo" class="logo main-logo" />
-        <img src="/static/img/Makueni%20logo.png" alt="Makueni County Logo" class="makueni-logo" />
+      <div class="logo-row modern-logos">
+        <img src="/static/img/TINA.jpeg" alt="MKJ TINA Logo" class="logo tina-logo" />
+        <img src="/static/img/Makueni%20logo.png" alt="County Government of Makueni Logo" class="logo makueni-logo" />
       </div>
-      <div class="govt-label">Government of Kenya &nbsp;|&nbsp; Makueni County Government</div>
+      <div class="govt-label">County Government of Makueni &nbsp;|&nbsp; MKJ TINA</div>
       <h1>MKJ SUPA CUP</h1>
       <h2>Governor Mutula Kilonzo Junior Super Cup</h2>
       <div class="desc">The official youth sports championship for Makueni County, empowering the next generation through fair play, unity, and excellence.</div>
       <p>Welcome to the digital home of the MKJ SUPA CUP. Register, manage teams, and follow the action — all in one place.</p>
       <a href="/accounts/login/" class="cta-btn">Login to Portal</a>
     </div>
-          .logo-row {
+          .logo-row.modern-logos {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 1.2rem;
+            gap: 2.5rem;
+            margin-bottom: 1.5rem;
           }
-          .logo-row .govt {
-            width: 70px;
-            height: 70px;
-            border-radius: 16px;
-            object-fit: cover;
-            border: 2px solid #fff;
-            background: #fff;
-          }
-          .logo-row .main-logo {
-            width: 100px;
-            height: 100px;
+          .logo-row .tina-logo {
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid #fff;
+            border: 4px solid #FFD54F;
             background: #fff;
+            box-shadow: 0 2px 12px rgba(21,101,192,.12);
+            transition: transform .2s;
+          }
+          .logo-row .tina-logo:hover {
+            transform: scale(1.07) rotate(-3deg);
           }
           .logo-row .makueni-logo {
-            width: 70px;
-            height: 70px;
+            width: 90px;
+            height: 90px;
             border-radius: 16px;
             object-fit: cover;
-            border: 2px solid #fff;
+            border: 4px solid #FFD54F;
             background: #fff;
+            box-shadow: 0 2px 12px rgba(21,101,192,.12);
+            transition: transform .2s;
+          }
+          .logo-row .makueni-logo:hover {
+            transform: scale(1.07) rotate(3deg);
           }
     <style>
       body {

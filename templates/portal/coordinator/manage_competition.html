@@ -126,11 +126,14 @@
 <!-- Group Fixtures -->
 {% if group_fixtures %}
 <div class="section-card">
-    <div class="card-header"><h3><i class="bi bi-calendar-event"></i> Group Stage Fixtures ({{ group_fixtures|length }})</h3></div>
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3><i class="bi bi-calendar-event"></i> Group Stage Fixtures ({{ group_fixtures|length }})</h3>
+        <a href="{% url 'coordinator_create_fixture' pk=competition.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Create Match</a>
+    </div>
     <div class="card-body">
         <div class="table-responsive" style="overflow-x:auto;">
         <table class="tbl">
-            <thead><tr><th>Date</th><th>Home</th><th>Score</th><th>Away</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Date</th><th>Home</th><th>Score</th><th>Away</th><th>Venue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 {% for fx in group_fixtures %}
                 <tr>
@@ -140,7 +143,13 @@
                     <td>{{ fx.away_team.name }}</td>
                     <td>{{ fx.venue.name|default:"TBA" }}</td>
                     <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>
-                    <td><a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td style="white-space:nowrap;">
+                        <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+                        <form method="post" action="{% url 'coordinator_delete_fixture' pk=competition.pk fixture_pk=fx.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -148,16 +157,27 @@
         </div>
     </div>
 </div>
+{% else %}
+<div class="section-card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3><i class="bi bi-calendar-event"></i> Group Stage Fixtures</h3>
+        <a href="{% url 'coordinator_create_fixture' pk=competition.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Create Match</a>
+    </div>
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;"><i class="bi bi-calendar-x" style="font-size:1.5rem;"></i><p>No group fixtures yet.</p></div>
+</div>
 {% endif %}
 
 <!-- Knockout Fixtures -->
 {% if knockout_fixtures %}
 <div class="section-card">
-    <div class="card-header"><h3><i class="bi bi-trophy"></i> Knockout Fixtures ({{ knockout_fixtures|length }})</h3></div>
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3><i class="bi bi-trophy"></i> Knockout Fixtures ({{ knockout_fixtures|length }})</h3>
+        <a href="{% url 'coordinator_create_fixture' pk=competition.pk %}?knockout=1" class="btn btn-sm btn-warning"><i class="bi bi-plus-lg"></i> Add Knockout Match</a>
+    </div>
     <div class="card-body">
         <div class="table-responsive" style="overflow-x:auto;">
         <table class="tbl">
-            <thead><tr><th>Round</th><th>Home</th><th>Score</th><th>Away</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Round</th><th>Home</th><th>Score</th><th>Away</th><th>Venue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 {% for fx in knockout_fixtures %}
                 <tr>
@@ -167,7 +187,13 @@
                     <td>{{ fx.away_team.name|default:"TBA" }}</td>
                     <td>{{ fx.venue.name|default:"TBA" }}</td>
                     <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>
-                    <td><a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td style="white-space:nowrap;">
+                        <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+                        <form method="post" action="{% url 'coordinator_delete_fixture' pk=competition.pk fixture_pk=fx.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -193,7 +219,7 @@
         <div class="card-body">
             {% if eligible_teams %}
                 {% for team in eligible_teams|slice:":10" %}
-                <div style="padding:.35rem 0;font-size:.85rem;border-bottom:1px solid #f0f0f0;">{{ team.name }} <span style="color:#999;">{{ team.county }}</span></div>
+                <div style="padding:.35rem 0;font-size:.85rem;border-bottom:1px solid #f0f0f0;">{{ team.name }} <span style="color:#999;">{{ team.sub_county }}</span></div>
                 {% endfor %}
                 {% if eligible_teams|length > 10 %}<div style="font-size:.8rem;color:#999;margin-top:.5rem;">+{{ eligible_teams.count|add:"-10" }} more…</div>{% endif %}
             {% else %}

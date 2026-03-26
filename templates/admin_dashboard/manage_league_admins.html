@@ -581,10 +581,16 @@
                     </select>
                 </div>
                 <div id="create-discipline-wrap" style="display:none;">
-                    <label>Coordinator Sport <span class="req">*</span></label>
-                    <select name="assigned_discipline" class="form-control">
-                        <option value="">Select Sport...</option>
+                    <label id="create-discipline-label">Coordinator Sport <span class="req">*</span></label>
+                    <select id="create-coordinator-discipline" name="assigned_discipline" class="form-control" style="display:none;" disabled>
+                        <option value="">Select Coordinator Sport...</option>
                         {% for value, label in coordinator_discipline_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="create-scout-discipline" name="assigned_discipline" class="form-control" style="display:none;" disabled>
+                        <option value="">Select Scout Sport + Gender...</option>
+                        {% for value, label in scout_discipline_choices %}
                         <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
@@ -883,6 +889,9 @@
     function toggleCreateRoleFields() {
         const role = document.getElementById('create-role');
         const disciplineWrap = document.getElementById('create-discipline-wrap');
+        const disciplineLabel = document.getElementById('create-discipline-label');
+        const coordinatorSelect = document.getElementById('create-coordinator-discipline');
+        const scoutSelect = document.getElementById('create-scout-discipline');
         const subcountyWrap = document.getElementById('create-subcounty-wrap');
         const subcountySelect = subcountyWrap ? subcountyWrap.querySelector('select') : null;
         const value = role ? role.value : '';
@@ -892,6 +901,32 @@
 
         disciplineWrap.style.display = isDisciplineRole ? 'block' : 'none';
         subcountyWrap.style.display = isSubcountyRole ? 'block' : 'none';
+
+        if (disciplineLabel && coordinatorSelect && scoutSelect) {
+            if (value === 'coordinator') {
+                disciplineLabel.innerHTML = 'Coordinator Sport <span class="req">*</span>';
+                coordinatorSelect.style.display = 'block';
+                coordinatorSelect.disabled = false;
+                scoutSelect.style.display = 'none';
+                scoutSelect.disabled = true;
+                scoutSelect.value = '';
+            } else if (value === 'scout') {
+                disciplineLabel.innerHTML = 'Scout Sport + Gender <span class="req">*</span>';
+                scoutSelect.style.display = 'block';
+                scoutSelect.disabled = false;
+                coordinatorSelect.style.display = 'none';
+                coordinatorSelect.disabled = true;
+                coordinatorSelect.value = '';
+            } else {
+                disciplineLabel.innerHTML = 'Assigned Sport <span class="req">*</span>';
+                coordinatorSelect.style.display = 'none';
+                coordinatorSelect.disabled = true;
+                coordinatorSelect.value = '';
+                scoutSelect.style.display = 'none';
+                scoutSelect.disabled = true;
+                scoutSelect.value = '';
+            }
+        }
 
         if (subcountySelect) {
             subcountySelect.required = isSubcountyRole;

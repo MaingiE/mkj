@@ -15,86 +15,27 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Site-wide Logos Row -->
-    <div class="site-logos-row">
-        <img src="{% static 'img/GOVT.jpeg' %}" alt="Government of Kenya" class="site-logo site-logo--sm">
-        <img src="{% static 'img/TINA.jpeg' %}" alt="MKJ SUPA CUP Logo" class="site-logo site-logo--main">
-        <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo" class="site-logo site-logo--sm">
-        <span class="site-logos-title">Governor Mutula Kilonzo Jr Super Cup</span>
-    </div>
     {% block body %}
     <!-- Navbar -->
     <nav class="navbar">
-        <div style="display:flex;align-items:center;gap:0">
+        <div class="navbar-left">
             <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Menu"><i class="bi bi-layout-sidebar"></i></button>
             <a href="{% url 'dashboard' %}" class="navbar-brand">
-                <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County Logo">
+                <div class="brand-logos">
+                    <img src="{% static 'img/TINA.jpeg' %}" alt="MKJ TINA" class="brand-logo brand-logo--tina">
+                    <img src="{% static 'img/Makueni logo.png' %}" alt="Makueni County" class="brand-logo brand-logo--county">
+                </div>
                 <span>MKJ SUPA CUP</span>
             </a>
         </div>
-        <button class="nav-toggle" onclick="document.querySelector('.navbar-nav').classList.toggle('show')"><i class="bi bi-list"></i></button>
-        <ul class="navbar-nav">
-            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
-            {% if user.role == 'admin' or user.role == 'competition_manager' %}
-            <li>
-                <a href="{% url 'competitions_list' %}" class="{% if 'competition' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-trophy"></i> Competitions <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
-                <div class="nav-dropdown-menu">
-                    <a href="{% url 'competitions_list' %}"><i class="bi bi-list-ul"></i> All Competitions</a>
-                </div>
-            </li>
-            {% endif %}
-            {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'verification_officer' or user.role == 'team_manager' %}
-            <li>
-                <a href="{% url 'teams_list' %}" class="{% if 'team' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people"></i> Teams <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
-                <div class="nav-dropdown-menu">
-                    <a href="{% url 'teams_list' %}"><i class="bi bi-people"></i> All Teams</a>
-                    {% if user.role == 'admin' or user.role == 'competition_manager' or user.role == 'verification_officer' %}
-                    <a href="{% url 'player_clearance_dashboard' %}"><i class="bi bi-shield-check"></i> Player Clearance</a>
-                    {% endif %}
-                </div>
-            </li>
-            {% endif %}
-
-            {% if user.role == 'treasurer' %}
-            <li><a href="{% url 'treasurer_dashboard' %}" class="{% if 'treasurer' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Treasurer</a></li>
-            {% endif %}
-            {% if user.role == 'team_manager' %}
-            <li><a href="{% url 'team_manager_dashboard' %}" class="{% if 'team_manager' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people"></i> My Team</a></li>
-            {% endif %}
-            {% if user.role == 'subcounty_sports_officer' %}
-            <li><a href="{% url 'subcounty_officer_dashboard' %}" class="{% if 'subcounty_officer' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-geo-alt"></i> My Sub-County</a></li>
-            {% endif %}
-            {% if user.role == 'chief_sports_officer' %}
-            <li><a href="{% url 'cm_dashboard' %}" class="{% if 'cm_' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-shield-shaded"></i> Chief Sports Officer</a></li>
-            {% endif %}
-            {% if user.role == 'director_sports' %}
-            <li><a href="{% url 'director_sports_dashboard' %}" class="{% if 'director_sports' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-shield-shaded"></i> Director Sports</a></li>
-            {% endif %}
-            {% if user.role == 'chief_officer_sports' %}
-            <li><a href="{% url 'chief_officer_sports_dashboard' %}" class="{% if 'chief_officer_sports' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-award"></i> Chief Officer</a></li>
-            {% endif %}
-            {% if user.role == 'admin' or user.role == 'coordinator' or user.role == 'referee' %}
-            <li>
-                <a href="{% url 'referees_list' %}" class="{% if 'referee' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-flag"></i> Referees <i class="bi bi-chevron-down" style="font-size:.6rem;margin-left:.1rem"></i></a>
-                <div class="nav-dropdown-menu">
-                    <a href="{% url 'referees_list' %}"><i class="bi bi-flag"></i> All Referees</a>
-                    {% if user.role == 'admin' or user.role == 'coordinator' %}
-                    {% if user.role == 'coordinator' %}
-                    <a href="{% url 'coordinator_referees' %}"><i class="bi bi-clock"></i> Manage Referees</a>
-                    <a href="{% url 'coordinator_appointments' %}"><i class="bi bi-calendar-event"></i> Appointments</a>
-                    {% else %}
-                    <a href="{% url 'pending_referees' %}"><i class="bi bi-clock"></i> Pending Approval</a>
-                    <a href="{% url 'referee_appointments' %}"><i class="bi bi-calendar-event"></i> Appointments</a>
-                    {% endif %}
-                    {% endif %}
-                </div>
-            </li>
-            {% endif %}
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu"><i class="bi bi-list"></i></button>
+        <ul class="navbar-nav" id="navbarNav">
+            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-house-door"></i> Home</a></li>
             <li><a href="{% url 'matches_list' %}" class="{% if 'match' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-clipboard-data"></i> Matches</a></li>
+            <li><a href="{% url 'home' %}"><i class="bi bi-globe"></i> Public Site</a></li>
         </ul>
         <div class="navbar-user">
-            <a href="{% url 'home' %}" style="color:rgba(255,255,255,.65);font-size:.72rem;margin-right:.25rem;"><i class="bi bi-globe"></i></a>
-            <span class="role-badge">{{ user.get_role_display }}</span>
+            <span class="role-badge">{% if user.role == 'coordinator' and user.assigned_discipline == 'football' %}Soccer Coordinator{% else %}{{ user.get_role_display }}{% endif %}</span>
             <span style="font-size:.82rem">{{ user.first_name }}</span>
             <form method="post" action="{% url 'web_logout' %}" style="display:inline;">
                 {% csrf_token %}
