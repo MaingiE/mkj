@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var pubNavLinks = document.querySelector('.pub-nav-links, .fkf-nav-links');
     if (pubNavToggle && pubNavLinks) {
         pubNavToggle.addEventListener('click', function () {
+            pubNavToggle.classList.toggle('open');
             pubNavLinks.classList.toggle('show');
             pubNavLinks.classList.toggle('open');
         });
@@ -93,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
         pubNavLinks.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function (e) {
                 if (window.innerWidth <= 768 && !e.defaultPrevented) {
+                    pubNavToggle.classList.remove('open');
                     pubNavLinks.classList.remove('show');
                     pubNavLinks.classList.remove('open');
                 }
@@ -229,6 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (pubNavLinks && (pubNavLinks.classList.contains('show') || pubNavLinks.classList.contains('open'))) {
                 pubNavLinks.classList.remove('show');
                 pubNavLinks.classList.remove('open');
+                if (pubNavToggle) pubNavToggle.classList.remove('open');
             }
             if (sidebar && sidebar.classList.contains('open')) {
                 sidebar.classList.remove('open');

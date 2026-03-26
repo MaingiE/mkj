@@ -27,15 +27,15 @@
                 </div>
                 <span>MKJ SUPA CUP</span>
             </a>
+            <ul class="navbar-nav" id="navbarNav">
+                <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-house-door"></i> Home</a></li>
+                <li><a href="{% url 'matches_list' %}" class="{% if 'match' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-clipboard-data"></i> Matches</a></li>
+                <li><a href="{% url 'home' %}"><i class="bi bi-globe"></i> Public Site</a></li>
+            </ul>
         </div>
         <button class="nav-toggle" id="navToggle" aria-label="Open menu"><i class="bi bi-list"></i></button>
-        <ul class="navbar-nav" id="navbarNav">
-            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-house-door"></i> Home</a></li>
-            <li><a href="{% url 'matches_list' %}" class="{% if 'match' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-clipboard-data"></i> Matches</a></li>
-            <li><a href="{% url 'home' %}"><i class="bi bi-globe"></i> Public Site</a></li>
-        </ul>
         <div class="navbar-user">
-            <span class="role-badge">{% if user.role == 'coordinator' and user.assigned_discipline == 'football' %}Soccer Coordinator{% else %}{{ user.get_role_display }}{% endif %}</span>
+            <span class="role-badge">{{ user.get_role_display }}</span>
             <span style="font-size:.82rem">{{ user.first_name }}</span>
             <form method="post" action="{% url 'web_logout' %}" style="display:inline;">
                 {% csrf_token %}
