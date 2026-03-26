@@ -124,16 +124,16 @@
         {% empty %}
         <div class="pool-empty">No teams assigned</div>
         {% endfor %}
-        <!-- Add team -->
-        {% if eligible_teams %}
+        <!-- Add sub-county team -->
+        {% if available_subcounties %}
         <div style="padding:.75rem 1rem;border-top:1px solid #eee;">
             <form method="post" class="d-flex gap-2">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_team">
                 <input type="hidden" name="pool_id" value="{{ pool.pk }}">
-                <select name="team_id" class="form-select form-select-sm" required>
-                    <option value="">Add team…</option>
-                    {% for t in eligible_teams %}<option value="{{ t.pk }}">{{ t.sub_county }}</option>{% endfor %}
+                <select name="sub_county" class="form-select form-select-sm" required>
+                    <option value="">Add sub-county…</option>
+                    {% for sc in available_subcounties %}<option value="{{ sc }}">{{ sc }}</option>{% endfor %}
                 </select>
                 <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
             </form>

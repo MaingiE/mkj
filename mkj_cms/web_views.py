@@ -2925,6 +2925,7 @@ def coordinator_competition_manage_view(request, pk):
 def coordinator_manage_pools_view(request, pk):
     """Coordinator: Create/delete pools and assign/remove teams for their discipline competition."""
     from competitions.models import Competition, Pool, PoolTeam, Venue
+    from accounts.models import MAKUENI_SUBCOUNTY_WARDS
 
     competition = get_object_or_404(Competition, pk=pk)
     discipline = _coordinator_discipline(request.user)
@@ -2959,23 +2960,45 @@ def coordinator_manage_pools_view(request, pk):
 
         elif action == 'add_team':
             pool_id = request.POST.get('pool_id')
-            team_id = request.POST.get('team_id')
+            sub_county = request.POST.get('sub_county', '').strip()
             try:
                 pool = Pool.objects.get(pk=pool_id, competition=competition)
-                team = Team.objects.get(pk=team_id)
-                if team.status != 'registered':
-                    messages.error(request, f'{team.name} is not approved.')
-                elif PoolTeam.objects.filter(pool__competition=competition, team=team).exists():
-                    messages.error(request, f'{team.name} is already in a pool.')
+                if not sub_county or sub_county not in MAKUENI_SUBCOUNTY_WARDS:
+                    messages.error(request, 'Please select a valid sub-county.')
                 else:
-                    PoolTeam.objects.create(pool=pool, team=team)
-                    messages.success(request, f'{team.name} added to {pool.name}.')
-                    # Auto-generate fixtures if pool now has >=2 teams
-                    auto_fixtures = _auto_generate_pool_fixtures(pool, competition, request.user)
-                    if auto_fixtures:
-                        messages.info(request, f'{len(auto_fixtures)} fixtures auto-generated for {pool.name}. You can modify dates/times from the fixtures page.')
-            except (Pool.DoesNotExist, Team.DoesNotExist):
-                messages.error(request, 'Pool or team not found.')
+                    # Get or create the County record for Makueni
+                    from teams.models import County, TeamStatus
+                    makueni_county, _ = County.objects.get_or_create(
+                        name='Makueni', defaults={'code': 'MAK', 'capital': 'Wote'},
+                    )
+                    sport_label = competition.get_sport_type_display()
+                    team_name = f"{sub_county} {sport_label}"
+                    team, _ = Team.objects.get_or_create(
+                        name=team_name,
+                        defaults={
+                            'county': makueni_county,
+                            'sub_county': sub_county,
+                            'sport_type': competition.sport_type,
+                            'competition': competition,
+                            'status': TeamStatus.REGISTERED,
+                            'contact_phone': '+254700000000',
+                        },
+                    )
+                    if PoolTeam.objects.filter(pool__competition=competition, team=team).exists():
+                        messages.error(request, f'{sub_county} is already in a pool.')
+                    else:
+                        # Ensure team is linked to this competition
+                        if team.competition != competition:
+                            team.competition = competition
+                            team.save(update_fields=['competition'])
+                        PoolTeam.objects.create(pool=pool, team=team)
+                        messages.success(request, f'{sub_county} added to {pool.name}.')
+                        # Auto-generate fixtures if pool now has >=2 teams
+                        auto_fixtures = _auto_generate_pool_fixtures(pool, competition, request.user)
+                        if auto_fixtures:
+                            messages.info(request, f'{len(auto_fixtures)} fixtures auto-generated for {pool.name}. You can modify dates/times from the fixtures page.')
+            except Pool.DoesNotExist:
+                messages.error(request, 'Pool not found.')
 
         elif action == 'remove_team':
             pt_id = request.POST.get('pool_team_id')
@@ -3005,16 +3028,22 @@ def coordinator_manage_pools_view(request, pk):
         return redirect('coordinator_manage_pools', pk=competition.pk)
 
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').select_related('venue').order_by('name')
-    assigned_ids = PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
-    eligible_teams = Team.objects.filter(
-        status='registered', sport_type=competition.sport_type,
-    ).exclude(pk__in=assigned_ids).order_by('sub_county', 'name')
+    # Build list of sub-counties already assigned in this competition
+    assigned_subcounties = set(
+        PoolTeam.objects.filter(pool__competition=competition)
+        .values_list('team__sub_county', flat=True)
+    )
+    # Always show all 6 sub-counties minus the ones already assigned
+    available_subcounties = sorted(
+        sc for sc in MAKUENI_SUBCOUNTY_WARDS.keys()
+        if sc not in assigned_subcounties
+    )
     venues = Venue.objects.filter(is_active=True).order_by('name')
 
     return render(request, 'portal/coordinator/manage_pools.html', {
         'competition': competition,
         'pools': pools,
-        'eligible_teams': eligible_teams,
+        'available_subcounties': available_subcounties,
         'venues': venues,
         'pool_preset_available': bool(_get_county_final_pool_preset(competition.sport_type)),
     })
