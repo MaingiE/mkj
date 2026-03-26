@@ -236,7 +236,7 @@ EMAIL_PORT       = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS    = True
 EMAIL_HOST_USER  = env("EMAIL_HOST_USER",     default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <noreply@mksupacup.go.ke>")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
 SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
 
 # ── LOCALISATION ───────────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ IPRS_ENABLED     = env.bool("IPRS_ENABLED", default=True)
 
 # ── SERVER ERROR EMAIL (Django emails ADMINS on 500 errors) ────────────────────
 ADMINS = [tuple(a.split(":")) for a in env.list("ADMINS", default=[])]
-SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+SERVER_EMAIL = env("SERVER_EMAIL", default="info@mkjsupacup.com")
 
 # ── SENTRY ERROR TRACKING ──────────────────────────────────────────────────────
 SENTRY_DSN = env("SENTRY_DSN", default="")
