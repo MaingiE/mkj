@@ -72,30 +72,11 @@ def role_required(*roles):
 
 def send_credentials_email(user, temporary_password, role_label):
     """Send login credentials to the registrant's email address and print to terminal."""
-    from django.contrib.sites.shortcuts import get_current_site
-    subject = f'MKJ SUPA CUP Portal Access - {role_label}'
-    site_url = getattr(django_settings, 'SITE_URL', 'https://mksupacup.go.ke')
-    text_content = (
-        f'Dear {user.first_name} {user.last_name},\n\n'
-        f'Your MKJ SUPA CUP portal account has been created.\n\n'
-        f'Login Email: {user.email}\n'
-        f'Temporary Password: {temporary_password}\n'
-        f'Role: {role_label}\n\n'
-        f'Login here: {site_url}/portal/login/\n\n'
-        f'You will be required to change your password on first login.\n\n'
-        f'Regards,\n'
-        f'MKJ SUPA CUP Administration\n'
-        f'Makueni County Sports Department'
-    )
-    print("\n=== NEW USER ACCOUNT EMAIL ===\n" + text_content + "\n============================\n")
+    # Use the centralized branded notification system
+    from accounts.notifications import notify_account_created
+    print(f"\n=== NEW USER ACCOUNT ===\nEmail: {user.email}\nRole: {role_label}\n========================\n")
     try:
-        email = EmailMultiAlternatives(
-            subject,
-            text_content,
-            getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.go.ke'),
-            [user.email],
-        )
-        email.send(fail_silently=True)
+        notify_account_created(user, temporary_password, role_label)
         logger.info("Credentials email sent to %s (%s)", user.email, role_label)
     except Exception as exc:
         logger.error("Failed to send credentials email to %s: %s", user.email, exc)
@@ -1238,6 +1219,13 @@ def add_player_view(request, team_pk):
                         f'Shirt number #{player.shirt_number} was reserved temporarily and can be updated later by the team manager.'
                     ))
 
+                # ── Notify subcounty officers & verification officers ────
+                try:
+                    from accounts.notifications import notify_new_player
+                    notify_new_player(player, team)
+                except Exception:
+                    pass
+
                 action = request.POST.get('action', 'add_more')
                 if action == 'finish':
                     return redirect('team_detail', pk=team.pk)
@@ -1736,6 +1724,13 @@ def squad_select_view(request, fixture_pk):
                 SquadPlayer.objects.create(submission=submission, player=p, is_starter=True, shirt_number=p.shirt_number)
             for p in sub_players:
                 SquadPlayer.objects.create(submission=submission, player=p, is_starter=False, shirt_number=p.shirt_number)
+
+            # ── Notify coordinator ───────────────────────────────────────
+            try:
+                from accounts.notifications import notify_squad_submitted
+                notify_squad_submitted(submission)
+            except Exception:
+                pass
 
             messages.success(request, f'✅ Team list submitted for {fixture.home_team} vs {fixture.away_team}.')
             return redirect('matches_list')
@@ -2278,6 +2273,14 @@ def match_report_form_view(request, fixture_pk):
 
         report.save()
 
+        # ── Notify coordinator on submission ─────────────────────────────
+        if action == 'submit':
+            try:
+                from accounts.notifications import notify_match_report_submitted
+                notify_match_report_submitted(report)
+            except Exception:
+                pass
+
         # ── Parse period scores ──
         report.period_scores.all().delete()
         period_count = int(request.POST.get('period_count', 0))
@@ -2704,6 +2707,14 @@ def _auto_generate_pool_fixtures(pool, competition, user):
         round_number += 1
         if round_number % 3 == 0:
             current_date += timedelta(days=7)
+
+    # ── Notify team managers & subcounty officers for all new fixtures ────
+    try:
+        from accounts.notifications import notify_fixture_update
+        for fx in created:
+            notify_fixture_update(fx, action='created')
+    except Exception:
+        pass
 
     return created
 
@@ -3315,6 +3326,15 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
                 return redirect('coordinator_edit_fixture', pk=pk, fixture_pk=fixture_pk)
 
         fixture.save()
+
+        # ── Notify on fixture changes ────────────────────────────────────
+        if score_changed or status_changed:
+            try:
+                from accounts.notifications import notify_fixture_update
+                notify_fixture_update(fixture, action='updated')
+            except Exception:
+                pass
+
         if fixture.pool_id and (score_changed or status_changed):
             recalculate_pool_standings(fixture.pool)
         if score_changed or status_changed:
@@ -3433,6 +3453,14 @@ def coordinator_create_fixture_view(request, pk):
             status=FixtureStatus.PENDING,
             created_by=request.user,
         )
+
+        # ── Notify team managers & subcounty officers ────────────────────
+        try:
+            from accounts.notifications import notify_fixture_update
+            notify_fixture_update(fixture, action='created')
+        except Exception:
+            pass
+
         messages.success(request, f'Match created: {fixture}')
         return redirect('coordinator_competition_manage', pk=pk)
 
@@ -5626,6 +5654,13 @@ def team_manager_match_squad_view(request, fixture_pk):
                 p = Player.objects.get(pk=pid, team=team)
                 SquadPlayer.objects.create(submission=submission, player=p, is_starter=False, shirt_number=p.shirt_number)
 
+            # ── Notify coordinator ───────────────────────────────────────
+            try:
+                from accounts.notifications import notify_squad_submitted
+                notify_squad_submitted(submission)
+            except Exception:
+                pass
+
             messages.success(request, f'Squad submitted for {fixture}.')
             return redirect('team_manager_dashboard')
 
@@ -7130,6 +7165,14 @@ def subcounty_officer_add_player_view(request, discipline_pk):
             player = form.save(commit=False)
             player.discipline = discipline
             player.save()
+
+            # ── Notify verification officers ─────────────────────────────
+            try:
+                from accounts.notifications import notify_new_player
+                notify_new_player(player)
+            except Exception:
+                pass
+
             messages.success(
                 request,
                 f'{player.first_name} {player.last_name} registered '

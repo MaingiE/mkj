@@ -773,6 +773,13 @@ def add_player_action(request):
             
             messages.success(request, f'✅ Player {player.full_name} added successfully!')
             
+            # ── Notify subcounty officers & verification officers ────
+            try:
+                from accounts.notifications import notify_new_player
+                notify_new_player(player, team)
+            except Exception:
+                pass
+
             # Redirect back to add players page (Add & Continue)
             if is_admin:
                 return redirect(f"{reverse('teams:add_players_approved')}?team_id={team.id}")
