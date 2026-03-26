@@ -41,7 +41,7 @@
                         <i class="bi bi-hourglass-split"></i> Pending
                     </span>
                     {% elif p.verification_status == 'verified' %}
-                    <span style="display:inline-flex;align-items:center;gap:.3rem;background:#E8F5E9;color:#2E7D32;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">
+                    <span style="display:inline-flex;align-items:center;gap:.3rem;background:#e8f5ed;color:#2E7D32;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">
                         <i class="bi bi-check-circle-fill"></i> Verified
                     </span>
                     {% elif p.verification_status == 'rejected' %}
@@ -63,10 +63,10 @@
                 <td style="padding:.6rem 1rem">
                     <div style="display:flex;gap:.4rem;align-items:center">
                         {% if p.photo %}
-                        <a href="{{ p.photo.url }}" target="_blank" style="color:#1565C0;font-size:.85rem" title="View photo"><i class="bi bi-image"></i></a>
+                        <a href="{{ p.photo.url }}" target="_blank" style="color:#124491;font-size:.85rem" title="View photo"><i class="bi bi-image"></i></a>
                         {% endif %}
                         {% if p.id_document %}
-                        <a href="{{ p.id_document.url }}" target="_blank" style="color:#1565C0;font-size:.85rem" title="View ID"><i class="bi bi-card-heading"></i></a>
+                        <a href="{{ p.id_document.url }}" target="_blank" style="color:#124491;font-size:.85rem" title="View ID"><i class="bi bi-card-heading"></i></a>
                         {% endif %}
                         {% if p.verification_status != 'verified' %}
                         <form method="post" action="{% url 'subcounty_officer_delete_player' player_pk=p.pk %}" style="margin:0"

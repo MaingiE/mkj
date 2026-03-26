@@ -26,7 +26,7 @@
             <div style="padding:.85rem 1rem;border:1px solid #e5e7eb;border-radius:10px;background:#fafafa;">
                 <div style="font-size:.8rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.04em;">{{ official.role_display }}</div>
                 <div style="font-weight:700;color:#222;margin-top:.2rem;">{{ official.referee_name }}</div>
-                <div style="font-size:.82rem;color:{% if official.status == 'confirmed' %}#1565C0{% elif official.status == 'pending' %}#E65100{% elif official.status == 'declined' %}#C62828{% else %}#777{% endif %};margin-top:.2rem;">
+                <div style="font-size:.82rem;color:{% if official.status == 'confirmed' %}#124491{% elif official.status == 'pending' %}#E65100{% elif official.status == 'declined' %}#C62828{% else %}#777{% endif %};margin-top:.2rem;">
                     {{ official.status|title }}
                 </div>
             </div>
@@ -54,12 +54,12 @@
         <div style="display:flex;justify-content:center;align-items:center;gap:2rem;">
             <div>
                 <div style="font-weight:600;margin-bottom:.3rem;">{{ report.fixture.home_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.home_score }}</div>
+                <div style="font-size:3rem;font-weight:bold;color:#124491;">{{ report.home_score }}</div>
             </div>
             <div style="font-size:2rem;color:#999;">—</div>
             <div>
                 <div style="font-weight:600;margin-bottom:.3rem;">{{ report.fixture.away_team.name }}</div>
-                <div style="font-size:3rem;font-weight:bold;color:#1565C0;">{{ report.away_score }}</div>
+                <div style="font-size:3rem;font-weight:bold;color:#124491;">{{ report.away_score }}</div>
             </div>
         </div>
         {% if sport_cfg.label == 'Volleyball' and report.home_sets is not None %}
@@ -217,7 +217,7 @@
                     🔄 Return for Revision
                 </button>
                 <button type="submit" name="action" value="approve"
-                        style="background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
+                        style="background:#124491;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;"
                         onclick="return confirm('Approve this report? This will finalize the match result and update standings.')">
                     ✅ Approve Report
                 </button>

@@ -10,12 +10,12 @@ document.addEventListener('DOMContentLoaded', function () {
     );
     staggerTargets.forEach(function (el, i) {
         el.style.opacity = '0';
-        el.style.transform = 'translateY(12px)';
-        el.style.transition = 'opacity .35s ease, transform .35s ease';
+        el.style.transform = 'translateY(8px)';
+        el.style.transition = 'opacity .25s ease, transform .25s ease';
         setTimeout(function () {
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
-        }, 60 + i * 55);
+        }, 40 + i * 40);
     });
 
     // ── Auto-dismiss alerts with slide-out ──────────────────────────────

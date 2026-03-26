@@ -72,7 +72,7 @@
                         <td>{{ p.position|default:"—" }}</td>
                         <td>
                             {% if p.pk in shortlisted_ids %}
-                            <span style="background:#E8F5E9;color:#1565C0;padding:.25rem .6rem;border-radius:12px;font-size:.78rem;font-weight:600;">
+                            <span style="background:#e8f5ed;color:#124491;padding:.25rem .6rem;border-radius:12px;font-size:.78rem;font-weight:600;">
                                 ✓ Shortlisted
                             </span>
                             {% elif submission.is_locked %}
@@ -81,7 +81,7 @@
                             <form method="post" action="{% url 'scout_add_to_shortlist' player_pk=p.pk %}" style="display:inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="rating" value="3">
-                                <button type="submit" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.25rem .65rem;font-size:.78rem;">
+                                <button type="submit" class="btn btn-outline btn-sm" style="background:#124491;color:#fff;border-color:#124491;padding:.25rem .65rem;font-size:.78rem;">
                                     <i class="bi bi-plus"></i> Shortlist
                                 </button>
                             </form>

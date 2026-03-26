@@ -11,7 +11,7 @@
 ═══════════════════════════════════════ */
 .news-hero {
     padding: 6rem 0 2rem;
-    background: linear-gradient(135deg, #0C1B3A 0%, #1A6FB5 50%, #0C1B3A 100%);
+    background: linear-gradient(135deg, #0C1B3A 0%, #124491 50%, #0C1B3A 100%);
     position: relative;
     overflow: hidden;
     text-align: center;
@@ -59,7 +59,7 @@
     font-size: .88rem; outline: none; transition: border-color .2s;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.442.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat .85rem center;
 }
-.nf-search:focus { border-color: #1A6FB5; }
+.nf-search:focus { border-color: #124491; }
 .nf-cats {
     display: flex; gap: .4rem; flex-wrap: wrap;
 }
@@ -69,7 +69,7 @@
     border: 1px solid #e0e0e0; color: #555; transition: all .2s;
     white-space: nowrap;
 }
-.nf-cat:hover, .nf-cat.active { background: #1A6FB5; color: #fff; border-color: #1A6FB5; }
+.nf-cat:hover, .nf-cat.active { background: #124491; color: #fff; border-color: #124491; }
 
 /* ── Featured Article ── */
 .news-featured {
@@ -89,7 +89,7 @@
 .nf-card-img img { width: 100%; height: 100%; object-fit: cover; }
 .nf-card-img .nf-badge {
     position: absolute; top: 1rem; left: 1rem;
-    background: #1A6FB5; color: #fff; padding: .3rem .8rem;
+    background: #124491; color: #fff; padding: .3rem .8rem;
     border-radius: 6px; font-size: .72rem; font-weight: 700; letter-spacing: .5px;
     text-transform: uppercase;
 }
@@ -107,11 +107,11 @@
     margin-bottom: .75rem; line-height: 1.3;
 }
 .nf-card-body h2 a { color: inherit; transition: color .2s; }
-.nf-card-body h2 a:hover { color: #1A6FB5; }
+.nf-card-body h2 a:hover { color: #124491; }
 .nf-card-body p { color: #666; font-size: .95rem; line-height: 1.6; margin-bottom: 1.5rem; }
 .nf-read-btn {
     display: inline-flex; align-items: center; gap: .5rem;
-    color: #1A6FB5; font-weight: 600; font-size: .88rem;
+    color: #124491; font-weight: 600; font-size: .88rem;
     transition: gap .2s;
 }
 .nf-read-btn:hover { gap: .8rem; }
@@ -220,9 +220,9 @@
 .news-pagination a {
     background: #fff; color: #555; border: 1px solid #e0e0e0;
 }
-.news-pagination a:hover { background: #e8f0f8; color: #1A6FB5; border-color: #1A6FB5; }
+.news-pagination a:hover { background: #e8f0f8; color: #124491; border-color: #124491; }
 .news-pagination .current {
-    background: #1A6FB5; color: #fff; border: 1px solid #1A6FB5;
+    background: #124491; color: #fff; border: 1px solid #124491;
 }
 
 /* ── Empty state ── */
@@ -266,7 +266,7 @@
             {% if featured.featured_image %}
                 <img src="{{ featured.featured_image.url }}" alt="{{ featured.title }}">
             {% else %}
-                <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1A6FB5;">
+                <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#124491;">
                     <i class="bi bi-newspaper" style="font-size:4rem;opacity:.3;"></i>
                 </div>
             {% endif %}
@@ -299,7 +299,7 @@
                 {% if hl.featured_image %}
                     <img src="{{ hl.featured_image.url }}" alt="{{ hl.title }}">
                 {% else %}
-                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e8f0f8;color:#1A6FB5;">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e8f0f8;color:#124491;">
                         <i class="bi bi-star" style="font-size:2rem;opacity:.3;"></i>
                     </div>
                 {% endif %}
@@ -325,7 +325,7 @@
                 {% if article.featured_image %}
                     <img src="{{ article.featured_image.url }}" alt="{{ article.title }}">
                 {% else %}
-                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e8f0f8;color:#1A6FB5;">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e8f0f8;color:#124491;">
                         <i class="bi bi-file-text" style="font-size:2.5rem;opacity:.3;"></i>
                     </div>
                 {% endif %}

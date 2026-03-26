@@ -10,7 +10,7 @@
     .official-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .6rem; border-radius: 999px; background: #f5f7fb; color: #243b53; font-size: .78rem; }
     .official-chip strong { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
     .official-chip.pending { background: #fff4e5; color: #9a3412; }
-    .official-chip.confirmed { background: #e8f5e9; color: #1565c0; }
+    .official-chip.confirmed { background: #e8f5ed; color: #124491; }
     .official-chip.declined { background: #ffebee; color: #b71c1c; }
     .status-badge { font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 6px; }
     .filter-bar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
@@ -51,7 +51,7 @@
         {% endif %}
     </div>
     <div style="display:flex;gap:.5rem;align-items:center;">
-        <span class="status-badge" style="background:{% if report.status == 'submitted' %}#FFF3E0;color:#E65100{% elif report.status == 'approved' %}#E8F5E9;color:#1565C0{% else %}#FFEBEE;color:#C62828{% endif %};">{{ report.get_status_display }}</span>
+        <span class="status-badge" style="background:{% if report.status == 'submitted' %}#FFF3E0;color:#E65100{% elif report.status == 'approved' %}#e8f5ed;color:#124491{% else %}#FFEBEE;color:#C62828{% endif %};">{{ report.get_status_display }}</span>
         {% if report.status == 'submitted' %}
         <a href="{% url 'match_report_review' report_pk=report.pk %}" class="btn btn-sm btn-primary">Review</a>
         {% else %}

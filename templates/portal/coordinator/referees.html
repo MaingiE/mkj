@@ -14,9 +14,9 @@
 <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-flag"></i> Referees{% if discipline_label %} &mdash; {{ discipline_label }}{% endif %} ({{ stats.total }})</h2>
 
 <!-- Add Referee -->
-<div class="card mb-3" style="border-left:4px solid #1565C0;">
-    <div class="card-header" style="background:#E3F2FD;">
-        <h3 style="margin:0;font-size:1rem;color:#1565C0;"><i class="bi bi-person-plus"></i> Add Referee</h3>
+<div class="card mb-3" style="border-left:4px solid #124491;">
+    <div class="card-header" style="background:#e8edf5;">
+        <h3 style="margin:0;font-size:1rem;color:#124491;"><i class="bi bi-person-plus"></i> Add Referee</h3>
     </div>
     <div class="card-body">
         <form method="post">
@@ -112,7 +112,7 @@
                     {% if ref.approved_by %}&middot; Added by: {{ ref.approved_by.get_full_name }}{% endif %}
                 </div>
             </div>
-            <span class="status-badge" style="background:#E8F5E9;color:#1565C0;">Approved</span>
+            <span class="status-badge" style="background:#e8f5ed;color:#124491;">Approved</span>
         </div>
         {% empty %}
         <div style="text-align:center;padding:2rem;color:#999;">No approved referees.</div>

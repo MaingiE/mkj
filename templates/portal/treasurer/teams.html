@@ -12,7 +12,7 @@
 </div>
 
 <!-- Fee notice -->
-<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem">
+<div style="background:#e8f5ed;border:1px solid #a5d6a7;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem">
     <span style="font-size:2rem">💳</span>
     <div>
         <strong style="color:#1b5e20">One-Time County Registration Fee: KSh {{ registration_fee|floatformat:0 }}</strong>
@@ -26,8 +26,8 @@
         <div style="font-size:2rem;font-weight:800;color:#f57c00">{{ unpaid_count }}</div>
         <div style="color:#888;font-size:.82rem">Awaiting Payment</div>
     </div>
-    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #1565c0">
-        <div style="font-size:2rem;font-weight:800;color:#1565c0">{{ paid_count }}</div>
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #124491">
+        <div style="font-size:2rem;font-weight:800;color:#124491">{{ paid_count }}</div>
         <div style="color:#888;font-size:.82rem">Ready to Approve</div>
     </div>
 </div>
@@ -88,7 +88,7 @@
      SECTION 2 — STEP: Approve (payment already confirmed)
      ═══════════════════════════════════════════════════════════ -->
 <div class="card">
-    <div class="card-header" style="background:#e8f5e9;border-left:4px solid #2e7d32">
+    <div class="card-header" style="background:#e8f5ed;border-left:4px solid #2e7d32">
         <h3 style="color:#1b5e20">✅ Step 2 — Approve Teams ({{ paid_count }})</h3>
         <p style="margin:0;font-size:.85rem;color:#888">Payment confirmed. Click Approve to register the team and create their manager login.</p>
     </div>

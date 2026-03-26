@@ -32,7 +32,7 @@
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background:{% if player.verification_status == 'verified' %}#e8f5e9{% elif player.verification_status == 'rejected' %}#fce4ec{% else %}#fff3e0{% endif %};color:{% if player.verification_status == 'verified' %}#1565C0{% elif player.verification_status == 'rejected' %}#C62828{% else %}#e65100{% endif %}">
+        <div class="stat-icon" style="background:{% if player.verification_status == 'verified' %}#e8f5ed{% elif player.verification_status == 'rejected' %}#fce4ec{% else %}#fff3e0{% endif %};color:{% if player.verification_status == 'verified' %}#124491{% elif player.verification_status == 'rejected' %}#C62828{% else %}#e65100{% endif %}">
             {% if player.verification_status == 'verified' %}✅{% elif player.verification_status == 'rejected' %}❌{% else %}⏳{% endif %}
         </div>
         <div class="stat-info"><h3>{{ player.get_verification_status_display }}</h3><p>Verification</p></div>
@@ -67,11 +67,11 @@
 
             <!-- Passport Photo -->
             <div style="margin-bottom:1.5rem;padding:1rem;background:#f5f7f5;border-radius:10px">
-                <h4 style="margin:0 0 .75rem;color:#1565C0">📸 Passport-Size Photo</h4>
+                <h4 style="margin:0 0 .75rem;color:#124491">📸 Passport-Size Photo</h4>
                 {% if player.photo %}
                 <div style="text-align:center">
                     <img src="{{ player.photo.url }}" alt="Player Photo" style="max-width:200px;max-height:250px;border-radius:8px;border:2px solid #e0e0e0;object-fit:cover">
-                    <br><a href="{{ player.photo.url }}" target="_blank" style="color:#1565C0;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
+                    <br><a href="{{ player.photo.url }}" target="_blank" style="color:#124491;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
                 </div>
                 {% else %}
                 <div style="text-align:center;padding:2rem;color:#C62828;background:#fce4ec;border-radius:8px">
@@ -82,11 +82,11 @@
 
             <!-- National ID -->
             <div style="margin-bottom:1.5rem;padding:1rem;background:#f5f7f5;border-radius:10px">
-                <h4 style="margin:0 0 .75rem;color:#1565C0">🪪 National ID ({{ player.national_id_number|default:"Not provided" }})</h4>
+                <h4 style="margin:0 0 .75rem;color:#124491">🪪 National ID ({{ player.national_id_number|default:"Not provided" }})</h4>
                 {% if player.id_document %}
                 <div style="text-align:center">
                     <img src="{{ player.id_document.url }}" alt="ID Document" style="max-width:100%;max-height:300px;border-radius:8px;border:2px solid #e0e0e0;object-fit:contain">
-                    <br><a href="{{ player.id_document.url }}" target="_blank" style="color:#1565C0;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
+                    <br><a href="{{ player.id_document.url }}" target="_blank" style="color:#124491;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
                 </div>
                 {% else %}
                 <div style="text-align:center;padding:2rem;color:#C62828;background:#fce4ec;border-radius:8px">
@@ -97,11 +97,11 @@
 
             <!-- Birth Certificate -->
             <div style="padding:1rem;background:#f5f7f5;border-radius:10px">
-                <h4 style="margin:0 0 .75rem;color:#1565C0">📜 Birth Certificate</h4>
+                <h4 style="margin:0 0 .75rem;color:#124491">📜 Birth Certificate</h4>
                 {% if player.birth_certificate %}
                 <div style="text-align:center">
                     <img src="{{ player.birth_certificate.url }}" alt="Birth Certificate" style="max-width:100%;max-height:300px;border-radius:8px;border:2px solid #e0e0e0;object-fit:contain">
-                    <br><a href="{{ player.birth_certificate.url }}" target="_blank" style="color:#1565C0;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
+                    <br><a href="{{ player.birth_certificate.url }}" target="_blank" style="color:#124491;font-size:.85rem;margin-top:.5rem;display:inline-block">Open Full Size ↗</a>
                 </div>
                 {% else %}
                 <div style="text-align:center;padding:2rem;color:#C62828;background:#fce4ec;border-radius:8px">
@@ -121,7 +121,7 @@
                 <table>
                     <tr><td style="font-weight:600;width:40%">Full Name</td><td>{{ player.first_name }} {{ player.last_name }}</td></tr>
                     <tr><td style="font-weight:600">Date of Birth</td><td>{{ player.date_of_birth|date:"d M Y" }}</td></tr>
-                    <tr><td style="font-weight:600">Age</td><td>{{ player.age }} years {% if not player.is_age_eligible %}<span style="color:#C62828;font-weight:700">⛔ INELIGIBLE</span>{% else %}<span style="color:#1565C0">✅ Eligible</span>{% endif %}</td></tr>
+                    <tr><td style="font-weight:600">Age</td><td>{{ player.age }} years {% if not player.is_age_eligible %}<span style="color:#C62828;font-weight:700">⛔ INELIGIBLE</span>{% else %}<span style="color:#124491">✅ Eligible</span>{% endif %}</td></tr>
                     <tr><td style="font-weight:600">National ID #</td><td>{{ player.national_id_number|default:"—" }}</td></tr>
                     <tr><td style="font-weight:600">Birth Cert #</td><td>{{ player.birth_cert_number|default:"—" }}</td></tr>
                     <tr><td style="font-weight:600">Position</td><td>{{ player.get_position_display }}</td></tr>
@@ -132,7 +132,7 @@
                         <td style="font-weight:600">Documents</td>
                         <td>
                             {% if player.documents_uploaded %}
-                            <span style="color:#1565C0;font-weight:600">✅ All uploaded</span>
+                            <span style="color:#124491;font-weight:600">✅ All uploaded</span>
                             {% else %}
                             <span style="color:#C62828;font-weight:600">⚠️ Incomplete</span>
                             <ul style="margin:.25rem 0 0;padding-left:1.25rem;font-size:.85rem;color:#888">
@@ -153,16 +153,16 @@
             <div class="card-body">
                 {% if messages %}
                 {% for message in messages %}
-                <div style="margin-bottom:1rem;padding:.75rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e3f2fd{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1565C0{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#1565c0{% endif %}">
+                <div style="margin-bottom:1rem;padding:.75rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5ed{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e8edf5{% endif %};border-left:4px solid {% if message.tags == 'success' %}#124491{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#124491{% endif %}">
                     {{ message }}
                 </div>
                 {% endfor %}
                 {% endif %}
 
                 {% if player.verification_status == 'verified' %}
-                <div style="text-align:center;padding:2rem;background:#e8f5e9;border-radius:10px;margin-bottom:1rem">
+                <div style="text-align:center;padding:2rem;background:#e8f5ed;border-radius:10px;margin-bottom:1rem">
                     <div style="font-size:3rem">✅</div>
-                    <h3 style="color:#1565C0;margin:.5rem 0">Verified</h3>
+                    <h3 style="color:#124491;margin:.5rem 0">Verified</h3>
                     <p style="color:#555;font-size:.9rem">
                         By {{ player.verified_by.get_full_name|default:"System" }}
                         on {{ player.verified_at|date:"d M Y H:i"|default:"—" }}
@@ -185,7 +185,7 @@
                 </div>
                 <form method="post" style="display:flex;gap:.5rem">
                     {% csrf_token %}
-                    <button type="submit" name="action" value="verify" style="flex:1;padding:.6rem;background:#1565C0;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+                    <button type="submit" name="action" value="verify" style="flex:1;padding:.6rem;background:#124491;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
                         ✅ Override & Verify
                     </button>
                     <button type="submit" name="action" value="reset" style="flex:1;padding:.6rem;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;cursor:pointer">
@@ -199,7 +199,7 @@
                     {% csrf_token %}
 
                     <!-- Approve Button -->
-                    <button type="submit" name="action" value="verify" style="width:100%;padding:.75rem;background:#1565C0;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem;margin-bottom:1rem">
+                    <button type="submit" name="action" value="verify" style="width:100%;padding:.75rem;background:#124491;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem;margin-bottom:1rem">
                         ✅ Verify Player
                     </button>
 
@@ -230,7 +230,7 @@
 </div>
 
 <div style="margin-top:1.5rem;display:flex;gap:1.5rem">
-    <a href="{% url 'player_verification_list' %}" style="color:#1565C0;font-weight:600;text-decoration:none">← Back to Verification List</a>
-    <a href="{% url 'player_clearance_detail' player_pk=player.pk %}" style="color:#1565C0;font-weight:600;text-decoration:none">🛡️ View Full Clearance (Huduma + FIFA Connect) →</a>
+    <a href="{% url 'player_verification_list' %}" style="color:#124491;font-weight:600;text-decoration:none">← Back to Verification List</a>
+    <a href="{% url 'player_clearance_detail' player_pk=player.pk %}" style="color:#124491;font-weight:600;text-decoration:none">🛡️ View Full Clearance (Huduma + FIFA Connect) →</a>
 </div>
 {% endblock %}

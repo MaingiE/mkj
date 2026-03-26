@@ -10,7 +10,7 @@
 ═══════════════════════════════════════ */
 .gallery-hero {
     padding: 6rem 0 2rem;
-    background: linear-gradient(135deg, #0C1B3A 0%, #1A6FB5 50%, #0C1B3A 100%);
+    background: linear-gradient(135deg, #0C1B3A 0%, #124491 50%, #0C1B3A 100%);
     position: relative; overflow: hidden;
     text-align: center; color: #fff;
 }
@@ -92,8 +92,8 @@
     font-size: .85rem; font-weight: 600; transition: all .2s;
 }
 .gallery-pagination a { background: #fff; color: #555; border: 1px solid #e0e0e0; }
-.gallery-pagination a:hover { background: #e8f0f8; color: #1A6FB5; border-color: #1A6FB5; }
-.gallery-pagination .current { background: #1A6FB5; color: #fff; border: 1px solid #1A6FB5; }
+.gallery-pagination a:hover { background: #e8f0f8; color: #124491; border-color: #124491; }
+.gallery-pagination .current { background: #124491; color: #fff; border: 1px solid #124491; }
 
 /* ── Empty ── */
 .gallery-empty {
@@ -125,7 +125,7 @@
                 {% if album.display_cover %}
                     <img src="{{ album.display_cover }}" alt="{{ album.title }}" loading="lazy">
                 {% else %}
-                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#1A6FB5;">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#124491;">
                         <i class="bi bi-images" style="font-size:3rem;opacity:.3;"></i>
                     </div>
                 {% endif %}

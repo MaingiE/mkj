@@ -19,7 +19,7 @@
         <div style="color:#888;font-size:.85rem">Pending</div>
     </div>
     <div class="card" style="padding:1.25rem;text-align:center">
-        <div style="font-size:2rem;font-weight:800;color:#1565C0">{{ stats.registered }}</div>
+        <div style="font-size:2rem;font-weight:800;color:#124491">{{ stats.registered }}</div>
         <div style="color:#888;font-size:.85rem">Approved</div>
     </div>
     <div class="card" style="padding:1.25rem;text-align:center">
@@ -75,7 +75,7 @@
                             <form method="post" style="display:inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="team_id" value="{{ team.pk }}">
-                                <button type="submit" name="action" value="approve" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;margin-right:.25rem" onclick="return confirm('Approve {{ team.name }}?')">
+                                <button type="submit" name="action" value="approve" class="btn btn-outline btn-sm" style="background:#124491;color:#fff;border-color:#124491;margin-right:.25rem" onclick="return confirm('Approve {{ team.name }}?')">
                                     ✅ Approve
                                 </button>
                                 <button type="submit" name="action" value="reject" class="btn btn-outline btn-sm" style="color:#C62828;border-color:#C62828" onclick="return confirm('Reject {{ team.name }}? This cannot be undone.')">

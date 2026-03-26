@@ -29,7 +29,7 @@
             <div style="padding:.85rem 1rem;border:1px solid #e5e7eb;border-radius:10px;background:#fafafa;">
                 <div style="font-size:.8rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.04em;">{{ official.role_display }}</div>
                 <div style="font-weight:700;color:#222;margin-top:.2rem;">{{ official.referee_name }}</div>
-                <div style="font-size:.82rem;color:{% if official.status == 'confirmed' %}#1565C0{% elif official.status == 'pending' %}#E65100{% elif official.status == 'declined' %}#C62828{% else %}#777{% endif %};margin-top:.2rem;">
+                <div style="font-size:.82rem;color:{% if official.status == 'confirmed' %}#124491{% elif official.status == 'pending' %}#E65100{% elif official.status == 'declined' %}#C62828{% else %}#777{% endif %};margin-top:.2rem;">
                     {{ official.status|title }}
                 </div>
             </div>
@@ -57,12 +57,12 @@
         <div style="display:flex;justify-content:center;align-items:center;gap:clamp(1rem,4vw,2rem);flex-wrap:wrap;">
             <div>
                 <div style="font-weight:600;margin-bottom:.5rem;font-size:clamp(.85rem,2.5vw,1rem);">{{ report.fixture.home_team.name }}</div>
-                <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#1565C0;">{{ report.home_score }}</div>
+                <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#124491;">{{ report.home_score }}</div>
             </div>
             <div style="font-size:clamp(1.2rem,4vw,2rem);color:#999;">—</div>
             <div>
                 <div style="font-weight:600;margin-bottom:.5rem;font-size:clamp(.85rem,2.5vw,1rem);">{{ report.fixture.away_team.name }}</div>
-                <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#1565C0;">{{ report.away_score }}</div>
+                <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#124491;">{{ report.away_score }}</div>
             </div>
         </div>
         {% if sport_cfg.label == 'Volleyball' and report.home_sets is not None %}
@@ -209,7 +209,7 @@
     </a>
     {% if report.status == 'draft' or report.status == 'returned' %}
     <a href="{% url 'match_report_form' fixture_pk=report.fixture.pk %}"
-       style="background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+       style="background:#124491;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
         ✏️ Edit Report
     </a>
     {% endif %}

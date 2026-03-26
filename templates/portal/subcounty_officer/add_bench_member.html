@@ -12,8 +12,8 @@
     <p>{{ reg.county }} County &mdash; {{ discipline.get_sport_type_display }}</p>
 </div>
 
-<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:.6rem;align-items:flex-start;">
-    <span style="font-size:1.1rem;color:#1565c0"><i class="bi bi-info-circle"></i></span>
+<div style="background:#e8edf5;border:1px solid #90caf9;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:.6rem;align-items:flex-start;">
+    <span style="font-size:1.1rem;color:#124491"><i class="bi bi-info-circle"></i></span>
     <div style="font-size:.86rem;color:#334;line-height:1.45;">
         When role is <strong>Team Manager</strong>, an account is created automatically and assigned the Team Manager role.
         Provide a valid email address for credential delivery.
@@ -64,7 +64,7 @@
             <label style="display:block;font-weight:600;font-size:.88rem;color:#333;margin-bottom:.3rem">{{ field.label }}</label>
             {% if 'phone' in field.name %}
             <div class="input-group">
-                <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff">+254</span>
+                <span class="input-group-text fw-bold" style="background:#124491;color:#fff">+254</span>
                 {{ field }}
             </div>
             {% else %}
@@ -96,6 +96,6 @@
 {% endif %}
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=discipline.pk %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to {{ discipline.get_sport_type_display }}</a>
+    <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=discipline.pk %}" style="color:#124491;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to {{ discipline.get_sport_type_display }}</a>
 </div>
 {% endblock %}

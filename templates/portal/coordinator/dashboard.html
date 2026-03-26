@@ -56,10 +56,10 @@
     .dc-stat .lbl { font-size: .62rem; color: #757575; font-weight: 500; }
     .dc-stat.teal   { border-left-color: #00695C; }
     .dc-stat.teal .num { color: #00695C; }
-    .dc-stat.green  { border-left-color: #1565C0; }
-    .dc-stat.green .num { color: #1565C0; }
-    .dc-stat.blue   { border-left-color: #1565C0; }
-    .dc-stat.blue .num { color: #1565C0; }
+    .dc-stat.green  { border-left-color: #124491; }
+    .dc-stat.green .num { color: #124491; }
+    .dc-stat.blue   { border-left-color: #124491; }
+    .dc-stat.blue .num { color: #124491; }
     .dc-stat.amber  { border-left-color: #E65100; }
     .dc-stat.amber .num { color: #E65100; }
     .dc-stat.red    { border-left-color: #C62828; }
@@ -242,7 +242,7 @@ function goQuick(type) {
                 </div>
             </a>
             <a href="{% url 'coordinator_appointments' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-calendar-event"></i></div>
+                <div class="tile-icon" style="background:#e8edf5;color:#124491;"><i class="bi bi-calendar-event"></i></div>
                 <div class="tile-text">
                     <h4>Appointments</h4>
                     <p>Appoint referees to fixtures</p>
@@ -263,14 +263,14 @@ function goQuick(type) {
                 </div>
             </a>
             <a href="{% url 'coordinator_squads' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;"><i class="bi bi-people"></i></div>
+                <div class="tile-icon" style="background:#e8f5ed;color:#124491;"><i class="bi bi-people"></i></div>
                 <div class="tile-text">
                     <h4>Match Day Squads</h4>
                     <p>View submitted squad lists</p>
                 </div>
             </a>
             <a href="{% url 'coordinator_venues' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-geo-alt"></i></div>
+                <div class="tile-icon" style="background:#e8edf5;color:#124491;"><i class="bi bi-geo-alt"></i></div>
                 <div class="tile-text">
                     <h4>Venues</h4>
                     <p>Select &amp; update match venues</p>
@@ -365,7 +365,7 @@ function goQuick(type) {
                 <div class="ri-main">{{ fx.home_team.name }} {{ fx.home_score }} - {{ fx.away_score }} {{ fx.away_team.name }}</div>
                 <div class="ri-sub">{{ fx.competition.name }} &middot; {{ fx.match_date|date:"d M Y" }}</div>
             </div>
-            <span class="ri-badge" style="background:#E8F5E9;color:#1565C0;">Completed</span>
+            <span class="ri-badge" style="background:#e8f5ed;color:#124491;">Completed</span>
         </div>
         {% endfor %}
     </div>

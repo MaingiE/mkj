@@ -15,7 +15,7 @@
 <!-- Squad capacity bar -->
 <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;max-width:600px">
     <div style="flex:1;background:#e0e0e0;border-radius:8px;height:10px">
-        <div style="background:{% if discipline.can_add_player %}#1565C0{% else %}#C62828{% endif %};border-radius:8px;height:10px;width:{% widthratio discipline.player_count discipline.squad_limit 100 %}%;transition:width .3s"></div>
+        <div style="background:{% if discipline.can_add_player %}#124491{% else %}#C62828{% endif %};border-radius:8px;height:10px;width:{% widthratio discipline.player_count discipline.squad_limit 100 %}%;transition:width .3s"></div>
     </div>
     <span style="font-size:.82rem;font-weight:600;color:#555;white-space:nowrap">{{ discipline.player_count }}/{{ discipline.squad_limit }}</span>
 </div>
@@ -31,11 +31,11 @@
         <i class="bi bi-exclamation-circle"></i> Squad limit reached
     </span>
     {% endif %}
-    <a href="{% url 'subcounty_officer_add_bench_member' discipline_pk=discipline.pk %}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;font-size:.9rem;background:#1565C0;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">
+    <a href="{% url 'subcounty_officer_add_bench_member' discipline_pk=discipline.pk %}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;font-size:.9rem;background:#124491;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">
         <i class="bi bi-person-badge"></i> Technical Bench
     </a>
     {% if team %}
-    <span style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;font-size:.82rem;background:#E8F5E9;color:#2E7D32;border-radius:8px;font-weight:600">
+    <span style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;font-size:.82rem;background:#e8f5ed;color:#2E7D32;border-radius:8px;font-weight:600">
         <i class="bi bi-shield-check"></i> Team: {{ team.name }}
     </span>
     {% endif %}
@@ -63,7 +63,7 @@
 
 <!-- Status tabs -->
 <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0;flex-wrap:wrap">
-    <a href="?tab=all" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'all' %}#1565C0{% else %}transparent{% endif %};color:{% if tab == 'all' %}#1565C0{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
+    <a href="?tab=all" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'all' %}#124491{% else %}transparent{% endif %};color:{% if tab == 'all' %}#124491{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
         All ({{ stats.total }})
     </a>
     <a href="?tab=pending" style="padding:.65rem 1.25rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'pending' %}#E65100{% else %}transparent{% endif %};color:{% if tab == 'pending' %}#E65100{% else %}#888{% endif %};margin-bottom:-2px;font-size:.9rem">
@@ -99,7 +99,7 @@
 
 <!-- Technical Bench -->
 <div class="card" style="padding:1.2rem;margin-top:1.5rem;">
-    <h4 style="margin-top:0;display:flex;align-items:center;gap:.5rem"><i class="bi bi-person-badge" style="color:#1565C0"></i> Technical Bench</h4>
+    <h4 style="margin-top:0;display:flex;align-items:center;gap:.5rem"><i class="bi bi-person-badge" style="color:#124491"></i> Technical Bench</h4>
     {% if bench_members %}
     <div style="display:grid;gap:.75rem;">
         {% for member in bench_members %}
@@ -121,6 +121,6 @@
 </div>
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'subcounty_officer_disciplines' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Disciplines</a>
+    <a href="{% url 'subcounty_officer_disciplines' %}" style="color:#124491;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Disciplines</a>
 </div>
 {% endblock %}

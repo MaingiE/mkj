@@ -17,7 +17,7 @@
     <div class="card-body">
         {% if messages %}
         {% for message in messages %}
-        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'error' %}#fce4ec{% else %}#e8f5e9{% endif %};border-left:4px solid {% if message.tags == 'error' %}#C62828{% else %}#1565C0{% endif %}">
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'error' %}#fce4ec{% else %}#e8f5ed{% endif %};border-left:4px solid {% if message.tags == 'error' %}#C62828{% else %}#124491{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
@@ -35,7 +35,7 @@
             {% endfor %}
 
             <div style="display:flex;gap:.75rem;margin-top:1rem">
-                <button type="submit" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.6rem 1.5rem">
+                <button type="submit" class="btn btn-outline btn-sm" style="background:#124491;color:#fff;border-color:#124491;padding:.6rem 1.5rem">
                     Save Changes
                 </button>
                 <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem">Cancel</a>

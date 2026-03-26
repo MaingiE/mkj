@@ -38,7 +38,7 @@
         <div style="margin-top:1rem">
             {% if player_type == 'county' %}
                 {% if player.verification_status == 'verified' %}
-                <span style="background:#e8f5e9;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                <span style="background:#e8f5ed;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
                     <i class="bi bi-check-circle"></i> Verified
                 </span>
                 {% elif player.verification_status == 'rejected' %}
@@ -46,7 +46,7 @@
                     <i class="bi bi-x-circle"></i> Rejected
                 </span>
                 {% elif player.verification_status == 'resubmit' %}
-                <span style="background:#e3f2fd;color:#1565c0;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                <span style="background:#e8edf5;color:#124491;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
                     <i class="bi bi-arrow-repeat"></i> Resubmit
                 </span>
                 {% else %}
@@ -55,7 +55,7 @@
                 </span>
                 {% endif %}
             {% else %}
-                <span style="background:#e8f5e9;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+                <span style="background:#e8f5ed;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
                     <i class="bi bi-check-circle"></i> {{ player.get_verification_status_display }}
                 </span>
             {% endif %}
@@ -175,12 +175,12 @@
         <h3 style="font-size:1rem;color:#333;margin-top:1.5rem;margin-bottom:.8rem"><i class="bi bi-file-earmark"></i> Documents</h3>
         <div style="display:flex;gap:1rem;flex-wrap:wrap">
             {% if player.id_document %}
-            <a href="{{ player.id_document.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:#e3f2fd;color:#1565c0;border-radius:6px;font-size:.85rem;text-decoration:none;font-weight:600">
+            <a href="{{ player.id_document.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:#e8edf5;color:#124491;border-radius:6px;font-size:.85rem;text-decoration:none;font-weight:600">
                 <i class="bi bi-file-earmark-person"></i> ID Document
             </a>
             {% endif %}
             {% if player.birth_certificate %}
-            <a href="{{ player.birth_certificate.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:#e3f2fd;color:#1565c0;border-radius:6px;font-size:.85rem;text-decoration:none;font-weight:600">
+            <a href="{{ player.birth_certificate.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:#e8edf5;color:#124491;border-radius:6px;font-size:.85rem;text-decoration:none;font-weight:600">
                 <i class="bi bi-file-earmark-text"></i> Birth Certificate
             </a>
             {% endif %}
@@ -189,6 +189,6 @@
 </div>
 
 <div style="margin-top:1.5rem">
-    <a href="javascript:history.back()" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back</a>
+    <a href="javascript:history.back()" style="color:#124491;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back</a>
 </div>
 {% endblock %}

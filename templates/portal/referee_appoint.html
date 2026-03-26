@@ -34,13 +34,13 @@
         font-size: .75rem;
         font-weight: 600;
     }
-    .avail-available { background: #E8F5E9; color: #1565C0; }
+    .avail-available { background: #e8f5ed; color: #124491; }
     .avail-unavailable { background: #FFEBEE; color: #c62828; }
     .avail-notset { background: #f5f5f5; color: #999; }
     .busy-badge { background: #FFF3E0; color: #E65100; }
     .appoint-form { display: inline; }
     .appoint-btn {
-        background: #1565C0; color: #fff; border: none; padding: .35rem .8rem;
+        background: #124491; color: #fff; border: none; padding: .35rem .8rem;
         border-radius: 6px; cursor: pointer; font-size: .85rem;
     }
     .appoint-btn:hover { background: #2E7D32; }
@@ -73,7 +73,7 @@
 
 <!-- ═══ FIXTURE INFO ═══ -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="background:#E8F5E9;">
+    <div class="card-header" style="background:#e8f5ed;">
         <h3>Match Details</h3>
     </div>
     <div class="card-body">
@@ -150,7 +150,7 @@
 
 <!-- ═══ APPOINT A REFEREE ═══ -->
 <div class="card" style="margin-bottom:2rem;">
-    <div class="card-header" style="background:#E3F2FD;">
+    <div class="card-header" style="background:#e8edf5;">
         <h3>👤 Appoint a Referee</h3>
         <p style="font-size:.85rem;color:#666;margin:0;">Select a role then pick a referee. Green = available, red = unavailable, orange = busy on this date.</p>
     </div>
@@ -163,8 +163,8 @@
                 <button type="button"
                         class="role-select-btn"
                         data-role="{{ role.role_key }}"
-                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid {% if role.is_mandatory %}#c62828{% else %}#1565C0{% endif %};cursor:pointer;font-size:.9rem;
-                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:{% if role.is_mandatory %}#c62828{% else %}#1565C0{% endif %};{% endif %}"
+                        style="padding:.5rem 1rem;border-radius:8px;border:2px solid {% if role.is_mandatory %}#c62828{% else %}#124491{% endif %};cursor:pointer;font-size:.9rem;
+                               {% if role.appointment %}background:#f5f5f5;color:#999;border-color:#ddd;{% else %}background:#fff;color:{% if role.is_mandatory %}#c62828{% else %}#124491{% endif %};{% endif %}"
                         onclick="selectRole('{{ role.role_key }}', this)">
                     {{ role.role_label }}
                     {% if role.appointment %}<span style="font-size:.75rem;">(filled)</span>{% endif %}
@@ -203,7 +203,7 @@
                         <td style="padding:.5rem .8rem;">
                             <strong>{{ ref.full_name }}</strong>
                             {% if ref.is_appointed_here %}
-                            <span style="font-size:.7rem;background:#E8F5E9;color:#1565C0;padding:.1rem .4rem;border-radius:4px;margin-left:.3rem;">
+                            <span style="font-size:.7rem;background:#e8f5ed;color:#124491;padding:.1rem .4rem;border-radius:4px;margin-left:.3rem;">
                                 On this match
                             </span>
                             {% endif %}
@@ -213,7 +213,7 @@
                         <td style="padding:.5rem .8rem;text-align:center;">{{ ref.total_matches }}</td>
                         <td style="padding:.5rem .8rem;text-align:center;">
                             {% if ref.avg_rating > 0 %}
-                            <span style="font-weight:600;{% if ref.avg_rating >= 7 %}color:#1565C0;{% elif ref.avg_rating >= 5 %}color:#FF8F00;{% else %}color:#c62828;{% endif %}">
+                            <span style="font-weight:600;{% if ref.avg_rating >= 7 %}color:#124491;{% elif ref.avg_rating >= 5 %}color:#FF8F00;{% else %}color:#c62828;{% endif %}">
                                 {{ ref.avg_rating }}
                             </span>
                             {% else %}
@@ -231,7 +231,7 @@
                             {% elif ref.is_appointed_here %}
                             <span class="avail-badge avail-available">Assigned</span>
                             {% else %}
-                            <span style="color:#1565C0;font-size:.85rem;">Free</span>
+                            <span style="color:#124491;font-size:.85rem;">Free</span>
                             {% endif %}
                         </td>
                         <td style="padding:.5rem .8rem;text-align:right;">
@@ -290,10 +290,10 @@ function selectRole(roleKey, btn) {
     // Toggle selection
     document.querySelectorAll('.role-select-btn').forEach(b => {
         b.style.background = '#fff';
-        b.style.color = '#1565C0';
+        b.style.color = '#124491';
         b.style.fontWeight = 'normal';
     });
-    btn.style.background = '#1565C0';
+    btn.style.background = '#124491';
     btn.style.color = '#fff';
     btn.style.fontWeight = '700';
     selectedRole = roleKey;

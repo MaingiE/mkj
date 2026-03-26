@@ -67,7 +67,7 @@
 
 <!-- Formation & Kit Selection -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="background:#E8F5E9;"><h3>⚙️ Playing Units &amp; Kit Colours</h3></div>
+    <div class="card-header" style="background:#e8f5ed;"><h3>⚙️ Playing Units &amp; Kit Colours</h3></div>
     <div class="card-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
             <div>
@@ -136,8 +136,8 @@
     <div class="card-header">
         <h3>⚽ Available Players ({{ players|length }})</h3>
         <div style="display:flex;gap:1rem;font-size:.9rem;">
-            <span id="starterCount" style="color:#1565C0;font-weight:600">Starters: 0</span>
-            <span id="subCount" style="color:#1565C0;font-weight:600">Subs: 0</span>
+            <span id="starterCount" style="color:#124491;font-weight:600">Starters: 0</span>
+            <span id="subCount" style="color:#124491;font-weight:600">Subs: 0</span>
             <span id="gkStatus" style="color:#6A1B9A;font-weight:600">GK: ✗</span>
         </div>
     </div>
@@ -173,7 +173,7 @@
                         <td>
                             {{ player.get_full_name }}
                             {% if player.position == 'GK' %}
-                            <span style="display:inline-block;background:#1565C0;color:#fff;font-size:.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;">GK</span>
+                            <span style="display:inline-block;background:#124491;color:#fff;font-size:.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;">GK</span>
                             {% endif %}
                         </td>
                         <td>{{ player.get_position_display }}</td>
@@ -190,7 +190,7 @@
 <div style="display:flex;gap:1rem;justify-content:flex-end;">
     <a href="{% url 'matches_list' %}" class="btn" style="background:#757575;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">Cancel</a>
     <button type="submit" class="btn" id="submitBtn"
-            style="background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;opacity:.5;" disabled>
+            style="background:#124491;color:#fff;padding:.6rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-size:1rem;opacity:.5;" disabled>
         📤 Submit Squad
     </button>
 </div>
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const starterEl = document.getElementById('starterCount');
         const subEl = document.getElementById('subCount');
         starterEl.style.color = (starters >= minStarters && starters <= maxStarters) ? '#2E7D32' : '#c62828';
-        subEl.style.color = subs <= maxSubs ? '#1565C0' : '#c62828';
+        subEl.style.color = subs <= maxSubs ? '#124491' : '#c62828';
 
         // GK status
         const gkEl = document.getElementById('gkStatus');

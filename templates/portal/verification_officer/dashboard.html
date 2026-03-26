@@ -10,7 +10,7 @@
 </div>
 
 <!-- Officer Banner -->
-<div class="card mb-1" style="background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%); color: #fff; border: none;">
+<div class="card mb-1" style="background: linear-gradient(135deg, #003388 0%, #124491 40%, #3a7bd5 100%); color: #fff; border: none;">
     <div class="card-body" style="padding: 1.5rem;">
         <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
             <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;">
@@ -33,8 +33,8 @@
 
 <!-- Stats -->
 <div class="stats-grid">
-    <div class="stat-card" style="border-left:4px solid #1565C0">
-        <div class="stat-icon" style="background:#e3f2fd;color:#1565C0"><i class="bi bi-hourglass-split"></i></div>
+    <div class="stat-card" style="border-left:4px solid #124491">
+        <div class="stat-icon" style="background:#e8edf5;color:#124491"><i class="bi bi-hourglass-split"></i></div>
         <div class="stat-info">
             <h3>{{ stats.in_progress }}</h3>
             <p>In Progress</p>
@@ -83,7 +83,7 @@
 
 <!-- Verification Tabs -->
 <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0">
-    <a href="{% url 'vo_dashboard' %}?tab=in_progress{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'in_progress' %}#1565C0{% else %}transparent{% endif %};color:{% if tab == 'in_progress' %}#1565C0{% else %}#888{% endif %};margin-bottom:-2px">
+    <a href="{% url 'vo_dashboard' %}?tab=in_progress{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'in_progress' %}#124491{% else %}transparent{% endif %};color:{% if tab == 'in_progress' %}#124491{% else %}#888{% endif %};margin-bottom:-2px">
         ⏳ In Progress ({{ stats.in_progress }})
     </a>
     <a href="{% url 'vo_dashboard' %}?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#2E7D32{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#2E7D32{% else %}#888{% endif %};margin-bottom:-2px">
@@ -123,7 +123,7 @@
                         <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
                         <td>{{ p.age }}</td>
                         <td>
-                            <span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e3f2fd;color:#1565C0">
+                            <span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e8edf5;color:#124491">
                                 Step {{ p.current_verification_step }}/3 — {{ p.step_label }}
                             </span>
                         </td>
@@ -131,7 +131,7 @@
                         <td style="text-align:center">{% if p.iprs_age_status == 'verified' %}<span style="color:#2E7D32">✓</span>{% elif p.iprs_age_status == 'failed' %}<span style="color:#C62828">✗</span>{% else %}<span style="color:#bbb">○</span>{% endif %}</td>
                         <td style="text-align:center">{% if p.higher_league_status == 'clear' %}<span style="color:#2E7D32">✓</span>{% elif p.higher_league_status == 'flagged' %}<span style="color:#C62828">✗</span>{% else %}<span style="color:#bbb">○</span>{% endif %}</td>
                         <td>
-                            <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.3rem .75rem;font-size:.8rem">Review</a>
+                            <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#124491;color:#fff;border-color:#124491;padding:.3rem .75rem;font-size:.8rem">Review</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -169,7 +169,7 @@
                         <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
                         <td>{{ p.age }}</td>
                         <td>{{ p.national_id_number|default:"—" }}</td>
-                        <td><span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e8f5e9;color:#2E7D32">✅ 3/3 Complete</span></td>
+                        <td><span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e8f5ed;color:#2E7D32">✅ 3/3 Complete</span></td>
                         <td>
                             <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
                         </td>

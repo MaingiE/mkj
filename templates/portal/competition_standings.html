@@ -54,7 +54,7 @@
                 </thead>
                 <tbody>
                     {% for pt in ps.teams %}
-                    <tr{% if forloop.counter <= competition.qualify_from_group %} style="background:#e8f5e9"{% endif %}>
+                    <tr{% if forloop.counter <= competition.qualify_from_group %} style="background:#e8f5ed"{% endif %}>
                         <td style="text-align:center;font-weight:700;color:#888">{{ forloop.counter }}</td>
                         <td><strong>{{ pt.team.name }}</strong> <span style="color:#aaa;font-size:.78rem">({{ pt.team.county }})</span></td>
                         <td style="text-align:center">{{ pt.played }}</td>
@@ -73,7 +73,7 @@
     </div>
     {% endfor %}
     <p style="font-size:.82rem;color:#888">
-        <span style="display:inline-block;width:12px;height:12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:2px;vertical-align:middle;margin-right:.3rem"></span>
+        <span style="display:inline-block;width:12px;height:12px;background:#e8f5ed;border:1px solid #a5d6a7;border-radius:2px;vertical-align:middle;margin-right:.3rem"></span>
         Qualify for knockout stage (top {{ competition.qualify_from_group }} per group)
     </p>
 {% else %}

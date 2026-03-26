@@ -3,14 +3,14 @@
 
 {% block extra_css %}
 <style>
-    .report-card { background:#fff; border-radius:12px; padding:1rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:.75rem; border-left:4px solid #1565C0; }
+    .report-card { background:#fff; border-radius:12px; padding:1rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:.75rem; border-left:4px solid #124491; }
     .report-card.highly_recommended { border-left-color:#2E7D32; }
-    .report-card.recommended { border-left-color:#1565C0; }
+    .report-card.recommended { border-left-color:#124491; }
     .report-card.monitor { border-left-color:#F57F17; }
     .report-card.not_recommended { border-left-color:#c62828; }
     .rec-badge { display:inline-block; font-size:.7rem; font-weight:700; padding:.15rem .5rem; border-radius:10px; }
-    .rec-highly { background:#E8F5E9; color:#2E7D32; }
-    .rec-recommended { background:#E3F2FD; color:#1565C0; }
+    .rec-highly { background:#e8f5ed; color:#2E7D32; }
+    .rec-recommended { background:#e8edf5; color:#124491; }
     .rec-monitor { background:#FFF8E1; color:#F57F17; }
     .rec-not { background:#FFEBEE; color:#c62828; }
     .rating-circle { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%; font-weight:800; font-size:1.1rem; color:#fff; }
@@ -38,9 +38,9 @@
 </div>
 
 <div class="summary-row">
-    <div class="summary-card"><div class="num" style="color:#1565C0;">{{ stats.total_reports }}</div><div class="lbl">Total Reports</div></div>
+    <div class="summary-card"><div class="num" style="color:#124491;">{{ stats.total_reports }}</div><div class="lbl">Total Reports</div></div>
     <div class="summary-card"><div class="num" style="color:#2E7D32;">{{ stats.highly_recommended }}</div><div class="lbl">Highly Recommended</div></div>
-    <div class="summary-card"><div class="num" style="color:#1565C0;">{{ stats.recommended }}</div><div class="lbl">Recommended</div></div>
+    <div class="summary-card"><div class="num" style="color:#124491;">{{ stats.recommended }}</div><div class="lbl">Recommended</div></div>
     <div class="summary-card"><div class="num" style="color:#00695C;">{{ stats.scouts_active }}</div><div class="lbl">Active Scouts</div></div>
 </div>
 

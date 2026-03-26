@@ -26,9 +26,9 @@
         border: 1px solid transparent;
     }
     .results-nav a:hover, .results-nav a.active {
-        background: #1A6FB5;
+        background: #124491;
         color: #fff;
-        border-color: #1A6FB5;
+        border-color: #124491;
     }
 
     .filter-bar {
@@ -48,7 +48,7 @@
         min-width: 250px;
         transition: border-color .2s;
     }
-    .filter-bar select:focus { border-color: #1A6FB5; outline: none; }
+    .filter-bar select:focus { border-color: #124491; outline: none; }
 
     .summary-row {
         display: grid;
@@ -68,10 +68,10 @@
     .summary-stat:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
     .summary-stat .num { font-size: 2rem; font-weight: 900; line-height: 1.1; }
     .summary-stat .lbl { font-size: .78rem; color: #757575; font-weight: 500; margin-top: .15rem; }
-    .ss-green { border-top-color: #1A6FB5; }
-    .ss-green .num { color: #1A6FB5; }
-    .ss-blue { border-top-color: #1A6FB5; }
-    .ss-blue .num { color: #1A6FB5; }
+    .ss-green { border-top-color: #124491; }
+    .ss-green .num { color: #124491; }
+    .ss-blue { border-top-color: #124491; }
+    .ss-blue .num { color: #124491; }
     .ss-amber { border-top-color: #F57F17; }
     .ss-amber .num { color: #F57F17; }
     .ss-red { border-top-color: #C62828; }
@@ -99,8 +99,8 @@
         gap: .5rem;
         color: #fff;
     }
-    .lb-head.green { background: linear-gradient(135deg, #1A6FB5, #1A6FB5); }
-    .lb-head.blue { background: linear-gradient(135deg, #1a5c30, #1A6FB5); }
+    .lb-head.green { background: linear-gradient(135deg, #124491, #124491); }
+    .lb-head.blue { background: linear-gradient(135deg, #1a5c30, #124491); }
     .lb-head.amber { background: linear-gradient(135deg, #E65100, #F57F17); }
     .lb-head.teal { background: linear-gradient(135deg, #004D40, #00695C); }
 
@@ -156,8 +156,8 @@
     }
     .comp-tag {
         font-size: .65rem;
-        background: #E8F5E9;
-        color: #1A6FB5;
+        background: #e8f5ed;
+        color: #124491;
         padding: .1rem .4rem;
         border-radius: 4px;
     }
@@ -216,7 +216,7 @@
     <div class="container">
         {% if selected_competition %}
         <div style="text-align:center;margin-bottom:1.5rem;">
-            <h2 style="font-size:1.3rem;font-weight:800;color:#1A6FB5;">{{ selected_competition.name }}</h2>
+            <h2 style="font-size:1.3rem;font-weight:800;color:#124491;">{{ selected_competition.name }}</h2>
             <p style="font-size:.85rem;color:#757575;">{{ selected_competition.get_sport_type_display }} &middot; {{ selected_competition.get_age_group_display }} &middot; {{ selected_competition.get_status_display }}</p>
         </div>
         {% endif %}
@@ -267,7 +267,7 @@
                             <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
                             {% if not selected_competition %}<td><span class="comp-tag">{{ s.competition.name|truncatechars:15 }}</span></td>{% endif %}
                             <td>{{ s.matches_played }}</td>
-                            <td class="stat-highlight" style="color:#1A6FB5;">{{ s.goals }}</td>
+                            <td class="stat-highlight" style="color:#124491;">{{ s.goals }}</td>
                             <td>{{ s.assists }}</td>
                         </tr>
                         {% endfor %}
@@ -303,7 +303,7 @@
                             <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
                             {% if not selected_competition %}<td><span class="comp-tag">{{ s.competition.name|truncatechars:15 }}</span></td>{% endif %}
                             <td>{{ s.matches_played }}</td>
-                            <td class="stat-highlight" style="color:#1A6FB5;">{{ s.assists }}</td>
+                            <td class="stat-highlight" style="color:#124491;">{{ s.assists }}</td>
                             <td>{{ s.goals }}</td>
                         </tr>
                         {% endfor %}

@@ -13,11 +13,11 @@
 
 <!-- County Payment Banner -->
 {% if current_season %}
-<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+<div style="background:#e8edf5;border:1px solid #90caf9;border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
     <div style="display:flex;align-items:center;gap:.75rem">
         <span style="font-size:1.5rem"><i class="bi bi-building"></i></span>
         <span style="font-size:.92rem">
-            <strong style="color:#1565c0">{{ current_season }} County Payments:</strong>
+            <strong style="color:#124491">{{ current_season }} County Payments:</strong>
             {{ counties_paid }} paid &#8226; {{ counties_pending }} pending &#8226;
             KSh {{ total_collected|floatformat:0 }} collected
         </span>
@@ -29,7 +29,7 @@
 {% endif %}
 
 <!-- Fee reminder -->
-<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:.9rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
+<div style="background:#e8f5ed;border:1px solid #a5d6a7;border-radius:10px;padding:.9rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
     <span style="font-size:1.5rem"><i class="bi bi-credit-card"></i></span>
     <span style="font-size:.92rem"><strong style="color:#1b5e20">Standard one-time county registration fee: KSh {{ registration_fee|floatformat:0 }}</strong> &mdash; confirm this exact amount before approving any county registration.</span>
 </div>
@@ -40,8 +40,8 @@
         <div style="font-size:2.2rem;font-weight:800;color:#f57c00">{{ pending_count }}</div>
         <div style="color:#888;font-size:.85rem;margin-top:.3rem">Awaiting Review</div>
     </div>
-    <div class="card" style="padding:1.4rem;text-align:center;border-top:4px solid #1565c0">
-        <div style="font-size:2.2rem;font-weight:800;color:#1565c0">{{ paid_count }}</div>
+    <div class="card" style="padding:1.4rem;text-align:center;border-top:4px solid #124491">
+        <div style="font-size:2.2rem;font-weight:800;color:#124491">{{ paid_count }}</div>
         <div style="color:#888;font-size:.85rem;margin-top:.3rem">Payment Submitted</div>
     </div>
     <div class="card" style="padding:1.4rem;text-align:center;border-top:4px solid #2e7d32">

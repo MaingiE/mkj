@@ -12,12 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #1565C0;
-            --primary-dark: #0D47A1;
+            --primary: #124491;
+            --primary-dark: #003388;
             --primary-light: #2E7D32;
             --accent: #F9A825;
             --bg-dark: #060f08;
-            --success: #42A5F5;
+            --success: #3a7bd5;
             --error: #ef4444;
             --warning: #f59e0b;
             --info: #3b82f6;
@@ -55,20 +55,20 @@
             background:
                 radial-gradient(ellipse at 20% 20%, rgba(46,125,50,.06) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 80%, rgba(249,168,37,.04) 0%, transparent 45%),
-                radial-gradient(ellipse at 50% 50%, rgba(21,101,192,.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(18,68,145,.03) 0%, transparent 60%),
                 #f5f7fa;
         }
         .bg-layer::after {
             content: ''; position: absolute; inset: 0;
             background-image:
-                linear-gradient(rgba(21,101,192,.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(21,101,192,.03) 1px, transparent 1px);
+                linear-gradient(rgba(18,68,145,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(18,68,145,.03) 1px, transparent 1px);
             background-size: 60px 60px;
         }
 
         /* Floating orbs */
         .orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: 0; opacity: .25; }
-        .orb--1 { width: min(320px, 52vw); height: min(320px, 52vw); background: rgba(21,101,192,.15); top: 4vh; left: 4vw; animation: orb-drift 20s ease-in-out infinite; }
+        .orb--1 { width: min(320px, 52vw); height: min(320px, 52vw); background: rgba(18,68,145,.15); top: 4vh; left: 4vw; animation: orb-drift 20s ease-in-out infinite; }
         .orb--2 { width: min(280px, 46vw); height: min(280px, 46vw); background: rgba(249,168,37,.08); bottom: 4vh; right: 4vw; animation: orb-drift 25s ease-in-out infinite reverse; }
         .orb--3 { width: min(220px, 38vw); height: min(220px, 38vw); background: rgba(46,125,50,.1); top: 42%; left: 58%; transform: translate(-50%, -50%); animation: orb-drift 18s ease-in-out infinite 3s; }
         @keyframes orb-drift {
@@ -89,7 +89,7 @@
             border: 1px solid rgba(255,255,255,.06);
             border-radius: 24px;
             padding: 2.5rem 2.5rem 2rem;
-            box-shadow: 0 30px 80px rgba(0,0,0,.15), 0 8px 30px rgba(21,101,192,.1);
+            box-shadow: 0 30px 80px rgba(0,0,0,.15), 0 8px 30px rgba(18,68,145,.1);
             animation: card-enter .7s var(--transition) both;
         }
         @keyframes card-enter {
@@ -229,7 +229,7 @@
             border-radius: 12px; font-family: 'Outfit', sans-serif;
             font-size: .9rem; font-weight: 700; color: #fff; cursor: pointer;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            box-shadow: 0 4px 20px rgba(21,101,192,.3);
+            box-shadow: 0 4px 20px rgba(18,68,145,.3);
             transition: all .3s var(--transition); letter-spacing: .5px;
             position: relative; overflow: hidden;
         }
@@ -240,7 +240,7 @@
             transition: left .5s;
         }
         .submit-btn:hover::before { left: 100%; }
-        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(21,101,192,.4); }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(18,68,145,.4); }
         .submit-btn:active { transform: translateY(0); }
         .submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
         .submit-btn.loading { pointer-events: none; }
@@ -293,7 +293,7 @@
             position: relative; z-index: 1;
             padding: 1.5rem 2rem 1.8rem;
             text-align: center;
-            background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #0D47A1 100%);
+            background: linear-gradient(135deg, #003388 0%, #124491 50%, #003388 100%);
             border-top: 1px solid rgba(255,255,255,.06);
         }
         .partners-bar__label {
@@ -357,7 +357,7 @@
         .modal-close:hover { background: rgba(255,255,255,.05); color: rgba(255,255,255,.6); }
         .modal-icon {
             width: 52px; height: 52px;
-            background: rgba(21,101,192,.15); border-radius: 50%;
+            background: rgba(18,68,145,.15); border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 1.25rem; color: var(--success);
         }

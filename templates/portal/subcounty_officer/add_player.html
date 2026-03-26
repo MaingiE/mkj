@@ -29,7 +29,7 @@
                 <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;color:#333;margin-bottom:.4rem;font-size:.9rem">{{ field.label }}</label>
                 {% if 'phone' in field.name %}
                 <div class="input-group">
-                    <span class="input-group-text fw-bold" style="background:#1565C0;color:#fff;border-radius:10px 0 0 10px;padding:.5rem .9rem">+254</span>
+                    <span class="input-group-text fw-bold" style="background:#124491;color:#fff;border-radius:10px 0 0 10px;padding:.5rem .9rem">+254</span>
                     {{ field }}
                 </div>
                 {% else %}
@@ -41,7 +41,7 @@
             {% endfor %}
 
             <div style="display:flex;gap:1rem;margin-top:1.5rem">
-                <button type="submit" style="flex:1;padding:.8rem;background:#1565C0;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer">
+                <button type="submit" style="flex:1;padding:.8rem;background:#124491;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer">
                     <i class="bi bi-check-circle"></i> Register Player
                 </button>
                 <a href="{% url 'subcounty_officer_discipline_players' discipline_pk=discipline.pk %}" style="padding:.8rem 1.5rem;background:#e0e0e0;color:#333;border-radius:10px;font-size:1rem;font-weight:600;text-decoration:none;display:flex;align-items:center;justify-content:center">

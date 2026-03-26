@@ -109,7 +109,7 @@
                         {% if event.event_type == 'goal' %}
                         <span style="color:#2e7d32"><i class="bi bi-bullseye"></i> Goal</span>
                         {% elif event.event_type == 'assist' %}
-                        <span style="color:#1565c0"><i class="bi bi-hand-thumbs-up"></i> Assist</span>
+                        <span style="color:#124491"><i class="bi bi-hand-thumbs-up"></i> Assist</span>
                         {% elif event.event_type == 'yellow' %}
                         <span style="color:#f9a825"><i class="bi bi-square-fill"></i> Yellow Card</span>
                         {% elif event.event_type == 'red' or event.event_type == 'second_yellow' %}
@@ -162,7 +162,7 @@
 <!-- Approval Form -->
 {% if report.status == 'submitted' %}
 <div class="card" style="border:2px solid #1b5e20">
-    <div class="card-header" style="background:#e8f5e9">
+    <div class="card-header" style="background:#e8f5ed">
         <h3><i class="bi bi-check-circle"></i> Approve or Return This Report</h3>
     </div>
     <div class="card-body">

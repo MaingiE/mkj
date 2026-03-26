@@ -7,7 +7,7 @@
 <style>
 /* ── Hero ──────────────────────────────── */
 .log-hero {
-    background: linear-gradient(135deg, #0D3B0F 0%, #1565C0 50%, #2E7D32 100%);
+    background: linear-gradient(135deg, #003388 0%, #124491 50%, #2E7D32 100%);
     border-radius: 16px; padding: 2rem 2.5rem; color: #fff;
     margin-bottom: 1.5rem; position: relative; overflow: hidden;
 }
@@ -51,10 +51,10 @@
 .log-stat .st-label { font-size: .78rem; color: #757575; font-weight: 500; }
 .log-stat .st-icon { position: absolute; top: 1rem; right: 1.1rem; font-size: 1.6rem; opacity: .12; }
 
-.log-stat.c-green  { border-left-color: #1565C0; }
-.log-stat.c-green  .st-num { color: #1565C0; }
-.log-stat.c-blue   { border-left-color: #1565C0; }
-.log-stat.c-blue   .st-num { color: #1565C0; }
+.log-stat.c-green  { border-left-color: #124491; }
+.log-stat.c-green  .st-num { color: #124491; }
+.log-stat.c-blue   { border-left-color: #124491; }
+.log-stat.c-blue   .st-num { color: #124491; }
 .log-stat.c-amber  { border-left-color: #E65100; }
 .log-stat.c-amber  .st-num { color: #E65100; }
 .log-stat.c-purple { border-left-color: #6A1B9A; }
@@ -71,14 +71,14 @@
 }
 .filter-bar .form-control:focus,
 .filter-bar .form-select:focus {
-    border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.1);
+    border-color: #124491; box-shadow: 0 0 0 3px rgba(18,68,145,.1);
 }
 .filter-bar label {
     font-size: .7rem; font-weight: 600; text-transform: uppercase;
     letter-spacing: .5px; color: #999; margin-bottom: .25rem; display: block;
 }
 .btn-search {
-    background: #1565C0; color: #fff; border: none; font-size: .8rem;
+    background: #124491; color: #fff; border: none; font-size: .8rem;
     font-weight: 600; padding: .5rem 1.2rem; border-radius: 8px; transition: background .2s;
 }
 .btn-search:hover { background: #2E7D32; color: #fff; }
@@ -93,7 +93,7 @@
     font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
     transition: all .2s;
 }
-.btn-reset:hover { border-color: #1565C0; color: #1565C0; background: #F1F8E9; }
+.btn-reset:hover { border-color: #124491; color: #124491; background: #F1F8E9; }
 
 /* ── Filter Chips ──────────────────────── */
 .chip-bar { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: 1rem; }
@@ -101,10 +101,10 @@
 .filter-chip {
     display: inline-flex; align-items: center; gap: .3rem;
     padding: .25rem .7rem; border-radius: 20px; font-size: .75rem; font-weight: 500;
-    background: #E8F5E9; color: #1565C0; border: 1px solid #C8E6C9;
+    background: #e8f5ed; color: #124491; border: 1px solid #C8E6C9;
 }
 .filter-chip.ch-amber { background: #FFF3E0; color: #E65100; border-color: #FFE0B2; }
-.filter-chip.ch-blue  { background: #E3F2FD; color: #1565C0; border-color: #BBDEFB; }
+.filter-chip.ch-blue  { background: #e8edf5; color: #124491; border-color: #BBDEFB; }
 .filter-chip.ch-purple { background: #F3E5F5; color: #6A1B9A; border-color: #E1BEE7; }
 .filter-chip .chip-x {
     text-decoration: none; color: inherit; opacity: .5; font-size: .65rem;
@@ -124,7 +124,7 @@
 .card-head .title { font-size: .95rem; font-weight: 600; color: #212121; display: flex; align-items: center; gap: .5rem; }
 .count-pill {
     font-size: .72rem; font-weight: 600; padding: .15rem .6rem;
-    border-radius: 20px; background: #E8F5E9; color: #1565C0;
+    border-radius: 20px; background: #e8f5ed; color: #124491;
 }
 
 .log-table { width: 100%; border-collapse: collapse; }
@@ -153,7 +153,7 @@
 .user-avatar {
     width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: .75rem; font-weight: 700; color: #fff; background: #1565C0;
+    font-size: .75rem; font-weight: 700; color: #fff; background: #124491;
 }
 .user-name { font-size: .82rem; font-weight: 500; color: #212121; }
 .user-badge {
@@ -170,11 +170,11 @@
     font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
     white-space: nowrap;
 }
-.ab-create, .ab-add     { background: #E8F5E9; color: #1565C0; }
+.ab-create, .ab-add     { background: #e8f5ed; color: #124491; }
 .ab-update, .ab-edit,
 .ab-change              { background: #FFF3E0; color: #E65100; }
 .ab-delete, .ab-remove  { background: #FFEBEE; color: #C62828; }
-.ab-view, .ab-read      { background: #E3F2FD; color: #1565C0; }
+.ab-view, .ab-read      { background: #e8edf5; color: #124491; }
 .ab-login, .ab-logout   { background: #F3E5F5; color: #6A1B9A; }
 .ab-default             { background: #F5F5F5; color: #757575; }
 
@@ -189,7 +189,7 @@
 .desc-repr { font-size: .7rem; color: #999; margin-top: 1px; }
 
 /* IP */
-.ip-badge { font-size: .75rem; color: #1565C0; background: #E8F5E9; padding: .15rem .5rem; border-radius: 5px; }
+.ip-badge { font-size: .75rem; color: #124491; background: #e8f5ed; padding: .15rem .5rem; border-radius: 5px; }
 .ip-none { font-size: .82rem; color: #ccc; }
 
 /* Row action buttons */
@@ -200,7 +200,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     text-decoration: none; transition: all .2s;
 }
-.btn-row:hover { border-color: #1565C0; color: #1565C0; background: #E8F5E9; }
+.btn-row:hover { border-color: #124491; color: #124491; background: #e8f5ed; }
 .btn-row.undo:hover { border-color: #E65100; color: #E65100; background: #FFF3E0; }
 
 /* ── Pagination ────────────────────────── */
@@ -212,8 +212,8 @@
     padding: .3rem .6rem !important; border-color: #e0e0e0 !important;
     color: #757575 !important; min-width: 30px; text-align: center;
 }
-.log-pag .page-link:hover { border-color: #1565C0 !important; color: #1565C0 !important; background: #E8F5E9 !important; }
-.log-pag .page-item.active .page-link { background: #1565C0 !important; border-color: #1565C0 !important; color: #fff !important; font-weight: 600; }
+.log-pag .page-link:hover { border-color: #124491 !important; color: #124491 !important; background: #e8f5ed !important; }
+.log-pag .page-item.active .page-link { background: #124491 !important; border-color: #124491 !important; color: #fff !important; font-weight: 600; }
 .log-pag .page-item.disabled .page-link { opacity: .35; pointer-events: none; }
 
 /* ── Empty State ───────────────────────── */
@@ -433,7 +433,7 @@
                     {% for log in page_obj %}
                     {% with al=log.action|lower %}
                     <tr class="{% if log.is_undone %}is-undone{% endif %}"
-                        style="--row-color:{% if al == 'create' or al == 'add' %}#1565C0{% elif al == 'update' or al == 'edit' or al == 'change' %}#E65100{% elif al == 'delete' or al == 'remove' %}#C62828{% elif al == 'view' or al == 'read' %}#1565C0{% elif al == 'login' or al == 'logout' %}#6A1B9A{% else %}transparent{% endif %}">
+                        style="--row-color:{% if al == 'create' or al == 'add' %}#124491{% elif al == 'update' or al == 'edit' or al == 'change' %}#E65100{% elif al == 'delete' or al == 'remove' %}#C62828{% elif al == 'view' or al == 'read' %}#124491{% elif al == 'login' or al == 'logout' %}#6A1B9A{% else %}transparent{% endif %}">
 
                         <td>
                             <div class="ts-date">{{ log.timestamp|date:"M d, Y" }}</div>

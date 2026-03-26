@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
     .sg-hero {
-        background: linear-gradient(135deg, #0D3B1E 0%, #1565C0 40%, #2E7D32 100%);
+        background: linear-gradient(135deg, #0D3B1E 0%, #124491 40%, #2E7D32 100%);
         border-radius: 16px;
         padding: 2rem 2.5rem;
         color: #fff;
@@ -72,10 +72,10 @@
     .sg-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
     .sg-stat .num  { font-size: 1.55rem; font-weight: 800; line-height: 1.1; }
     .sg-stat .lbl  { font-size: .76rem; color: #757575; font-weight: 500; margin-top: .15rem; }
-    .sg-stat.green   { border-left-color: #1565C0; }
-    .sg-stat.green .num  { color: #1565C0; }
-    .sg-stat.blue    { border-left-color: #1565C0; }
-    .sg-stat.blue .num   { color: #1565C0; }
+    .sg-stat.green   { border-left-color: #124491; }
+    .sg-stat.green .num  { color: #124491; }
+    .sg-stat.blue    { border-left-color: #124491; }
+    .sg-stat.blue .num   { color: #124491; }
     .sg-stat.teal    { border-left-color: #00897B; }
     .sg-stat.teal .num   { color: #00897B; }
     .sg-stat.amber   { border-left-color: #E65100; }
@@ -110,7 +110,7 @@
         transform: translateY(-3px);
         box-shadow: 0 6px 20px rgba(0,0,0,.1);
         border-color: #2E7D32;
-        color: #1565C0;
+        color: #124491;
     }
     .action-tile .tile-icon {
         width: 44px;
@@ -156,7 +156,7 @@
         justify-content: space-between;
         align-items: center;
     }
-    .panel-head h3 { font-size: .92rem; font-weight: 700; margin: 0; color: #1565C0; }
+    .panel-head h3 { font-size: .92rem; font-weight: 700; margin: 0; color: #124491; }
     .panel-head a   { font-size: .78rem; text-decoration: none; color: #2E7D32; font-weight: 600; }
     .panel-head a:hover { text-decoration: underline; }
     .panel-body { padding: 1rem 1.25rem; }
@@ -244,7 +244,7 @@
 <div class="section-title"><i class="bi bi-lightning-charge"></i> Quick Actions</div>
 <div class="actions-grid">
     <a href="{% url 'sg_verifications' %}" class="action-tile">
-        <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;">
+        <div class="tile-icon" style="background:#e8f5ed;color:#124491;">
             <i class="bi bi-person-vcard"></i>
         </div>
         <div class="tile-text">
@@ -282,7 +282,7 @@
         </div>
     </a>
     <a href="{% url 'sg_user_actions' %}" class="action-tile">
-        <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;">
+        <div class="tile-icon" style="background:#e8edf5;color:#124491;">
             <i class="bi bi-journal-text"></i>
         </div>
         <div class="tile-text">
@@ -348,7 +348,7 @@
         <div class="panel-body" style="max-height:380px;overflow-y:auto;">
             {% for log in recent_activity %}
             <div class="activity-item">
-                <div class="activity-dot" style="background:{% cycle '#2E7D32' '#1565C0' '#E65100' '#6A1B9A' '#C62828' '#00695C' %}"></div>
+                <div class="activity-dot" style="background:{% cycle '#2E7D32' '#124491' '#E65100' '#6A1B9A' '#C62828' '#00695C' %}"></div>
                 <div>
                     <div class="ai-main">{{ log.description|truncatechars:70 }}</div>
                     <div class="ai-meta">

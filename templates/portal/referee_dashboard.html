@@ -19,7 +19,7 @@
         <p style="color:#666;">Your account has the referee role but no referee profile has been created yet.<br>
         Please contact the Referee Manager or register as a referee.</p>
         <a href="{% url 'referee_register' %}"
-           style="display:inline-block;margin-top:1rem;background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+           style="display:inline-block;margin-top:1rem;background:#124491;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
             Register as Referee
         </a>
     </div>
@@ -29,7 +29,7 @@
 <!-- Quick Stats -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
     <div class="card" style="text-align:center;padding:1.2rem;">
-        <div style="font-size:2rem;font-weight:700;color:#1565C0;">{{ total_appointments }}</div>
+        <div style="font-size:2rem;font-weight:700;color:#124491;">{{ total_appointments }}</div>
         <div style="color:#666;font-size:.85rem;">Total Appointments</div>
     </div>
     <div class="card" style="text-align:center;padding:1.2rem;">
@@ -37,7 +37,7 @@
         <div style="color:#666;font-size:.85rem;">Pending Confirmation</div>
     </div>
     <div class="card" style="text-align:center;padding:1.2rem;">
-        <div style="font-size:2rem;font-weight:700;color:#1565C0;">{{ upcoming_matches|length }}</div>
+        <div style="font-size:2rem;font-weight:700;color:#124491;">{{ upcoming_matches|length }}</div>
         <div style="color:#666;font-size:.85rem;">Upcoming Matches</div>
     </div>
     <div class="card" style="text-align:center;padding:1.2rem;">
@@ -71,7 +71,7 @@
                     {{ info.match_date|date:"D, d M Y" }} · {{ info.fixture.kickoff_time|time:"H:i" }}
                     {% if info.fixture.venue %} · {{ info.fixture.venue }}{% endif %}
                 </div>
-                <div style="font-size:.85rem;color:#1565C0;font-weight:600;">Role: {{ info.role }}</div>
+                <div style="font-size:.85rem;color:#124491;font-weight:600;">Role: {{ info.role }}</div>
             </div>
             <a href="{% url 'appointment_action' appointment_pk=info.appointment.pk %}"
                style="background:#FF8F00;color:#fff;padding:.55rem 1.15rem;border-radius:8px;text-decoration:none;font-size:.9rem;white-space:nowrap;">
@@ -122,7 +122,7 @@
 <!-- ═══ CURRENT / TODAY'S MATCHES ═══ -->
 {% if current_matches %}
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="background:#E8F5E9;">
+    <div class="card-header" style="background:#e8f5ed;">
         <h3>⚽ Today's Matches</h3>
     </div>
     <div class="card-body">
@@ -133,7 +133,7 @@
                 <div style="font-size:.85rem;color:#666;">
                     {{ info.fixture.kickoff_time|time:"H:i" }}
                     {% if info.fixture.venue %} · {{ info.fixture.venue }}{% endif %}
-                    · <span style="color:#1565C0;font-weight:600;">{{ info.role }}</span>
+                    · <span style="color:#124491;font-weight:600;">{{ info.role }}</span>
                 </div>
             </div>
             <div style="display:flex;gap:.5rem;">
@@ -166,7 +166,7 @@
                         <td>{{ info.match_date|date:"d M Y" }}</td>
                         <td><strong>{{ info.fixture.home_team }}</strong> vs <strong>{{ info.fixture.away_team }}</strong></td>
                         <td>{{ info.fixture.venue|default:"TBD" }}</td>
-                        <td><span style="color:#1565C0;font-weight:600;">{{ info.role }}</span></td>
+                        <td><span style="color:#124491;font-weight:600;">{{ info.role }}</span></td>
                         <td>
                             {% if info.status == 'confirmed' %}
                             <span class="badge badge-success">Confirmed</span>
@@ -179,7 +179,7 @@
                         <td>
                             {% if info.status == 'pending' %}
                             <a href="{% url 'appointment_action' appointment_pk=info.appointment.pk %}"
-                               style="background:#1565C0;color:#fff;padding:.3rem .7rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+                               style="background:#124491;color:#fff;padding:.3rem .7rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
                                 Respond
                             </a>
                             {% endif %}
@@ -196,7 +196,7 @@
 <!-- ═══ PENDING SQUAD APPROVALS ═══ -->
 {% if pending_squads %}
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="background:#E3F2FD;">
+    <div class="card-header" style="background:#e8edf5;">
         <h3>📋 Squads Awaiting Approval ({{ pending_squads|length }})</h3>
     </div>
     <div class="card-body">
@@ -209,7 +209,7 @@
                 </div>
             </div>
             <a href="{% url 'squad_review' squad_pk=sq.pk %}"
-               style="background:#1565C0;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+               style="background:#124491;color:#fff;padding:.4rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
                 Review Squad
             </a>
         </div>
@@ -246,18 +246,18 @@
     <div class="card-header">
         <h3>👤 My Profile</h3>
         <a href="{% url 'referee_edit_profile' %}"
-           style="background:#1565C0;color:#fff;padding:.3rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
+           style="background:#124491;color:#fff;padding:.3rem .8rem;border-radius:6px;text-decoration:none;font-size:.85rem;">
             Edit Profile
         </a>
     </div>
     <div class="card-body">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
             <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
-                <div style="font-weight:700;color:#1565C0;">{{ profile.get_referee_type_display }}</div>
+                <div style="font-weight:700;color:#124491;">{{ profile.get_referee_type_display }}</div>
                 <div style="font-size:.85rem;color:#666;">Official Type</div>
             </div>
             <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
-                <div style="font-weight:700;color:#1565C0;">{{ profile.get_level_display }}</div>
+                <div style="font-weight:700;color:#124491;">{{ profile.get_level_display }}</div>
                 <div style="font-size:.85rem;color:#666;">Level</div>
             </div>
             <div style="text-align:center;padding:.8rem;background:#f9f9f9;border-radius:8px;">
@@ -298,7 +298,7 @@
                         <td>
                             {% if info.fixture.match_report %}
                             <a href="{% url 'match_report_detail' report_pk=info.fixture.match_report.pk %}"
-                               style="color:#1565C0;">View</a>
+                               style="color:#124491;">View</a>
                             {% else %}
                             <a href="{% url 'match_report_form' fixture_pk=info.fixture.pk %}"
                                style="color:#FF8F00;">Write</a>
@@ -320,7 +320,7 @@
         <h3>No upcoming appointments</h3>
         <p style="color:#666;">You have no active match appointments. Check back later or update your profile.</p>
         <a href="{% url 'referee_edit_profile' %}"
-           style="display:inline-block;margin-top:1rem;background:#1565C0;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+           style="display:inline-block;margin-top:1rem;background:#124491;color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;">
             Edit Profile
         </a>
     </div>

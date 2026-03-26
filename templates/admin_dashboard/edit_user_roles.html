@@ -25,15 +25,15 @@
         transition: all .2s ease;
         margin-bottom: .5rem;
     }
-    .role-option:hover { border-color: #42A5F5; background: #FAFAFA; }
+    .role-option:hover { border-color: #3a7bd5; background: #FAFAFA; }
     .role-option.selected {
-        border-color: #1565C0;
-        background: #E8F5E9;
+        border-color: #124491;
+        background: #e8f5ed;
     }
     .role-option input[type="radio"] {
         width: 18px;
         height: 18px;
-        accent-color: #1565C0;
+        accent-color: #124491;
         flex-shrink: 0;
     }
     .role-option .role-name {
@@ -67,7 +67,7 @@
 <div class="er-grid">
     <!-- User Info -->
     <div class="card">
-        <div class="card-header" style="background:#E3F2FD;">
+        <div class="card-header" style="background:#e8edf5;">
             <h3>User Information</h3>
         </div>
         <div class="card-body">
@@ -84,10 +84,10 @@
                     <div class="label">Current Role</div>
                     <div class="value">
                         <span style="display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.82rem;font-weight:600;
-                            {% if edit_user.role == 'admin' %}background:#E3F2FD;color:#1565C0;
+                            {% if edit_user.role == 'admin' %}background:#e8edf5;color:#124491;
                             {% elif edit_user.role == 'competition_manager' %}background:#F3E5F5;color:#6A1B9A;
                             {% elif edit_user.role == 'coordinator' %}background:#FFF3E0;color:#E65100;
-                            {% elif edit_user.role == 'referee' %}background:#E8F5E9;color:#1565C0;
+                            {% elif edit_user.role == 'referee' %}background:#e8f5ed;color:#124491;
                             {% elif edit_user.role == 'team_manager' %}background:#FCE4EC;color:#AD1457;
                             {% elif edit_user.role == 'treasurer' %}background:#FFF8E1;color:#F57F17;
                             {% else %}background:#ECEFF1;color:#455A64;{% endif %}">

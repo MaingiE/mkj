@@ -49,7 +49,7 @@
         <h4>{{ d.get_sport_type_display }}</h4>
         <p>{{ d.player_count }} / {{ d.squad_limit }} players</p>
         <div style="background:#e0e0e0;border-radius:8px;height:6px;margin-top:.5rem;width:100%">
-            <div style="background:{% if d.can_add_player %}#1565C0{% else %}#C62828{% endif %};border-radius:8px;height:6px;width:{% widthratio d.player_count d.squad_limit 100 %}%;transition:width .3s"></div>
+            <div style="background:{% if d.can_add_player %}#124491{% else %}#C62828{% endif %};border-radius:8px;height:6px;width:{% widthratio d.player_count d.squad_limit 100 %}%;transition:width .3s"></div>
         </div>
     </a>
     {% endfor %}
@@ -63,6 +63,6 @@
 {% endif %}
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'subcounty_officer_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <a href="{% url 'subcounty_officer_dashboard' %}" style="color:#124491;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 </div>
 {% endblock %}

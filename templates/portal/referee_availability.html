@@ -9,7 +9,7 @@
         <span style="color:#757575;">Availability</span>
     </div>
     <div class="d-flex align-items-center gap-3">
-        <h1 style="font-size:2rem;font-weight:800;color:#1565C0;">📆 My Availability</h1>
+        <h1 style="font-size:2rem;font-weight:800;color:#124491;">📆 My Availability</h1>
         <span class="badge bg-success" style="font-size:1rem;padding:.5rem 1rem;border-radius:8px;">Next 30 Days</span>
     </div>
     <p style="font-size:1.1rem;color:#555;">Set your availability for the next 30 days — Referee Managers will see this when making appointments.</p>
@@ -18,7 +18,7 @@
 <!-- Legend -->
 <div class="card shadow-sm mb-4">
     <div class="card-body d-flex flex-wrap gap-4 justify-content-between align-items-center" style="font-size:.95rem;background:#f9f9f9;border-radius:10px;">
-        <span><span style="display:inline-block;width:18px;height:18px;background:#42A5F5;border-radius:4px;vertical-align:middle;margin-right:.4rem;"></span> <strong>Available</strong></span>
+        <span><span style="display:inline-block;width:18px;height:18px;background:#3a7bd5;border-radius:4px;vertical-align:middle;margin-right:.4rem;"></span> <strong>Available</strong></span>
         <span><span style="display:inline-block;width:18px;height:18px;background:#E57373;border-radius:4px;vertical-align:middle;margin-right:.4rem;"></span> <strong>Unavailable</strong></span>
         <span><span style="display:inline-block;width:18px;height:18px;background:#ddd;border-radius:4px;vertical-align:middle;margin-right:.4rem;"></span> <strong>Not Set</strong></span>
         <span style="font-size:1.1rem;">⚽ <strong>Match Appointed</strong></span>
@@ -33,12 +33,12 @@
     <div class="card-body" style="background:#f5f5f5;border-radius:0 0 10px 10px;">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1.2rem;">
             {% for day in calendar_days %}
-            <div style="border:2px solid {% if day.status == 'available' %}#42A5F5{% elif day.status == 'unavailable' %}#E57373{% else %}#ddd{% endif %};border-radius:12px;padding:1.1rem;text-align:center;background:{% if day.status == 'available' %}#E8F5E9{% elif day.status == 'unavailable' %}#FFEBEE{% else %}#fafafa{% endif %};{% if day.is_today %}box-shadow:0 0 0 4px #1565C0;{% endif %}transition:box-shadow .2s;">
+            <div style="border:2px solid {% if day.status == 'available' %}#3a7bd5{% elif day.status == 'unavailable' %}#E57373{% else %}#ddd{% endif %};border-radius:12px;padding:1.1rem;text-align:center;background:{% if day.status == 'available' %}#e8f5ed{% elif day.status == 'unavailable' %}#FFEBEE{% else %}#fafafa{% endif %};{% if day.is_today %}box-shadow:0 0 0 4px #124491;{% endif %}transition:box-shadow .2s;">
                 <div style="font-weight:700;font-size:1rem;color:#333;">{{ day.weekday }}</div>
-                <div style="font-size:2rem;font-weight:800;color:{% if day.is_today %}#1565C0{% else %}#333{% endif %};margin-bottom:.2rem;">{{ day.date|date:"d" }}</div>
+                <div style="font-size:2rem;font-weight:800;color:{% if day.is_today %}#124491{% else %}#333{% endif %};margin-bottom:.2rem;">{{ day.date|date:"d" }}</div>
                 <div style="font-size:.85rem;color:#666;margin-bottom:.3rem;">{{ day.date|date:"M Y" }}</div>
                 {% if day.has_match %}
-                <div style="font-size:.85rem;color:#1565C0;font-weight:700;margin-top:.3rem;">⚽ Match Day</div>
+                <div style="font-size:.85rem;color:#124491;font-weight:700;margin-top:.3rem;">⚽ Match Day</div>
                 {% endif %}
                 <div style="margin-top:.5rem;font-size:.85rem;font-weight:600;{% if day.status == 'available' %}color:#2E7D32;{% elif day.status == 'unavailable' %}color:#c62828;{% else %}color:#999;{% endif %}">
                     {% if day.status == 'available' %}✅ Available
@@ -54,7 +54,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="date" value="{{ day.date|date:'Y-m-d' }}">
                         <input type="hidden" name="status" value="available">
-                        <button type="submit" style="background:#42A5F5;color:#fff;border:none;border-radius:6px;padding:.3rem .7rem;font-size:.9rem;cursor:pointer;font-weight:700;box-shadow:0 2px 6px #4caf5040;" title="Set Available">✓</button>
+                        <button type="submit" style="background:#3a7bd5;color:#fff;border:none;border-radius:6px;padding:.3rem .7rem;font-size:.9rem;cursor:pointer;font-weight:700;box-shadow:0 2px 6px #4caf5040;" title="Set Available">✓</button>
                     </form>
                     {% endif %}
                     {% if day.status != 'unavailable' %}
@@ -95,7 +95,7 @@
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">Notes (optional)</label>
                 <input type="text" name="notes" placeholder="e.g. Available after 2 PM" style="width:100%;padding:.7rem;border:1px solid #bbb;border-radius:8px;font-size:1rem;">
             </div>
-            <button type="submit" style="background:#1565C0;color:#fff;padding:.7rem 2rem;border-radius:10px;border:none;cursor:pointer;font-size:1.1rem;font-weight:700;box-shadow:0 2px 8px #1b5e2040;">
+            <button type="submit" style="background:#124491;color:#fff;padding:.7rem 2rem;border-radius:10px;border:none;cursor:pointer;font-size:1.1rem;font-weight:700;box-shadow:0 2px 8px #1b5e2040;">
                 💾 Save
             </button>
         </form>

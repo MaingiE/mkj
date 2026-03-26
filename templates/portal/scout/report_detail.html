@@ -15,8 +15,8 @@
     .info-item .lbl { font-size:.73rem; color:#666; text-transform:uppercase; }
     .info-item .val { font-weight:600; }
     .rec-badge-lg { display:inline-block; font-size:.85rem; font-weight:700; padding:.3rem .8rem; border-radius:20px; }
-    .rec-highly { background:#E8F5E9; color:#2E7D32; }
-    .rec-recommended { background:#E3F2FD; color:#1565C0; }
+    .rec-highly { background:#e8f5ed; color:#2E7D32; }
+    .rec-recommended { background:#e8edf5; color:#124491; }
     .rec-monitor { background:#FFF8E1; color:#F57F17; }
     .rec-not { background:#FFEBEE; color:#c62828; }
     .text-section { margin-bottom:1rem; }
@@ -101,7 +101,7 @@
 
 <!-- Criteria Scores -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="background:#E3F2FD;"><h3><i class="bi bi-bar-chart-line"></i> {{ criteria_def.label }} — Criteria Scores</h3></div>
+    <div class="card-header" style="background:#e8edf5;"><h3><i class="bi bi-bar-chart-line"></i> {{ criteria_def.label }} — Criteria Scores</h3></div>
     <div class="card-body">
         {% for cd in criteria_display %}
         <div class="score-bar">

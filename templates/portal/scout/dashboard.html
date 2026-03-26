@@ -10,7 +10,7 @@
     <h1><i class="bi bi-binoculars-fill"></i> Scout Dashboard</h1>
     <p>Assigned Discipline:
         {% if discipline %}
-        <span style="display:inline-block;background:#1565C0;color:#fff;padding:.25rem .8rem;border-radius:20px;font-weight:600;font-size:.9rem">{{ discipline_label }}</span>
+        <span style="display:inline-block;background:#124491;color:#fff;padding:.25rem .8rem;border-radius:20px;font-weight:600;font-size:.9rem">{{ discipline_label }}</span>
         {% else %}
         <span style="display:inline-block;background:#e65100;color:#fff;padding:.25rem .8rem;border-radius:20px;font-weight:600;font-size:.85rem">Not Assigned — Contact Admin</span>
         {% endif %}
@@ -23,8 +23,8 @@
         <div class="stat-icon green"><i class="bi bi-people-fill"></i></div>
         <div class="stat-info"><h3>{{ total_players }}</h3><p>{% if discipline %}Discipline Players{% else %}Verified Players{% endif %}</p></div>
     </div>
-    <div class="stat-card" style="border-left:4px solid #1565C0">
-        <div class="stat-icon" style="background:#E3F2FD;color:#1565C0"><i class="bi bi-bookmark-star-fill"></i></div>
+    <div class="stat-card" style="border-left:4px solid #124491">
+        <div class="stat-icon" style="background:#e8edf5;color:#124491"><i class="bi bi-bookmark-star-fill"></i></div>
         <div class="stat-info"><h3>{{ shortlist_count }}</h3><p>Shortlisted</p></div>
     </div>
     <div class="stat-card" style="border-left:4px solid #E65100">
@@ -35,7 +35,7 @@
 
 <!-- Quick Actions -->
 <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
-    <a href="{% url 'scout_players' %}" class="btn" style="background:#1565C0;color:#fff;padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;font-weight:600;">
+    <a href="{% url 'scout_players' %}" class="btn" style="background:#124491;color:#fff;padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;font-weight:600;">
         <i class="bi bi-search"></i> Browse Players
     </a>
     <a href="{% url 'scout_shortlist' %}" class="btn btn-outline" style="padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;font-weight:600;">
@@ -47,7 +47,7 @@
 {% if shortlist %}
 <div class="card">
     <div class="card-body">
-        <h3 style="margin-bottom:1rem;font-size:1rem;"><i class="bi bi-bookmark-star-fill" style="color:#1565C0"></i> Recent Shortlist</h3>
+        <h3 style="margin-bottom:1rem;font-size:1rem;"><i class="bi bi-bookmark-star-fill" style="color:#124491"></i> Recent Shortlist</h3>
         <div class="table-responsive">
             <table>
                 <thead>
@@ -84,7 +84,7 @@
         </div>
         {% if shortlist_count > 10 %}
         <div style="text-align:center;margin-top:1rem;">
-            <a href="{% url 'scout_shortlist' %}" style="color:#1565C0;font-weight:600;text-decoration:none;">View all {{ shortlist_count }} entries →</a>
+            <a href="{% url 'scout_shortlist' %}" style="color:#124491;font-weight:600;text-decoration:none;">View all {{ shortlist_count }} entries →</a>
         </div>
         {% endif %}
     </div>
@@ -95,7 +95,7 @@
         <div style="font-size:3rem">🔭</div>
         <h3>No players shortlisted yet</h3>
         <p style="color:#888">Browse verified players and start building your shortlist.</p>
-        <a href="{% url 'scout_players' %}" style="color:#1565C0;font-weight:600;text-decoration:none;">Browse Players →</a>
+        <a href="{% url 'scout_players' %}" style="color:#124491;font-weight:600;text-decoration:none;">Browse Players →</a>
     </div>
 </div>
 {% endif %}

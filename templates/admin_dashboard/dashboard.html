@@ -6,11 +6,11 @@
 {% block extra_css %}
 <style>
     .dash-hero {
-        background: linear-gradient(135deg, #0D3B0F 0%, #1565C0 50%, #2E7D32 100%);
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
+        background: linear-gradient(135deg, #003388 0%, #124491 50%, #1a5bb5 100%);
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
         color: #fff;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         position: relative;
         overflow: hidden;
     }
@@ -19,161 +19,163 @@
         position: absolute;
         top: -50%;
         right: -10%;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
         border-radius: 50%;
     }
-    .dash-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
-    .dash-hero p { opacity: .85; font-size: .95rem; position: relative; }
+    .dash-hero h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: .15rem; position: relative; }
+    .dash-hero p { opacity: .8; font-size: .85rem; position: relative; }
     .dash-hero .hero-badge {
         display: inline-block;
-        background: rgba(255,255,255,.15);
-        border: 1px solid rgba(255,255,255,.25);
-        padding: .2rem .8rem;
+        background: rgba(255,255,255,.12);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,.18);
+        padding: .15rem .65rem;
         border-radius: 20px;
-        font-size: .75rem;
+        font-size: .68rem;
         letter-spacing: .5px;
         text-transform: uppercase;
-        margin-bottom: .5rem;
+        margin-bottom: .4rem;
     }
     .stat-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: .85rem;
+        margin-bottom: 1.5rem;
     }
     .dash-stat {
         background: #fff;
-        border-radius: 12px;
-        padding: 1.25rem 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,.06);
-        border-left: 4px solid transparent;
-        transition: all .25s ease;
+        border-radius: 10px;
+        padding: 1rem 1.15rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 6px rgba(0,0,0,.02);
+        border-left: 3px solid transparent;
+        transition: all .2s ease;
         position: relative;
+        border: 1px solid #e5eaf0;
     }
-    .dash-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .dash-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.07); }
     .dash-stat .stat-num {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: 800;
         line-height: 1.1;
-        margin-bottom: .15rem;
+        margin-bottom: .1rem;
     }
     .dash-stat .stat-label {
-        font-size: .82rem;
-        color: #757575;
+        font-size: .78rem;
+        color: #64748b;
         font-weight: 500;
     }
     .dash-stat .stat-sub {
-        font-size: .75rem;
-        color: #999;
-        margin-top: .25rem;
+        font-size: .7rem;
+        color: #94a3b8;
+        margin-top: .2rem;
     }
     .dash-stat .stat-icon {
         position: absolute;
-        top: 1rem;
-        right: 1.25rem;
-        font-size: 1.8rem;
-        opacity: .15;
+        top: .85rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        opacity: .1;
     }
-    .dash-stat.green  { border-left-color: #1565C0; }
-    .dash-stat.green .stat-num { color: #1565C0; }
-    .dash-stat.blue   { border-left-color: #1565C0; }
-    .dash-stat.blue .stat-num { color: #1565C0; }
-    .dash-stat.amber  { border-left-color: #E65100; }
-    .dash-stat.amber .stat-num { color: #E65100; }
-    .dash-stat.red    { border-left-color: #C62828; }
-    .dash-stat.red .stat-num { color: #C62828; }
-    .dash-stat.purple { border-left-color: #6A1B9A; }
-    .dash-stat.purple .stat-num { color: #6A1B9A; }
+    .dash-stat.green  { border-left-color: #124491; }
+    .dash-stat.green .stat-num { color: #124491; }
+    .dash-stat.blue   { border-left-color: #3b82f6; }
+    .dash-stat.blue .stat-num { color: #3b82f6; }
+    .dash-stat.amber  { border-left-color: #d97706; }
+    .dash-stat.amber .stat-num { color: #d97706; }
+    .dash-stat.red    { border-left-color: #cf2e2e; }
+    .dash-stat.red .stat-num { color: #cf2e2e; }
+    .dash-stat.purple { border-left-color: #7c3aed; }
+    .dash-stat.purple .stat-num { color: #7c3aed; }
 
     .actions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: .85rem;
+        margin-bottom: 1.5rem;
     }
     .action-tile {
         background: #fff;
-        border-radius: 12px;
-        padding: 1.25rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,.03);
         text-decoration: none;
-        color: #212121;
-        transition: all .25s ease;
+        color: #1e293b;
+        transition: all .2s ease;
         display: flex;
         align-items: flex-start;
-        gap: 1rem;
-        border: 1px solid transparent;
+        gap: .85rem;
+        border: 1px solid #e5eaf0;
     }
     .action-tile:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0,0,0,.1);
-        border-color: #1565C0;
-        color: #1565C0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,.07);
+        border-color: #124491;
+        color: #124491;
     }
     .action-tile .tile-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 9px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.3rem;
+        font-size: 1.15rem;
         flex-shrink: 0;
     }
     .action-tile .tile-text h4 {
-        font-size: .9rem;
+        font-size: .82rem;
         font-weight: 600;
-        margin-bottom: .15rem;
+        margin-bottom: .1rem;
     }
     .action-tile .tile-text p {
-        font-size: .78rem;
-        color: #757575;
+        font-size: .72rem;
+        color: #64748b;
         margin: 0;
         line-height: 1.35;
     }
     .action-tile .tile-badge {
-        background: #C62828;
+        background: #cf2e2e;
         color: #fff;
-        font-size: .7rem;
+        font-size: .65rem;
         font-weight: 700;
-        padding: .1rem .45rem;
-        border-radius: 10px;
-        margin-left: .4rem;
+        padding: .08rem .4rem;
+        border-radius: 8px;
+        margin-left: .3rem;
     }
 
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 
     .recent-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: .7rem 0;
-        border-bottom: 1px solid #f0f0f0;
+        padding: .55rem 0;
+        border-bottom: 1px solid #f0f2f5;
     }
     .recent-item:last-child { border-bottom: none; }
-    .recent-item .ri-main { font-weight: 600; font-size: .9rem; }
-    .recent-item .ri-sub { font-size: .78rem; color: #999; }
+    .recent-item .ri-main { font-weight: 600; font-size: .82rem; }
+    .recent-item .ri-sub { font-size: .72rem; color: #94a3b8; }
     .recent-item .ri-badge {
-        font-size: .75rem;
+        font-size: .7rem;
         font-weight: 600;
-        padding: .2rem .6rem;
-        border-radius: 6px;
+        padding: .15rem .5rem;
+        border-radius: 5px;
         white-space: nowrap;
     }
     .empty-state-sm {
         text-align: center;
-        padding: 2rem 1rem;
-        color: #999;
+        padding: 1.75rem 1rem;
+        color: #94a3b8;
     }
-    .empty-state-sm .icon { font-size: 2rem; margin-bottom: .5rem; opacity: .4; }
+    .empty-state-sm .icon { font-size: 1.75rem; margin-bottom: .4rem; opacity: .35; }
 
     @media (max-width: 768px) {
         .two-col { grid-template-columns: 1fr; }
         .stat-row { grid-template-columns: repeat(2, 1fr); }
         .actions-grid { grid-template-columns: 1fr 1fr; }
-        .dash-hero { padding: 1.5rem; }
+        .dash-hero { padding: 1.25rem; }
     }
     @media (max-width: 480px) {
         .stat-row { grid-template-columns: 1fr; }
@@ -215,14 +217,14 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="card" style="margin-bottom:2rem;">
-    <div class="card-header" style="background:linear-gradient(135deg,#1565C0,#2E7D32);color:#fff;">
-        <h3 style="color:#fff;">Quick Actions</h3>
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:linear-gradient(135deg,#003388,#124491);color:#fff;">
+        <h3 style="color:#fff;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
     </div>
     <div class="card-body">
         <div class="actions-grid">
-            <a href="{% url 'manage_league_admins' %}" class="action-tile" style="background:#FFEBEE;border:1px solid #FFCDD2;">
-                <div class="tile-icon" style="background:#C62828;color:#fff;"><i class="bi bi-people-fill"></i></div>
+            <a href="{% url 'manage_league_admins' %}" class="action-tile" style="background:#fef2f2;border:1px solid #fecaca;">
+                <div class="tile-icon" style="background:#cf2e2e;color:#fff;"><i class="bi bi-people-fill"></i></div>
                 <div class="tile-text">
                     <h4>User Management</h4>
                     <p>Create users, assign roles, manage access</p>
@@ -230,7 +232,7 @@
             </a>
 
             <a href="{% url 'assign_zones' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-geo-alt"></i></div>
+                <div class="tile-icon" style="background:#e8edf5;color:#124491;"><i class="bi bi-geo-alt"></i></div>
                 <div class="tile-text">
                     <h4>Assign Zones</h4>
                     <p>Set team zones and divisions</p>
@@ -271,7 +273,7 @@
             </a>
 
             <a href="{% url 'matches_list' %}" class="action-tile">
-                <div class="tile-icon" style="background:#E8F5E9;color:#1565C0;"><i class="bi bi-clipboard-data"></i></div>
+                <div class="tile-icon" style="background:#e8f5ed;color:#124491;"><i class="bi bi-clipboard-data"></i></div>
                 <div class="tile-text">
                     <h4>Manage Matches</h4>
                     <p>Edit results, update live scores</p>
@@ -313,7 +315,7 @@
                         <div class="ri-sub">{{ team.county|default:"No county" }} &middot; {{ team.registered_at|date:"d M Y" }}</div>
                     </div>
                     <span class="ri-badge" style="
-                        {% if team.status == 'registered' %}background:#E8F5E9;color:#1565C0;
+                        {% if team.status == 'registered' %}background:#e8f5ed;color:#124491;
                         {% elif team.status == 'pending' %}background:#FFF8E1;color:#F57F17;
                         {% else %}background:#f5f5f5;color:#666;{% endif %}">
                         {{ team.status|title }}
@@ -344,9 +346,9 @@
                         </div>
                     </div>
                     <span class="ri-badge" style="
-                        {% if fixture.status == 'completed' %}background:#E8F5E9;color:#1565C0;
+                        {% if fixture.status == 'completed' %}background:#e8f5ed;color:#124491;
                         {% elif fixture.status == 'live' %}background:#FFEBEE;color:#C62828;
-                        {% elif fixture.status == 'scheduled' %}background:#E3F2FD;color:#1565C0;
+                        {% elif fixture.status == 'scheduled' %}background:#e8edf5;color:#124491;
                         {% else %}background:#f5f5f5;color:#666;{% endif %}">
                         {% if fixture.status == 'completed' %}{{ fixture.home_score }} - {{ fixture.away_score }}
                         {% elif fixture.status == 'live' %}<i class="bi bi-record-circle" style="color:#C62828;"></i> LIVE

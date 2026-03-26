@@ -11,7 +11,7 @@
     <p>{{ fixture.home_team.name }} vs {{ fixture.away_team.name }} &mdash; {{ fixture.match_date|date:"d M Y, H:i" }}</p>
 </div>
 
-<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:.9rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
+<div style="background:#e8edf5;border:1px solid #90caf9;border-radius:10px;padding:.9rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
     <span style="font-size:1.2rem"><i class="bi bi-clock"></i></span>
     <div style="font-size:.88rem;color:#355;">
         Squad selection/edit window: from <strong>{{ selection_opens_at|date:"d M Y, H:i" }}</strong> until kickoff.
@@ -103,11 +103,11 @@
     <h3 style="font-size:.95rem;color:#888;margin-bottom:.5rem">Current Submission Status</h3>
     <div style="display:flex;gap:1rem;align-items:center">
         {% if existing.status == 'submitted' %}
-        <span style="background:#e3f2fd;color:#1565c0;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+        <span style="background:#e8edf5;color:#124491;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
             <i class="bi bi-clock"></i> Submitted — Awaiting Referee Review
         </span>
         {% elif existing.status == 'approved' %}
-        <span style="background:#e8f5e9;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
+        <span style="background:#e8f5ed;color:#2e7d32;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
             <i class="bi bi-check-circle"></i> Approved by Referee
         </span>
         {% elif existing.status == 'rejected' %}
@@ -123,6 +123,6 @@
 {% endif %}
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'team_manager_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <a href="{% url 'team_manager_dashboard' %}" style="color:#124491;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 </div>
 {% endblock %}

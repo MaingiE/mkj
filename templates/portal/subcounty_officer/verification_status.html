@@ -21,8 +21,8 @@
         <div style="font-size:2rem;font-weight:800;color:#f57c00">{{ pending_players|length }}</div>
         <div style="color:#888;font-size:.82rem">Pending</div>
     </div>
-    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #1565c0">
-        <div style="font-size:2rem;font-weight:800;color:#1565c0">{{ resubmit_players|length }}</div>
+    <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #124491">
+        <div style="font-size:2rem;font-weight:800;color:#124491">{{ resubmit_players|length }}</div>
         <div style="color:#888;font-size:.82rem">Resubmit</div>
     </div>
     <div class="card" style="padding:1.2rem;text-align:center;border-top:4px solid #C62828">
@@ -55,9 +55,9 @@
 
 {% if resubmit_players %}
 <div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
-    <h3 style="font-size:1rem;color:#1565c0;margin-bottom:.8rem"><i class="bi bi-arrow-repeat"></i> Resubmission Required</h3>
+    <h3 style="font-size:1rem;color:#124491;margin-bottom:.8rem"><i class="bi bi-arrow-repeat"></i> Resubmission Required</h3>
     <table style="width:100%;border-collapse:collapse;font-size:.88rem">
-        <thead><tr style="background:#e3f2fd;text-align:left">
+        <thead><tr style="background:#e8edf5;text-align:left">
             <th style="padding:.5rem .8rem">Name</th>
             <th style="padding:.5rem .8rem">Discipline</th>
             <th style="padding:.5rem .8rem">Reason</th>
@@ -67,7 +67,7 @@
             <tr style="border-bottom:1px solid #eee">
                 <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
                 <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
-                <td style="padding:.5rem .8rem;color:#1565c0">{{ entry.player.rejection_reason|default:"—" }}</td>
+                <td style="padding:.5rem .8rem;color:#124491">{{ entry.player.rejection_reason|default:"—" }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -101,7 +101,7 @@
 <div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
     <h3 style="font-size:1rem;color:#2e7d32;margin-bottom:.8rem"><i class="bi bi-check-circle"></i> Verified Players</h3>
     <table style="width:100%;border-collapse:collapse;font-size:.88rem">
-        <thead><tr style="background:#e8f5e9;text-align:left">
+        <thead><tr style="background:#e8f5ed;text-align:left">
             <th style="padding:.5rem .8rem">Name</th>
             <th style="padding:.5rem .8rem">Discipline</th>
             <th style="padding:.5rem .8rem">Position</th>
@@ -122,6 +122,6 @@
 {% endif %}
 
 <div style="margin-top:1.5rem">
-    <a href="{% url 'subcounty_officer_dashboard' %}" style="color:#1565C0;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    <a href="{% url 'subcounty_officer_dashboard' %}" style="color:#124491;font-weight:600;font-size:.9rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
 </div>
 {% endblock %}

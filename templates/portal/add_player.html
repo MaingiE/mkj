@@ -22,10 +22,10 @@
     </div>
 </div>
 
-<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;border-radius:10px;background:#e3f2fd;border-left:4px solid #1565C0;display:flex;align-items:center;gap:.75rem">
+<div style="margin-bottom:1.5rem;padding:1rem 1.25rem;border-radius:10px;background:#e8edf5;border-left:4px solid #124491;display:flex;align-items:center;gap:.75rem">
     <span style="font-size:1.5rem">ℹ️</span>
     <div>
-        <strong style="color:#1565C0">Shirt Number Allocation</strong>
+        <strong style="color:#124491">Shirt Number Allocation</strong>
         <p style="margin:0;color:#555;font-size:.9rem">Shirt number is no longer entered during registration. A temporary number is reserved automatically, and the team manager can update it later.</p>
     </div>
 </div>
@@ -37,7 +37,7 @@
         <div class="card-body">
             {% if messages %}
             {% for message in messages %}
-            <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5e9{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e3f2fd{% endif %};border-left:4px solid {% if message.tags == 'success' %}#1565C0{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#1565c0{% endif %}">
+            <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:8px;background:{% if message.tags == 'success' %}#e8f5ed{% elif message.tags == 'error' %}#fce4ec{% elif message.tags == 'warning' %}#fff3e0{% else %}#e8edf5{% endif %};border-left:4px solid {% if message.tags == 'success' %}#124491{% elif message.tags == 'error' %}#C62828{% elif message.tags == 'warning' %}#f57c00{% else %}#124491{% endif %}">
                 {{ message }}
             </div>
             {% endfor %}
@@ -47,7 +47,7 @@
                 {% csrf_token %}
 
                 <fieldset style="border:1px solid #e0e0e0;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem">
-                    <legend style="font-weight:700;color:#1565C0;padding:0 .5rem;font-size:.95rem">Personal Information</legend>
+                    <legend style="font-weight:700;color:#124491;padding:0 .5rem;font-size:.95rem">Personal Information</legend>
                     {% for field in form %}
                         {% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'date_of_birth' or field.name == 'position' or field.name == 'national_id_number' or field.name == 'birth_cert_number' %}
                         <div style="margin-bottom:1rem">
@@ -55,7 +55,7 @@
                             {% if field.name == 'national_id_number' %}
                             <div style="display:flex;gap:.5rem;align-items:flex-start">
                                 <div style="flex:1">{{ field }}</div>
-                                <button type="button" id="iprs-lookup-btn" onclick="lookupIPRS()" style="padding:.45rem 1rem;background:#1565c0;color:#fff;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;white-space:nowrap;margin-top:1px;display:flex;align-items:center;gap:.35rem" title="Look up name & DOB from IPRS">
+                                <button type="button" id="iprs-lookup-btn" onclick="lookupIPRS()" style="padding:.45rem 1rem;background:#124491;color:#fff;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;white-space:nowrap;margin-top:1px;display:flex;align-items:center;gap:.35rem" title="Look up name & DOB from IPRS">
                                     <span id="iprs-btn-icon">🔍</span>
                                     <span id="iprs-btn-text">IPRS Lookup</span>
                                 </button>
@@ -72,14 +72,14 @@
                 </fieldset>
 
                 <fieldset style="border:1px solid #e0e0e0;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem">
-                    <legend style="font-weight:700;color:#1565C0;padding:0 .5rem;font-size:.95rem">📄 Verification Documents</legend>
+                    <legend style="font-weight:700;color:#124491;padding:0 .5rem;font-size:.95rem">📄 Verification Documents</legend>
                     <p style="color:#666;font-size:.85rem;margin-bottom:1rem">All three documents are required for player verification by the admin.</p>
 
                     <!-- IPRS Photo Preview (auto-populated from IPRS lookup) -->
-                    <div id="iprs-photo-section" style="display:none;margin-bottom:1rem;padding:.75rem;background:#e3f2fd;border-radius:8px;border-left:4px solid #1565c0">
-                        <label style="display:block;font-weight:600;color:#1565c0;margin-bottom:.5rem;font-size:.9rem">📷 IPRS Passport Photo</label>
+                    <div id="iprs-photo-section" style="display:none;margin-bottom:1rem;padding:.75rem;background:#e8edf5;border-radius:8px;border-left:4px solid #124491">
+                        <label style="display:block;font-weight:600;color:#124491;margin-bottom:.5rem;font-size:.9rem">📷 IPRS Passport Photo</label>
                         <div style="display:flex;align-items:flex-start;gap:1rem">
-                            <img id="iprs-photo-img" src="" alt="IPRS Photo" style="width:120px;height:150px;object-fit:cover;border-radius:8px;border:2px solid #1565c0;background:#f5f7f5">
+                            <img id="iprs-photo-img" src="" alt="IPRS Photo" style="width:120px;height:150px;object-fit:cover;border-radius:8px;border:2px solid #124491;background:#f5f7f5">
                             <div style="font-size:.83rem;color:#555">
                                 <p style="margin:0 0 .25rem">This photo was returned from IPRS and will be saved with the player record for verification comparison.</p>
                                 <em style="color:#888">You can still upload a separate player photo below.</em>
@@ -131,7 +131,7 @@
                 {% endif %}
 
                 <div style="display:flex;gap:.75rem;margin-top:1rem">
-                    <button type="submit" name="action" value="add_more" class="btn btn-outline btn-sm" style="background:#1565C0;color:#fff;border-color:#1565C0;padding:.6rem 1.5rem;flex:1">
+                    <button type="submit" name="action" value="add_more" class="btn btn-outline btn-sm" style="background:#124491;color:#fff;border-color:#124491;padding:.6rem 1.5rem;flex:1">
                         Save &amp; Add Another
                     </button>
                     <button type="submit" name="action" value="finish" class="btn btn-outline btn-sm" style="padding:.6rem 1.5rem;flex:1">
@@ -166,7 +166,7 @@
                         <tr>
                             <td><strong>{{ p.shirt_number }}</strong></td>
                             <td>{{ p.first_name }} {{ p.last_name }}</td>
-                            <td><span class="badge" style="background:#e8f5e9;color:#1565C0">{{ p.get_position_display }}</span></td>
+                            <td><span class="badge" style="background:#e8f5ed;color:#124491">{{ p.get_position_display }}</span></td>
                             <td>
                                 {% if p.is_age_eligible %}
                                 {{ p.age }}
@@ -176,7 +176,7 @@
                             </td>
                             <td>
                                 {% if p.documents_uploaded %}
-                                <span style="color:#1565C0" title="All documents uploaded">✅</span>
+                                <span style="color:#124491" title="All documents uploaded">✅</span>
                                 {% else %}
                                 <span style="color:#f57c00" title="Missing documents">⚠️</span>
                                 {% endif %}
@@ -233,7 +233,7 @@ function lookupIPRS() {
     btn.disabled = true;
     btnIcon.textContent = '⏳';
     btnText.textContent = 'Looking up...';
-    showStatus('⏳ Querying IPRS...', '#1565c0', '#e3f2fd');
+    showStatus('⏳ Querying IPRS...', '#124491', '#e8edf5');
 
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     const formData = new FormData();
@@ -270,7 +270,7 @@ function lookupIPRS() {
             [firstName, lastName, dob].forEach(el => {
                 if (el) {
                     el.style.transition = 'background .3s';
-                    el.style.background = '#e8f5e9';
+                    el.style.background = '#e8f5ed';
                     setTimeout(() => el.style.background = '', 2000);
                 }
             });
@@ -279,7 +279,7 @@ function lookupIPRS() {
             if (data.age !== null) msg += ' — Age: <strong>' + data.age + '</strong>';
             if (data.gender) msg += ' — ' + escapeHtml(data.gender);
             if (data.is_simulation) msg += ' <em style="opacity:.7">(Simulation)</em>';
-            showStatus(msg, '#1565C0', '#e8f5e9');
+            showStatus(msg, '#124491', '#e8f5ed');
         } else if (data.success && !data.person_found) {
             showStatus('❌ No person found with this National ID.', '#C62828', '#fce4ec');
         } else {

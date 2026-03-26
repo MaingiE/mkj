@@ -8,7 +8,7 @@
     .appt-card .meta { font-size: .8rem; color: #757575; margin-bottom: .5rem; }
     .appt-roles { display: flex; flex-wrap: wrap; gap: .5rem; }
     .role-chip { font-size: .75rem; padding: .2rem .6rem; border-radius: 6px; background: #f5f5f5; }
-    .role-chip.filled { background: #E8F5E9; color: #1565C0; }
+    .role-chip.filled { background: #e8f5ed; color: #124491; }
     .role-chip.empty { background: #FFF3E0; color: #E65100; }
     .role-chip.optional-empty { background: #f5f5f5; color: #999; }
     .mandatory-tag { font-size: .6rem; font-weight: 700; color: #c62828; margin-left: .2rem; vertical-align: super; }
@@ -26,9 +26,9 @@
 <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-calendar-event"></i> Referee Appointments — {{ discipline_label }}</h2>
 
 <div class="summary-row">
-    <div class="summary-card"><div class="num" style="color:#1565C0;">{{ total_fixtures }}</div><div class="lbl">Fixtures</div></div>
+    <div class="summary-card"><div class="num" style="color:#124491;">{{ total_fixtures }}</div><div class="lbl">Fixtures</div></div>
     <div class="summary-card"><div class="num" style="color:#E65100;">{{ total_needing }}</div><div class="lbl">Need Officials</div></div>
-    <div class="summary-card"><div class="num" style="color:#1565C0;">{{ total_fully }}</div><div class="lbl">Fully Appointed</div></div>
+    <div class="summary-card"><div class="num" style="color:#124491;">{{ total_fully }}</div><div class="lbl">Fully Appointed</div></div>
     <div class="summary-card"><div class="num" style="color:#00695C;">{{ approved_referees_count }}</div><div class="lbl">Available Referees</div></div>
 </div>
 

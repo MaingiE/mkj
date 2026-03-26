@@ -10,12 +10,12 @@
         align-items: center;
         gap: .3rem;
         font-size: .82rem;
-        color: #1A6FB5;
+        color: #124491;
         font-weight: 600;
         margin-bottom: 1rem;
         transition: color .2s;
     }
-    .back-link:hover { color: #1A6FB5; }
+    .back-link:hover { color: #124491; }
 
     .comp-hero {
         text-align: center;
@@ -49,8 +49,8 @@
         text-transform: uppercase;
         letter-spacing: .5px;
     }
-    .badge-active { background: #e8f0f8; color: #1A6FB5; }
-    .badge-completed { background: #E3F2FD; color: #1a5c30; }
+    .badge-active { background: #e8f0f8; color: #124491; }
+    .badge-completed { background: #e8edf5; color: #1a5c30; }
     .badge-knockout { background: #FFF3E0; color: #E65100; }
     .badge-registration { background: #F3E5F5; color: #6A1B9A; }
 
@@ -66,7 +66,7 @@
         color: #1a1a1a;
         margin: 0;
     }
-    .section-header i { color: #1A6FB5; }
+    .section-header i { color: #124491; }
 
     /* ── Pool standings table ─────────────────────────────────────────── */
     .pool-card {
@@ -77,7 +77,7 @@
         margin-bottom: 1.5rem;
     }
     .pool-header {
-        background: linear-gradient(135deg, #1A6FB5, #1A6FB5);
+        background: linear-gradient(135deg, #124491, #124491);
         color: #fff;
         padding: .6rem 1.25rem;
         font-weight: 700;
@@ -124,11 +124,11 @@
     }
     .pos-1 { background: linear-gradient(135deg, #FFD700, #FFA000); color: #333; }
     .pos-2 { background: linear-gradient(135deg, #E0E0E0, #BDBDBD); color: #333; }
-    .pos-qualify { background: #e8f0f8; color: #1A6FB5; }
+    .pos-qualify { background: #e8f0f8; color: #124491; }
     .pos-other { background: #F5F5F5; color: #999; }
     .team-name-cell { font-weight: 600; color: #1a1a1a; }
     .team-badge-img { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; margin-right: .3rem; vertical-align: middle; }
-    .pts-cell { font-weight: 800; color: #1A6FB5; font-size: .95rem; }
+    .pts-cell { font-weight: 800; color: #124491; font-size: .95rem; }
 
     /* ── Knockout bracket ─────────────────────────────────────────────── */
     .ko-round {
@@ -174,7 +174,7 @@
     .ko-score {
         font-size: 1rem;
         font-weight: 900;
-        color: #1A6FB5;
+        color: #124491;
         white-space: nowrap;
     }
     .ko-vs { font-size: .75rem; color: #bbb; font-weight: 600; }
@@ -187,7 +187,7 @@
         gap: .5rem;
         align-items: center;
     }
-    .ko-winner { color: #1A6FB5; }
+    .ko-winner { color: #124491; }
 
     /* ── Match cards ──────────────────────────────────────────────────── */
     .match-grid {
@@ -238,7 +238,7 @@
     .match-score {
         font-size: 1.1rem;
         font-weight: 900;
-        color: #1A6FB5;
+        color: #124491;
         letter-spacing: 2px;
         white-space: nowrap;
     }
@@ -276,8 +276,8 @@
         gap: .5rem;
         color: #fff;
     }
-    .lb-head.green { background: linear-gradient(135deg, #1A6FB5, #1A6FB5); }
-    .lb-head.blue { background: linear-gradient(135deg, #1a5c30, #1A6FB5); }
+    .lb-head.green { background: linear-gradient(135deg, #124491, #124491); }
+    .lb-head.blue { background: linear-gradient(135deg, #1a5c30, #124491); }
     .lb-head.amber { background: linear-gradient(135deg, #E65100, #F57F17); }
     .lb-head.teal { background: linear-gradient(135deg, #004D40, #00695C); }
 
@@ -492,7 +492,7 @@
 <section class="section">
     <div class="container">
         <div class="section-header">
-            <i class="bi bi-check-circle-fill" style="font-size:1.2rem;color:#1A6FB5;"></i>
+            <i class="bi bi-check-circle-fill" style="font-size:1.2rem;color:#124491;"></i>
             <h3>Recent Results</h3>
         </div>
         <div class="match-grid">
@@ -538,7 +538,7 @@
 <section class="section-alt">
     <div class="container">
         <div class="section-header">
-            <i class="bi bi-clock" style="font-size:1.2rem;color:#1A6FB5;"></i>
+            <i class="bi bi-clock" style="font-size:1.2rem;color:#124491;"></i>
             <h3>Upcoming Fixtures</h3>
         </div>
         <div class="match-grid">
@@ -583,7 +583,7 @@
 <section class="section">
     <div class="container">
         <div class="section-header">
-            <i class="bi bi-bar-chart-line" style="font-size:1.2rem;color:#1A6FB5;"></i>
+            <i class="bi bi-bar-chart-line" style="font-size:1.2rem;color:#124491;"></i>
             <h3>Player Statistics</h3>
         </div>
 
@@ -618,7 +618,7 @@
                             </td>
                             <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
                             <td>{{ s.matches_played }}</td>
-                            <td class="stat-highlight" style="color:#1A6FB5;">{{ s.goals }}</td>
+                            <td class="stat-highlight" style="color:#124491;">{{ s.goals }}</td>
                             <td>{{ s.assists }}</td>
                         </tr>
                         {% endfor %}
@@ -652,7 +652,7 @@
                             </td>
                             <td class="player-team">{{ s.team.name|truncatechars:18 }}</td>
                             <td>{{ s.matches_played }}</td>
-                            <td class="stat-highlight" style="color:#1A6FB5;">{{ s.assists }}</td>
+                            <td class="stat-highlight" style="color:#124491;">{{ s.assists }}</td>
                             <td>{{ s.goals }}</td>
                         </tr>
                         {% endfor %}
@@ -731,7 +731,7 @@
 
             <!-- FAIR PLAY -->
             <div class="leaderboard">
-                <div class="lb-head" style="background:#e8f0f8;color:#1A6FB5;"><i class="bi bi-award"></i> Fair Play Table</div>
+                <div class="lb-head" style="background:#e8f0f8;color:#124491;"><i class="bi bi-award"></i> Fair Play Table</div>
                 {% if fair_play_table %}
                 <table class="lb-table">
                     <thead>
@@ -751,7 +751,7 @@
                             </td>
                             <td style="color:#F57F17;font-weight:700;">{{ row.yellow_total }}</td>
                             <td style="color:#C62828;font-weight:700;">{{ row.red_total }}</td>
-                            <td class="stat-highlight" style="color:#1A6FB5;">{{ row.fair_play_points }}</td>
+                            <td class="stat-highlight" style="color:#124491;">{{ row.fair_play_points }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
