@@ -326,8 +326,8 @@
     position: relative;
     z-index: 2;
     background: linear-gradient(135deg, #0b2545 0%, #13315c 50%, #134074 100%);
-    padding: 2.2rem 0;
-    box-shadow: 0 4px 24px rgba(0,0,0,.15);
+    padding: 2.5rem 0;
+    box-shadow: 0 4px 24px rgba(0,0,0,.15), inset 0 1px 0 rgba(232,185,30,.15);
 }
 .countdown-strip::before {
     content: '';
@@ -375,54 +375,71 @@
 }
 .cd-title {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: #fff;
-    margin-bottom: .2rem;
+    margin-bottom: .3rem;
     letter-spacing: .5px;
+    text-shadow: 0 2px 6px rgba(0,0,0,.3);
 }
 .cd-date-text {
-    font-size: .78rem;
-    color: rgba(255,255,255,.45);
+    font-size: .82rem;
+    color: rgba(255,255,255,.7);
     display: flex;
     align-items: center;
     gap: .4rem;
+    font-weight: 500;
 }
 .cd-date-text svg { color: rgba(232,185,30,.5); }
-.cd-timer { display: flex; gap: 1rem; }
+.cd-timer { display: flex; gap: 1rem; align-items: flex-start; }
 .cd-unit { text-align: center; }
+.cd-sep {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: rgba(232,185,30,.5);
+    padding-top: 1.2rem;
+    animation: cdSepBlink 1s ease infinite;
+}
+@keyframes cdSepBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+}
 .cd-num-box {
-    width: 64px;
-    height: 64px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(26,111,181,.15);
-    border-radius: 14px;
+    width: 72px;
+    height: 72px;
+    background: rgba(255,255,255,.1);
+    border: 2px solid rgba(232,185,30,.35);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: .3rem;
+    margin-bottom: .4rem;
     position: relative;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     transition: all .3s;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
 }
 .cd-num-box:hover {
-    border-color: rgba(26,111,181,.4);
-    background: rgba(255,255,255,.06);
-    transform: translateY(-2px);
+    border-color: rgba(232,185,30,.6);
+    background: rgba(255,255,255,.15);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.3), 0 0 20px rgba(232,185,30,.15);
 }
 .cd-num {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 900;
-    color: #fff;
+    color: #FFD54F;
+    text-shadow: 0 2px 8px rgba(232,185,30,.3);
 }
 .cd-label {
-    font-size: .58rem;
-    color: rgba(255,255,255,.35);
+    font-size: .65rem;
+    color: rgba(255,255,255,.7);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    font-weight: 600;
+    font-weight: 700;
 }
 .cd-live-dot {
     width: 8px;
@@ -438,11 +455,17 @@
     50% { opacity: .4; transform: scale(.8); }
 }
 @media (max-width: 768px) {
-    .countdown-strip { padding: 1.6rem 0; }
+    .countdown-strip { padding: 1.8rem 0; }
     .cd-inner { flex-direction: column; gap: 1.4rem; text-align: center; }
     .cd-info { text-align: center; }
     .cd-date-text { justify-content: center; }
-    .cd-num-box { width: 54px; height: 54px; }
+    .cd-num-box { width: 62px; height: 62px; }
+    .cd-num { font-size: 1.5rem; }
+    .cd-label { font-size: .6rem; }
+}
+@media (max-width: 400px) {
+    .cd-timer { gap: .6rem; }
+    .cd-num-box { width: 56px; height: 56px; }
     .cd-num { font-size: 1.3rem; }
 }
 
@@ -1005,14 +1028,17 @@
                 <div class="cd-num-box"><span class="cd-num" id="cdDays">00</span></div>
                 <span class="cd-label">Days</span>
             </div>
+            <span class="cd-sep">:</span>
             <div class="cd-unit">
                 <div class="cd-num-box"><span class="cd-num" id="cdHours">00</span></div>
                 <span class="cd-label">Hours</span>
             </div>
+            <span class="cd-sep">:</span>
             <div class="cd-unit">
                 <div class="cd-num-box"><span class="cd-num" id="cdMins">00</span></div>
                 <span class="cd-label">Min</span>
             </div>
+            <span class="cd-sep">:</span>
             <div class="cd-unit">
                 <div class="cd-num-box"><span class="cd-num" id="cdSecs">00</span></div>
                 <span class="cd-label">Sec</span>
