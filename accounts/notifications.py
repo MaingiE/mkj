@@ -141,8 +141,8 @@ body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin:
 <div style="padding:20px 0;">
 <div class="wrap">
  <div class="logo-bar">
-  <img src="{logo_base}/TINA.jpeg" alt="Tina" style="height:56px;">
   <img src="{logo_base}/makueni_logo.png" alt="Makueni County" style="height:56px;">
+  <img src="{logo_base}/TINA.jpeg" alt="Tina" style="height:56px;">
  </div>
  <div class="header">
   <h1>Welcome to Mutula Kilonzo Junior Supa Cup<br>Competition Management System</h1>
@@ -188,7 +188,7 @@ def notify_account_created(user, temporary_password, role_label=None):
 
     _send(
         f"Welcome to MKJ SUPA CUP - {role_display}",
-        _base_html("Welcome to the Portal", body),
+        _base_html("Your Account Details", body),
         [user.email],
     )
 

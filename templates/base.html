@@ -79,7 +79,25 @@
     {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/main.js' %}?v=20260328"></script>
+    <script src="{% static 'js/main.js' %}?v=20260328b"></script>
+    {% if user.is_authenticated %}
+    <script>
+    (function(){
+        var IDLE_LIMIT = 15 * 60 * 1000; // 15 minutes - matches AUTO_LOGOUT_IDLE_MINUTES in settings
+        var timer;
+        function resetTimer(){
+            clearTimeout(timer);
+            timer = setTimeout(function(){
+                window.location.href = "{% url 'web_login' %}?timeout=1";
+            }, IDLE_LIMIT);
+        }
+        ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(evt){
+            document.addEventListener(evt, resetTimer, {passive:true});
+        });
+        resetTimer();
+    })();
+    </script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>

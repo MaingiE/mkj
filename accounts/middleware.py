@@ -32,6 +32,37 @@ ALLOWED_PATHS = {
 }
 
 
+class AutoLogoutMiddleware:
+    """
+    Server-side inactivity check.  On every authenticated request,
+    compare the current time with the session's ``_last_activity``
+    timestamp.  If the gap exceeds ``settings.AUTO_LOGOUT_IDLE_MINUTES``
+    (default 15), flush the session (logs the user out) and redirect
+    to the login page.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        import time
+        from django.conf import settings
+        from django.contrib.auth import logout
+
+        idle_limit = getattr(settings, "AUTO_LOGOUT_IDLE_MINUTES", 15) * 60
+
+        if request.user.is_authenticated:
+            now = time.time()
+            last = request.session.get("_last_activity")
+            if last is not None and (now - last) > idle_limit:
+                logout(request)
+                from django.shortcuts import redirect
+                return redirect("web_login")
+            request.session["_last_activity"] = now
+
+        return self.get_response(request)
+
+
 class ForcePasswordChangeMiddleware:
     """
     If request.user.must_change_password is True, redirect every page

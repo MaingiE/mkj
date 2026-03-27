@@ -43,8 +43,8 @@ table td {{ padding: 10px; border-bottom: 1px solid #e8edf5; font-size: 14px; }}
 <div style="padding:20px 0;">
 <div class="wrap">
  <div class="logo-bar">
-  <img src="{logo_base}/TINA.jpeg" alt="Tina" style="height:56px;">
   <img src="{logo_base}/makueni_logo.png" alt="Makueni County" style="height:56px;">
+  <img src="{logo_base}/TINA.jpeg" alt="Tina" style="height:56px;">
  </div>
  <div class="header">
   <h1>MKJ SUPA CUP Appeals System</h1>

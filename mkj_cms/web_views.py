@@ -885,6 +885,11 @@ def web_login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
 
+    # Show session-timeout message when redirected by idle timer
+    timeout_msg = None
+    if request.GET.get('timeout') == '1':
+        timeout_msg = 'Your session expired due to inactivity. Please log in again.'
+
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
@@ -905,9 +910,12 @@ def web_login_view(request):
             return render(request, 'accounts/login.html', {
                 'error': 'Invalid email or password. Please try again.',
                 'email': email,
+                'timeout_msg': timeout_msg,
             })
 
-    return render(request, 'accounts/login.html')
+    return render(request, 'accounts/login.html', {
+        'timeout_msg': timeout_msg,
+    })
 
 
 @login_required(login_url='web_login')
@@ -917,20 +925,27 @@ def force_change_password_view(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+
         new_password = request.POST.get('new_password', '')
         confirm_password = request.POST.get('confirm_password', '')
 
         if new_password != confirm_password:
             messages.error(request, 'Passwords do not match.')
-        elif len(new_password) < 8:
-            messages.error(request, 'Password must be at least 8 characters.')
         else:
-            request.user.set_password(new_password)
-            request.user.must_change_password = False
-            request.user.save(update_fields=['password', 'must_change_password'])
-            login(request, request.user, backend='accounts.backends.EmailBackend')
-            messages.success(request, 'Password changed successfully! Welcome to MKJ SUPA CUP CMS.')
-            return redirect('dashboard')
+            try:
+                validate_password(new_password, request.user)
+            except ValidationError as e:
+                for msg in e.messages:
+                    messages.error(request, msg)
+            else:
+                request.user.set_password(new_password)
+                request.user.must_change_password = False
+                request.user.save(update_fields=['password', 'must_change_password'])
+                login(request, request.user, backend='accounts.backends.EmailBackend')
+                messages.success(request, 'Password changed successfully! Welcome to MKJ SUPA CUP CMS.')
+                return redirect('dashboard')
 
     return render(request, 'accounts/force_change_password.html')
 
@@ -1418,14 +1433,20 @@ def change_password_view(request):
             messages.error(request, 'Current password is incorrect.')
         elif new_password != confirm_password:
             messages.error(request, 'New passwords do not match.')
-        elif len(new_password) < 8:
-            messages.error(request, 'Password must be at least 8 characters.')
         else:
-            request.user.set_password(new_password)
-            request.user.must_change_password = False
-            request.user.save(update_fields=['password', 'must_change_password'])
-            login(request, request.user)
-            messages.success(request, 'Password updated successfully!')
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError
+            try:
+                validate_password(new_password, request.user)
+            except ValidationError as e:
+                for msg in e.messages:
+                    messages.error(request, msg)
+            else:
+                request.user.set_password(new_password)
+                request.user.must_change_password = False
+                request.user.save(update_fields=['password', 'must_change_password'])
+                login(request, request.user)
+                messages.success(request, 'Password updated successfully!')
 
     return redirect('web_profile')
 
@@ -6944,7 +6965,7 @@ def scout_report_detail_view(request, pk):
 
 # ── Leadership: View Scout Reports ──────────────────────────────────────────
 
-@role_required('chief_sports_officer', 'director_sports', 'chief_officer_sports', 'cec_sports', 'admin')
+@role_required('chief_sports_officer', 'director_sports', 'chief_officer_sports', 'cec_sports', 'governor', 'waziri_sports', 'admin')
 def leadership_scout_reports_view(request):
     """Leadership roles: View all scouting reports across all scouts."""
     from teams.models import ScoutReport
@@ -6986,7 +7007,7 @@ def leadership_scout_reports_view(request):
     })
 
 
-@role_required('chief_sports_officer', 'director_sports', 'chief_officer_sports', 'cec_sports', 'admin')
+@role_required('chief_sports_officer', 'director_sports', 'chief_officer_sports', 'cec_sports', 'governor', 'waziri_sports', 'admin')
 def leadership_scout_report_detail_view(request, pk):
     """Leadership roles: View a specific scouting report in detail."""
     from teams.models import ScoutReport, get_scouting_criteria

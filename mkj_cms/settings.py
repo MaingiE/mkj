@@ -62,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
+    "accounts.middleware.AutoLogoutMiddleware",
     "accounts.middleware.ForcePasswordChangeMiddleware",
     "admin_dashboard.activity_middleware.ActivityLoggingMiddleware",
 ]
@@ -96,9 +97,10 @@ AUTH_USER_MODEL = "accounts.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "accounts.validators.StrongPasswordValidator"},
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -234,8 +236,11 @@ else:
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default"
 
-SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 hours
-SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_AGE = 60 * 60 * 2               # max 2 hours even if active
+SESSION_SAVE_EVERY_REQUEST = True               # refresh expiry on every request
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True          # kill session when browser closes
+SESSION_COOKIE_HTTPONLY = True                   # JS cannot read the session cookie
+AUTO_LOGOUT_IDLE_MINUTES = 15                   # log out after 15 min inactivity
 
 # ── CELERY ─────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL        = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
