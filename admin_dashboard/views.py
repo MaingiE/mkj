@@ -1,5 +1,6 @@
-﻿# admin_dashboard/views.py â€” Adapted for MKJ SUPA CUP CMS models
+# admin_dashboard/views.py â€” Adapted for MKJ SUPA CUP CMS models
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
@@ -400,6 +401,26 @@ def view_report(request, report_id):
 @user_passes_test(admin_required)
 def manage_users(request):
     """Manage all users â€” filter, search, view."""
+    # Show success toast from create_user redirect params
+    if request.GET.get('created') == '1':
+        uemail = request.GET.get('uemail', '')
+        urole = request.GET.get('urole', '')
+        sent = request.GET.get('sent') == '1'
+        if sent:
+            messages.success(request, mark_safe(
+                f'User created!<br>'
+                f'Email: <code>{uemail}</code><br>'
+                f'Role: {urole}<br>'
+                f'Temporary password has been sent to the user\'s email.'
+            ))
+        else:
+            messages.warning(request, mark_safe(
+                f'User created but email delivery failed.<br>'
+                f'Email: <code>{uemail}</code><br>'
+                f'Role: {urole}<br>'
+                f'Please reset their password manually or contact them directly.'
+            ))
+
     role_filter = request.GET.get('role', 'all')
     status_filter = request.GET.get('status', 'all')
     search_query = request.GET.get('search', '')
@@ -619,20 +640,9 @@ def create_user(request):
                 except Exception:
                     pass
 
-            if email_sent:
-                messages.success(request, mark_safe(
-                    f'User created!<br>'
-                    f'Email: <code>{email}</code><br>'
-                    f'Role: {role}<br>'
-                    f'Temporary password has been sent to the user\'s email.'
-                ))
-            else:
-                messages.warning(request, mark_safe(
-                    f'User created but email delivery failed.<br>'
-                    f'Email: <code>{email}</code><br>'
-                    f'Role: {role}<br>'
-                    f'Please reset their password manually or contact them directly.'
-                ))
+            from urllib.parse import urlencode
+            params = urlencode({'created': '1', 'sent': '1' if email_sent else '0', 'uemail': email, 'urole': role})
+            return redirect(f"{reverse('manage_users')}?{params}")
         except Exception as e:
             messages.error(request, f"Error: {e}")
 
