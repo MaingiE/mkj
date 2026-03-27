@@ -1,4 +1,4 @@
-# MKJ SUPA CUP — Discipline Coordinator Guide
+# MKJ SUPA CUP - Discipline Coordinator Guide
 
 ## Overview
 
@@ -52,9 +52,9 @@ Overview scoped to the coordinator's discipline:
 ### 3. Competition Management
 
 **URLs:**
-- `/portal/coordinator/competitions/` — List competitions
-- `/portal/coordinator/competitions/<pk>/` — Central management hub
-- `/portal/coordinator/competitions/<pk>/edit/` — Edit competition settings
+- `/portal/coordinator/competitions/` - List competitions
+- `/portal/coordinator/competitions/<pk>/` - Central management hub
+- `/portal/coordinator/competitions/<pk>/edit/` - Edit competition settings
 
 **Editable fields:** format type, age group, start/end dates, max teams, teams per group, qualify from group count, description, rules, status
 
@@ -109,8 +109,8 @@ Editable: match date, kickoff time, venue, status, scores. For knockout: home/aw
 ### 6. Venue Management
 
 **URLs:**
-- `/portal/coordinator/venues/` — View and manage all venues
-- `/portal/coordinator/competitions/<pk>/venues/` — Allocate venue to a competition
+- `/portal/coordinator/venues/` - View and manage all venues
+- `/portal/coordinator/competitions/<pk>/venues/` - Allocate venue to a competition
 
 | Action | Detail |
 |--------|--------|
@@ -145,8 +145,8 @@ Manual standings edits require exceptional case confirmation + reason (min 12 ch
 ### 9. Referee Appointments
 
 **URLs:**
-- `/portal/coordinator/appointments/` — Overview of all fixtures with staffing status
-- `/portal/coordinator/appointments/<fixture_pk>/` — Appoint officials to a specific fixture
+- `/portal/coordinator/appointments/` - Overview of all fixtures with staffing status
+- `/portal/coordinator/appointments/<fixture_pk>/` - Appoint officials to a specific fixture
 
 **Appointment process:**
 1. View fixtures needing officials (filterable: upcoming/past)
@@ -183,11 +183,11 @@ View all squad submissions filtered by the coordinator's discipline:
 **URL:** `/portal/coordinator/competitions/<pk>/stats/`
 
 Comprehensive statistical view:
-- **Top scorers** — ranked by goals
-- **Top assisters** — ranked by assists
-- **Disciplinary table** — yellow and red cards per player
-- **Fair play table** — team-level discipline ranking
-- **Pool standings** — per pool with full stats
+- **Top scorers** - ranked by goals
+- **Top assisters** - ranked by assists
+- **Disciplinary table** - yellow and red cards per player
+- **Fair play table** - team-level discipline ranking
+- **Pool standings** - per pool with full stats
 
 ### 13. Competition Rules
 

@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Accounts — Custom User Model with Role-Based Access
+MKJ SUPA CUP Accounts - Custom User Model with Role-Based Access
 """
 import re
 
@@ -146,7 +146,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Central MKJ SUPA CUP user — single table, role differentiates access.
+    Central MKJ SUPA CUP user - single table, role differentiates access.
     """
     email       = models.EmailField(unique=True)
     first_name  = models.CharField(max_length=100)

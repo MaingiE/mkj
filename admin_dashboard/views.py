@@ -88,7 +88,7 @@ MKJ SUPA CUP Administration
                 return
             except Exception as exc:
                 if attempt < 3:
-                    log.warning("Welcome email attempt %d/3 failed for %s: %s — retrying", attempt, recipient, exc)
+                    log.warning("Welcome email attempt %d/3 failed for %s: %s - retrying", attempt, recipient, exc)
                     time.sleep(attempt * 5)
                 else:
                     log.error("Welcome email failed for %s after 3 attempts: %s", recipient, exc)
@@ -130,7 +130,7 @@ MKJ SUPA CUP Administration
                 return
             except Exception as exc:
                 if attempt < 3:
-                    log.warning("Password reset email attempt %d/3 failed for %s: %s — retrying", attempt, recipient, exc)
+                    log.warning("Password reset email attempt %d/3 failed for %s: %s - retrying", attempt, recipient, exc)
                     time.sleep(attempt * 5)
                 else:
                     log.error("Password reset email failed for %s after 3 attempts: %s", recipient, exc)

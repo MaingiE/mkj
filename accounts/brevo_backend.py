@@ -1,7 +1,7 @@
 """
 Brevo (Sendinblue) HTTP API Email Backend for Django.
 
-Bypasses SMTP entirely — uses Brevo's transactional email REST API over HTTPS.
+Bypasses SMTP entirely - uses Brevo's transactional email REST API over HTTPS.
 This works on Railway (and any platform) because HTTPS port 443 is never blocked.
 
 Usage:
@@ -13,7 +13,7 @@ Usage:
   3. Ensure info@mkjsupacup.com is verified as a sender in Brevo.
 
 All existing Django mail calls (send_mail, EmailMultiAlternatives, etc.)
-automatically route through this backend — zero code changes needed.
+automatically route through this backend - zero code changes needed.
 """
 
 import logging
@@ -38,7 +38,7 @@ class BrevoEmailBackend(BaseEmailBackend):
 
     def send_messages(self, email_messages):
         if not self.api_key:
-            logger.error("BREVO_API_KEY is not set — emails will not be sent.")
+            logger.error("BREVO_API_KEY is not set - emails will not be sent.")
             if not self.fail_silently:
                 raise ValueError("BREVO_API_KEY is not configured.")
             return 0

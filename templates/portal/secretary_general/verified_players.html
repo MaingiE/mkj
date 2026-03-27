@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verified Players &mdash; Secretary General{% endblock %}
+{% block title %}Verified Players - Secretary General{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>Verified Players</span>
     </div>
     <h1><i class="bi bi-patch-check-fill"></i> Verified Players</h1>
-    <p>All verified players across disciplines &mdash; who was verified, when, and by whom (read-only)</p>
+    <p>All verified players across disciplines - who was verified, when, and by whom (read-only)</p>
 </div>
 
 <!-- Stats -->
@@ -64,11 +64,11 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ p.first_name }} {{ p.last_name }}</td>
-                    <td>{{ p.discipline.registration.county|default:"—" }}</td>
+                    <td>{{ p.discipline.registration.county|default:" - " }}</td>
                     <td>{{ p.discipline.get_sport_type_display }}</td>
                     <td style="font-size:.85rem;">{{ p.national_id_number }}</td>
                     <td style="font-size:.82rem;white-space:nowrap;">
-                        {{ p.registered_at|date:"d M Y H:i"|default:"—" }}
+                        {{ p.registered_at|date:"d M Y H:i"|default:" - " }}
                     </td>
                 </tr>
                 {% empty %}

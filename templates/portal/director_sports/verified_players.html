@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verified Players &mdash; Director of Sports{% endblock %}
+{% block title %}Verified Players - Director of Sports{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -7,7 +7,7 @@
         <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
         <span>Verified Players</span>
     </div>
-    <h1><i class="bi bi-patch-check-fill"></i> Verified Players — Review &amp; Final Approval</h1>
+    <h1><i class="bi bi-patch-check-fill"></i> Verified Players - Review &amp; Final Approval</h1>
     <p>Review all verified players. Approve, disapprove, and lock the final list.</p>
 </div>
 
@@ -123,14 +123,14 @@
                         {% elif p.iprs_photo %}
                         <img src="{{ p.iprs_photo.url }}" alt="{{ p.first_name }}" style="width:34px;height:42px;object-fit:cover;border-radius:4px;">
                         {% else %}
-                        <span style="color:#999;">—</span>
+                        <span style="color:#999;"> - </span>
                         {% endif %}
                     </td>
                     <td>{{ p.first_name }} {{ p.last_name }}</td>
-                    <td>{{ p.discipline.registration.county|default:"—" }}</td>
+                    <td>{{ p.discipline.registration.county|default:" - " }}</td>
                     <td>{{ p.discipline.get_sport_type_display }}</td>
                     <td style="font-size:.85rem;">{{ p.national_id_number }}</td>
-                    <td>{{ p.position|default:"—" }}</td>
+                    <td>{{ p.position|default:" - " }}</td>
                     <td>
                         {% if p.director_locked %}
                             <span class="badge bg-primary"><i class="bi bi-lock-fill"></i> Locked</span>

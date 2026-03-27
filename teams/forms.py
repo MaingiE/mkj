@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Teams — Django Forms for Registration & Management
+MKJ SUPA CUP Teams - Django Forms for Registration & Management
 Adapted from FKFSYS teams registration workflow.
 """
 from django import forms
@@ -48,7 +48,7 @@ class TeamRegistrationForm(forms.ModelForm):
             status=CompetitionStatus.UPCOMING,
         ),
         required=False,
-        empty_label="— Select a competition (optional) —",
+        empty_label=" - Select a competition (optional) - ",
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_competition'}),
         label="Competition",
         help_text="Competitions currently open for registration.",
@@ -172,7 +172,7 @@ class TeamRegistrationForm(forms.ModelForm):
 
 class PlayerRegistrationForm(forms.ModelForm):
     """
-    Player registration form — used after a team is approved.
+    Player registration form - used after a team is approved.
     Includes document upload fields and age validation.
     """
 
@@ -287,7 +287,7 @@ class PlayerRegistrationForm(forms.ModelForm):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  COUNTY SPORTS ADMIN — Registration Form (public, no login)
+#  COUNTY SPORTS ADMIN - Registration Form (public, no login)
 # ══════════════════════════════════════════════════════════════════════════════
 
 class CountyAdminRegistrationForm(forms.Form):
@@ -312,21 +312,21 @@ class CountyAdminRegistrationForm(forms.Form):
         label='Phone Number *',
     )
     county = forms.ChoiceField(
-        choices=[('', '— Select your county —')] + list(KenyaCounty.choices),
+        choices=[('', ' - Select your county - ')] + list(KenyaCounty.choices),
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='County *',
     )
 
-    # Director of Sports — contact person for the county
+    # Director of Sports - contact person for the county
     director_name = forms.CharField(
         max_length=200,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name of Director of Sports'}),
-        label='Director of Sports — Full Name *',
+        label='Director of Sports - Full Name *',
     )
     director_phone = forms.CharField(
         max_length=13,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '712345678', 'pattern': '\\d{9}', 'minlength': '9', 'maxlength': '9', 'inputmode': 'numeric'}),
-        label='Director of Sports — Phone Number *',
+        label='Director of Sports - Phone Number *',
     )
 
     def clean_email(self):
@@ -349,7 +349,7 @@ class CountyAdminRegistrationForm(forms.Form):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  COUNTY SPORTS ADMIN — Payment Submission
+#  COUNTY SPORTS ADMIN - Payment Submission
 # ══════════════════════════════════════════════════════════════════════════════
 
 class CountyPaymentForm(forms.Form):
@@ -397,7 +397,7 @@ class CountyPaymentForm(forms.Form):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  COUNTY SPORTS ADMIN — Add Player Form
+#  COUNTY SPORTS ADMIN - Add Player Form
 # ══════════════════════════════════════════════════════════════════════════════
 
 class CountyPlayerForm(forms.ModelForm):
@@ -410,7 +410,7 @@ class CountyPlayerForm(forms.ModelForm):
         self.fields['huduma_number'].required = False
 
         # Build sub_county choices from MakueniSubCounty enum
-        sc_choices = [('', '— Select Sub-County —')]
+        sc_choices = [('', ' - Select Sub-County - ')]
         sc_choices += [(sc.value, sc.label) for sc in MakueniSubCounty]
         self.fields['sub_county'].widget = forms.Select(
             attrs={'class': 'form-control', 'id': 'id_sub_county'},
@@ -425,7 +425,7 @@ class CountyPlayerForm(forms.ModelForm):
         self.fields['ward'].widget = forms.Select(
             attrs={'class': 'form-control', 'id': 'id_ward'},
         )
-        self.fields['ward'].widget.choices = [('', '— Select Ward —')]
+        self.fields['ward'].widget.choices = [('', ' - Select Ward - ')]
 
     class Meta:
         model = CountyPlayer
@@ -472,7 +472,7 @@ class CountyPlayerForm(forms.ModelForm):
             existing = qs.first()
             raise ValidationError(
                 f'This National ID is already registered under '
-                f'{existing.discipline.registration.county} — {existing.discipline.get_sport_type_display()}.'
+                f'{existing.discipline.registration.county} - {existing.discipline.get_sport_type_display()}.'
             )
         return nid
 
@@ -482,9 +482,9 @@ class CountyPlayerForm(forms.ModelForm):
             today = timezone.now().date()
             age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
             if age < PLAYER_MIN_AGE:
-                raise ValidationError(f'Player is {age} — minimum age is {PLAYER_MIN_AGE}.')
+                raise ValidationError(f'Player is {age} - minimum age is {PLAYER_MIN_AGE}.')
             if age > PLAYER_MAX_AGE:
-                raise ValidationError(f'Player is {age} — maximum age is {PLAYER_MAX_AGE}.')
+                raise ValidationError(f'Player is {age} - maximum age is {PLAYER_MAX_AGE}.')
         return dob
 
     def clean_phone(self):
@@ -492,7 +492,7 @@ class CountyPlayerForm(forms.ModelForm):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  TECHNICAL BENCH — Add / Edit Form
+#  TECHNICAL BENCH - Add / Edit Form
 # ══════════════════════════════════════════════════════════════════════════════
 
 class TechnicalBenchForm(forms.ModelForm):
@@ -598,7 +598,7 @@ class CountyDelegationMemberForm(forms.ModelForm):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  KIT COLORS — County Admin edits the linked Team's kit colours
+#  KIT COLORS - County Admin edits the linked Team's kit colours
 # ══════════════════════════════════════════════════════════════════════════════
 
 class KitColorsForm(forms.ModelForm):

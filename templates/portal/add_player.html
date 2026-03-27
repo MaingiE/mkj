@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Add Player — {{ team.name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Add Player - {{ team.name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -276,8 +276,8 @@ function lookupIPRS() {
             });
 
             let msg = '✅ <strong>' + escapeHtml(data.full_name) + '</strong>';
-            if (data.age !== null) msg += ' — Age: <strong>' + data.age + '</strong>';
-            if (data.gender) msg += ' — ' + escapeHtml(data.gender);
+            if (data.age !== null) msg += ' - Age: <strong>' + data.age + '</strong>';
+            if (data.gender) msg += ' - ' + escapeHtml(data.gender);
             if (data.is_simulation) msg += ' <em style="opacity:.7">(Simulation)</em>';
             showStatus(msg, '#124491', '#e8f5ed');
         } else if (data.success && !data.person_found) {
@@ -287,7 +287,7 @@ function lookupIPRS() {
         }
     })
     .catch(err => {
-        showStatus('❌ Network error — please try again.', '#C62828', '#fce4ec');
+        showStatus('❌ Network error - please try again.', '#C62828', '#fce4ec');
         console.error('IPRS lookup error:', err);
     })
     .finally(() => {

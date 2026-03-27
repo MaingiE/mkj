@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}County Delegations &mdash; Director of Sports{% endblock %}
+{% block title %}County Delegations - Director of Sports{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -76,9 +76,9 @@
                     <td>{{ m.registration.county }}</td>
                     <td>{{ m.full_name }}</td>
                     <td><span class="badge bg-info text-dark">{{ m.get_role_display }}</span></td>
-                    <td style="font-size:.85rem;">{{ m.phone|default:"—" }}</td>
-                    <td style="font-size:.85rem;">{{ m.email|default:"—" }}</td>
-                    <td style="font-size:.82rem;">{{ m.national_id_number|default:"—" }}</td>
+                    <td style="font-size:.85rem;">{{ m.phone|default:" - " }}</td>
+                    <td style="font-size:.85rem;">{{ m.email|default:" - " }}</td>
+                    <td style="font-size:.82rem;">{{ m.national_id_number|default:" - " }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="7" class="text-muted text-center">No delegation members found</td></tr>

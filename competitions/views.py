@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Competitions — Views
+MKJ SUPA CUP Competitions - Views
 """
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import action
@@ -74,7 +74,7 @@ class PoolViewSet(ModelViewSet):
 
 
 class PoolTeamManageView(generics.CreateAPIView):
-    """Add a team to a pool — Competition Manager only."""
+    """Add a team to a pool - Competition Manager only."""
     serializer_class   = PoolTeamSerializer
     permission_classes = [IsCompetitionManager]
 

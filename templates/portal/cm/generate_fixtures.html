@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Generate Fixtures &mdash; {{ competition.name }} &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Generate Fixtures - {{ competition.name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -179,7 +179,7 @@
 <div class="gen-card">
     <div class="danger-box" style="margin-bottom:1rem;">
         <i class="bi bi-exclamation-octagon"></i>
-        <strong>Danger Zone</strong> &mdash; Clearing fixtures will permanently delete all {{ existing_count }} fixtures and cannot be undone.
+        <strong>Danger Zone</strong> - Clearing fixtures will permanently delete all {{ existing_count }} fixtures and cannot be undone.
     </div>
     <form method="post" onsubmit="return confirm('Are you sure you want to delete ALL {{ existing_count }} fixtures? This cannot be undone.');">
         {% csrf_token %}

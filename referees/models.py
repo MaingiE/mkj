@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Referees — Models
+MKJ SUPA CUP Referees - Models
 """
 from django.db import models
 from django.conf import settings
@@ -78,7 +78,7 @@ class RefereeCertification(models.Model):
     certificate = models.FileField(upload_to="referee_certs/", null=True, blank=True)
 
     def __str__(self):
-        return f"{self.title} — {self.referee}"
+        return f"{self.title} - {self.referee}"
 
 
 class AppointmentRole(models.TextChoices):
@@ -283,7 +283,7 @@ class RefereeAvailability(models.Model):
         ordering        = ["date"]
 
     def __str__(self):
-        return f"{self.referee.user.get_full_name()} — {self.date} ({self.status})"
+        return f"{self.referee.user.get_full_name()} - {self.date} ({self.status})"
 
 
 class RefereeReview(models.Model):

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Teams — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Teams - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -52,8 +52,8 @@
                     <tr data-county="{{ team.county }}" data-status="{{ team.status }}">
                         <td><strong>{{ team.name }}</strong></td>
                         <td>{{ team.county }}</td>
-                        <td>{{ team.competition|default:"—" }}</td>
-                        <td>{{ team.manager|default:"—" }}</td>
+                        <td>{{ team.competition|default:" - " }}</td>
+                        <td>{{ team.manager|default:" - " }}</td>
                         <td>{{ team.players.count }}</td>
                         <td>
                             {% if team.status == 'registered' %}

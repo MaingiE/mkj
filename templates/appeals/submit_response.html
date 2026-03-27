@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Submit Response — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Submit Response - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div style="margin-bottom:1rem;">
@@ -18,7 +18,7 @@
     {% if appeal.response_deadline %}
     <div style="background:{% if appeal.response_overdue %}#ffebee{% else %}#fff3cd{% endif %}; padding:.75rem; border-radius:4px; margin-bottom:1rem;">
         <strong>Response Deadline:</strong> {{ appeal.response_deadline|date:"d M Y H:i" }}
-        {% if appeal.response_overdue %}<span style="color:red;"> — OVERDUE</span>{% endif %}
+        {% if appeal.response_overdue %}<span style="color:red;"> - OVERDUE</span>{% endif %}
     </div>
     {% endif %}
 

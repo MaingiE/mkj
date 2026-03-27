@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Accounts — Views & Permissions
+MKJ SUPA CUP Accounts - Views & Permissions
 """
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
@@ -24,18 +24,18 @@ User = get_user_model()
 # ── AUTH VIEWS ────────────────────────────────────────────────────────────────
 
 class LoginView(TokenObtainPairView):
-    """POST /api/v1/auth/login/ — returns access+refresh tokens + user profile"""
+    """POST /api/v1/auth/login/ - returns access+refresh tokens + user profile"""
     serializer_class = MKJTokenObtainSerializer
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(tags=["auth"], summary="Login — returns JWT tokens + user profile")
+    @extend_schema(tags=["auth"], summary="Login - returns JWT tokens + user profile")
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
 
 class LogoutView(APIView):
-    """POST /api/v1/auth/logout/ — blacklists the refresh token"""
-    @extend_schema(tags=["auth"], summary="Logout — blacklists refresh token")
+    """POST /api/v1/auth/logout/ - blacklists the refresh token"""
+    @extend_schema(tags=["auth"], summary="Logout - blacklists refresh token")
     def post(self, request):
         try:
             token = RefreshToken(request.data.get("refresh"))
@@ -46,7 +46,7 @@ class LogoutView(APIView):
 
 
 class RegisterView(generics.CreateAPIView):
-    """POST /api/v1/auth/register/ — create new user"""
+    """POST /api/v1/auth/register/ - create new user"""
     serializer_class   = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -62,7 +62,7 @@ class RegisterView(generics.CreateAPIView):
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
-    """GET/PATCH /api/v1/auth/profile/ — view or update own profile"""
+    """GET/PATCH /api/v1/auth/profile/ - view or update own profile"""
     serializer_class = UserProfileSerializer
 
     def get_object(self):
@@ -87,7 +87,7 @@ class ChangePasswordView(APIView):
 # ── USER MANAGEMENT (Admin / Competition Manager) ─────────────────────────────
 
 class UserListView(generics.ListAPIView):
-    """GET /api/v1/auth/users/ — list all users (admin only)"""
+    """GET /api/v1/auth/users/ - list all users (admin only)"""
     serializer_class   = UserProfileSerializer
     permission_classes = [IsAdminOrCompetitionManager]
     filterset_fields   = ["role", "county", "is_active"]

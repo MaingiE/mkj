@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Audit Report — KYISA CMS{% endblock %}
+{% block title %}Audit Report  -  KYISA CMS{% endblock %}
 
 {% block extra_css %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
-   AUDIT REPORT — DESIGN TOKENS
+   AUDIT REPORT  -  DESIGN TOKENS
 ═══════════════════════════════════════ */
 :root {
   --ar-ink:        #080d0b;
@@ -533,7 +533,7 @@ body              { background: var(--ar-ink) !important; color: var(--ar-t1) !i
       <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
         <div class="ar-search-wrap">
           <i class="fas fa-search"></i>
-          <input type="text" name="search" class="ar-search" placeholder="Search audit trail — users, actions, descriptions..." value="{{ f_search }}">
+          <input type="text" name="search" class="ar-search" placeholder="Search audit trail  -  users, actions, descriptions..." value="{{ f_search }}">
         </div>
         <button type="submit" class="ar-btn-primary">
           <i class="fas fa-search"></i> Search
@@ -837,7 +837,7 @@ body              { background: var(--ar-ink) !important; color: var(--ar-t1) !i
     {% if page_obj.has_other_pages %}
     <div class="ar-pag-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
       <div class="ar-pag-info">
-        Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+        Showing <strong>{{ page_obj.start_index }} - {{ page_obj.end_index }}</strong>
         of <strong>{{ page_obj.paginator.count }}</strong> entries
       </div>
       <nav>

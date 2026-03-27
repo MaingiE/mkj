@@ -1,4 +1,4 @@
-# MKJ SUPA CUP — Scout Module Guide
+# MKJ SUPA CUP - Scout Module Guide
 
 ## Overview
 
@@ -31,7 +31,7 @@ The Scout module enables talent identification and evaluation across all sports 
 
 The scout's home screen shows:
 - Assigned discipline
-- Shortlist count and top-rated (4–5 star) players
+- Shortlist count and top-rated (4 - 5 star) players
 - Total verified players in their discipline
 - Quick links: Browse Players, My Shortlist, Live Matches
 
@@ -55,9 +55,9 @@ The scout's home screen shows:
 | Edit entry | `/portal/scout/shortlist/<pk>/edit/` |
 | Remove entry | `/portal/scout/shortlist/<pk>/remove/` (POST) |
 
-- **Rating:** 1–5 stars (1 = Low potential, 5 = Outstanding)
+- **Rating:** 1 - 5 stars (1 = Low potential, 5 = Outstanding)
 - **Notes:** Freeform scouting notes
-- One entry per scout–player pair (unique constraint)
+- One entry per scout - player pair (unique constraint)
 - Filterable by rating
 
 ### 5. Live Match Scouting
@@ -82,7 +82,7 @@ The scout's home screen shows:
 
 **URL:** `/portal/scout/match/<fixture_pk>/evaluate/<player_pk>/`
 
-This is the core scouting tool — a **sport-specific, criteria-based evaluation form**.
+This is the core scouting tool - a **sport-specific, criteria-based evaluation form**.
 
 #### Scouting Criteria by Sport
 
@@ -112,8 +112,8 @@ This is the core scouting tool — a **sport-specific, criteria-based evaluation
 
 | Field | Type | Range |
 |-------|------|-------|
-| Criteria scores | Per-criterion | 1–10 each |
-| Overall rating | Number | 1–10 |
+| Criteria scores | Per-criterion | 1 - 10 each |
+| Overall rating | Number | 1 - 10 |
 | Strengths | Text | Freeform |
 | Weaknesses | Text | Freeform |
 | Recommendation | Choice | Highly Recommended / Recommended / Continue Monitoring / Not Recommended |
@@ -152,7 +152,7 @@ Available to: Chief Sports Officer, Director of Sports, Chief Officer - Sports, 
 ScoutShortlist
 ├── scout (User, role=scout)
 ├── player (CountyPlayer)
-├── rating (1–5)
+├── rating (1 - 5)
 ├── notes (text)
 ├── created_at / updated_at
 └── Unique: (scout, player)
@@ -163,7 +163,7 @@ ScoutReport
 ├── fixture (Fixture)
 ├── sport_type (string)
 ├── criteria_scores (JSON: {"technical": 8, "tactical": 7, ...})
-├── overall_rating (1–10)
+├── overall_rating (1 - 10)
 ├── strengths (text)
 ├── weaknesses (text)
 ├── recommendation (choice)
@@ -181,13 +181,13 @@ ScoutReport
 Admin creates Scout (assigns discipline)
         │
         ▼
-Scout browses verified players ──► Adds to Shortlist (1–5 rating + notes)
+Scout browses verified players ──► Adds to Shortlist (1 - 5 rating + notes)
         │
         ▼
 Scout views live/upcoming fixtures ──► Opens approved squad lists
         │
         ▼
-Scout evaluates players in-match (sport-specific criteria, 1–10 scores)
+Scout evaluates players in-match (sport-specific criteria, 1 - 10 scores)
         │
         ▼
 ScoutReport saved (criteria JSON, overall rating, recommendation)

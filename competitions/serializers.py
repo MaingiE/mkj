@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Competitions — Serializers
+MKJ SUPA CUP Competitions - Serializers
 """
 from rest_framework import serializers
 from .models import Competition, Venue, Pool, PoolTeam, Fixture
@@ -69,7 +69,7 @@ class PoolTeamSerializer(serializers.ModelSerializer):
         """Only teams with confirmed payment can be added to a pool."""
         if not team.payment_confirmed:
             raise serializers.ValidationError(
-                f"{team.name} cannot be added to a pool — payment has not been confirmed by the treasurer."
+                f"{team.name} cannot be added to a pool - payment has not been confirmed by the treasurer."
             )
         if team.status != "registered":
             raise serializers.ValidationError(

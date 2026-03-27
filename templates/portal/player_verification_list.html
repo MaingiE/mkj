@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Player Verification — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Player Verification - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -74,8 +74,8 @@
                             <span style="color:#C62828;font-weight:700">{{ p.age }} ⛔</span>
                             {% endif %}
                         </td>
-                        <td>{{ p.national_id_number|default:"—" }}</td>
-                        <td>{{ p.birth_cert_number|default:"—" }}</td>
+                        <td>{{ p.national_id_number|default:" - " }}</td>
+                        <td>{{ p.birth_cert_number|default:" - " }}</td>
                         <td>{% if p.photo %}<a href="{{ p.photo.url }}" target="_blank" style="color:#124491">📸 View</a>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</td>
                         <td>{% if p.id_document %}<a href="{{ p.id_document.url }}" target="_blank" style="color:#124491">🪪 View</a>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</td>
                         <td>{% if p.birth_certificate %}<a href="{{ p.birth_certificate.url }}" target="_blank" style="color:#124491">📜 View</a>{% else %}<span style="color:#C62828">Missing</span>{% endif %}</td>
@@ -118,10 +118,10 @@
                         <td><strong>{{ p.first_name }} {{ p.last_name }}</strong><br><small style="color:#888">#{{ p.shirt_number }} · {{ p.get_position_display }}</small></td>
                         <td>{{ p.team.name }}</td>
                         <td><span style="color:#124491;font-weight:600">{{ p.age }}</span></td>
-                        <td>{{ p.national_id_number|default:"—" }}</td>
-                        <td>{{ p.birth_cert_number|default:"—" }}</td>
-                        <td>{{ p.verified_by.get_full_name|default:"—" }}</td>
-                        <td>{{ p.verified_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ p.national_id_number|default:" - " }}</td>
+                        <td>{{ p.birth_cert_number|default:" - " }}</td>
+                        <td>{{ p.verified_by.get_full_name|default:" - " }}</td>
+                        <td>{{ p.verified_at|date:"d M Y H:i"|default:" - " }}</td>
                         <td>
                             <a href="{% url 'verify_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
                         </td>
@@ -166,9 +166,9 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge badge-danger">{{ p.get_rejection_reason_display|default:"—" }}</span>
+                            <span class="badge badge-danger">{{ p.get_rejection_reason_display|default:" - " }}</span>
                         </td>
-                        <td><small>{{ p.rejection_notes|default:"—"|truncatewords:15 }}</small></td>
+                        <td><small>{{ p.rejection_notes|default:" - "|truncatewords:15 }}</small></td>
                         <td>
                             <a href="{% url 'verify_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">Review</a>
                         </td>

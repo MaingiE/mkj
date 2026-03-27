@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Publish Decision — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Publish Decision - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div style="margin-bottom:1rem;">
@@ -10,7 +10,7 @@
     <h1 style="margin:0 0 1rem;">📢 Publish Jury Decision</h1>
 
     <div style="background:#f8f9fa; padding:1rem; border-radius:4px; margin-bottom:1rem;">
-        <p><strong>Appeal:</strong> #{{ appeal.pk }} — {{ appeal.subject }}</p>
+        <p><strong>Appeal:</strong> #{{ appeal.pk }} - {{ appeal.subject }}</p>
         <p><strong>Outcome:</strong>
             <span class="badge {% if decision.outcome == 'successful' %}bg-success{% elif decision.outcome == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}" style="padding:4px 8px; border-radius:4px; color:#fff;">
                 {{ decision.get_outcome_display }}
@@ -37,7 +37,7 @@
         {% csrf_token %}
         <div style="display:flex; gap:.5rem;">
             <button type="submit" class="btn btn-success">📢 Publish Decision</button>
-            <a href="{% url 'upload_decision_evidence' pk=appeal.pk decision_pk=decision.pk %}" class="btn btn-outline">Back — Add More Evidence</a>
+            <a href="{% url 'upload_decision_evidence' pk=appeal.pk decision_pk=decision.pk %}" class="btn btn-outline">Back - Add More Evidence</a>
         </div>
     </form>
 </div>

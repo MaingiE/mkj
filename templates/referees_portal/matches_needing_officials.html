@@ -151,7 +151,7 @@
     {% if t_appointed %}
     <div class="card shadow mb-4">
         <div class="card-header py-3 bg-info text-white">
-            <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Tournament Matches – Officials Appointed ({{ t_appointed|length }})</h6>
+            <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Tournament Matches - Officials Appointed ({{ t_appointed|length }})</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -185,9 +185,9 @@
                                     {% if m.away_team %}{{ m.away_team.display_name }}{% else %}TBD{% endif %}
                                 </div>
                             </td>
-                            <td>{{ m.officials.main_referee|default:"–" }}</td>
-                            <td>{{ m.officials.assistant_1|default:"–" }}</td>
-                            <td>{{ m.officials.assistant_2|default:"–" }}</td>
+                            <td>{{ m.officials.main_referee|default:" - " }}</td>
+                            <td>{{ m.officials.assistant_1|default:" - " }}</td>
+                            <td>{{ m.officials.assistant_2|default:" - " }}</td>
                             <td>
                                 <span class="badge {% if m.officials.status == 'CONFIRMED' %}bg-success{% else %}bg-info{% endif %}">
                                     {{ m.officials.get_status_display }}

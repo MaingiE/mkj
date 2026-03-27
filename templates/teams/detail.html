@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ team.name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}{{ team.name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>{{ team.name }}</span>
     </div>
     <h1>{{ team.name }}</h1>
-    <p>{{ team.county }} — {{ team.get_status_display }}</p>
+    <p>{{ team.county }} - {{ team.get_status_display }}</p>
 </div>
 
 <div class="stats-grid">
@@ -23,14 +23,14 @@
     <div class="stat-card blue">
         <div class="stat-icon blue">🏆</div>
         <div class="stat-info">
-            <h3>{{ team.competition|default:"—" }}</h3>
+            <h3>{{ team.competition|default:" - " }}</h3>
             <p>Competition</p>
         </div>
     </div>
     <div class="stat-card yellow">
         <div class="stat-icon yellow">👔</div>
         <div class="stat-info">
-            <h3>{{ team.manager.get_full_name|default:"—" }}</h3>
+            <h3>{{ team.manager.get_full_name|default:" - " }}</h3>
             <p>Manager</p>
         </div>
     </div>
@@ -41,10 +41,10 @@
         <div class="card-header"><h3>Team Details</h3></div>
         <div class="card-body">
             <table>
-                <tr><td><strong>Home Kit</strong></td><td>{{ team.home_colour|default:"—" }}</td></tr>
-                <tr><td><strong>Away Kit</strong></td><td>{{ team.away_colour|default:"—" }}</td></tr>
-                <tr><td><strong>Contact Phone</strong></td><td>{{ team.contact_phone|default:"—" }}</td></tr>
-                <tr><td><strong>Contact Email</strong></td><td>{{ team.contact_email|default:"—" }}</td></tr>
+                <tr><td><strong>Home Kit</strong></td><td>{{ team.home_colour|default:" - " }}</td></tr>
+                <tr><td><strong>Away Kit</strong></td><td>{{ team.away_colour|default:" - " }}</td></tr>
+                <tr><td><strong>Contact Phone</strong></td><td>{{ team.contact_phone|default:" - " }}</td></tr>
+                <tr><td><strong>Contact Email</strong></td><td>{{ team.contact_email|default:" - " }}</td></tr>
                 <tr><td><strong>Registered</strong></td><td>{{ team.registered_at|date:"d M Y" }}</td></tr>
             </table>
         </div>

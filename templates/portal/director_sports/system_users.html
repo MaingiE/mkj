@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}System Users &amp; Roles &mdash; Director of Sports{% endblock %}
+{% block title %}System Users &amp; Roles - Director of Sports{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -89,7 +89,7 @@
                 {% for u in system_users %}
                 <tr>
                     <td style="font-size:.82rem;">{{ forloop.counter }}</td>
-                    <td>{{ u.get_full_name|default:"—" }}</td>
+                    <td>{{ u.get_full_name|default:" - " }}</td>
                     <td style="font-size:.85rem;">{{ u.email }}</td>
                     <td><span class="badge bg-secondary">{{ u.get_role_display }}</span></td>
                     <td>

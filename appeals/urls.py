@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Appeals — URL Configuration
+MKJ SUPA CUP Appeals - URL Configuration
 """
 from django.urls import path
 from . import views
@@ -19,7 +19,7 @@ urlpatterns = [
     path("jury/squads/<int:pk>/",     jury_views.jury_squad_detail_view,     name="jury_squad_detail"),
     path("jury/disciplinary/",        jury_views.jury_disciplinary_view,     name="jury_disciplinary"),
 
-    # ── Jury Chair exports — Excel ────────────────────────────────────────
+    # ── Jury Chair exports - Excel ────────────────────────────────────────
     path("jury/export/teams/excel/",         jury_views.jury_export_teams_excel,         name="jury_export_teams_excel"),
     path("jury/export/players/excel/",       jury_views.jury_export_players_excel,       name="jury_export_players_excel"),
     path("jury/export/fixtures/excel/",      jury_views.jury_export_fixtures_excel,      name="jury_export_fixtures_excel"),
@@ -27,7 +27,7 @@ urlpatterns = [
     path("jury/export/squads/excel/",        jury_views.jury_export_squads_excel,        name="jury_export_squads_excel"),
     path("jury/export/disciplinary/excel/",  jury_views.jury_export_disciplinary_excel,  name="jury_export_disciplinary_excel"),
 
-    # ── Jury Chair exports — PDF ──────────────────────────────────────────
+    # ── Jury Chair exports - PDF ──────────────────────────────────────────
     path("jury/export/teams/pdf/",           jury_views.jury_export_teams_pdf,           name="jury_export_teams_pdf"),
     path("jury/export/players/pdf/",         jury_views.jury_export_players_pdf,         name="jury_export_players_pdf"),
     path("jury/export/fixtures/pdf/",        jury_views.jury_export_fixtures_pdf,        name="jury_export_fixtures_pdf"),

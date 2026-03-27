@@ -129,11 +129,11 @@ class GalleryImage(models.Model):
         ordering = ["order", "uploaded_at"]
 
     def __str__(self):
-        return self.caption or f"Photo #{self.order} — {self.album.title}"
+        return self.caption or f"Photo #{self.order} - {self.album.title}"
 
 
 class Video(models.Model):
-    """Video content — supports both uploads and YouTube/external embeds."""
+    """Video content - supports both uploads and YouTube/external embeds."""
     SOURCE_CHOICES = [
         ("upload", "Direct Upload"),
         ("youtube", "YouTube"),

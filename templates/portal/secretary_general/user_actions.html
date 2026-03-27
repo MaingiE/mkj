@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}User Activity &mdash; Secretary General{% endblock %}
+{% block title %}User Activity - Secretary General{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>User Activity</span>
     </div>
     <h1><i class="bi bi-journal-text"></i> User Activity Log</h1>
-    <p>All system user actions &mdash; filter by user or action type (read-only)</p>
+    <p>All system user actions - filter by user or action type (read-only)</p>
 </div>
 
 <!-- Filters -->
@@ -56,10 +56,10 @@
                 <tr>
                     <td style="font-size:.82rem;white-space:nowrap;">{{ log.timestamp|date:"d M Y H:i" }}</td>
                     <td>{{ log.user.get_full_name|default:"System" }}</td>
-                    <td style="font-size:.82rem;">{{ log.user.get_role_display|default:"—" }}</td>
+                    <td style="font-size:.82rem;">{{ log.user.get_role_display|default:" - " }}</td>
                     <td><span class="badge bg-{{ log.action_class }}">{{ log.get_action_display }}</span></td>
                     <td style="font-size:.85rem;">{{ log.description|truncatechars:80 }}</td>
-                    <td style="font-size:.82rem;">{{ log.ip_address|default:"—" }}</td>
+                    <td style="font-size:.82rem;">{{ log.ip_address|default:" - " }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="6" class="text-muted text-center">No activity logs found</td></tr>

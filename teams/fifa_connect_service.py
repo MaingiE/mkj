@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP — FIFA Connect API Integration Service
+MKJ SUPA CUP - FIFA Connect API Integration Service
 ==============================================
 Checks whether a player is registered in higher-level leagues above
 County League. Players found in any of these leagues are FLAGGED and
@@ -154,7 +154,7 @@ class FIFAConnectService:
         return results
 
     # ──────────────────────────────────────────────────────────────────────────
-    #  Private — API communication
+    #  Private - API communication
     # ──────────────────────────────────────────────────────────────────────────
 
     def _call_fifa_connect_api(self, player) -> dict:
@@ -183,7 +183,7 @@ class FIFAConnectService:
 
     def _call_api(self, payload: dict) -> dict:
         """
-        Stub implementation — simulates the FIFA Connect API response.
+        Stub implementation - simulates the FIFA Connect API response.
 
         In PRODUCTION, this will be an HTTP call. For now, it returns a
         simulated response based on the player data so the workflow can
@@ -208,7 +208,7 @@ class FIFAConnectService:
         # ── SIMULATION MODE (for development/testing) ─────────────────────────
         # Generates a deterministic FIFA ID and returns "clear" by default.
         # Admins can manually flag players after reviewing the result.
-        logger.info("FIFA Connect SIMULATION mode — player: %s %s",
+        logger.info("FIFA Connect SIMULATION mode - player: %s %s",
                      payload.get('first_name'), payload.get('last_name'))
 
         # Generate a consistent simulated FIFA ID

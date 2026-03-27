@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Team Registrations — Treasurer{% endblock %}
+{% block title %}Team Registrations - Treasurer{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -33,11 +33,11 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SECTION 1 — STEP: Confirm Payment
+     SECTION 1 - STEP: Confirm Payment
      ═══════════════════════════════════════════════════════════ -->
 <div class="card" style="margin-bottom:2rem">
     <div class="card-header" style="background:#fff3e0;border-left:4px solid #f57c00">
-        <h3 style="color:#e65100">⏳ Step 1 — Confirm Payment ({{ unpaid_count }})</h3>
+        <h3 style="color:#e65100">⏳ Step 1 - Confirm Payment ({{ unpaid_count }})</h3>
         <p style="margin:0;font-size:.85rem;color:#888">Enter the M-Pesa or bank reference for each team after verifying their payment.</p>
     </div>
     <div class="card-body">
@@ -85,11 +85,11 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SECTION 2 — STEP: Approve (payment already confirmed)
+     SECTION 2 - STEP: Approve (payment already confirmed)
      ═══════════════════════════════════════════════════════════ -->
 <div class="card">
     <div class="card-header" style="background:#e8f5ed;border-left:4px solid #2e7d32">
-        <h3 style="color:#1b5e20">✅ Step 2 — Approve Teams ({{ paid_count }})</h3>
+        <h3 style="color:#1b5e20">✅ Step 2 - Approve Teams ({{ paid_count }})</h3>
         <p style="margin:0;font-size:.85rem;color:#888">Payment confirmed. Click Approve to register the team and create their manager login.</p>
     </div>
     <div class="card-body">
@@ -149,7 +149,7 @@
         <li>You enter the M-Pesa/bank reference and confirm payment → <em>Payment Confirmed</em></li>
         <li>You click <strong>Approve</strong> → team status becomes <em>Registered</em></li>
         <li>A team manager login is automatically created using the team's contact email</li>
-        <li>The temporary password is sent to the team manager email — they can then log in and add players</li>
+        <li>The temporary password is sent to the team manager email - they can then log in and add players</li>
     </ol>
 </div>
 {% endblock %}

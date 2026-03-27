@@ -1,8 +1,8 @@
 """
-MKJ SUPA CUP — Player Clearance & Verification Views
+MKJ SUPA CUP - Player Clearance & Verification Views
 ===============================================
 Step-by-step verification workflow:
-  Step 1: Document Verification (existing — admin reviews ID, birth cert, photo)
+  Step 1: Document Verification (existing - admin reviews ID, birth cert, photo)
   Step 2: Huduma Kenya Age Verification (IPRS check)
   Step 3: FIFA Connect Higher-League Check (flag off ineligible players)
   Step 4: Final Clearance (only if Steps 1-3 pass)
@@ -44,7 +44,7 @@ def clearance_role_required(view):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   CLEARANCE DASHBOARD — Overview of all verification steps
+#   CLEARANCE DASHBOARD - Overview of all verification steps
 # ══════════════════════════════════════════════════════════════════════════════
 
 @clearance_role_required
@@ -125,7 +125,7 @@ def player_clearance_dashboard(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   PLAYER CLEARANCE DETAIL — Step-by-step for a single player
+#   PLAYER CLEARANCE DETAIL - Step-by-step for a single player
 # ══════════════════════════════════════════════════════════════════════════════
 
 @clearance_role_required
@@ -189,7 +189,7 @@ def huduma_verify_player(request, player_pk):
                     f"DOB mismatch. Claimed: {player.date_of_birth}, "
                     f"IPRS: {result.verified_dob}"
                 )
-                messages.warning(request, f'❌ Age mismatch for {player.get_full_name()} — DOB does not match IPRS records.')
+                messages.warning(request, f'❌ Age mismatch for {player.get_full_name()} - DOB does not match IPRS records.')
             else:
                 player.huduma_status = HudumaVerificationStatus.PENDING
                 player.huduma_notes = f"API error: {result.error_message}"
@@ -309,7 +309,7 @@ def fifa_connect_check_player(request, player_pk):
             if result.is_clear:
                 player.fifa_connect_status = FIFAConnectStatus.CLEAR
                 player.fifa_connect_leagues = []
-                player.fifa_connect_notes = "Clear — no higher-league registrations found."
+                player.fifa_connect_notes = "Clear - no higher-league registrations found."
                 if result.fifa_connect_id and not player.fifa_connect_id:
                     player.fifa_connect_id = result.fifa_connect_id
                 messages.success(request, f'✅ FIFA Connect check CLEAR for {player.get_full_name()}. No higher-league registrations.')
@@ -323,12 +323,12 @@ def fifa_connect_check_player(request, player_pk):
                 player.status = PlayerStatus.INELIGIBLE
                 player.rejection_reason = RejectionReason.FIFA_CONNECT_FLAGGED
                 player.rejection_notes = result.flag_reason
-                messages.warning(request, f'🚩 {player.get_full_name()} FLAGGED — registered in higher-level league(s)!')
+                messages.warning(request, f'🚩 {player.get_full_name()} FLAGGED - registered in higher-level league(s)!')
 
             elif result.success and not result.player_found:
                 player.fifa_connect_status = FIFAConnectStatus.CLEAR
                 player.fifa_connect_leagues = []
-                player.fifa_connect_notes = "Player not found in FIFA Connect — no higher league record."
+                player.fifa_connect_notes = "Player not found in FIFA Connect - no higher league record."
                 messages.info(request, f'ℹ️ {player.get_full_name()} not found in FIFA Connect. Treated as clear.')
 
             else:
@@ -441,7 +441,7 @@ def player_final_clearance(request, player_pk):
 
         if action == 'grant_clearance':
             if not player.is_fully_cleared:
-                messages.error(request, 'Cannot grant clearance — not all verification steps have passed.')
+                messages.error(request, 'Cannot grant clearance - not all verification steps have passed.')
                 return redirect('player_clearance_detail', player_pk=player.pk)
 
             player.status = PlayerStatus.ELIGIBLE
@@ -513,7 +513,7 @@ def bulk_fifa_connect_check(request):
             if result.is_clear:
                 player.fifa_connect_status = FIFAConnectStatus.CLEAR
                 player.fifa_connect_leagues = []
-                player.fifa_connect_notes = "Clear — bulk check."
+                player.fifa_connect_notes = "Clear - bulk check."
                 if result.fifa_connect_id:
                     player.fifa_connect_id = result.fifa_connect_id
                 cleared += 1
@@ -590,7 +590,7 @@ def bulk_huduma_check(request):
                 verified += 1
             elif result.success:
                 player.huduma_status = HudumaVerificationStatus.FAILED
-                player.huduma_notes = "Bulk check — verification failed."
+                player.huduma_notes = "Bulk check - verification failed."
                 failed += 1
             else:
                 player.huduma_status = HudumaVerificationStatus.PENDING
@@ -624,7 +624,7 @@ def bulk_huduma_check(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   API ENDPOINT — FIFA Connect Player Quick-Check (AJAX)
+#   API ENDPOINT - FIFA Connect Player Quick-Check (AJAX)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @login_required(login_url='web_login')
@@ -668,7 +668,7 @@ def api_fifa_connect_quick_check(request):
 @require_POST
 def api_iprs_lookup(request):
     """
-    AJAX endpoint — look up a person by National ID via IPRS.
+    AJAX endpoint - look up a person by National ID via IPRS.
 
     Called from the add-player form when the user enters a National ID number.
     Returns JSON with the person's name, date of birth, age, and gender so
@@ -679,7 +679,7 @@ def api_iprs_lookup(request):
     if not national_id:
         return JsonResponse({'success': False, 'error_message': 'National ID is required.'}, status=400)
 
-    # Basic format validation — Kenyan IDs are 7-8 digits
+    # Basic format validation - Kenyan IDs are 7-8 digits
     if not national_id.isdigit() or len(national_id) < 7 or len(national_id) > 8:
         return JsonResponse({
             'success': False,

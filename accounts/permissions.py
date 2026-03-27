@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP — Role-Based Permission Classes
+MKJ SUPA CUP - Role-Based Permission Classes
 """
 from rest_framework.permissions import BasePermission
 from accounts.models import UserRole
@@ -86,7 +86,7 @@ IsRefereeManagerOrAdmin = IsCoordinatorOrAdmin  # backwards compat
 
 
 class IsAnyStaff(BasePermission):
-    """Any internal staff role (CM, RM, Treasurer, Admin) — not team manager or referee."""
+    """Any internal staff role (CM, RM, Treasurer, Admin) - not team manager or referee."""
     def has_permission(self, request, view):
         return bool(
             request.user and request.user.is_authenticated and

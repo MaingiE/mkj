@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Profile — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}My Profile - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -18,11 +18,11 @@
             <table>
                 <tr><td><strong>Name</strong></td><td>{{ user.get_full_name }}</td></tr>
                 <tr><td><strong>Email</strong></td><td>{{ user.email }}</td></tr>
-                <tr><td><strong>Phone</strong></td><td>{{ user.phone|default:"—" }}</td></tr>
+                <tr><td><strong>Phone</strong></td><td>{{ user.phone|default:" - " }}</td></tr>
                 <tr><td><strong>Role</strong></td><td><span class="badge badge-info">{{ user.get_role_display }}</span></td></tr>
-                <tr><td><strong>County</strong></td><td>{{ user.county|default:"—" }}</td></tr>
+                <tr><td><strong>County</strong></td><td>{{ user.county|default:" - " }}</td></tr>
                 <tr><td><strong>Member Since</strong></td><td>{{ user.date_joined|date:"d M Y" }}</td></tr>
-                <tr><td><strong>Last Login</strong></td><td>{{ user.last_login|date:"d M Y H:i"|default:"—" }}</td></tr>
+                <tr><td><strong>Last Login</strong></td><td>{{ user.last_login|date:"d M Y H:i"|default:" - " }}</td></tr>
             </table>
         </div>
     </div>

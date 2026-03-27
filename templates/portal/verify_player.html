@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verify Player — {{ player.get_full_name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Verify Player - {{ player.get_full_name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -122,8 +122,8 @@
                     <tr><td style="font-weight:600;width:40%">Full Name</td><td>{{ player.first_name }} {{ player.last_name }}</td></tr>
                     <tr><td style="font-weight:600">Date of Birth</td><td>{{ player.date_of_birth|date:"d M Y" }}</td></tr>
                     <tr><td style="font-weight:600">Age</td><td>{{ player.age }} years {% if not player.is_age_eligible %}<span style="color:#C62828;font-weight:700">⛔ INELIGIBLE</span>{% else %}<span style="color:#124491">✅ Eligible</span>{% endif %}</td></tr>
-                    <tr><td style="font-weight:600">National ID #</td><td>{{ player.national_id_number|default:"—" }}</td></tr>
-                    <tr><td style="font-weight:600">Birth Cert #</td><td>{{ player.birth_cert_number|default:"—" }}</td></tr>
+                    <tr><td style="font-weight:600">National ID #</td><td>{{ player.national_id_number|default:" - " }}</td></tr>
+                    <tr><td style="font-weight:600">Birth Cert #</td><td>{{ player.birth_cert_number|default:" - " }}</td></tr>
                     <tr><td style="font-weight:600">Position</td><td>{{ player.get_position_display }}</td></tr>
                     <tr><td style="font-weight:600">Shirt Number</td><td>#{{ player.shirt_number }}</td></tr>
                     <tr><td style="font-weight:600">Team</td><td>{{ player.team.name }} ({{ player.team.county }})</td></tr>
@@ -165,7 +165,7 @@
                     <h3 style="color:#124491;margin:.5rem 0">Verified</h3>
                     <p style="color:#555;font-size:.9rem">
                         By {{ player.verified_by.get_full_name|default:"System" }}
-                        on {{ player.verified_at|date:"d M Y H:i"|default:"—" }}
+                        on {{ player.verified_at|date:"d M Y H:i"|default:" - " }}
                     </p>
                 </div>
                 <form method="post">
@@ -194,7 +194,7 @@
                 </form>
 
                 {% else %}
-                <!-- PENDING — show approve/reject -->
+                <!-- PENDING - show approve/reject -->
                 <form method="post">
                     {% csrf_token %}
 
@@ -216,7 +216,7 @@
                         </div>
                         <div style="margin-bottom:.75rem">
                             <label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.3rem">Additional Notes</label>
-                            <textarea name="rejection_notes" class="form-control" rows="3" placeholder="Optional — describe the issue..." style="width:100%"></textarea>
+                            <textarea name="rejection_notes" class="form-control" rows="3" placeholder="Optional - describe the issue..." style="width:100%"></textarea>
                         </div>
                         <button type="submit" name="action" value="reject" style="width:100%;padding:.6rem;background:#C62828;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600" onclick="return confirm('Are you sure you want to reject this player?')">
                             ❌ Reject

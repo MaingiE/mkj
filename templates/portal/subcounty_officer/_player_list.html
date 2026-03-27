@@ -25,7 +25,7 @@
                         {% endif %}
                         <div>
                             <strong style="font-size:.88rem">{{ p.first_name }} {{ p.last_name }}</strong>
-                            <div style="font-size:.78rem;color:#888">#{{ p.jersey_number|default:"—" }} &middot; {{ p.position|default:"N/A" }}</div>
+                            <div style="font-size:.78rem;color:#888">#{{ p.jersey_number|default:" - " }} &middot; {{ p.position|default:"N/A" }}</div>
                         </div>
                     </div>
                 </td>
@@ -34,7 +34,7 @@
                     <div style="font-size:.78rem;color:{% if p.age >= 18 and p.age <= 23 %}#2E7D32{% else %}#C62828{% endif %};font-weight:600">{{ p.age }} yrs{% if p.age < 18 or p.age > 23 %} <i class="bi bi-exclamation-triangle-fill"></i>{% endif %}</div>
                 </td>
                 <td style="padding:.6rem 1rem;font-family:monospace;font-size:.84rem">{{ p.national_id_number }}</td>
-                <td style="padding:.6rem 1rem;font-size:.84rem">{{ p.phone|default:"—" }}</td>
+                <td style="padding:.6rem 1rem;font-size:.84rem">{{ p.phone|default:" - " }}</td>
                 <td style="padding:.6rem 1rem">
                     {% if p.verification_status == 'pending' %}
                     <span style="display:inline-flex;align-items:center;gap:.3rem;background:#FFF3E0;color:#E65100;padding:.2rem .6rem;border-radius:10px;font-size:.76rem;font-weight:600">

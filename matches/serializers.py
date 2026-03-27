@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Matches — Serializers
+MKJ SUPA CUP Matches - Serializers
 """
 from rest_framework import serializers
 from django.utils import timezone
@@ -113,7 +113,7 @@ class MatchReportSerializer(serializers.ModelSerializer):
 
     def get_fixture_label(self, obj):
         f = obj.fixture
-        return f"{f.home_team} vs {f.away_team} — {f.match_date}"
+        return f"{f.home_team} vs {f.away_team} - {f.match_date}"
 
     def create(self, validated_data):
         events_data = validated_data.pop("events", [])

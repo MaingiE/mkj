@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Teams — Views
+MKJ SUPA CUP Teams - Views
 """
 from rest_framework import generics, permissions
 from rest_framework.viewsets import ModelViewSet

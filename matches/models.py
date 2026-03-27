@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Matches — Models (Squad Submissions, Match Reports, Results)
+MKJ SUPA CUP Matches - Models (Squad Submissions, Match Reports, Results)
 """
 from django.db import models
 from django.conf import settings
@@ -220,7 +220,7 @@ class SquadStatus(models.TextChoices):
     DRAFT     = "draft",     "Draft"
     SUBMITTED = "submitted", "Submitted"
     APPROVED  = "approved",  "Approved by Referee"
-    REJECTED  = "rejected",  "Rejected — Needs Changes"
+    REJECTED  = "rejected",  "Rejected - Needs Changes"
 
 
 class SquadSubmission(models.Model):
@@ -260,7 +260,7 @@ class SquadSubmission(models.Model):
     status      = models.CharField(max_length=20, choices=SquadStatus.choices, default=SquadStatus.DRAFT)
     formation   = models.CharField(
         max_length=20, blank=True, default="",
-        help_text="Playing formation (e.g. 4-3-3, 4-4-2) — applies to football",
+        help_text="Playing formation (e.g. 4-3-3, 4-4-2) - applies to football",
     )
     kit_choice  = models.CharField(
         max_length=10, choices=KIT_CHOICES, default="home",
@@ -460,7 +460,7 @@ class MatchReport(models.Model):
     )
     status       = models.CharField(max_length=20, choices=MatchReportStatus.choices, default=MatchReportStatus.DRAFT)
 
-    # Final Score (total / aggregate — all sports)
+    # Final Score (total / aggregate - all sports)
     home_score   = models.PositiveIntegerField()
     away_score   = models.PositiveIntegerField()
 
@@ -615,7 +615,7 @@ class MatchEvent(models.Model):
         ordering = ["minute"]
 
     def __str__(self):
-        return f"{self.event_type} @ {self.minute}' — {self.player}"
+        return f"{self.event_type} @ {self.minute}' - {self.player}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -664,7 +664,7 @@ class PlayerStatistics(models.Model):
         verbose_name_plural = "Player Statistics"
 
     def __str__(self):
-        return f"{self.player.get_full_name()} — {self.competition.name} (G:{self.goals} A:{self.assists})"
+        return f"{self.player.get_full_name()} - {self.competition.name} (G:{self.goals} A:{self.assists})"
 
     def save(self, *args, **kwargs):
         self.goal_contributions = self.goals + self.assists

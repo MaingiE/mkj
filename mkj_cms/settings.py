@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Competition Management System — Django Settings
+MKJ SUPA CUP Competition Management System - Django Settings
 """
 
 import environ
@@ -148,7 +148,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 # ── SPECTACULAR (API DOCS) ─────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     "TITLE": "MKJ SUPA CUP Competition Management System API",
-    "DESCRIPTION": "Governor Mutula Kilonzo Junior Super Cup — Makueni County Sports Competition Management",
+    "DESCRIPTION": "Governor Mutula Kilonzo Junior Super Cup - Makueni County Sports Competition Management",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -262,7 +262,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── SQUAD RULES ────────────────────────────────────────────────────────────────
 SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF = 2
-# Default fallbacks — overridden by SPORT_SQUAD_RULES in matches/models.py
+# Default fallbacks - overridden by SPORT_SQUAD_RULES in matches/models.py
 SQUAD_MIN_STARTERS = 7      # Minimum starters required
 SQUAD_MIN_PLAYERS  = 7      # Absolute minimum players (starters only if no subs)
 SQUAD_MAX_PLAYERS  = 23
@@ -280,7 +280,7 @@ FIFA_CONNECT_API_KEY = env("FIFA_CONNECT_API_KEY", default="")
 FIFA_CONNECT_ENABLED = env.bool("FIFA_CONNECT_ENABLED", default=True)
 FIFA_CONNECT_TIMEOUT = env.int("FIFA_CONNECT_TIMEOUT", default=30)
 
-# Smile Identity — IPRS / Enhanced KYC Verification
+# Smile Identity - IPRS / Enhanced KYC Verification
 # Sign up at smileidentity.com → Dashboard → API Keys
 # Use sandbox for testing (SMILE_ENVIRONMENT=sandbox)
 SMILE_PARTNER_ID = env("SMILE_PARTNER_ID", default="")

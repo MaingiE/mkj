@@ -79,7 +79,7 @@ class ActivityLoggingMiddleware(MiddlewareMixin):
         if not (200 <= response.status_code < 400):
             return response
 
-        # Skip login/logout — handled by signals
+        # Skip login/logout - handled by signals
         if any(seg in request.path for seg in ('/login/', '/logout/')):
             return response
 

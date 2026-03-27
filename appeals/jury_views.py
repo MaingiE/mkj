@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Appeals — Jury Chair Views
+MKJ SUPA CUP Appeals - Jury Chair Views
 Provides read-only data views + PDF / Excel exports for the Chair of the Jury.
 
 Data sections:
@@ -399,7 +399,7 @@ def jury_export_teams_excel(request):
     ws.title = "Teams"
     headers = ["#", "Team Name", "County", "Competition", "Status", "Manager", "Contact Email", "Contact Phone", "Registered"]
     widths = [6, 30, 18, 30, 14, 30, 30, 18, 18]
-    _xl_write_header(ws, "MKJ SUPA CUP — Teams Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {teams.count()}", headers, widths, styles)
+    _xl_write_header(ws, "MKJ SUPA CUP - Teams Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {teams.count()}", headers, widths, styles)
 
     for i, t in enumerate(teams[:5000], start=5):
         vals = [
@@ -439,7 +439,7 @@ def jury_export_players_excel(request):
     ws.title = "Approved Players"
     headers = ["#", "First Name", "Last Name", "Team", "Competition", "Position", "Shirt #", "DOB", "Age", "ID Number", "Status"]
     widths = [6, 20, 20, 28, 28, 12, 10, 14, 6, 18, 14]
-    _xl_write_header(ws, "MKJ SUPA CUP — Approved Players Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {players.count()}", headers, widths, styles)
+    _xl_write_header(ws, "MKJ SUPA CUP - Approved Players Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {players.count()}", headers, widths, styles)
 
     for i, p in enumerate(players[:5000], start=5):
         vals = [
@@ -478,7 +478,7 @@ def jury_export_fixtures_excel(request):
     ws.title = "Fixtures"
     headers = ["#", "Competition", "Home Team", "Away Team", "Date", "Kickoff", "Venue", "Status", "Score"]
     widths = [6, 28, 25, 25, 14, 10, 28, 14, 12]
-    _xl_write_header(ws, "MKJ SUPA CUP — Fixtures Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {fixtures.count()}", headers, widths, styles)
+    _xl_write_header(ws, "MKJ SUPA CUP - Fixtures Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {fixtures.count()}", headers, widths, styles)
 
     for i, f in enumerate(fixtures[:5000], start=5):
         score = ""
@@ -524,7 +524,7 @@ def jury_export_match_reports_excel(request):
     ws.title = "Match Reports"
     headers = ["#", "Competition", "Home Team", "Away Team", "Score", "Yellow (H)", "Yellow (A)", "Red (H)", "Red (A)", "Referee", "Status", "Submitted"]
     widths = [6, 28, 22, 22, 10, 10, 10, 10, 10, 28, 14, 18]
-    _xl_write_header(ws, "MKJ SUPA CUP — Match Reports", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {reports.count()}", headers, widths, styles)
+    _xl_write_header(ws, "MKJ SUPA CUP - Match Reports", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {reports.count()}", headers, widths, styles)
 
     for i, r in enumerate(reports[:5000], start=5):
         fx = r.fixture
@@ -573,7 +573,7 @@ def jury_export_squads_excel(request):
     ws.title = "Squads"
     headers = ["#", "Match Date", "Competition", "Team", "vs", "Player", "Shirt #", "Position", "Starter", "Status"]
     widths = [6, 14, 28, 25, 25, 28, 10, 12, 10, 14]
-    _xl_write_header(ws, "MKJ SUPA CUP — Match Day Squads", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {squad_players.count()}", headers, widths, styles)
+    _xl_write_header(ws, "MKJ SUPA CUP - Match Day Squads", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {squad_players.count()}", headers, widths, styles)
 
     for i, sp in enumerate(squad_players[:5000], start=5):
         sub = sp.submission
@@ -624,7 +624,7 @@ def jury_export_disciplinary_excel(request):
     ws.title = "Disciplinary"
     headers = ["#", "Match Date", "Competition", "Team", "Player", "Card Type", "Minute", "Match", "Notes"]
     widths = [6, 14, 28, 25, 28, 16, 10, 40, 30]
-    _xl_write_header(ws, "MKJ SUPA CUP — Disciplinary Sanctions Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {events.count()}", headers, widths, styles)
+    _xl_write_header(ws, "MKJ SUPA CUP - Disciplinary Sanctions Report", f"Generated: {now.strftime('%B %d, %Y %I:%M %p')}  |  Records: {events.count()}", headers, widths, styles)
 
     for i, ev in enumerate(events[:5000], start=5):
         fx = ev.report.fixture
@@ -688,7 +688,7 @@ def _pdf_base(title, subtitle, header_row, data_rows, col_widths, filename):
     
     # Add MKJ SUPA CUP 4th Edition header
     elements.extend([
-        Paragraph("⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION — 4TH EDITION", 
+        Paragraph("⚽ KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION - 4TH EDITION", 
                  ParagraphStyle("Edition", parent=styles["Heading2"], fontSize=10, textColor=colors.HexColor("#004D1A"), spaceAfter=2, alignment=1)),
         Paragraph(title, title_style),
         Paragraph(subtitle, ParagraphStyle("S2", parent=styles["Heading2"], fontSize=12, textColor=colors.HexColor("#333"), spaceAfter=4)),
@@ -723,7 +723,7 @@ def _pdf_base(title, subtitle, header_row, data_rows, col_widths, filename):
     elements.append(table)
     elements.append(Spacer(1, 8 * mm))
     elements.append(Paragraph(
-        f"<i>Report generated by MKJ SUPA CUP CMS on {now.strftime('%d/%m/%Y %H:%M')}. Confidential — for authorised personnel only.</i>",
+        f"<i>Report generated by MKJ SUPA CUP CMS on {now.strftime('%d/%m/%Y %H:%M')}. Confidential - for authorised personnel only.</i>",
         ParagraphStyle("Footer", parent=styles["Normal"], fontSize=7, textColor=colors.gray),
     ))
 

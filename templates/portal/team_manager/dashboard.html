@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Team Manager Dashboard &mdash; MKJ SUPA CUP{% endblock %}
+{% block title %}Team Manager Dashboard - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
     </div>
     <h1><i class="bi bi-speedometer2"></i> Team Manager Dashboard</h1>
     {% if bench %}
-    <p>{{ county_reg.county }} County &mdash; {{ discipline.get_sport_type_display }}</p>
+    <p>{{ county_reg.county }} County - {{ discipline.get_sport_type_display }}</p>
     {% endif %}
 </div>
 
@@ -17,7 +17,7 @@
 {% if bench and verified_players %}
 <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
-        <h2 style="font-size:1.1rem;color:#333;margin:0"><i class="bi bi-people"></i> Verified Players &mdash; {{ discipline.get_sport_type_display }}</h2>
+        <h2 style="font-size:1.1rem;color:#333;margin:0"><i class="bi bi-people"></i> Verified Players - {{ discipline.get_sport_type_display }}</h2>
         <a href="{% url 'team_list_pdf' discipline_pk=discipline.pk %}" class="btn btn--primary" style="padding:.4rem 1rem;font-size:.85rem">
             <i class="bi bi-file-earmark-pdf"></i> Download Team List PDF
         </a>
@@ -40,8 +40,8 @@
                     <td style="padding:.5rem .8rem;color:#888">{{ forloop.counter }}</td>
                     <td style="padding:.5rem .8rem;font-weight:600">{{ p.first_name }} {{ p.last_name }}</td>
                     <td style="padding:.5rem .8rem">{{ p.age }}</td>
-                    <td style="padding:.5rem .8rem">{{ p.position|default:"—" }}</td>
-                    <td style="padding:.5rem .8rem">{{ p.jersey_number|default:"—" }}</td>
+                    <td style="padding:.5rem .8rem">{{ p.position|default:" - " }}</td>
+                    <td style="padding:.5rem .8rem">{{ p.jersey_number|default:" - " }}</td>
                     <td style="padding:.5rem .8rem">
                         <a href="{% url 'player_profile' player_pk=p.pk %}" style="color:#124491;font-size:.82rem;font-weight:600;text-decoration:none">
                             <i class="bi bi-eye"></i> Profile
@@ -63,7 +63,7 @@
 <!-- Team-based players (old flow) -->
 {% for team, players in team_players.items %}
 <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
-    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-people"></i> {{ team.name }} — Verified Players</h2>
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem"><i class="bi bi-people"></i> {{ team.name }} - Verified Players</h2>
     {% if players %}
     <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:.88rem">

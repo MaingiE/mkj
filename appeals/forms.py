@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Appeals — Forms for appeal submission, response, and jury decisions
+MKJ SUPA CUP Appeals - Forms for appeal submission, response, and jury decisions
 """
 from django import forms
 from django.core.exceptions import ValidationError
@@ -45,7 +45,7 @@ class AppealForm(forms.ModelForm):
             self.fields["respondent_team"].queryset = Team.objects.exclude(pk=appellant_team.pk)
         self.fields["match"].required = False
         self.fields["competition"].required = False
-        # Respondent is auto-determined from match — hide but keep for fallback
+        # Respondent is auto-determined from match - hide but keep for fallback
         self.fields["respondent_team"].required = False
         self.fields["respondent_team"].widget = forms.HiddenInput()
 

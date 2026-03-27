@@ -1,4 +1,4 @@
-# MKJ SUPA CUP Frontend — React SPA
+# MKJ SUPA CUP Frontend - React SPA
 
 Modern React frontend for the Kenya Youth Interschool Sports Association Competition Management System.
 
@@ -26,13 +26,13 @@ The Vite dev server runs on `http://localhost:5173` and proxies all `/api/*` and
 
 ### Run both servers together:
 
-**Terminal 1 — Django API:**
+**Terminal 1 - Django API:**
 ```bash
 cd ..
 python manage.py runserver 8000
 ```
 
-**Terminal 2 — Vite frontend:**
+**Terminal 2 - Vite frontend:**
 ```bash
 npm run dev
 ```

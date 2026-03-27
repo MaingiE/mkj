@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Treasurer Actions &mdash; Secretary General{% endblock %}
+{% block title %}Treasurer Actions - Secretary General{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -30,7 +30,7 @@
                     <td>{{ log.user.get_full_name|default:"System" }}</td>
                     <td><span class="badge bg-{{ log.action_class }}">{{ log.get_action_display }}</span></td>
                     <td style="font-size:.85rem;">{{ log.description|truncatechars:100 }}</td>
-                    <td style="font-size:.82rem;">{{ log.object_repr|default:"—" }}</td>
+                    <td style="font-size:.82rem;">{{ log.object_repr|default:" - " }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="5" class="text-muted text-center">No treasurer actions recorded</td></tr>

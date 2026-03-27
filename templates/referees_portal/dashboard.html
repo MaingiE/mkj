@@ -683,7 +683,7 @@
                                 <tbody>
                                     {% for t in tournament_completed %}
                                     <tr>
-                                        <td>{{ t.match_date|date:"d/m/Y"|default:"–" }}</td>
+                                        <td>{{ t.match_date|date:"d/m/Y"|default:" - " }}</td>
                                         <td><span class="badge bg-success">{{ t.tournament_name }}</span></td>
                                         <td>{{ t.home_name }} vs {{ t.away_name }}</td>
                                         <td><span class="badge bg-secondary">{{ t.role }}</span></td>

@@ -1,5 +1,5 @@
 ﻿{% extends 'base.html' %}
-{% block title %}Dashboard &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Dashboard - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -96,7 +96,7 @@
             <!-- Admin Portal Hub -->
             <div class="card mb-1">
                 <div class="card-header" style="background:linear-gradient(90deg,#0C1B3A,#1A6FB5);color:#fff;">
-                    <h3 style="color:#fff;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>System Admin &mdash; All Portals</h3>
+                    <h3 style="color:#fff;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>System Admin - All Portals</h3>
                     <small style="color:#E8B91E;">Full system access for testing</small>
                 </div>
                 <div class="card-body">
@@ -509,9 +509,7 @@
                         <td>
                             {% if f.home_score is not None %}
                             <strong>{{ f.home_score }} - {{ f.away_score }}</strong>
-                            {% else %}
-                            &mdash;
-                            {% endif %}
+                            {% else %} - {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Matches & Fixtures — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Matches & Fixtures - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>Matches</span>
     </div>
     <h1><i class="bi bi-clipboard-data"></i> Fixtures & Results</h1>
-    <p>MKJ SUPA CUP 2026 County Finals — Group stage fixtures by discipline and pool</p>
+    <p>MKJ SUPA CUP 2026 County Finals - Group stage fixtures by discipline and pool</p>
 </div>
 
 <div class="card">
@@ -87,7 +87,7 @@
                             {% endif %}
                         </td>
                         <td class="text-nowrap">
-                            {% comment %} TEAM MANAGER — Squad Selection {% endcomment %}
+                            {% comment %} TEAM MANAGER - Squad Selection {% endcomment %}
                             {% if user.role == 'team_manager' %}
                                 {% if fd.squad %}
                                     {% if fd.squad.status == 'approved' %}
@@ -112,7 +112,7 @@
                                 {% endif %}
                             {% endif %}
 
-                            {% comment %} REFEREE — Submit Report {% endcomment %}
+                            {% comment %} REFEREE - Submit Report {% endcomment %}
                             {% if user.role == 'referee' %}
                                 {% if fd.report %}
                                 <a href="{% url 'match_report_detail' report_pk=fd.report.pk %}" class="btn-action btn-action-link">
@@ -125,7 +125,7 @@
                                 {% endif %}
                             {% endif %}
 
-                            {% comment %} ADMIN / CM — View Report {% endcomment %}
+                            {% comment %} ADMIN / CM - View Report {% endcomment %}
                             {% if user.role == 'admin' or user.role == 'competition_manager' %}
                                 {% if fd.report %}
                                 <a href="{% url 'match_report_detail' report_pk=fd.report.pk %}" class="btn-action btn-action-link" style="margin-right:.5rem;">
@@ -134,7 +134,7 @@
                                 {% endif %}
                             {% endif %}
 
-                            {% comment %} REFEREE MANAGER — Review Report {% endcomment %}
+                            {% comment %} REFEREE MANAGER - Review Report {% endcomment %}
                             {% if user.role == 'coordinator' or user.role == 'admin' %}
                                 {% if fd.report and fd.report.status == 'submitted' %}
                                 <a href="{% url 'match_report_review' report_pk=fd.report.pk %}" class="btn-action btn-action-warning">
@@ -174,8 +174,8 @@
                     <tr>
                         <td>{{ report.fixture.home_team }} vs {{ report.fixture.away_team }}</td>
                         <td><strong>{{ report.home_score }} - {{ report.away_score }}</strong></td>
-                        <td>{{ report.referee.user.get_full_name|default:"—" }}</td>
-                        <td>{{ report.submitted_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ report.referee.user.get_full_name|default:" - " }}</td>
+                        <td>{{ report.submitted_at|date:"d M Y H:i"|default:" - " }}</td>
                         <td>
                             <a href="{% url 'match_report_review' report_pk=report.pk %}" class="btn-action btn-action-warning">
                                 Review
@@ -205,7 +205,7 @@
                     <tr>
                         <td>{{ report.fixture.home_team }} vs {{ report.fixture.away_team }}</td>
                         <td><strong>{{ report.home_score }} - {{ report.away_score }}</strong></td>
-                        <td>{{ report.referee.user.get_full_name|default:"—" }}</td>
+                        <td>{{ report.referee.user.get_full_name|default:" - " }}</td>
                         <td>
                             {% if report.status == 'approved' %}
                             <span class="badge badge-success">Approved</span>
@@ -217,7 +217,7 @@
                             <span class="badge badge-gray">{{ report.get_status_display }}</span>
                             {% endif %}
                         </td>
-                        <td>{{ report.submitted_at|date:"d M Y"|default:"—" }}</td>
+                        <td>{{ report.submitted_at|date:"d M Y"|default:" - " }}</td>
                         <td>
                             <a href="{% url 'match_report_detail' report_pk=report.pk %}" class="btn-action btn-action-link">View</a>
                         </td>

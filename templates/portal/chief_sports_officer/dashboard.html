@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Chief Sports Officer — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Chief Sports Officer - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1><i class="bi bi-shield-check"></i> Chief Sports Officer Portal</h1>
-    <p>Governor Mutula Kilonzo Junior Super Cup — County Sports Operations</p>
+    <p>Governor Mutula Kilonzo Junior Super Cup - County Sports Operations</p>
 </div>
 
 <!-- Officer Banner -->
@@ -19,7 +19,7 @@
             <div>
                 <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800;">Chief Sports Officer</h2>
                 <p style="margin: .25rem 0 0; opacity: .8; font-size: .85rem;">
-                    County Sports Operations — Disciplines, Players & Sub-County Management
+                    County Sports Operations - Disciplines, Players & Sub-County Management
                 </p>
             </div>
             <div style="margin-left: auto;">
@@ -164,7 +164,7 @@
                     <tr>
                         <td>{{ f.match_date|date:"d M Y" }}</td>
                         <td><strong>{{ f.home_team }}</strong> vs <strong>{{ f.away_team }}</strong></td>
-                        <td>{{ f.home_score|default:'-' }} – {{ f.away_score|default:'-' }}</td>
+                        <td>{{ f.home_score|default:'-' }} - {{ f.away_score|default:'-' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

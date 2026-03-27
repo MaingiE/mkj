@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Review Team List — {{ squad.team.name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Review Team List - {{ squad.team.name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>{{ squad.team.name }}</span>
     </div>
     <h1>📋 Review Team List</h1>
-    <p>{{ squad.team.name }} — {{ squad.fixture.home_team }} vs {{ squad.fixture.away_team }}</p>
+    <p>{{ squad.team.name }} - {{ squad.fixture.home_team }} vs {{ squad.fixture.away_team }}</p>
 </div>
 
 <!-- Fixture & Submission Info -->
@@ -24,7 +24,7 @@
     </div>
     <div class="stat-card">
         <div class="stat-label">Submitted</div>
-        <div class="stat-value" style="font-size:1.1rem;">{{ squad.submitted_at|date:"d M Y H:i"|default:"—" }}</div>
+        <div class="stat-value" style="font-size:1.1rem;">{{ squad.submitted_at|date:"d M Y H:i"|default:" - " }}</div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Status</div>

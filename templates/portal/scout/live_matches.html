@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Live Scouting — {{ discipline_label }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Live Scouting - {{ discipline_label }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -20,7 +20,7 @@
         <a href="{% url 'scout_dashboard' %}">Scout Dashboard</a>
         <span>Live Scouting</span>
     </div>
-    <h1><i class="bi bi-broadcast"></i> Live Scouting — {{ discipline_label }}</h1>
+    <h1><i class="bi bi-broadcast"></i> Live Scouting - {{ discipline_label }}</h1>
     <p style="color:#666;font-size:.9rem;">View match squads and evaluate players during live matches.</p>
 </div>
 
@@ -44,7 +44,7 @@
                 {{ fd.fixture.match_date|date:"d M Y" }}{% if fd.fixture.kickoff_time %} {{ fd.fixture.kickoff_time|time:"H:i" }}{% endif %} &middot;
                 {{ fd.fixture.venue.name|default:"TBA" }}
                 {% if fd.fixture.status == 'completed' %}
-                    &middot; <strong>{{ fd.fixture.home_score }} — {{ fd.fixture.away_score }}</strong>
+                    &middot; <strong>{{ fd.fixture.home_score }} - {{ fd.fixture.away_score }}</strong>
                 {% endif %}
             </div>
             <div style="margin-top:.4rem;">

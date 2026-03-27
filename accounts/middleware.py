@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Accounts — Force Password Change Middleware
+MKJ SUPA CUP Accounts - Force Password Change Middleware
 
 Redirects any authenticated user with `must_change_password=True`
 to the password-change page.  The only pages they are allowed to

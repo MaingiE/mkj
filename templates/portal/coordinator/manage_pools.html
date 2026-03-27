@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Manage Pools &mdash; {{ competition.name }} &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Manage Pools - {{ competition.name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -36,11 +36,11 @@
         </div>
         <div style="font-size:.85rem;color:#555;">
             {% if competition.format_type == 'knockout' %}
-                <i class="bi bi-info-circle"></i> Knockout only — pools are not required. Use "Generate Fixtures" instead.
+                <i class="bi bi-info-circle"></i> Knockout only - pools are not required. Use "Generate Fixtures" instead.
             {% elif competition.format_type == 'group_stage' %}
-                <i class="bi bi-info-circle"></i> Group stage only — create pools below, add teams, and fixtures auto-generate.
+                <i class="bi bi-info-circle"></i> Group stage only - create pools below, add teams, and fixtures auto-generate.
             {% else %}
-                <i class="bi bi-info-circle"></i> Group stage + Knockout — create pools, add teams (fixtures auto-generate), and tables update automatically once final results are entered.
+                <i class="bi bi-info-circle"></i> Group stage + Knockout - create pools, add teams (fixtures auto-generate), and tables update automatically once final results are entered.
             {% endif %}
         </div>
         <div style="margin-left:auto;font-size:.8rem;color:#999;">

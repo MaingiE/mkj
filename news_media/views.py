@@ -73,7 +73,7 @@ def gallery_detail_view(request, slug):
 
 
 def videos_list_view(request):
-    """Public video listing — uploads + YouTube embeds."""
+    """Public video listing - uploads + YouTube embeds."""
     videos = Video.objects.filter(is_published=True)
     featured_video = videos.filter(is_featured=True).first()
 

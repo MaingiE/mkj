@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Scout Report — {{ report.player.first_name }} {{ report.player.last_name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Scout Report - {{ report.player.first_name }} {{ report.player.last_name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -101,7 +101,7 @@
 
 <!-- Criteria Scores -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="background:#e8edf5;"><h3><i class="bi bi-bar-chart-line"></i> {{ criteria_def.label }} — Criteria Scores</h3></div>
+    <div class="card-header" style="background:#e8edf5;"><h3><i class="bi bi-bar-chart-line"></i> {{ criteria_def.label }} - Criteria Scores</h3></div>
     <div class="card-body">
         {% for cd in criteria_display %}
         <div class="score-bar">

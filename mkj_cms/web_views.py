@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP CMS — Web Frontend Views (Template-Based Portals)
+MKJ SUPA CUP CMS - Web Frontend Views (Template-Based Portals)
 Includes public website pages, public registration, and authenticated CMS portal views.
 """
 import json
@@ -330,7 +330,7 @@ def _get_managed_discipline(user, discipline_pk):
 
 def _ensure_competition_for_sport_type(sport_type):
     """Auto-create a Competition for the given sport_type if none exists for the current season.
-    MKJ SUPA CUP *is* the competition — no manual creation step needed."""
+    MKJ SUPA CUP *is* the competition - no manual creation step needed."""
     import datetime
     current_year = str(datetime.date.today().year)
     existing = Competition.objects.filter(sport_type=sport_type, season=current_year).first()
@@ -415,13 +415,13 @@ def about_view(request):
 
 
 def public_competitions_view(request):
-    """Public competitions listing — grouped by sport, with exhibition marker."""
+    """Public competitions listing - grouped by sport, with exhibition marker."""
     all_comps = Competition.objects.all()
     active    = all_comps.filter(status='active')
     upcoming  = all_comps.filter(status__in=['upcoming', 'registration'])
     completed = all_comps.filter(status='completed')
 
-    # Flat catalogue — used for per-sport competition sections
+    # Flat catalogue - used for per-sport competition sections
     SPORT_CATALOGUE = [
         {'key': SportType.FOOTBALL_MEN,       'label': 'Football (Men)',          'icon': '\u26BD', 'exhibition': False},
         {'key': SportType.FOOTBALL_WOMEN,     'label': 'Football (Women)',        'icon': '\u26BD', 'exhibition': False},
@@ -435,7 +435,7 @@ def public_competitions_view(request):
         {'key': SportType.HANDBALL_WOMEN,     'label': 'Handball (Women)',        'icon': '\U0001F93E', 'exhibition': False},
     ]
 
-    # Grouped disciplines — for the top tile grid with dropdowns
+    # Grouped disciplines - for the top tile grid with dropdowns
     DISCIPLINES = [
         {
             'name': 'Football', 'icon': '\u26BD', 'exhibition': False,
@@ -487,7 +487,7 @@ def public_competitions_view(request):
 
 def public_fixtures_results_view(request):
     """
-    Public Fixtures & Results page — replaces old Competitions page.
+    Public Fixtures & Results page - replaces old Competitions page.
     Disciplines grouped with Men/Women dropdown; each discipline shows
     group stages, knockouts, standings tables, and results.
     """
@@ -651,7 +651,7 @@ def public_competition_detail_view(request, pk):
 
 
 def public_results_view(request):
-    """Public results page — completed matches, upcoming fixtures, and competition links."""
+    """Public results page - completed matches, upcoming fixtures, and competition links."""
     now = timezone.now()
     sport_filter = request.GET.get('sport', '').strip()
     valid_sports = {c.value for c in SportType}
@@ -698,7 +698,7 @@ def public_results_view(request):
 
 def public_statistics_view(request):
     """
-    Public statistics hub — top scorers, assist leaders, disciplinary,
+    Public statistics hub - top scorers, assist leaders, disciplinary,
     and clean sheet leaders across all active/completed competitions.
     Users can filter by competition.
     """
@@ -785,7 +785,7 @@ def public_statistics_view(request):
 
 def public_competition_standings_view(request, pk):
     """
-    Public competition standings — pool tables, knockout bracket, and top stats.
+    Public competition standings - pool tables, knockout bracket, and top stats.
     Auto-updated from approved match reports.
     """
     from competitions.models import Pool, PoolTeam, KnockoutRound
@@ -881,7 +881,7 @@ def contact_view(request):
 # ── AUTH VIEWS ────────────────────────────────────────────────────────────────
 
 def web_login_view(request):
-    """Login page — redirects to dashboard if already authenticated."""
+    """Login page - redirects to dashboard if already authenticated."""
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -1023,7 +1023,7 @@ def dashboard_view(request):
 
 @login_required(login_url='web_login')
 def competitions_list_view(request):
-    """List all competitions — county finals with pooling per discipline."""
+    """List all competitions - county finals with pooling per discipline."""
     from django.db.models import Case, When, IntegerField, Prefetch
     from competitions.models import Pool, PoolTeam
 
@@ -1093,7 +1093,7 @@ def competition_detail_view(request, pk):
 
 @login_required(login_url='web_login')
 def teams_list_view(request):
-    """List teams — team managers see only their teams."""
+    """List teams - team managers see only their teams."""
     user = request.user
     if user.role == 'team_manager':
         teams = Team.objects.filter(manager=user)
@@ -1197,25 +1197,25 @@ def add_player_view(request, team_pk):
                         player.fifa_connect_status = FIFAConnectStatus.CLEAR
                         if fc_result.fifa_connect_id:
                             player.fifa_connect_id = fc_result.fifa_connect_id
-                        player.fifa_connect_notes = "Auto-screened on registration — clear."
+                        player.fifa_connect_notes = "Auto-screened on registration - clear."
                         player.save()
                 except Exception:
                     pass  # Don't block player registration on API errors
 
                 if not player.is_age_eligible:
                     messages.warning(request, (
-                        f'{player.get_full_name()} added but AUTO-REJECTED — '
+                        f'{player.get_full_name()} added but AUTO-REJECTED - '
                         f'age {player.age} is outside the {PLAYER_MIN_AGE}-{PLAYER_MAX_AGE} bracket.'
                     ))
                 elif not player.documents_uploaded:
                     messages.info(request, (
                         f'{player.get_full_name()} added to {team.name}. '
-                        f'Documents pending — upload ID, birth certificate & photo for verification.'
+                        f'Documents pending - upload ID, birth certificate & photo for verification.'
                     ))
                 else:
                     messages.success(request, (
                         f'{player.get_full_name()} added to {team.name}. '
-                        f'Documents submitted — pending admin verification. '
+                        f'Documents submitted - pending admin verification. '
                         f'Shirt number #{player.shirt_number} was reserved temporarily and can be updated later by the team manager.'
                     ))
 
@@ -1307,7 +1307,7 @@ def delete_player_view(request, player_pk):
 
 @login_required(login_url='web_login')
 def referees_list_view(request):
-    """List referees and appointments — sub-county officers do not access referees."""
+    """List referees and appointments - sub-county officers do not access referees."""
     user = request.user
     # Sub-county sports officers should not manage or view referees
     if user.role == 'subcounty_sports_officer':
@@ -1338,7 +1338,7 @@ def referees_list_view(request):
 
 @login_required(login_url='web_login')
 def matches_list_view(request):
-    """List fixtures and match reports — with role-appropriate actions."""
+    """List fixtures and match reports - with role-appropriate actions."""
     user = request.user
 
     if user.role == 'team_manager':
@@ -1431,18 +1431,18 @@ def change_password_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   ADMIN / MANAGER — TEAM APPROVAL VIEWS
+#   ADMIN / MANAGER - TEAM APPROVAL VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer')
 def pending_teams_view(request):
-    """Legacy endpoint — registration removed."""
+    """Legacy endpoint - registration removed."""
     messages.info(request, 'Registration has been removed from MKJ SUPA CUP.')
     return redirect('dashboard')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   ADMIN / MANAGER — REFEREE APPROVAL VIEWS
+#   ADMIN / MANAGER - REFEREE APPROVAL VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('admin', 'coordinator')
@@ -1505,12 +1505,12 @@ def pending_referees_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   ADMIN — PLAYER VERIFICATION VIEWS
+#   ADMIN - PLAYER VERIFICATION VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('admin', 'competition_manager', 'chief_sports_officer', 'secretary_general', 'verification_officer')
 def player_verification_list_view(request):
-    """Canonical player verification entry — routes per role."""
+    """Canonical player verification entry - routes per role."""
     if request.user.role == 'secretary_general':
         messages.info(request, 'Use the Secretary General verification view for read-only verification summaries.')
         return redirect('sg_verifications')
@@ -1566,7 +1566,7 @@ def verify_player_view(request, player_pk):
             messages.warning(request, f'❌ {player.get_full_name()} has been rejected: {player.get_rejection_reason_display()}')
 
         elif action == 'reset':
-            # Allow re-submission — set back to pending
+            # Allow re-submission - set back to pending
             player.verification_status = VerificationStatus.PENDING
             player.rejection_reason = ''
             player.rejection_notes = ''
@@ -1620,7 +1620,7 @@ def squad_select_view(request, fixture_pk):
 
     # Only treasurer-approved teams can submit squads / play
     if not team.payment_confirmed:
-        messages.error(request, 'Your team cannot participate — payment has not been confirmed by the treasurer.')
+        messages.error(request, 'Your team cannot participate - payment has not been confirmed by the treasurer.')
         return redirect('matches_list')
 
     deadline = fixture.squad_deadline
@@ -1818,7 +1818,7 @@ def squad_review_list_view(request):
 
 @role_required('referee', 'admin', 'competition_manager', 'chief_sports_officer')
 def squad_review_view(request, squad_pk):
-    """Referee reviews a submitted squad — approve or reject."""
+    """Referee reviews a submitted squad - approve or reject."""
     squad = get_object_or_404(SquadSubmission, pk=squad_pk)
     if request.user.role == 'referee':
         from referees.models import AppointmentStatus, get_head_official_role
@@ -1898,7 +1898,7 @@ def substitution_request_view(request, fixture_pk):
         messages.error(request, 'No approved team list found for this match.')
         return redirect('matches_list')
 
-    # Current match state — who is on the pitch, who is still available
+    # Current match state - who is on the pitch, who is still available
     executed_subs = SubstitutionRequest.objects.filter(
         fixture=fixture, team=team, status=SubstitutionStatus.EXECUTED,
     ).select_related('player_on', 'player_off')
@@ -2437,7 +2437,7 @@ def match_report_review_view(request, report_pk):
             process_approved_report(report)
 
             report.save()
-            messages.success(request, f'✅ Match report approved — {fixture.home_team} {report.home_score}-{report.away_score} {fixture.away_team}')
+            messages.success(request, f'✅ Match report approved - {fixture.home_team} {report.home_score}-{report.away_score} {fixture.away_team}')
 
         elif action == 'return':
             report.status = MatchReportStatus.RETURNED
@@ -2494,15 +2494,13 @@ def appointment_action_view(request, appointment_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   REFEREE DASHBOARD  (Comprehensive — borrowed from FKF)
+#   REFEREE DASHBOARD  (Comprehensive - borrowed from FKF)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('referee')
 def referee_dashboard_view(request):
     """
-    Full referee portal dashboard showing:
-    – pending confirmations, upcoming / current / completed matches
-    – pending match reports, squad approvals, availability summary
+    Full referee portal dashboard showing: - pending confirmations, upcoming / current / completed matches - pending match reports, squad approvals, availability summary
     """
     user = request.user
     try:
@@ -2605,7 +2603,7 @@ def referee_dashboard_view(request):
 
 @role_required('referee')
 def referee_edit_profile_view(request):
-    """Referee edits own profile — including referee_type (Referee / Assistant Referee)."""
+    """Referee edits own profile - including referee_type (Referee / Assistant Referee)."""
     user = request.user
     try:
         profile = user.referee_profile
@@ -2721,7 +2719,7 @@ def _auto_generate_pool_fixtures(pool, competition, user):
 
 @role_required('coordinator', 'admin')
 def coordinator_dashboard_view(request):
-    """Discipline Coordinator dashboard — overview scoped to assigned discipline."""
+    """Discipline Coordinator dashboard - overview scoped to assigned discipline."""
     from competitions.models import (
         Competition, Fixture, Venue, Pool, PoolTeam,
         SportType, CompetitionStatus,
@@ -2818,7 +2816,7 @@ def coordinator_competitions_view(request):
 
 @role_required('coordinator', 'admin')
 def coordinator_create_competition_view(request):
-    """Removed — MKJ SUPA CUP is the default competition. Competitions are auto-created per discipline."""
+    """Removed - MKJ SUPA CUP is the default competition. Competitions are auto-created per discipline."""
     messages.info(request, 'MKJ SUPA CUP competitions are automatically created per discipline.')
     return redirect('coordinator_competitions')
 
@@ -3464,7 +3462,7 @@ def coordinator_create_fixture_view(request, pk):
         messages.success(request, f'Match created: {fixture}')
         return redirect('coordinator_competition_manage', pk=pk)
 
-    # GET — show form
+    # GET - show form
     pools = Pool.objects.filter(competition=competition).order_by('name')
     venues = Venue.objects.filter(is_active=True).order_by('name')
     teams = Team.objects.filter(status='registered', sport_type=competition.sport_type).order_by('name')
@@ -3934,12 +3932,12 @@ def coordinator_competition_rules_view(request, pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   TREASURER PORTAL (Payment/Registration removed — MKJ SUPA CUP has no fees)
+#   TREASURER PORTAL (Payment/Registration removed - MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('treasurer', 'admin')
 def treasurer_dashboard_view(request):
-    """Treasurer home — MKJ SUPA CUP has no registration fees."""
+    """Treasurer home - MKJ SUPA CUP has no registration fees."""
     from appeals.models import Appeal
     total_teams = Team.objects.count()
     total_players = CountyPlayer.objects.count()
@@ -3954,19 +3952,19 @@ def treasurer_dashboard_view(request):
 
 @role_required('treasurer', 'admin')
 def treasurer_teams_view(request):
-    """Removed — no payment/registration workflow."""
+    """Removed - no payment/registration workflow."""
     return redirect('treasurer_dashboard')
 
 
 @role_required('treasurer', 'admin')
 def treasurer_county_payments_view(request):
-    """Removed — MKJ SUPA CUP has no county payment fees."""
+    """Removed - MKJ SUPA CUP has no county payment fees."""
     messages.info(request, 'MKJ SUPA CUP does not charge participation fees.')
     return redirect('treasurer_dashboard')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   COMPETITION MANAGER — STATISTICS & LEADERBOARDS
+#   COMPETITION MANAGER - STATISTICS & LEADERBOARDS
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
@@ -4112,7 +4110,7 @@ def competition_report_approve_view(request, pk, report_pk):
             )
             messages.success(
                 request,
-                f'Match report approved — {fixture.home_team} '
+                f'Match report approved - {fixture.home_team} '
                 f'{report.home_score}-{report.away_score} {fixture.away_team}. '
                 f'Standings and player statistics updated automatically.'
             )
@@ -4290,7 +4288,7 @@ def referee_appoint_view(request, fixture_pk):
                         request,
                         f'⚠️ {referee_profile.user.get_full_name()} already has an appointment '
                         f'on {fixture.match_date.strftime("%d %b %Y")} '
-                        f'({conflict.fixture}). Appointment created anyway — please verify.'
+                        f'({conflict.fixture}). Appointment created anyway - please verify.'
                     )
 
                 # Create appointment
@@ -4410,12 +4408,12 @@ def referee_appoint_view(request, fixture_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   COMPETITION MANAGER — FULL PORTAL VIEWS
+#   COMPETITION MANAGER - FULL PORTAL VIEWS
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_dashboard_view(request):
-    """Competition Manager dashboard — overview of all competitions and key stats."""
+    """Competition Manager dashboard - overview of all competitions and key stats."""
     from competitions.models import (
         Competition, Fixture, Venue, Pool, PoolTeam,
         SportType, CompetitionStatus,
@@ -4472,7 +4470,7 @@ def cm_dashboard_view(request):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_create_competition_view(request):
-    """Removed — MKJ SUPA CUP is the default competition. Competitions are auto-created per discipline."""
+    """Removed - MKJ SUPA CUP is the default competition. Competitions are auto-created per discipline."""
     messages.info(request, 'MKJ SUPA CUP competitions are automatically created per discipline.')
     return redirect('cm_dashboard')
 
@@ -4634,7 +4632,7 @@ def cm_manage_pools_view(request, pk):
 
                 # Validate payment
                 if not team.payment_confirmed:
-                    messages.error(request, f'{team.name} cannot be pooled — payment not confirmed.')
+                    messages.error(request, f'{team.name} cannot be pooled - payment not confirmed.')
                 elif team.status != 'registered':
                     messages.error(request, f'{team.name} is not approved.')
                 elif PoolTeam.objects.filter(pool__competition=competition, team=team).exists():
@@ -4775,7 +4773,7 @@ def cm_generate_fixtures_view(request, pk):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_manage_venues_view(request):
-    """Manage venues — list, create, edit."""
+    """Manage venues - list, create, edit."""
     from competitions.models import Venue
 
     if request.method == 'POST':
@@ -4880,7 +4878,7 @@ def cm_allocate_venue_view(request, pk):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_edit_standings_view(request, pk):
-    """Admin override — manually edit pool team standings."""
+    """Admin override - manually edit pool team standings."""
     from competitions.models import Competition, Pool, PoolTeam
 
     competition = get_object_or_404(Competition, pk=pk)
@@ -5030,7 +5028,7 @@ def cm_competition_rules_view(request, pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   M-PESA / REGISTRATION PAYMENT — REMOVED (MKJ SUPA CUP has no fees)
+#   M-PESA / REGISTRATION PAYMENT - REMOVED (MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
 
 
@@ -5048,19 +5046,19 @@ def cec_sports_portal_view(request):
     })
 
 
-# (County admin dashboard removed — use subcounty_officer_dashboard instead)
+# (County admin dashboard removed - use subcounty_officer_dashboard instead)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SUB-COUNTY OFFICER — PAYMENT REMOVED (MKJ SUPA CUP has no fees)
+#   SUB-COUNTY OFFICER - PAYMENT REMOVED (MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
 
 
-# (County admin discipline/player views removed — use subcounty_officer equivalents)
+# (County admin discipline/player views removed - use subcounty_officer equivalents)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS DIRECTOR — TECHNICAL BENCH MANAGEMENT
+#   COUNTY SPORTS DIRECTOR - TECHNICAL BENCH MANAGEMENT
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('subcounty_sports_officer', 'admin')
@@ -5307,7 +5305,7 @@ def county_admin_delete_delegation_member_view(request, member_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   COUNTY SPORTS DIRECTOR — PLAYER VERIFICATION OVERVIEW
+#   COUNTY SPORTS DIRECTOR - PLAYER VERIFICATION OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('subcounty_sports_officer', 'admin')
@@ -5404,7 +5402,7 @@ def player_profile_view(request, player_pk):
 
 @login_required(login_url='web_login')
 def county_player_profile_view(request, player_pk):
-    """County player profile view — redirect to the unified player profile."""
+    """County player profile view - redirect to the unified player profile."""
     return player_profile_view(request, player_pk)
 
 
@@ -5567,7 +5565,7 @@ def team_manager_match_squad_view(request, fixture_pk):
         kickoff_dt = timezone.make_aware(kickoff_dt, timezone.get_current_timezone())
 
     if fixture.status in ('live', 'completed') or now >= kickoff_dt:
-        messages.error(request, 'Cannot edit squad — match has already started or completed.')
+        messages.error(request, 'Cannot edit squad - match has already started or completed.')
         return redirect('team_manager_dashboard')
 
     # Squad selection window opens 2 hours before kickoff.
@@ -5590,7 +5588,7 @@ def team_manager_match_squad_view(request, fixture_pk):
     # If squad already approved by referee, warn that changes need re-approval
     needs_re_approval = existing and existing.status == SquadStatus.APPROVED
 
-    # Get fully verified players only — suspended ones flagged
+    # Get fully verified players only - suspended ones flagged
     eligible_players = Player.objects.filter(
         team=team,
         verification_status=VerificationStatus.VERIFIED,
@@ -5694,7 +5692,7 @@ def team_manager_match_squad_view(request, fixture_pk):
 @role_required('team_manager')
 def team_manager_opponent_view(request, fixture_pk):
     """
-    View opponent team list — ONLY after referee has approved both squads.
+    View opponent team list - ONLY after referee has approved both squads.
     """
     fixture = get_object_or_404(Fixture.objects.select_related(
         'home_team', 'away_team', 'competition'
@@ -5826,7 +5824,7 @@ def team_manager_file_appeal_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   TEAM LIST — DOWNLOADABLE PDF
+#   TEAM LIST - DOWNLOADABLE PDF
 # ══════════════════════════════════════════════════════════════════════════════
 
 @login_required(login_url='web_login')
@@ -5981,22 +5979,22 @@ def team_list_pdf_view(request, discipline_pk):
                     except Exception:
                         pass
 
-                dob_str = p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else '—'
+                dob_str = p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else ' - '
 
                 player_data.append([
                     str(row_num),
                     photo_cell,
                     Paragraph(f"{p.last_name} {p.first_name}", name_style),
                     dob_str,
-                    p.position or '—',
-                    str(p.jersey_number) if p.jersey_number else '—',
+                    p.position or ' - ',
+                    str(p.jersey_number) if p.jersey_number else ' - ',
                 ])
 
             # Column widths adjusted for photo column
             col_widths = [1*cm, 2.2*cm, 5*cm, 3*cm, 3*cm, 2*cm]
             player_table = Table(player_data, colWidths=col_widths, repeatRows=1)
 
-            # Row heights — header is normal, player rows need space for photo
+            # Row heights - header is normal, player rows need space for photo
             row_heights = [None] + [25*mm] * len(players)
 
             player_table = Table(player_data, colWidths=col_widths, rowHeights=row_heights, repeatRows=1)
@@ -6023,7 +6021,7 @@ def team_list_pdf_view(request, discipline_pk):
         elements.append(Spacer(1, 1*cm))
         footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey, alignment=1)
         elements.append(Paragraph(
-            f"Generated on {timezone.now().strftime('%d %B %Y at %H:%M')} — MKJ SUPA CUP CMS | Confidential — For authorised personnel only",
+            f"Generated on {timezone.now().strftime('%d %B %Y at %H:%M')} - MKJ SUPA CUP CMS | Confidential - For authorised personnel only",
             footer_style,
         ))
 
@@ -6045,7 +6043,7 @@ def team_list_pdf_view(request, discipline_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SECRETARY GENERAL — READ-ONLY OVERSIGHT PORTAL
+#   SECRETARY GENERAL - READ-ONLY OVERSIGHT PORTAL
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('secretary_general')
@@ -6166,7 +6164,7 @@ def sg_treasurer_actions_view(request):
 
 @role_required('secretary_general')
 def sg_user_actions_view(request):
-    """SG: View all user activity — filterable by user and action type."""
+    """SG: View all user activity - filterable by user and action type."""
     from admin_dashboard.models import ActivityLog
 
     user_filter = request.GET.get('user', '')
@@ -6453,7 +6451,7 @@ def sg_exceptional_overrides_view(request):
 
 @role_required('secretary_general')
 def sg_verified_players_view(request):
-    """SG: View verified players for all disciplines — who verified, when, where."""
+    """SG: View verified players for all disciplines - who verified, when, where."""
     discipline_filter = request.GET.get('discipline', '')
     county_filter = request.GET.get('county', '')
 
@@ -6488,7 +6486,7 @@ def sg_verified_players_view(request):
 
 @role_required('scout', 'admin')
 def scout_dashboard_view(request):
-    """Scout dashboard — overview of shortlisted players and browse, scoped to discipline."""
+    """Scout dashboard - overview of shortlisted players and browse, scoped to discipline."""
     from teams.models import ScoutShortlist, CountyPlayer, CountyDiscipline, CountyRegistration
 
     user = request.user
@@ -6520,7 +6518,7 @@ def scout_dashboard_view(request):
 
 @role_required('scout', 'admin')
 def scout_players_view(request):
-    """Browse verified players for scouting — defaults to scout's assigned discipline."""
+    """Browse verified players for scouting - defaults to scout's assigned discipline."""
     from teams.models import ScoutShortlist, CountyPlayer, CountyDiscipline, CountyRegistration
 
     county_filter = request.GET.get('county', '')
@@ -7321,7 +7319,7 @@ def subcounty_officer_referees_view(request):
 
 @role_required('director_sports', 'admin')
 def director_sports_dashboard_view(request):
-    """Dashboard for Director of Sports — high-level oversight of all competitions."""
+    """Dashboard for Director of Sports - high-level oversight of all competitions."""
     stats = {
         'competitions': Competition.objects.count(),
         'teams': Team.objects.count(),
@@ -7353,7 +7351,7 @@ def director_sports_dashboard_view(request):
 
 @role_required('chief_sports_officer', 'admin')
 def chief_sports_officer_dashboard_view(request):
-    """Dashboard for Chief Sports Officer — county-level sports operations oversight."""
+    """Dashboard for Chief Sports Officer - county-level sports operations oversight."""
     all_disciplines = CountyDiscipline.objects.select_related('registration').all()
     stats = {
         'teams': Team.objects.count(),
@@ -7391,7 +7389,7 @@ def chief_sports_officer_dashboard_view(request):
 
 @role_required('chief_officer_sports', 'admin')
 def chief_officer_sports_dashboard_view(request):
-    """Dashboard for Chief Officer - Sports — executive oversight."""
+    """Dashboard for Chief Officer - Sports - executive oversight."""
     all_disciplines = CountyDiscipline.objects.select_related('registration').all()
     stats = {
         'competitions': Competition.objects.count(),
@@ -7430,7 +7428,7 @@ def chief_officer_sports_dashboard_view(request):
 
 @role_required('verification_officer', 'admin')
 def vo_dashboard_view(request):
-    """Verification Officer dashboard — 3-step sequential verification."""
+    """Verification Officer dashboard - 3-step sequential verification."""
     tab = request.GET.get('tab', 'in_progress')
     discipline_filter = request.GET.get('discipline', '')
 
@@ -7518,7 +7516,7 @@ def vo_verify_county_player_view(request, player_pk):
         messages.error(request, 'This player has been locked by the Director of Sports. No verification changes can be made.')
         return redirect('vo_dashboard')
 
-    step = player.current_verification_step  # 1–4
+    step = player.current_verification_step  # 1 - 4
 
     if request.method == 'POST':
         action = request.POST.get('action', '')
@@ -7531,16 +7529,16 @@ def vo_verify_county_player_view(request, player_pk):
             player.doc_rejection_reason = ''
             player.update_overall_status()
             player.save()
-            messages.success(request, f'📄 Step 1 — Documents verified for {player.get_full_name}.')
+            messages.success(request, f'📄 Step 1 - Documents verified for {player.get_full_name}.')
 
         elif action == 'doc_reject' and step == 1:
             reason = request.POST.get('doc_rejection_reason', '').strip()
             player.doc_status = 'rejected'
             player.doc_rejection_reason = reason or 'Documents not acceptable'
             player.update_overall_status()
-            player.rejection_reason = f'Step 1 — Documents: {player.doc_rejection_reason}'
+            player.rejection_reason = f'Step 1 - Documents: {player.doc_rejection_reason}'
             player.save()
-            messages.warning(request, f'❌ Step 1 — Documents rejected for {player.get_full_name}.')
+            messages.warning(request, f'❌ Step 1 - Documents rejected for {player.get_full_name}.')
 
         # ── Step 2: Age Verification (IPRS) ──────────────────────────
         elif action == 'iprs_verify' and step == 2:
@@ -7552,7 +7550,7 @@ def vo_verify_county_player_view(request, player_pk):
             player.huduma_verified_at = now
             player.update_overall_status()
             player.save()
-            messages.success(request, f'🪪 Step 2 — Age verified for {player.get_full_name}.')
+            messages.success(request, f'🪪 Step 2 - Age verified for {player.get_full_name}.')
 
         elif action == 'iprs_fail' and step == 2:
             notes = request.POST.get('iprs_age_notes', '').strip()
@@ -7560,9 +7558,9 @@ def vo_verify_county_player_view(request, player_pk):
             player.iprs_age_notes = notes or 'Age verification failed'
             player.iprs_age_verified_at = now
             player.update_overall_status()
-            player.rejection_reason = f'Step 2 — Age Verification: {player.iprs_age_notes}'
+            player.rejection_reason = f'Step 2 - Age Verification: {player.iprs_age_notes}'
             player.save()
-            messages.warning(request, f'❌ Step 2 — Age verification failed for {player.get_full_name}.')
+            messages.warning(request, f'❌ Step 2 - Age verification failed for {player.get_full_name}.')
 
         # ── Step 3: Higher Leagues Check ─────────────────────────────
         elif action == 'league_clear' and step == 3:
@@ -7575,7 +7573,7 @@ def vo_verify_county_player_view(request, player_pk):
             if player.is_verified:
                 messages.success(request, f'🎉 All 3 steps complete! {player.get_full_name} is FULLY VERIFIED.')
             else:
-                messages.success(request, f'🏆 Step 3 — Higher Leagues check clear for {player.get_full_name}.')
+                messages.success(request, f'🏆 Step 3 - Higher Leagues check clear for {player.get_full_name}.')
 
         elif action == 'league_flag' and step == 3:
             details = request.POST.get('higher_league_details', '').strip()
@@ -7583,9 +7581,9 @@ def vo_verify_county_player_view(request, player_pk):
             player.higher_league_details = details or 'Player found in higher league / national team'
             player.higher_league_checked_at = now
             player.update_overall_status()
-            player.rejection_reason = f'Step 3 — Higher Leagues: {player.higher_league_details}'
+            player.rejection_reason = f'Step 3 - Higher Leagues: {player.higher_league_details}'
             player.save()
-            messages.warning(request, f'🚩 Step 3 — Player flagged in higher league for {player.get_full_name}.')
+            messages.warning(request, f'🚩 Step 3 - Player flagged in higher league for {player.get_full_name}.')
 
         # ── Reset a failed step (back to not_checked) ────────────────
         elif action == 'reset_step':
@@ -7665,7 +7663,7 @@ def vo_verify_county_player_view(request, player_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   VERIFIED PLAYER LISTS — Sub-County Officer / Team Manager / Director
+#   VERIFIED PLAYER LISTS - Sub-County Officer / Team Manager / Director
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('subcounty_sports_officer', 'admin')
@@ -7905,7 +7903,7 @@ def director_sports_bulk_approve_view(request):
 @role_required('director_sports', 'admin')
 @require_POST
 def director_sports_lock_list_view(request):
-    """Director of Sports: lock all approved players — no further edits except by Director."""
+    """Director of Sports: lock all approved players - no further edits except by Director."""
     county_filter = request.POST.get('county', '')
     discipline_filter = request.POST.get('discipline', '')
 
@@ -7953,7 +7951,7 @@ def director_sports_unlock_list_view(request):
 # ── Director of Sports: Audit & Reports ──────────────────────────────────────
 @role_required('director_sports', 'admin')
 def director_sports_audit_view(request):
-    """Director of Sports: view all user activity logs — filterable by user, action, and date."""
+    """Director of Sports: view all user activity logs - filterable by user, action, and date."""
     from admin_dashboard.models import ActivityLog
 
     user_filter = request.GET.get('user', '')
@@ -8149,7 +8147,7 @@ def verified_players_pdf_view(request):
             players = CountyPlayer.objects.filter(
                 verification_status='verified', discipline=bench.discipline,
             )
-            scope_label = f"{bench.discipline.registration.county} — {bench.discipline.get_sport_type_display()}"
+            scope_label = f"{bench.discipline.registration.county} - {bench.discipline.get_sport_type_display()}"
         except TechnicalBenchMember.DoesNotExist:
             players = CountyPlayer.objects.none()
             scope_label = "No discipline assigned"
@@ -8158,7 +8156,7 @@ def verified_players_pdf_view(request):
         county_filter = request.GET.get('county', '')
         if county_filter:
             players = players.filter(discipline__registration__county=county_filter)
-        scope_label = "All Counties — All Disciplines"
+        scope_label = "All Counties - All Disciplines"
     else:
         messages.error(request, 'Permission denied.')
         return redirect('dashboard')
@@ -8169,7 +8167,7 @@ def verified_players_pdf_view(request):
     if discipline_filter:
         sport_label = dict(SportType.choices).get(discipline_filter, discipline_filter)
         players = players.filter(discipline__sport_type=discipline_filter)
-        scope_label += f" — {sport_label}"
+        scope_label += f" - {sport_label}"
 
     try:
         from reportlab.lib.pagesizes import A4
@@ -8218,7 +8216,7 @@ def verified_players_pdf_view(request):
             fontSize=11, spaceAfter=2, alignment=1,
         )
 
-        elements.append(Paragraph("MKJ SUPA CUP — 4th Edition", header_style))
+        elements.append(Paragraph("MKJ SUPA CUP - 4th Edition", header_style))
         elements.append(Paragraph("Verified Players List", title_style))
         elements.append(Paragraph(scope_label, subtitle_style))
         elements.append(Spacer(1, 0.5 * cm))
@@ -8245,10 +8243,10 @@ def verified_players_pdf_view(request):
                 str(row_num),
                 photo_cell,
                 Paragraph(f"{p.last_name} {p.first_name}", name_style),
-                p.discipline.get_sport_type_display() if p.discipline else '—',
-                p.national_id_number or '—',
-                p.position or '—',
-                str(p.jersey_number) if p.jersey_number else '—',
+                p.discipline.get_sport_type_display() if p.discipline else ' - ',
+                p.national_id_number or ' - ',
+                p.position or ' - ',
+                str(p.jersey_number) if p.jersey_number else ' - ',
             ])
 
         if row_num > 0:
@@ -8279,7 +8277,7 @@ def verified_players_pdf_view(request):
         elements.append(Spacer(1, 1 * cm))
         footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey, alignment=1)
         elements.append(Paragraph(
-            f"Generated on {timezone.now().strftime('%d %B %Y at %H:%M')} — MKJ SUPA CUP CMS | Confidential",
+            f"Generated on {timezone.now().strftime('%d %B %Y at %H:%M')} - MKJ SUPA CUP CMS | Confidential",
             footer_style,
         ))
 
@@ -8287,7 +8285,7 @@ def verified_players_pdf_view(request):
         buffer.seek(0)
 
         # Build descriptive filename with subcounty, discipline, gender
-        scope_parts = scope_label.replace(' — ', '_').replace(' ', '_')
+        scope_parts = scope_label.replace(' - ', '_').replace(' ', '_')
         filename = f"{scope_parts}_Verified_Players_{timezone.now().strftime('%Y%m%d')}.pdf"
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -8317,7 +8315,7 @@ def match_squad_pdf_view(request, squad_pk):
         messages.warning(request, 'Squad sheet can only be downloaded after referee approval.')
         return redirect('dashboard')
 
-    # Permission check — team manager, referee, admin, CM, director, chief officer
+    # Permission check - team manager, referee, admin, CM, director, chief officer
     user = request.user
     allowed = user.is_superuser or user.role in (
         'admin', 'competition_manager', 'chief_sports_officer',
@@ -8390,7 +8388,7 @@ def match_squad_pdf_view(request, squad_pk):
             fontSize=9, alignment=1, spaceAfter=2,
         )
 
-        elements.append(Paragraph("MKJ SUPA CUP — 4th Edition", header_style))
+        elements.append(Paragraph("MKJ SUPA CUP - 4th Edition", header_style))
         elements.append(Paragraph("Match Day Squad Sheet", title_style))
         elements.append(Paragraph(
             f"{fixture.home_team.name} vs {fixture.away_team.name}",
@@ -8398,10 +8396,10 @@ def match_squad_pdf_view(request, squad_pk):
         ))
 
         # Match info
-        match_date = fixture.match_date.strftime('%d %B %Y') if fixture.match_date else '—'
-        kickoff = fixture.kickoff_time.strftime('%H:%M') if hasattr(fixture, 'kickoff_time') and fixture.kickoff_time else '—'
-        venue_name = fixture.venue.name if fixture.venue else '—'
-        comp_name = fixture.competition.name if fixture.competition else '—'
+        match_date = fixture.match_date.strftime('%d %B %Y') if fixture.match_date else ' - '
+        kickoff = fixture.kickoff_time.strftime('%H:%M') if hasattr(fixture, 'kickoff_time') and fixture.kickoff_time else ' - '
+        venue_name = fixture.venue.name if fixture.venue else ' - '
+        comp_name = fixture.competition.name if fixture.competition else ' - '
 
         elements.append(Paragraph(
             f"Competition: {comp_name} &nbsp;|&nbsp; Date: {match_date} &nbsp;|&nbsp; Kick-off: {kickoff} &nbsp;|&nbsp; Venue: {venue_name}",
@@ -8409,13 +8407,13 @@ def match_squad_pdf_view(request, squad_pk):
         ))
         elements.append(Spacer(1, 0.3 * cm))
         elements.append(Paragraph(
-            f"<b>Team:</b> {squad.team.name} &nbsp;&nbsp; <b>Formation:</b> {squad.formation or '—'} &nbsp;&nbsp; "
-            f"<b>Kit:</b> {squad.get_kit_choice_display() if hasattr(squad, 'get_kit_choice_display') else squad.kit_choice or '—'}",
+            f"<b>Team:</b> {squad.team.name} &nbsp;&nbsp; <b>Formation:</b> {squad.formation or ' - '} &nbsp;&nbsp; "
+            f"<b>Kit:</b> {squad.get_kit_choice_display() if hasattr(squad, 'get_kit_choice_display') else squad.kit_choice or ' - '}",
             info_style,
         ))
         elements.append(Paragraph(
             f"<b>Status:</b> ✅ Approved by Referee &nbsp;&nbsp; "
-            f"<b>Approved:</b> {squad.reviewed_at.strftime('%d %B %Y %H:%M') if squad.reviewed_at else '—'}",
+            f"<b>Approved:</b> {squad.reviewed_at.strftime('%d %B %Y %H:%M') if squad.reviewed_at else ' - '}",
             info_style,
         ))
         elements.append(Spacer(1, 0.5 * cm))
@@ -8442,14 +8440,14 @@ def match_squad_pdf_view(request, squad_pk):
                     except Exception:
                         pass
 
-                dob_str = p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else '—'
+                dob_str = p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else ' - '
                 data.append([
                     str(sp.shirt_number),
                     photo_cell,
                     Paragraph(f"{p.last_name} {p.first_name}", name_style_cell),
-                    p.get_position_display() if hasattr(p, 'get_position_display') else (p.position or '—'),
+                    p.get_position_display() if hasattr(p, 'get_position_display') else (p.position or ' - '),
                     dob_str,
-                    p.national_id_number or '—',
+                    p.national_id_number or ' - ',
                 ])
 
             col_widths = [1 * cm, 2.2 * cm, 4.5 * cm, 3 * cm, 2.8 * cm, 3 * cm]
@@ -8480,7 +8478,7 @@ def match_squad_pdf_view(request, squad_pk):
         footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey, alignment=1)
         elements.append(Spacer(1, 0.5 * cm))
         elements.append(Paragraph(
-            f"Generated on {timezone.now().strftime('%d %B %Y at %H:%M')} — MKJ SUPA CUP CMS | Confidential — For authorised personnel only",
+            f"Generated on {timezone.now().strftime('%d %B %Y at %H:%M')} - MKJ SUPA CUP CMS | Confidential - For authorised personnel only",
             footer_style,
         ))
 
@@ -8499,12 +8497,12 @@ def match_squad_pdf_view(request, squad_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   GOVERNOR PORTAL   (Executive — full view access to everything)
+#   GOVERNOR PORTAL   (Executive - full view access to everything)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('governor', 'admin')
 def governor_dashboard_view(request):
-    """Dashboard for H.E. The Governor — executive overview of all operations."""
+    """Dashboard for H.E. The Governor - executive overview of all operations."""
     all_disciplines = CountyDiscipline.objects.select_related('registration').all()
     stats = {
         'competitions': Competition.objects.count(),
@@ -8536,12 +8534,12 @@ def governor_dashboard_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   WAZIRI SPORTS PORTAL   (Ministry — sports department oversight)
+#   WAZIRI SPORTS PORTAL   (Ministry - sports department oversight)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('waziri_sports', 'admin')
 def waziri_sports_dashboard_view(request):
-    """Dashboard for Waziri - Sports — department oversight."""
+    """Dashboard for Waziri - Sports - department oversight."""
     all_disciplines = CountyDiscipline.objects.select_related('registration').all()
     stats = {
         'competitions': Competition.objects.count(),

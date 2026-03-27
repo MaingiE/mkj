@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Reports &mdash; {{ discipline_label }} &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Match Reports - {{ discipline_label }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -19,7 +19,7 @@
 {% endblock %}
 
 {% block content %}
-<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-clipboard-data"></i> Match Reports — {{ discipline_label }}</h2>
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-clipboard-data"></i> Match Reports - {{ discipline_label }}</h2>
 
 <div class="filter-bar">
     <a href="{% url 'coordinator_match_reports' %}?status=submitted" class="btn {% if status_filter == 'submitted' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Pending</a>

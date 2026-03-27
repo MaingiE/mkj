@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   MKJ SUPA CUP — Main JS (Public Website + CMS Portal)
+   MKJ SUPA CUP - Main JS (Public Website + CMS Portal)
    ═══════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function () {
 
     // ── Staggered entrance animations ────────────────────────────────────
-    // Cards, stat cards, action cards, table rows — appear one by one
+    // Cards, stat cards, action cards, table rows - appear one by one
     const staggerTargets = document.querySelectorAll(
         '.stat-card, .action-card, .card, .table-responsive'
     );

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Appeals &amp; Decisions &mdash; Secretary General{% endblock %}
+{% block title %}Appeals &amp; Decisions - Secretary General{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -47,9 +47,9 @@
                 <tr>
                     <td>{{ appeal.pk }}</td>
                     <td><strong>{{ appeal.subject|truncatechars:40 }}</strong></td>
-                    <td>{{ appeal.appellant_team.name|default:"—" }}</td>
-                    <td>{{ appeal.respondent_team.name|default:"—" }}</td>
-                    <td>{{ appeal.competition.name|default:"—" }}</td>
+                    <td>{{ appeal.appellant_team.name|default:" - " }}</td>
+                    <td>{{ appeal.respondent_team.name|default:" - " }}</td>
+                    <td>{{ appeal.competition.name|default:" - " }}</td>
                     <td>
                         <span class="badge {% if appeal.status == 'decided' %}bg-success{% elif appeal.status == 'submitted' %}bg-warning text-dark{% elif appeal.status == 'under_review' %}bg-info{% else %}bg-secondary{% endif %}">
                             {{ appeal.get_status_display }}

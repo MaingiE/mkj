@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Referee Dashboard — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Referee Dashboard - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>Referee Portal</span>
     </div>
     <h1>🏁 Referee Dashboard</h1>
-    <p>Welcome, {{ user.get_full_name }}{% if profile %} — {{ profile.get_level_display }}{% endif %}</p>
+    <p>Welcome, {{ user.get_full_name }}{% if profile %} - {{ profile.get_level_display }}{% endif %}</p>
 </div>
 
 {% if no_profile %}
@@ -52,7 +52,7 @@
 
 {% if not profile.is_approved %}
 <div class="alert alert-warning" style="margin-bottom:1.5rem;">
-    <strong>⚠️ Account Pending Approval</strong> — Your referee profile is awaiting approval from the Referee Manager. Some features may be limited.
+    <strong>⚠️ Account Pending Approval</strong> - Your referee profile is awaiting approval from the Referee Manager. Some features may be limited.
 </div>
 {% endif %}
 
@@ -291,9 +291,7 @@
                         <td>
                             {% if info.fixture.home_score is not None %}
                             {{ info.fixture.home_score }} - {{ info.fixture.away_score }}
-                            {% else %}
-                            —
-                            {% endif %}
+                            {% else %} - {% endif %}
                         </td>
                         <td>
                             {% if info.fixture.match_report %}

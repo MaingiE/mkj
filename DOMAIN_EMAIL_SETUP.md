@@ -1,4 +1,4 @@
-# mkjsupacup.com — Domain, DNS & Email Setup Guide
+# mkjsupacup.com - Domain, DNS & Email Setup Guide
 
 This guide covers three things:
 1. Wiring `mkjsupacup.com` to your Railway deployment
@@ -32,7 +32,7 @@ and add/update these records:
 | A    | `@`  | *(IP Railway gave you)* | 3600 |
 
 > If Railway gave you a **CNAME** instead of an IP, use:  
-> `CNAME @ xyz.up.railway.app` — but not all registrars support CNAME on apex; if yours doesn't, use Cloudflare (free) as your DNS provider and enable the orange-cloud proxy, or use A record mode.
+> `CNAME @ xyz.up.railway.app` - but not all registrars support CNAME on apex; if yours doesn't, use Cloudflare (free) as your DNS provider and enable the orange-cloud proxy, or use A record mode.
 
 ### www subdomain
 
@@ -40,7 +40,7 @@ and add/update these records:
 |-------|-------|-------|-----|
 | CNAME | `www` | `mkjsupacup.com` | 3600 |
 
-### Email (Google Workspace MX records — add all five)
+### Email (Google Workspace MX records - add all five)
 
 | Type | Name | Priority | Value |
 |------|------|----------|-------|
@@ -56,7 +56,7 @@ and add/update these records:
 |------|------|-------|
 | TXT | `@` | `v=spf1 include:_spf.google.com ~all` |
 
-### DKIM (Google Workspace generates this for you — see step 3)
+### DKIM (Google Workspace generates this for you - see step 3)
 
 | Type | Name | Value |
 |------|------|-------|
@@ -68,7 +68,7 @@ and add/update these records:
 |------|------|-------|
 | TXT | `_dmarc` | `v=DMARC1; p=quarantine; rua=mailto:admin@mkjsupacup.com` |
 
-> DNS propagation takes 5–60 minutes. Use https://dnschecker.org to verify.
+> DNS propagation takes 5 - 60 minutes. Use https://dnschecker.org to verify.
 
 ---
 
@@ -80,7 +80,7 @@ Google Workspace gives you real `@mkjsupacup.com` addresses with Gmail, Calendar
 
 1. Go to **workspace.google.com** → click **Get Started**
 2. Enter your domain `mkjsupacup.com` (choose "I already have a domain")
-3. Create your first admin account — suggest: `admin@mkjsupacup.com`
+3. Create your first admin account - suggest: `admin@mkjsupacup.com`
 4. Verify domain ownership (Google gives you a TXT record to add in DNS)
 
 ### 3b  Recommended email accounts to create
@@ -133,7 +133,7 @@ SERVER_EMAIL=info@mkjsupacup.com
 ADMINS=Admin:info@mkjsupacup.com
 ```
 
-Railway injects `DATABASE_URL` and `REDIS_URL` automatically if you have those plugins — **do not override them**.
+Railway injects `DATABASE_URL` and `REDIS_URL` automatically if you have those plugins - **do not override them**.
 
 After saving variables, Railway will automatically redeploy.
 
@@ -149,10 +149,10 @@ A management command is included to delete all competition data while preserving
 2. Run:
 
 ```bash
-# Preview what will be deleted (dry run — just shows counts)
+# Preview what will be deleted (dry run - just shows counts)
 python manage.py wipe_data
 
-# Actually wipe (non-interactive — for Railway console)
+# Actually wipe (non-interactive - for Railway console)
 python manage.py wipe_data --yes
 ```
 
@@ -160,7 +160,7 @@ python manage.py wipe_data --yes
 
 | Flag | Effect |
 |------|--------|
-| *(none)* | Interactive — asks "YES" to confirm |
+| *(none)* | Interactive - asks "YES" to confirm |
 | `--yes` | Skip confirmation |
 | `--keep-users` | Preserve all user accounts (only wipes competition data) |
 
@@ -181,7 +181,7 @@ python manage.py wipe_data --yes
 - Django system tables (permissions, content types, sessions)
 - Static files
 
-### After wiping — recreate the admin account if needed
+### After wiping - recreate the admin account if needed
 
 ```bash
 python manage.py createsuperuser
@@ -196,7 +196,7 @@ Checklist after DNS propagation (~1 hour):
 - [ ] `https://mkjsupacup.com` loads the site (Railway SSL cert auto-provisioned)
 - [ ] `https://www.mkjsupacup.com` redirects correctly
 - [ ] Padlock icon appears (HTTPS, no cert warning)
-- [ ] Send a test password-reset email — arrives from `noreply@mkjsupacup.com`
+- [ ] Send a test password-reset email - arrives from `noreply@mkjsupacup.com`
 - [ ] Email not in spam (SPF + DKIM records are correct)
 - [ ] Railway dashboard shows domain as **"Active"** with green status
 

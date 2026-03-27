@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Pending Teams — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Pending Teams - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -57,13 +57,13 @@
                             {% endif %}
                         </td>
                         <td>{{ team.county }}</td>
-                        <td>{{ team.contact_email|default:"—" }}</td>
-                        <td>{{ team.contact_phone|default:"—" }}</td>
+                        <td>{{ team.contact_email|default:" - " }}</td>
+                        <td>{{ team.contact_phone|default:" - " }}</td>
                         <td>
                             {% if team.home_colour %}
                             <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:{{ team.home_colour }};border:1px solid #ddd;vertical-align:middle"></span>
                             {{ team.home_colour }}
-                            {% else %}—{% endif %}
+                            {% else %} - {% endif %}
                             {% if team.away_colour %}
                             /
                             <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:{{ team.away_colour }};border:1px solid #ddd;vertical-align:middle"></span>

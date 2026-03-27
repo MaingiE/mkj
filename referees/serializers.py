@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Referees — Serializers
+MKJ SUPA CUP Referees - Serializers
 """
 from rest_framework import serializers
 from django.utils import timezone
@@ -60,7 +60,7 @@ class RefereeAppointmentSerializer(serializers.ModelSerializer):
 
     def get_fixture_label(self, obj):
         f = obj.fixture
-        return f"{f.home_team} vs {f.away_team} — {f.match_date}"
+        return f"{f.home_team} vs {f.away_team} - {f.match_date}"
 
     def validate(self, attrs):
         fixture = attrs.get("fixture", getattr(self.instance, "fixture", None))

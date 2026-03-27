@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Referees — Views
+MKJ SUPA CUP Referees - Views
 """
 from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
@@ -18,7 +18,7 @@ from accounts.permissions import IsRefereeManager, IsReferee, IsRefereeManagerOr
 
 
 class RefereeListView(generics.ListAPIView):
-    """GET /api/v1/referees/ — list all referee profiles"""
+    """GET /api/v1/referees/ - list all referee profiles"""
     serializer_class   = RefereeProfileSerializer
     filterset_fields   = ["is_approved", "level", "county"]
     search_fields      = ["user__first_name", "user__last_name", "license_number"]
@@ -47,7 +47,7 @@ class RefereeDetailView(generics.RetrieveUpdateAPIView):
 
 
 class RefereeRegisterView(generics.CreateAPIView):
-    """POST /api/v1/referees/register/ — Referee creates their profile (after account registration)"""
+    """POST /api/v1/referees/register/ - Referee creates their profile (after account registration)"""
     serializer_class   = RefereeProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -57,7 +57,7 @@ class RefereeRegisterView(generics.CreateAPIView):
 
 
 class RefereeApproveView(APIView):
-    """POST /api/v1/referees/<id>/approve/ — Referee Manager approves or rejects"""
+    """POST /api/v1/referees/<id>/approve/ - Referee Manager approves or rejects"""
     permission_classes = [IsRefereeManagerOrAdmin]
 
     @extend_schema(tags=["referees"], summary="Approve or reject referee registration")
@@ -82,7 +82,7 @@ class RefereeApproveView(APIView):
 
 
 class MyAppointmentsView(generics.ListAPIView):
-    """GET /api/v1/referees/my-appointments/ — referee views their own appointments"""
+    """GET /api/v1/referees/my-appointments/ - referee views their own appointments"""
     serializer_class   = RefereeAppointmentSerializer
     permission_classes = [IsReferee]
     filterset_fields   = ["status", "fixture__match_date"]

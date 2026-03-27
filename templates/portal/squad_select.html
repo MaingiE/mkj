@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Select Team List — {{ fixture }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Select Team List - {{ fixture }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>Select Team List</span>
     </div>
     <h1>📋 Select Team List</h1>
-    <p>{{ team.name }} — {{ fixture.home_team }} vs {{ fixture.away_team }}</p>
+    <p>{{ team.name }} - {{ fixture.home_team }} vs {{ fixture.away_team }}</p>
 </div>
 
 <!-- Fixture Info -->
@@ -45,7 +45,7 @@
 
 {% if deadline_passed %}
 <div class="alert alert-danger" style="margin-bottom:1.5rem;">
-    <strong>⏰ Deadline Passed</strong> — Squad submission closed at {{ deadline|date:"d M Y H:i" }}. Contact the Organising Secretary if you need an extension.
+    <strong>⏰ Deadline Passed</strong> - Squad submission closed at {{ deadline|date:"d M Y H:i" }}. Contact the Organising Secretary if you need an extension.
 </div>
 {% endif %}
 
@@ -86,7 +86,7 @@
                         {% if deadline_passed %}disabled{% endif %} required>
                     {% for val, label, colour in kit_options %}
                     <option value="{{ val }}" {% if saved_kit == val %}selected{% endif %}>
-                        {{ label }} — {{ colour }}
+                        {{ label }} - {{ colour }}
                     </option>
                     {% endfor %}
                 </select>

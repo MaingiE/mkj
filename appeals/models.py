@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Appeals — Jury & Appeals Management System Models
+MKJ SUPA CUP Appeals - Jury & Appeals Management System Models
 
 Workflow:
 1. Team Manager submits appeal (with mandatory evidence + fee payment)
@@ -24,8 +24,8 @@ FILING_WINDOW_MINUTES = 30    # Appeal must be filed within 30 minutes after end
 
 class AppealStatus(models.TextChoices):
     DRAFT              = "draft",              "Draft"
-    SUBMITTED          = "submitted",          "Submitted — Awaiting Response"
-    RESPONSE_RECEIVED  = "response_received",  "Response Received — Awaiting Jury"
+    SUBMITTED          = "submitted",          "Submitted - Awaiting Response"
+    RESPONSE_RECEIVED  = "response_received",  "Response Received - Awaiting Jury"
     UNDER_REVIEW       = "under_review",       "Under Jury Review"
     DECIDED            = "decided",            "Decision Made"
     CLOSED             = "closed",             "Closed"
@@ -276,7 +276,7 @@ class Appeal(models.Model):
 
         if self.match:
             if self.match.status == FixtureStatus.LIVE:
-                # Match is ongoing — estimate end time as kickoff + 90 min, then add 30 min
+                # Match is ongoing - estimate end time as kickoff + 90 min, then add 30 min
                 kickoff_dt = self.match.kickoff_datetime
                 if kickoff_dt:
                     # Make naive datetime aware if needed
@@ -420,7 +420,7 @@ class JuryDecision(models.Model):
         help_text="Outcome of the appeal"
     )
     reasoning = models.TextField(
-        help_text="Detailed reasoning for the decision — MANDATORY"
+        help_text="Detailed reasoning for the decision - MANDATORY"
     )
     sanctions = models.TextField(
         blank=True,

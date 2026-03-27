@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}File Appeal &mdash; MKJ SUPA CUP{% endblock %}
+{% block title %}File Appeal - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -43,7 +43,7 @@
         <div style="margin-bottom:1rem">
             <label style="display:block;font-weight:600;font-size:.88rem;color:#333;margin-bottom:.3rem">Respondent Team (optional)</label>
             <select name="respondent_team" style="width:100%;padding:.5rem;border:1px solid #ddd;border-radius:6px;font-size:.9rem">
-                <option value="">— Select team —</option>
+                <option value=""> - Select team - </option>
                 {% for t in other_teams %}
                 <option value="{{ t.pk }}">{{ t.name }}</option>
                 {% endfor %}

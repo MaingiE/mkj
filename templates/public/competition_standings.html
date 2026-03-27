@@ -1,7 +1,7 @@
 {% extends "public/base.html" %}
 {% load static %}
 
-{% block title %}{{ competition.name }} — Standings{% endblock %}
+{% block title %}{{ competition.name }} - Standings{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -358,7 +358,7 @@
                 <i class="bi bi-diagram-3"></i> {{ competition.get_format_type_display }}
             </span>
             <span class="comp-meta-item" style="color:rgba(255,255,255,.85);">
-                <i class="bi bi-calendar-event"></i> {{ competition.start_date|date:"M d" }} — {{ competition.end_date|date:"M d, Y" }}
+                <i class="bi bi-calendar-event"></i> {{ competition.start_date|date:"M d" }} - {{ competition.end_date|date:"M d, Y" }}
             </span>
         </div>
         <div style="margin-top:.7rem;">

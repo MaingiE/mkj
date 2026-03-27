@@ -36,7 +36,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.WARNING(
             "\n============================================================\n"
-            "  MKJ SUPA CUP — FULL DATA WIPE\n"
+            "  MKJ SUPA CUP - FULL DATA WIPE\n"
             "============================================================\n"
             "  This will permanently delete:\n"
             "    • All competitions, pools, fixtures, venues\n"
@@ -53,7 +53,7 @@ class Command(BaseCommand):
         if not options["yes"]:
             confirm = input("Type  YES  (all caps) to proceed: ")
             if confirm.strip() != "YES":
-                self.stdout.write(self.style.SUCCESS("Aborted — nothing was changed."))
+                self.stdout.write(self.style.SUCCESS("Aborted - nothing was changed."))
                 return
 
         with transaction.atomic():
@@ -124,7 +124,7 @@ class Command(BaseCommand):
             count, _ = Model.objects.all().delete()
             self.stdout.write(f"  • Deleted {count:>6}  {app_label}.{model_name}")
         except LookupError:
-            # Model doesn't exist in this installation — skip silently
+            # Model doesn't exist in this installation - skip silently
             pass
         except Exception as exc:
             self.stdout.write(self.style.WARNING(

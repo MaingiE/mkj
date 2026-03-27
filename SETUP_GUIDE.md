@@ -56,7 +56,7 @@ mkj_cms/                      ← Project root
 
 ---
 
-## STEP 1 — INSTALL PREREQUISITES
+## STEP 1 - INSTALL PREREQUISITES
 
 You need these installed on your machine before starting.
 
@@ -98,7 +98,7 @@ redis-cli ping    # Should return: PONG
 
 ---
 
-## STEP 2 — PROJECT SETUP
+## STEP 2 - PROJECT SETUP
 
 ### 1. Create and activate a virtual environment
 
@@ -124,9 +124,9 @@ cp .env.example .env
 ```
 
 Open `.env` and set:
-- `SECRET_KEY` — generate one: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
-- `DATABASE_URL` — use SQLite for dev, PostgreSQL for production
-- `REDIS_URL` — use `redis://127.0.0.1:6379/0`
+- `SECRET_KEY` - generate one: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
+- `DATABASE_URL` - use SQLite for dev, PostgreSQL for production
+- `REDIS_URL` - use `redis://127.0.0.1:6379/0`
 
 ### 4. Run database migrations
 
@@ -152,7 +152,7 @@ The API is now running at: **http://127.0.0.1:8000**
 
 ---
 
-## STEP 3 — VERIFY EVERYTHING IS WORKING
+## STEP 3 - VERIFY EVERYTHING IS WORKING
 
 Open your browser and visit:
 
@@ -164,7 +164,7 @@ Open your browser and visit:
 
 ---
 
-## STEP 4 — SEED INITIAL DATA
+## STEP 4 - SEED INITIAL DATA
 
 ### Option A: Use the Admin Panel (easiest)
 Go to http://127.0.0.1:8000/admin/ and create:
@@ -218,13 +218,13 @@ print("Competition created:", comp)
 
 ---
 
-## STEP 5 — FULL API REFERENCE
+## STEP 5 - FULL API REFERENCE
 
 ### Authentication
 
 | Method | Endpoint | Who | Description |
 |--------|----------|-----|-------------|
-| POST | /api/v1/auth/login/ | All | Login — returns JWT access+refresh + user object |
+| POST | /api/v1/auth/login/ | All | Login - returns JWT access+refresh + user object |
 | POST | /api/v1/auth/logout/ | All | Blacklist refresh token |
 | POST | /api/v1/auth/register/ | All | Create new account |
 | GET | /api/v1/auth/profile/ | All | Get my profile |
@@ -263,7 +263,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1Q...
 
 ---
 
-### Competitions (Competition Manager only — write access)
+### Competitions (Competition Manager only - write access)
 
 | Method | Endpoint | Who | Description |
 |--------|----------|-----|-------------|
@@ -377,7 +377,7 @@ POST /api/v1/referees/reviews/
 
 ---
 
-### Matches — Squad Submission
+### Matches - Squad Submission
 
 | Method | Endpoint | Who | Description |
 |--------|----------|-----|-------------|
@@ -427,7 +427,7 @@ POST /api/v1/matches/squads/3/approve/
 
 ---
 
-### Matches — Match Reports
+### Matches - Match Reports
 
 | Method | Endpoint | Who | Description |
 |--------|----------|-----|-------------|
@@ -468,7 +468,7 @@ POST /api/v1/matches/reports/
 
 ---
 
-## STEP 6 — CONNECTING YOUR REACT FRONTEND
+## STEP 6 - CONNECTING YOUR REACT FRONTEND
 
 In your React app (the `.jsx` file we built), replace the static `USERS` and `FIXTURES` data with real API calls.
 
@@ -538,7 +538,7 @@ const fixtures = await api.get("/competitions/fixtures/");
 
 ---
 
-## STEP 7 — PRODUCTION DEPLOYMENT
+## STEP 7 - PRODUCTION DEPLOYMENT
 
 ### On a VPS (DigitalOcean, AWS EC2, etc.)
 
@@ -610,7 +610,7 @@ sudo systemctl enable mkj-supa-cup && sudo systemctl start mkj-supa-cup
 
 ---
 
-## STEP 8 — COMMON COMMANDS CHEAT SHEET
+## STEP 8 - COMMON COMMANDS CHEAT SHEET
 
 ```bash
 # Start development server
@@ -638,33 +638,33 @@ python manage.py check
 # Start Celery worker (for background tasks like emails)
 celery -A mkj_cms worker -l info
 
-# Reset all data (CAUTION — deletes everything!)
+# Reset all data (CAUTION - deletes everything!)
 python manage.py flush
 ```
 
 ---
 
-## STEP 9 — WHAT TO BUILD NEXT
+## STEP 9 - WHAT TO BUILD NEXT
 
 Your backend is complete and working. Here is the recommended order for next features:
 
-**Priority 1 — Core Workflow Completion**
+**Priority 1 - Core Workflow Completion**
 - [ ] Add `migrations/` folders by running `makemigrations` (needed before `migrate`)
 - [ ] Add email notifications (referee appointment → email referee, squad rejection → email team manager)
 - [ ] Add `pytz` to requirements for timezone handling in squad deadlines
 
-**Priority 2 — Polish**
+**Priority 2 - Polish**
 - [ ] Live score WebSocket updates using Django Channels
 - [ ] PDF export for match reports
 - [ ] SMS notifications via Africa's Talking API (Kenya-local SMS)
 - [ ] Player eligibility auto-check (age vs competition age_group)
 
-**Priority 3 — Reporting**
+**Priority 3 - Reporting**
 - [ ] Competition summary endpoint (aggregated stats)
 - [ ] Referee performance report endpoint
 - [ ] Export to Excel/CSV
 
-**Priority 4 — Mobile**
+**Priority 4 - Mobile**
 - [ ] Push notifications for referees and team managers
 - [ ] React Native / Flutter mobile app using the same API
 
@@ -714,5 +714,5 @@ Browser/Mobile App (React)
 
 ---
 
-*Built for MKJ SUPA CUP — Makueni County Youth Sports Tournament*
+*Built for MKJ SUPA CUP - Makueni County Youth Sports Tournament*
 *Framework: Django 5.0 · DRF 3.15 · PostgreSQL · JWT Authentication*

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Report — {{ fixture }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Match Report - {{ fixture }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>Match Report</span>
     </div>
     <h1>📝 {{ sport_family }} Match Report</h1>
-    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} — {{ fixture.match_date|date:"d M Y" }}</p>
+    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} - {{ fixture.match_date|date:"d M Y" }}</p>
 </div>
 
 {% if report and report.status == 'returned' and report.reviewer_notes %}
@@ -35,7 +35,7 @@
                 <input type="number" name="home_score" min="0" value="{{ report.home_score|default:0 }}"
                        style="width:100%;max-width:80px;padding:.5rem;font-size:1.5rem;text-align:center;border:1px solid #ddd;border-radius:8px;" required>
             </div>
-            <div style="font-size:1.5rem;font-weight:bold;color:#999;">—</div>
+            <div style="font-size:1.5rem;font-weight:bold;color:#999;"> - </div>
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.away_team.name }}</label>
                 <input type="number" name="away_score" min="0" value="{{ report.away_score|default:0 }}"
@@ -99,7 +99,7 @@
                 <input type="number" name="home_sets" min="0" max="3" value="{{ report.home_sets|default:0 }}"
                        style="width:100%;max-width:70px;padding:.4rem;font-size:1.2rem;text-align:center;border:1px solid #ddd;border-radius:8px;">
             </div>
-            <div style="font-size:1.2rem;font-weight:bold;color:#999;">—</div>
+            <div style="font-size:1.2rem;font-weight:bold;color:#999;"> - </div>
             <div>
                 <label style="font-weight:600;display:block;margin-bottom:.3rem;">{{ fixture.away_team.name }}</label>
                 <input type="number" name="away_sets" min="0" max="3" value="{{ report.away_sets|default:0 }}"
@@ -374,7 +374,7 @@
                     <option value="{{ fixture.away_team.pk }}" {% if evt.team_id == fixture.away_team.pk %}selected{% endif %}>{{ fixture.away_team.name }}</option>
                 </select>
                 <select name="event_{{ forloop.counter0 }}_player" style="padding:.4rem;border:1px solid #ddd;border-radius:6px;">
-                    <option value="">— Player —</option>
+                    <option value=""> - Player - </option>
                     <optgroup label="{{ fixture.home_team.name }}">
                     {% for p in home_players %}<option value="{{ p.pk }}" {% if evt.player_id == p.pk %}selected{% endif %}>#{{ p.shirt_number }} {{ p.get_full_name }}</option>{% endfor %}
                     </optgroup>
@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const awayTeamName = '{{ fixture.away_team.name }}';
 
     // Player options
-    let playerOptions = '<option value="">— Player —</option>';
+    let playerOptions = '<option value=""> - Player - </option>';
     playerOptions += `<optgroup label="${homeTeamName}">`;
     {% for p in home_players %}
     playerOptions += `<option value="{{ p.pk }}">#{{ p.shirt_number }} {{ p.get_full_name }}</option>`;

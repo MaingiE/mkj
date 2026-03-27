@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Appointments &mdash; {{ discipline_label }} &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Appointments - {{ discipline_label }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block content %}
-<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-calendar-event"></i> Referee Appointments — {{ discipline_label }}</h2>
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-calendar-event"></i> Referee Appointments - {{ discipline_label }}</h2>
 
 <div class="summary-row">
     <div class="summary-card"><div class="num" style="color:#124491;">{{ total_fixtures }}</div><div class="lbl">Fixtures</div></div>
@@ -50,7 +50,7 @@
     <div class="appt-roles">
         {% for r in fd.roles %}
         <span class="role-chip {% if r.appointment %}filled{% elif r.is_mandatory %}empty{% else %}optional-empty{% endif %}">
-            {{ r.role_label }}: {{ r.referee_name|default:"—" }}
+            {{ r.role_label }}: {{ r.referee_name|default:" - " }}
             {% if r.is_mandatory %}<span class="mandatory-tag">REQUIRED</span>{% else %}<span class="optional-tag">OPT</span>{% endif %}
         </span>
         {% endfor %}

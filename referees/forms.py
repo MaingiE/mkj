@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Referees — Django Forms for Registration & Management
+MKJ SUPA CUP Referees - Django Forms for Registration & Management
 Adapted from FKFSYS referee registration workflow.
 """
 from django import forms

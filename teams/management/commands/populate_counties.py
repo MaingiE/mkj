@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP — Initial County Data Population
+MKJ SUPA CUP - Initial County Data Population
 
 This script populates the County model with all 47 Kenyan counties
 and includes sample sports officer contact information.

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Technical Bench &mdash; Director of Sports{% endblock %}
+{% block title %}Technical Bench - Director of Sports{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -87,9 +87,9 @@
                     <td>{{ b.discipline.sport_type }}</td>
                     <td>{{ b.first_name }} {{ b.last_name }}</td>
                     <td><span class="badge bg-primary">{{ b.get_role_display }}</span></td>
-                    <td style="font-size:.85rem;">{{ b.phone|default:"—" }}</td>
-                    <td style="font-size:.85rem;">{{ b.email|default:"—" }}</td>
-                    <td style="font-size:.82rem;">{{ b.national_id_number|default:"—" }}</td>
+                    <td style="font-size:.85rem;">{{ b.phone|default:" - " }}</td>
+                    <td style="font-size:.85rem;">{{ b.email|default:" - " }}</td>
+                    <td style="font-size:.82rem;">{{ b.national_id_number|default:" - " }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="8" class="text-muted text-center">No technical bench members found</td></tr>

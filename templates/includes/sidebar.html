@@ -344,7 +344,7 @@
     {% elif user.role == 'chief_officer_sports' %}
     <!-- CHIEF OFFICER SPORTS SIDEBAR -->
     <div class="sidebar-section">
-        <div class="sidebar-section-toggle"><h4>Chief Officer &mdash; Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-toggle"><h4>Chief Officer - Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'chief_officer_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chief_officer_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-award"></i></span> Dashboard</a>
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
@@ -374,7 +374,7 @@
     {% elif user.role == 'waziri_sports' %}
     <!-- WAZIRI SPORTS SIDEBAR -->
     <div class="sidebar-section">
-        <div class="sidebar-section-toggle"><h4>Waziri &mdash; Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-toggle"><h4>Waziri - Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'waziri_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'waziri_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-mortarboard-fill"></i></span> Dashboard</a>
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>

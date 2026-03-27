@@ -36,7 +36,7 @@
                             </td>
                         </tr>
                         <tr><td style="font-weight:600;">Start Date</td><td>{{ competition.start_date|date:"d M Y" }}</td></tr>
-                        <tr><td style="font-weight:600;">End Date</td><td>{{ competition.end_date|date:"d M Y"|default:"—" }}</td></tr>
+                        <tr><td style="font-weight:600;">End Date</td><td>{{ competition.end_date|date:"d M Y"|default:" - " }}</td></tr>
                         <tr><td style="font-weight:600;">Teams</td><td>{{ teams.count }}</td></tr>
                         <tr><td style="font-weight:600;">Fixtures</td><td>{{ fixtures.count }}</td></tr>
                     </table>
@@ -58,7 +58,7 @@
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td><strong>{{ team.name }}</strong></td>
-                                    <td>{{ team.county|default:"—" }}</td>
+                                    <td>{{ team.county|default:" - " }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

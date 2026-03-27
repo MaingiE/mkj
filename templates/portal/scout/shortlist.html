@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Shortlist — Scout — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}My Shortlist - Scout - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -96,7 +96,7 @@
                         <td>{{ entry.player.discipline.registration.get_county_display }}</td>
                         <td>{{ entry.player.discipline.get_sport_type_display }}</td>
                         <td>{{ entry.player.age }}</td>
-                        <td>{{ entry.player.position|default:"—" }}</td>
+                        <td>{{ entry.player.position|default:" - " }}</td>
                         <td>
                             {% for i in "12345" %}
                                 {% if forloop.counter <= entry.rating %}
@@ -110,7 +110,7 @@
                             {% if entry.notes %}
                             <span title="{{ entry.notes }}" style="cursor:help;font-size:.85rem;color:#666;">{{ entry.notes|truncatechars:40 }}</span>
                             {% else %}
-                            <span style="color:#ccc">—</span>
+                            <span style="color:#ccc"> - </span>
                             {% endif %}
                         </td>
                         <td><small>{{ entry.created_at|date:"d M Y" }}</small></td>

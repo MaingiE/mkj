@@ -1,4 +1,4 @@
-# admin_dashboard/admin_views.py — MKJ SUPA CUP CMS
+# admin_dashboard/admin_views.py - MKJ SUPA CUP CMS
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, redirect
 from django.contrib import messages

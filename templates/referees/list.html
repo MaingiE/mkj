@@ -34,7 +34,7 @@
                     {% for ref in referees %}
                     <tr>
                         <td><strong>{{ ref.user.get_full_name }}</strong></td>
-                        <td>{{ ref.license_number|default:"—" }}</td>
+                        <td>{{ ref.license_number|default:" - " }}</td>
                         <td>{{ ref.get_level_display }}</td>
                         <td>{{ ref.county }}</td>
                         <td>{{ ref.total_matches }}</td>
@@ -97,9 +97,7 @@
                             </a>
                             {% elif appt.status == 'pending' %}
                             <span style="color:#999;font-size:.85rem;">Awaiting referee</span>
-                            {% else %}
-                            —
-                            {% endif %}
+                            {% else %} - {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

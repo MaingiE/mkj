@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Competitions — Core Models
+MKJ SUPA CUP Competitions - Core Models
 """
 from django.db import models
 from django.conf import settings
@@ -168,7 +168,7 @@ class Pool(models.Model):
         ordering = ["competition", "name"]
 
     def __str__(self):
-        return f"{self.competition.name} — {self.name}"
+        return f"{self.competition.name} - {self.name}"
 
 
 class PoolTeam(models.Model):
@@ -322,7 +322,7 @@ class Fixture(models.Model):
         return self.winner
 
     def __str__(self):
-        label = f"{self.home_team} vs {self.away_team} — {self.match_date}"
+        label = f"{self.home_team} vs {self.away_team} - {self.match_date}"
         if self.is_knockout and self.knockout_round:
             label = f"[{self.get_knockout_round_display()}] {label}"
         return label

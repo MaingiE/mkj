@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   MKJ SUPA CUP — Complete Website + CMS Stylesheet
-   Governor Mutula Kilonzo Junior Super Cup — Makueni County
+   MKJ SUPA CUP - Complete Website + CMS Stylesheet
+   Governor Mutula Kilonzo Junior Super Cup - Makueni County
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -56,7 +56,7 @@ img { max-width: 100%; }
 * { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.15) transparent; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 1 — PUBLIC WEBSITE (LIGHT THEME — MKJ SUPA CUP COLORS)
+   SECTION 1 - PUBLIC WEBSITE (LIGHT THEME - MKJ SUPA CUP COLORS)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ img { max-width: 100%; }
 }
 .fkf-nav-btn:hover { background: #124491; color: #fff; }
 
-/* Login link inside mobile nav — hidden on desktop */
+/* Login link inside mobile nav - hidden on desktop */
 .nav-login-mobile { display: none; }
 
 /* Navbar Dropdown */
@@ -165,7 +165,7 @@ img { max-width: 100%; }
 .fkf-nav-toggle.open span:nth-child(3) { top: 11px; transform: rotate(-45deg); }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   HERO — DARK CINEMATIC
+   HERO - DARK CINEMATIC
    ────────────────────────────────────────────────────────────────────────── */
 .hero {
     position: relative; min-height: 100vh;
@@ -339,7 +339,7 @@ img { max-width: 100%; }
     object-fit: contain;
 }
 
-/* Hero title — dark variant */
+/* Hero title - dark variant */
 .hero--dark .hero-title {
     font-family: 'Outfit', sans-serif;
     font-size: 3.2rem; font-weight: 900;
@@ -411,7 +411,7 @@ img { max-width: 100%; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   COUNTDOWN CARD — GLASS MORPHISM + RING DIALS
+   COUNTDOWN CARD - GLASS MORPHISM + RING DIALS
    ────────────────────────────────────────────────────────────────────────── */
 .cd-card {
     --cd-glow-1: rgba(249,168,37,.5);
@@ -911,7 +911,7 @@ img { max-width: 100%; }
     z-index: 1;
 }
 
-/* Image-only slides — Ken Burns zoom */
+/* Image-only slides - Ken Burns zoom */
 .story-slide__img {
     position: relative;
     width: 100%;
@@ -1113,7 +1113,7 @@ img { max-width: 100%; }
     opacity: 1;
 }
 
-/* Responsive — story subs */
+/* Responsive - story subs */
 @media (max-width: 768px) {
     .story-subs { grid-template-columns: repeat(2, 1fr); }
     .story-sub img { height: 130px; }
@@ -1125,7 +1125,7 @@ img { max-width: 100%; }
     .story-sub__overlay { padding: .6rem; }
 }
 
-/* Responsive — stories carousel */
+/* Responsive - stories carousel */
 @media (max-width: 768px) {
     .story-slide__split { grid-template-columns: 1fr; }
     .story-slide__split .story-slide__img img { height: 220px; min-height: unset; }
@@ -1248,7 +1248,7 @@ img { max-width: 100%; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   STORIES — FULLSCREEN IMMERSIVE WITH LOGO WATERMARK
+   STORIES - FULLSCREEN IMMERSIVE WITH LOGO WATERMARK
    ────────────────────────────────────────────────────────────────────────── */
 .stories-hero {
     position: relative; width: 100%; height: 80vh; min-height: 500px;
@@ -1349,7 +1349,7 @@ img { max-width: 100%; }
 .stories-hero__counter span { color: #fff; font-size: 1.1rem; }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   MATCH CENTER — STATS + FIXTURES + RESULTS
+   MATCH CENTER - STATS + FIXTURES + RESULTS
    ────────────────────────────────────────────────────────────────────────── */
 .match-center { background: #fff; }
 
@@ -1504,7 +1504,7 @@ img { max-width: 100%; }
 .anim-zoom.in-view { opacity: 1; transform: scale(1); }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   PAGE HERO — DARK CINEMATIC (inner pages)
+   PAGE HERO - DARK CINEMATIC (inner pages)
    ────────────────────────────────────────────────────────────────────────── */
 .page-hero {
     position: relative; min-height: 260px;
@@ -1559,7 +1559,7 @@ img { max-width: 100%; }
 .page-hero__breadcrumb svg { opacity: .4; }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   ABOUT PAGE — Prose, Mission/Vision, Values, Stats
+   ABOUT PAGE - Prose, Mission/Vision, Values, Stats
    ────────────────────────────────────────────────────────────────────────── */
 .about-prose p {
     font-size: 1.05rem; line-height: 1.85; color: #444; margin-bottom: 1rem;
@@ -1660,9 +1660,9 @@ img { max-width: 100%; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   COMPETITIONS PAGE — Sport tiles, Competition rows
+   COMPETITIONS PAGE - Sport tiles, Competition rows
    ────────────────────────────────────────────────────────────────────────── */
-/* Discipline grid — grouped tiles with dropdown links */
+/* Discipline grid - grouped tiles with dropdown links */
 .disc-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.15rem;
 }
@@ -1721,7 +1721,7 @@ img { max-width: 100%; }
 }
 .sport-filter-bar__clear:hover { background: rgba(198,40,40,.06); }
 
-/* Competition cards — unified */
+/* Competition cards - unified */
 .comp-card {
     display: flex; align-items: stretch;
     background: #fff; border-radius: 14px;
@@ -1799,7 +1799,7 @@ img { max-width: 100%; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   RESULTS PAGE — Tabs, Competition hub cards
+   RESULTS PAGE - Tabs, Competition hub cards
    ────────────────────────────────────────────────────────────────────────── */
 .results-tabs {
     display: flex; gap: .5rem; justify-content: center;
@@ -1962,7 +1962,7 @@ img { max-width: 100%; }
 .contact-map iframe { display: block; }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   RESPONSIVE — PUBLIC
+   RESPONSIVE - PUBLIC
    ────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
     .features-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2188,7 +2188,7 @@ img { max-width: 100%; }
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 2 — CMS PORTAL (Authenticated) — MODERNIZED 2026
+   SECTION 2 - CMS PORTAL (Authenticated) - MODERNIZED 2026
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── CMS BODY ────────────────────────────────────────────────────────── */
@@ -2289,7 +2289,7 @@ img { max-width: 100%; }
     background: rgba(255,255,255,.15);
     color: var(--white);
 }
-/* Navbar dropdown — animated */
+/* Navbar dropdown - animated */
 .nav-dropdown-menu {
     position: absolute;
     top: calc(100% + 4px);
@@ -2979,7 +2979,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .btn-outline.btn-purple:hover { background: #6A1B9A; color: #fff; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — CMS
+   RESPONSIVE - CMS
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
     .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
@@ -3027,7 +3027,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     .navbar-nav li:hover > .nav-dropdown-menu { display: none; }
     .navbar-nav li.open > .nav-dropdown-menu { display: block !important; }
     .navbar-user .role-badge { display: none; }
-    /* Sidebar — off-canvas drawer on mobile */
+    /* Sidebar - off-canvas drawer on mobile */
     .sidebar {
         position: fixed;
         top: 50px;
@@ -3054,7 +3054,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     }
     .sidebar-overlay.open { display: block; }
     .main-content { padding: .85rem; }
-    /* Breadcrumb — prominent on mobile since sidebar is hidden */
+    /* Breadcrumb - prominent on mobile since sidebar is hidden */
     .breadcrumb {
         flex-wrap: wrap;
         font-size: .82rem;

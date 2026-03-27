@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}All Verifications &mdash; Secretary General{% endblock %}
+{% block title %}All Verifications - Secretary General{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -76,7 +76,7 @@
                         <td>{{ p.discipline.get_sport_type_display }}</td>
                         <td>{{ p.national_id_number }}</td>
                         <td><span class="badge bg-success">Verified</span></td>
-                        <td>{{ p.registered_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ p.registered_at|date:"d M Y H:i"|default:" - " }}</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="6" class="text-muted text-center">No verified players found</td></tr>
@@ -89,7 +89,7 @@
                         <td>{{ p.discipline.get_sport_type_display }}</td>
                         <td>{{ p.national_id_number }}</td>
                         <td><span class="badge bg-warning text-dark">Pending</span></td>
-                        <td>{{ p.registered_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ p.registered_at|date:"d M Y H:i"|default:" - " }}</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="6" class="text-muted text-center">No pending players</td></tr>
@@ -102,7 +102,7 @@
                         <td>{{ p.discipline.get_sport_type_display }}</td>
                         <td>{{ p.national_id_number }}</td>
                         <td><span class="badge bg-danger">Rejected</span></td>
-                        <td>{{ p.registered_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ p.registered_at|date:"d M Y H:i"|default:" - " }}</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="6" class="text-muted text-center">No rejected players</td></tr>

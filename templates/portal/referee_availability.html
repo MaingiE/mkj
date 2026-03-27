@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Availability — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}My Availability - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header mb-4">
@@ -12,7 +12,7 @@
         <h1 style="font-size:2rem;font-weight:800;color:#124491;">📆 My Availability</h1>
         <span class="badge bg-success" style="font-size:1rem;padding:.5rem 1rem;border-radius:8px;">Next 30 Days</span>
     </div>
-    <p style="font-size:1.1rem;color:#555;">Set your availability for the next 30 days — Referee Managers will see this when making appointments.</p>
+    <p style="font-size:1.1rem;color:#555;">Set your availability for the next 30 days - Referee Managers will see this when making appointments.</p>
 </div>
 
 <!-- Legend -->
@@ -43,7 +43,7 @@
                 <div style="margin-top:.5rem;font-size:.85rem;font-weight:600;{% if day.status == 'available' %}color:#2E7D32;{% elif day.status == 'unavailable' %}color:#c62828;{% else %}color:#999;{% endif %}">
                     {% if day.status == 'available' %}✅ Available
                     {% elif day.status == 'unavailable' %}❌ Unavailable
-                    {% else %}— Not set —{% endif %}
+                    {% else %} - Not set - {% endif %}
                 </div>
                 {% if day.notes %}
                 <div style="font-size:.8rem;color:#666;margin-top:.2rem;font-style:italic;">{{ day.notes }}</div>

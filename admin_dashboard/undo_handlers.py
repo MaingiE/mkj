@@ -1,6 +1,6 @@
 # admin_dashboard/undo_handlers.py
 """
-Undo handlers for reversing administrative actions — MKJ SUPA CUP CMS
+Undo handlers for reversing administrative actions - MKJ SUPA CUP CMS
 """
 
 from django.utils import timezone

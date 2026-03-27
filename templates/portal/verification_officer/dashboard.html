@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Verification Officer — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Verification Officer - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1><i class="bi bi-shield-check"></i> Verification Officer Portal</h1>
-    <p>Governor Mutula Kilonzo Junior Super Cup — Player Verification</p>
+    <p>Governor Mutula Kilonzo Junior Super Cup - Player Verification</p>
 </div>
 
 <!-- Officer Banner -->
@@ -119,12 +119,12 @@
                     {% for p in in_progress_players %}
                     <tr>
                         <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
-                        <td>{{ p.discipline.sub_county|default:"—" }}</td>
+                        <td>{{ p.discipline.sub_county|default:" - " }}</td>
                         <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
                         <td>{{ p.age }}</td>
                         <td>
                             <span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e8edf5;color:#124491">
-                                Step {{ p.current_verification_step }}/3 — {{ p.step_label }}
+                                Step {{ p.current_verification_step }}/3 - {{ p.step_label }}
                             </span>
                         </td>
                         <td style="text-align:center">{% if p.doc_status == 'verified' %}<span style="color:#2E7D32">✓</span>{% elif p.doc_status == 'rejected' %}<span style="color:#C62828">✗</span>{% else %}<span style="color:#bbb">○</span>{% endif %}</td>
@@ -165,10 +165,10 @@
                     {% for p in verified_players %}
                     <tr style="background:#f1f8e9">
                         <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
-                        <td>{{ p.discipline.sub_county|default:"—" }}</td>
+                        <td>{{ p.discipline.sub_county|default:" - " }}</td>
                         <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
                         <td>{{ p.age }}</td>
-                        <td>{{ p.national_id_number|default:"—" }}</td>
+                        <td>{{ p.national_id_number|default:" - " }}</td>
                         <td><span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#e8f5ed;color:#2E7D32">✅ 3/3 Complete</span></td>
                         <td>
                             <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">View</a>
@@ -204,14 +204,14 @@
                     {% for p in rejected_players %}
                     <tr style="background:#fce4ec">
                         <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
-                        <td>{{ p.discipline.sub_county|default:"—" }}</td>
+                        <td>{{ p.discipline.sub_county|default:" - " }}</td>
                         <td><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
                         <td>
                             <span style="display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;background:#fce4ec;color:#C62828">
-                                Step {{ p.current_verification_step }}/3 — {{ p.step_label }}
+                                Step {{ p.current_verification_step }}/3 - {{ p.step_label }}
                             </span>
                         </td>
-                        <td><small>{{ p.rejection_reason|default:"—"|truncatewords:15 }}</small></td>
+                        <td><small>{{ p.rejection_reason|default:" - "|truncatewords:15 }}</small></td>
                         <td>
                             <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="padding:.3rem .75rem;font-size:.8rem">Review</a>
                         </td>

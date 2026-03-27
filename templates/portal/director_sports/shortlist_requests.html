@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Scout Edit Requests — Director of Sports{% endblock %}
+{% block title %}Scout Edit Requests - Director of Sports{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -45,19 +45,19 @@
                             <strong>{{ submission.scout.get_full_name }}</strong><br>
                             <span style="font-size:.8rem;color:#777;">{{ submission.scout.email }}</span>
                         </td>
-                        <td>{{ submission.scout.assigned_discipline|default:"—"|title }}</td>
+                        <td>{{ submission.scout.assigned_discipline|default:" - "|title }}</td>
                         <td>{{ submission.shortlist_count }}</td>
                         <td>
                             <span class="badge {% if submission.status == 'edit_requested' %}bg-warning text-dark{% elif submission.status == 'edit_approved' %}bg-success{% elif submission.status == 'edit_denied' %}bg-danger{% else %}bg-secondary{% endif %}">
                                 {{ submission.get_status_display }}
                             </span>
                         </td>
-                        <td>{{ submission.final_submitted_at|date:"d M Y H:i"|default:"—" }}</td>
+                        <td>{{ submission.final_submitted_at|date:"d M Y H:i"|default:" - " }}</td>
                         <td style="max-width:260px;">
                             {% if submission.edit_request_reason %}
                             <span title="{{ submission.edit_request_reason }}">{{ submission.edit_request_reason|truncatechars:90 }}</span>
                             {% else %}
-                            <span style="color:#888;">—</span>
+                            <span style="color:#888;"> - </span>
                             {% endif %}
                             {% if submission.review_notes %}
                             <div style="font-size:.8rem;color:#555;margin-top:.25rem;"><strong>Note:</strong> {{ submission.review_notes|truncatechars:70 }}</div>

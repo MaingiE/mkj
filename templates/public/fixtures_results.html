@@ -365,7 +365,7 @@
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     DISCIPLINES — Accordion with Fixtures, Standings, Results
+     DISCIPLINES - Accordion with Fixtures, Standings, Results
      ══════════════════════════════════════════════════════════════════════════ -->
 <section class="sec" style="padding-top:1rem;">
     <div class="container">
@@ -468,7 +468,7 @@
                                 {% for fx in item.group_fixtures %}
                                 <div class="fx-card">
                                     {% if fx.pool %}
-                                    <div class="fx-card__pool">{{ fx.pool.name }} — Round {{ fx.round_number|default:"" }}</div>
+                                    <div class="fx-card__pool">{{ fx.pool.name }} - Round {{ fx.round_number|default:"" }}</div>
                                     {% endif %}
                                     <div class="fx-card__teams">
                                         <span class="fx-card__team">{{ fx.home_team.name }}</span>

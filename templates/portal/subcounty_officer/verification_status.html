@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verification Status &mdash; MKJ SUPA CUP{% endblock %}
+{% block title %}Verification Status - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>Verification Status</span>
     </div>
     <h1><i class="bi bi-shield-check"></i> Player Verification Status</h1>
-    <p>{{ reg.county }} County &mdash; Overview of all player verification statuses</p>
+    <p>{{ reg.county }} County - Overview of all player verification statuses</p>
 </div>
 
 <!-- Summary Stats -->
@@ -67,7 +67,7 @@
             <tr style="border-bottom:1px solid #eee">
                 <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
                 <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
-                <td style="padding:.5rem .8rem;color:#124491">{{ entry.player.rejection_reason|default:"—" }}</td>
+                <td style="padding:.5rem .8rem;color:#124491">{{ entry.player.rejection_reason|default:" - " }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -112,8 +112,8 @@
             <tr style="border-bottom:1px solid #eee">
                 <td style="padding:.5rem .8rem;font-weight:600">{{ entry.player.first_name }} {{ entry.player.last_name }}</td>
                 <td style="padding:.5rem .8rem">{{ entry.discipline.get_sport_type_display }}</td>
-                <td style="padding:.5rem .8rem">{{ entry.player.position|default:"—" }}</td>
-                <td style="padding:.5rem .8rem">{{ entry.player.jersey_number|default:"—" }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.player.position|default:" - " }}</td>
+                <td style="padding:.5rem .8rem">{{ entry.player.jersey_number|default:" - " }}</td>
             </tr>
             {% endfor %}
         </tbody>

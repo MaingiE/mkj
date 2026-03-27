@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP CMS — Root URL Configuration
+MKJ SUPA CUP CMS - Root URL Configuration
 """
 from django.contrib import admin
 from django.urls import path, include
@@ -78,7 +78,7 @@ from .web_views import (
     competition_standings_view,
     competition_reports_view,
     competition_report_approve_view,
-    # Competition Manager — full portal
+    # Competition Manager - full portal
     cm_dashboard_view,
     cm_create_competition_view,
     cm_edit_competition_view,
@@ -266,7 +266,7 @@ urlpatterns = [
     path("portal/treasurer/teams/",          treasurer_teams_view,           name="treasurer_teams"),
     path("portal/treasurer/county-payments/", treasurer_county_payments_view, name="treasurer_county_payments"),
 
-    # ── COUNTY SPORTS ADMIN PORTAL (REMOVED — merged into subcounty officer) ──
+    # ── COUNTY SPORTS ADMIN PORTAL (REMOVED - merged into subcounty officer) ──
 
     # ── PLAYER PROFILE ────────────────────────────────────────────────────
     path("portal/players/<int:player_pk>/profile/", player_profile_view, name="player_profile"),
@@ -299,7 +299,7 @@ urlpatterns = [
     path("portal/competitions/<int:pk>/reports/<int:report_pk>/approve/",
          competition_report_approve_view, name="competition_report_approve"),
 
-    # ── COMPETITION MANAGER — FULL MANAGEMENT ─────────────────────────────
+    # ── COMPETITION MANAGER - FULL MANAGEMENT ─────────────────────────────
     path("portal/cm/",                                     cm_dashboard_view,             name="cm_dashboard"),
     path("portal/cm/create/",                              cm_create_competition_view,    name="cm_create_competition"),
     path("portal/cm/competitions/<int:pk>/edit/",          cm_edit_competition_view,      name="cm_edit_competition"),
@@ -461,6 +461,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # ── ADMIN CUSTOMISATION ───────────────────────────────────────────────────────
-admin.site.site_header = "MKJ SUPA CUP — Governor Mutula Kilonzo Junior Super Cup"
+admin.site.site_header = "MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup"
 admin.site.site_title  = "MKJ SUPA CUP Admin"
 admin.site.index_title = "Makueni County Sports Administration"

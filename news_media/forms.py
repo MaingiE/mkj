@@ -46,7 +46,7 @@ class VideoForm(forms.ModelForm):
             "is_featured", "is_published",
         ]
         widgets = {
-            "title": forms.TextInput(attrs={"placeholder": "e.g. MKJ SUPA CUP 2026 Highlights — Nairobi vs Mombasa"}),
+            "title": forms.TextInput(attrs={"placeholder": "e.g. MKJ SUPA CUP 2026 Highlights - Nairobi vs Mombasa"}),
             "description": forms.Textarea(attrs={"rows": 3, "placeholder": "Video description..."}),
             "video_url": forms.URLInput(attrs={"placeholder": "https://www.youtube.com/watch?v=..."}),
             "duration": forms.TextInput(attrs={"placeholder": "e.g. 3:45"}),

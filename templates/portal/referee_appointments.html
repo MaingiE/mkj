@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Appointments — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Match Appointments - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>Referee Appointments</span>
     </div>
     <h1>🏁 Match Appointments</h1>
-    <p>Assign referees to upcoming fixtures — overview of all matches needing officials</p>
+    <p>Assign referees to upcoming fixtures - overview of all matches needing officials</p>
 </div>
 
 <!-- ═══ SUMMARY CARDS ═══ -->
@@ -98,7 +98,7 @@
                                     {% else %}background:#f5f5f5;color:#999;border:1px solid #ddd;{% endif %}"
                                     title="{{ role.role_label }}: {{ role.referee_name|default:'Not Appointed' }}">
                                     {{ role.role_label|truncatechars:10 }}
-                                    {% if role.appointment %}✓{% else %}—{% endif %}
+                                    {% if role.appointment %}✓{% else %} - {% endif %}
                                 </span>
                                 {% endfor %}
                             </div>

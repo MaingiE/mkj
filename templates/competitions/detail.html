@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ competition.get_sport_type_display }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}{{ competition.get_sport_type_display }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -313,9 +313,7 @@
             <div class="fix-row__score">
                 {% if f.home_score is not None %}
                 {{ f.home_score }} - {{ f.away_score }}
-                {% else %}
-                —
-                {% endif %}
+                {% else %} - {% endif %}
             </div>
             <div class="fix-row__status">
                 <span class="badge-{% if f.status == 'completed' %}success{% elif f.status == 'live' %}danger{% elif f.status == 'confirmed' %}info{% else %}gray{% endif %}" style="font-size:.55rem; padding:.12rem .4rem; border-radius:4px;">
@@ -336,7 +334,7 @@
         <i class="bi bi-calendar-x"></i>
         <p>No fixtures scheduled yet.</p>
         {% if user.role == 'coordinator' or user.role == 'admin' or user.is_superuser %}
-        <p style="font-size:.78rem; margin-top:.3rem;">Assign teams to pools — fixtures are auto-generated.</p>
+        <p style="font-size:.78rem; margin-top:.3rem;">Assign teams to pools - fixtures are auto-generated.</p>
         {% endif %}
     </div>
     {% endif %}

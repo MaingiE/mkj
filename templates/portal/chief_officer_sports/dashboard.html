@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Chief Officer Sports — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Chief Officer Sports - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-award"></i> Chief Officer — Sports Portal</h1>
-    <p>Governor Mutula Kilonzo Junior Super Cup — Makueni County Government</p>
+    <h1><i class="bi bi-award"></i> Chief Officer - Sports Portal</h1>
+    <p>Governor Mutula Kilonzo Junior Super Cup - Makueni County Government</p>
 </div>
 
 <!-- Executive Banner -->
@@ -17,9 +17,9 @@
                 <i class="bi bi-award" style="font-size: 1.8rem;"></i>
             </div>
             <div>
-                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800;">Chief Officer — Sports</h2>
+                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800;">Chief Officer - Sports</h2>
                 <p style="margin: .25rem 0 0; opacity: .8; font-size: .85rem;">
-                    Makueni County Government — Department of Sports, Culture & Social Services
+                    Makueni County Government - Department of Sports, Culture & Social Services
                 </p>
             </div>
             <div style="margin-left: auto;">
@@ -232,7 +232,7 @@
                         <td>{{ match.competition.name }}</td>
                         <td><strong>{{ match.home_team.name }}</strong></td>
                         <td style="text-align:center; font-weight:800; color:var(--primary);">
-                            {{ match.home_score|default:"-" }} — {{ match.away_score|default:"-" }}
+                            {{ match.home_score|default:"-" }} - {{ match.away_score|default:"-" }}
                         </td>
                         <td><strong>{{ match.away_team.name }}</strong></td>
                     </tr>

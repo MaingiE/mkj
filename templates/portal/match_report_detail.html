@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Report — {{ report.fixture }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Match Report - {{ report.fixture }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>Report Detail</span>
     </div>
     <h1>📝 {{ sport_cfg.label }} Match Report</h1>
-    <p>{{ report.fixture.home_team }} vs {{ report.fixture.away_team }} — {{ report.fixture.match_date|date:"d M Y" }}</p>
+    <p>{{ report.fixture.home_team }} vs {{ report.fixture.away_team }} - {{ report.fixture.match_date|date:"d M Y" }}</p>
 </div>
 
 <!-- Status Banner -->
@@ -59,14 +59,14 @@
                 <div style="font-weight:600;margin-bottom:.5rem;font-size:clamp(.85rem,2.5vw,1rem);">{{ report.fixture.home_team.name }}</div>
                 <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#124491;">{{ report.home_score }}</div>
             </div>
-            <div style="font-size:clamp(1.2rem,4vw,2rem);color:#999;">—</div>
+            <div style="font-size:clamp(1.2rem,4vw,2rem);color:#999;"> - </div>
             <div>
                 <div style="font-weight:600;margin-bottom:.5rem;font-size:clamp(.85rem,2.5vw,1rem);">{{ report.fixture.away_team.name }}</div>
                 <div style="font-size:clamp(1.8rem,6vw,3rem);font-weight:bold;color:#124491;">{{ report.away_score }}</div>
             </div>
         </div>
         {% if sport_cfg.label == 'Volleyball' and report.home_sets is not None %}
-        <div style="margin-top:.5rem;color:#666;font-size:1rem;">Sets: {{ report.home_sets }} — {{ report.away_sets }}</div>
+        <div style="margin-top:.5rem;color:#666;font-size:1rem;">Sets: {{ report.home_sets }} - {{ report.away_sets }}</div>
         {% endif %}
         {% if report.overtime_played %}
         <div style="margin-top:.3rem;color:#FF8F00;font-size:.9rem;">⏱️ {% if sport_cfg.label == 'Soccer' %}After Extra Time{% else %}After Overtime ({{ report.overtime_periods }} OT period{{ report.overtime_periods|pluralize }}){% endif %}</div>
@@ -135,8 +135,8 @@
                 <div><strong>Added Time FT:</strong></div><div>{{ report.added_time_ft }} mins</div>
                 {% endif %}
                 <div><strong>{% if sport_cfg.label == 'Soccer' or sport_cfg.label == 'Handball' %}Pitch{% else %}Court{% endif %}:</strong></div><div>{{ report.get_pitch_condition_display }}</div>
-                <div><strong>Weather:</strong></div><div>{{ report.weather|default:"—" }}</div>
-                <div><strong>Attendance:</strong></div><div>{{ report.attendance|default:"—" }}</div>
+                <div><strong>Weather:</strong></div><div>{{ report.weather|default:" - " }}</div>
+                <div><strong>Attendance:</strong></div><div>{{ report.attendance|default:" - " }}</div>
             </div>
         </div>
     </div>
@@ -191,8 +191,8 @@
                             {{ evt.get_event_type_display }}
                         </td>
                         <td>{{ evt.team.name }}</td>
-                        <td>{{ evt.player.get_full_name|default:"—" }}</td>
-                        <td>{{ evt.notes|default:"—" }}</td>
+                        <td>{{ evt.player.get_full_name|default:" - " }}</td>
+                        <td>{{ evt.notes|default:" - " }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

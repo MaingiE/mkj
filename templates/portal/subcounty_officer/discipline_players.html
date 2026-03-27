@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ discipline.get_sport_type_display }} Players — MKJ SUPA CUP{% endblock %}
+{% block title %}{{ discipline.get_sport_type_display }} Players - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>{{ discipline.get_sport_type_display }}</span>
     </div>
     <h1><i class="bi bi-people"></i> {{ discipline.get_sport_type_display }}</h1>
-    <p>{{ discipline.sub_county|default:reg.county }} — {{ discipline.player_count }} / {{ discipline.squad_limit }} players registered</p>
+    <p>{{ discipline.sub_county|default:reg.county }} - {{ discipline.player_count }} / {{ discipline.squad_limit }} players registered</p>
 </div>
 
 <!-- Squad capacity bar -->

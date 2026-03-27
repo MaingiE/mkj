@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Director of Sports — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Director of Sports - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1><i class="bi bi-shield-shaded"></i> Director of Sports Portal</h1>
-    <p>Governor Mutula Kilonzo Junior Super Cup — Makueni County</p>
+    <p>Governor Mutula Kilonzo Junior Super Cup - Makueni County</p>
 </div>
 
 <!-- Executive Banner -->
@@ -177,7 +177,7 @@
                         <td>{{ match.competition.name }}</td>
                         <td><strong>{{ match.home_team.name }}</strong></td>
                         <td style="text-align:center; font-weight:800; color:var(--primary);">
-                            {{ match.home_score|default:"-" }} — {{ match.away_score|default:"-" }}
+                            {{ match.home_score|default:"-" }} - {{ match.away_score|default:"-" }}
                         </td>
                         <td><strong>{{ match.away_team.name }}</strong></td>
                     </tr>

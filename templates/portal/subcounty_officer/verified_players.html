@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verified Players &mdash; Sub-County Officer{% endblock %}
+{% block title %}Verified Players - Sub-County Officer{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
         <span>Verified Players</span>
     </div>
     <h1><i class="bi bi-patch-check-fill"></i> Verified Players</h1>
-    <p>All verified players in {{ sub_county }} &mdash; filter by discipline</p>
+    <p>All verified players in {{ sub_county }} - filter by discipline</p>
 </div>
 
 <!-- Stats -->
@@ -61,10 +61,10 @@
                     <td>{{ p.first_name }} {{ p.last_name }}</td>
                     <td>{{ p.discipline.get_sport_type_display }}</td>
                     <td style="font-size:.85rem;">{{ p.national_id_number }}</td>
-                    <td>{{ p.position|default:"—" }}</td>
-                    <td>{{ p.jersey_number|default:"—" }}</td>
+                    <td>{{ p.position|default:" - " }}</td>
+                    <td>{{ p.jersey_number|default:" - " }}</td>
                     <td style="font-size:.82rem;white-space:nowrap;">
-                        {{ p.registered_at|date:"d M Y H:i"|default:"—" }}
+                        {{ p.registered_at|date:"d M Y H:i"|default:" - " }}
                     </td>
                 </tr>
                 {% empty %}

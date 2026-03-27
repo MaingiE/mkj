@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Matches — Stats Engine
+MKJ SUPA CUP Matches - Stats Engine
 Automatically updates pool standings and player statistics
 when a match report is approved.
 Supports sport-specific scoring: football, volleyball, basketball, handball.

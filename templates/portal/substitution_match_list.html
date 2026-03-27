@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}Match Substitutions — {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+{% block title %}Match Substitutions - {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>Match Substitutions</h1>
-    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} &mdash; {{ fixture.match_date|date:'M d, Y' }}</p>
+    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} - {{ fixture.match_date|date:'M d, Y' }}</p>
 </div>
 
 <div class="stats-grid" style="margin-bottom:1.5rem;">
@@ -71,7 +71,7 @@
                             <button class="btn btn-sm btn-success" title="Execute"><i class="bi bi-check-all"></i> Execute</button>
                         </form>
                         {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="text-muted"> - </span>
                         {% endif %}
                     </td>
                 </tr>
@@ -122,7 +122,7 @@
                             <button class="btn btn-sm btn-success" title="Execute"><i class="bi bi-check-all"></i> Execute</button>
                         </form>
                         {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="text-muted"> - </span>
                         {% endif %}
                     </td>
                 </tr>

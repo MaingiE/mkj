@@ -31,7 +31,7 @@
 <!-- Fee reminder -->
 <div style="background:#e8f5ed;border:1px solid #a5d6a7;border-radius:10px;padding:.9rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
     <span style="font-size:1.5rem"><i class="bi bi-credit-card"></i></span>
-    <span style="font-size:.92rem"><strong style="color:#1b5e20">Standard one-time county registration fee: KSh {{ registration_fee|floatformat:0 }}</strong> &mdash; confirm this exact amount before approving any county registration.</span>
+    <span style="font-size:.92rem"><strong style="color:#1b5e20">Standard one-time county registration fee: KSh {{ registration_fee|floatformat:0 }}</strong> - confirm this exact amount before approving any county registration.</span>
 </div>
 
 <!-- Stats -->
@@ -91,7 +91,7 @@
                 <tr>
                     <td><strong>{{ team.county }}</strong></td>
                     <td>{{ team.user.first_name }} {{ team.user.last_name }}</td>
-                    <td>{{ team.user.email|default:"—" }}</td>
+                    <td>{{ team.user.email|default:" - " }}</td>
                     <td style="font-size:.82rem;color:#888">{{ team.created_at|date:"d M Y H:i" }}</td>
                     <td>
                         <span style="font-weight:600">

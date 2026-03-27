@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Appeals — Views for the Jury & Appeals Management System
+MKJ SUPA CUP Appeals - Views for the Jury & Appeals Management System
 
 Roles:
 - Team Manager: Submit appeals, upload evidence, pay fees, re-appeal
@@ -493,7 +493,7 @@ def upload_decision_evidence_view(request, pk, decision_pk):
 
 @jury_chair_required
 def publish_decision_view(request, pk, decision_pk):
-    """Publish a jury decision — both teams can then see it."""
+    """Publish a jury decision - both teams can then see it."""
     appeal = get_object_or_404(Appeal, pk=pk)
     decision = get_object_or_404(JuryDecision, pk=decision_pk, appeal=appeal)
 
@@ -605,7 +605,7 @@ def cancel_hearing_view(request, pk, hearing_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  RE-APPEAL (Team Manager — max 1)
+#  RE-APPEAL (Team Manager - max 1)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @team_manager_required

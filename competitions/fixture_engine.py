@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Competitions — Fixture Generation Engine
+MKJ SUPA CUP Competitions - Fixture Generation Engine
 Generates group-stage round-robin and knockout-bracket fixtures.
 """
 import logging
@@ -69,7 +69,7 @@ def generate_knockout_fixtures(competition, num_teams, start_date, kickoff_time,
     Creates placeholder fixtures from Round of N down to the Final.
 
     num_teams must be a power of 2 (4, 8, 16, 32).
-    Teams are NOT assigned — they are filled in as group stage completes
+    Teams are NOT assigned - they are filled in as group stage completes
     or manually by the Competition Manager.
     """
     from competitions.models import Fixture, KnockoutRound

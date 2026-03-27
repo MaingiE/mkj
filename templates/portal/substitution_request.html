@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}Request Substitution — {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+{% block title %}Request Substitution - {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>Substitution Request</h1>
-    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} &mdash; {{ fixture.match_date|date:'M d, Y' }}</p>
+    <p>{{ fixture.home_team }} vs {{ fixture.away_team }} - {{ fixture.match_date|date:'M d, Y' }}</p>
 </div>
 
 <!-- Substitution Limits -->
@@ -75,7 +75,7 @@
                 <div class="form-group">
                     <label for="player_off">Player Off (on pitch)</label>
                     <select name="player_off" id="player_off" class="form-control" required>
-                        <option value="">— Select player to come off —</option>
+                        <option value=""> - Select player to come off - </option>
                         {% for p in on_pitch_players %}
                         <option value="{{ p.id }}">#{{ p.shirt_number|default:"?" }} {{ p.get_full_name }}</option>
                         {% endfor %}
@@ -84,7 +84,7 @@
                 <div class="form-group">
                     <label for="player_on">Player On (bench)</label>
                     <select name="player_on" id="player_on" class="form-control" required>
-                        <option value="">— Select replacement from bench —</option>
+                        <option value=""> - Select replacement from bench - </option>
                         {% for p in bench_players %}
                         <option value="{{ p.id }}">#{{ p.shirt_number|default:"?" }} {{ p.get_full_name }}</option>
                         {% endfor %}
@@ -140,7 +140,7 @@
                     <td>{{ sub.player_on.get_full_name }}</td>
                     <td><span class="badge {% if sub.sub_type == 'concussion' %}badge-danger{% else %}badge-info{% endif %}">{{ sub.get_sub_type_display }}</span></td>
                     <td><span class="badge {% if sub.status == 'executed' %}badge-success{% elif sub.status == 'denied' %}badge-danger{% elif sub.status == 'approved' %}badge-info{% else %}badge-warning{% endif %}">{{ sub.get_status_display }}</span></td>
-                    <td>{{ sub.approved_by.get_full_name|default:"—" }}</td>
+                    <td>{{ sub.approved_by.get_full_name|default:" - " }}</td>
                 </tr>
                 {% endfor %}
                 </tbody>

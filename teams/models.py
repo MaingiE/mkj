@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Teams — Models
+MKJ SUPA CUP Teams - Models
 """
 import re
 
@@ -57,7 +57,7 @@ class CountyRegistration(models.Model):
         help_text="Kenyan county (only one admin per county)",
     )
 
-    # Director of Sports — county contact person
+    # Director of Sports - county contact person
     director_name = models.CharField(
         max_length=200, blank=True, default="",
         help_text="Full name of the Director of Sports for this county",
@@ -106,7 +106,7 @@ class CountyRegistration(models.Model):
         ordering = ["county"]
 
     def __str__(self):
-        return f"{self.county} — {self.get_status_display()}"
+        return f"{self.county} - {self.get_status_display()}"
 
     @property
     def is_approved(self):
@@ -136,7 +136,7 @@ class CountyDiscipline(models.Model):
 
     def __str__(self):
         owner = self.sub_county or self.registration.county
-        return f"{owner} — {self.get_sport_type_display()}"
+        return f"{owner} - {self.get_sport_type_display()}"
 
     @property
     def squad_limit(self):
@@ -219,7 +219,7 @@ class CountyPlayer(models.Model):
     date_of_birth = models.DateField()
     national_id_number = models.CharField(
         max_length=20, unique=True, validators=[national_id_validator],
-        help_text="National ID — unique across all counties and disciplines",
+        help_text="National ID - unique across all counties and disciplines",
     )
     huduma_number = models.CharField(
         max_length=30, blank=True, default="",
@@ -280,7 +280,7 @@ class CountyPlayer(models.Model):
             ("rejected", "Rejected"),
         ],
         default="not_checked",
-        help_text="Step 1 — manual review of photo, ID document & birth certificate",
+        help_text="Step 1 - manual review of photo, ID document & birth certificate",
     )
     doc_verified_at = models.DateTimeField(null=True, blank=True)
     doc_rejection_reason = models.TextField(blank=True, default="")
@@ -304,7 +304,7 @@ class CountyPlayer(models.Model):
         choices=[
             ("not_checked", "Not Checked"),
             ("clear", "Clear"),
-            ("flagged", "Flagged — Higher League / National Team"),
+            ("flagged", "Flagged - Higher League / National Team"),
         ],
         default="not_checked",
         help_text="Check if player is registered in a higher league or national team",
@@ -324,7 +324,7 @@ class CountyPlayer(models.Model):
             ("failed", "Age Mismatch / Failed"),
         ],
         default="not_checked",
-        help_text="Step 4 — verify age via IPRS (manual now, automated when API available)",
+        help_text="Step 4 - verify age via IPRS (manual now, automated when API available)",
     )
     iprs_age_verified_at = models.DateTimeField(null=True, blank=True)
     iprs_age_notes = models.TextField(blank=True, default="")
@@ -349,7 +349,7 @@ class CountyPlayer(models.Model):
     )
     director_locked = models.BooleanField(
         default=False,
-        help_text="Locked by Director of Sports — no further edits except by Director",
+        help_text="Locked by Director of Sports - no further edits except by Director",
     )
     director_locked_at = models.DateTimeField(null=True, blank=True)
 
@@ -462,7 +462,7 @@ class TechnicalBenchMember(models.Model):
         ordering = ["discipline", "role"]
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} — {self.get_role_display()} ({self.discipline})"
+        return f"{self.first_name} {self.last_name} - {self.get_role_display()} ({self.discipline})"
 
     @property
     def get_full_name(self):
@@ -812,8 +812,8 @@ class HudumaVerificationStatus(models.TextChoices):
 class FIFAConnectStatus(models.TextChoices):
     NOT_CHECKED = "not_checked", "Not Checked"
     PENDING     = "pending",     "Pending Check"
-    CLEAR       = "clear",       "Clear — No Higher League"
-    FLAGGED     = "flagged",     "Flagged — Higher League Found"
+    CLEAR       = "clear",       "Clear - No Higher League"
+    FLAGGED     = "flagged",     "Flagged - Higher League Found"
     ERROR       = "error",       "API Error"
 
 
@@ -925,7 +925,7 @@ class Player(models.Model):
 
     @property
     def is_age_eligible(self):
-        """True if the player falls within the 18–23 age bracket."""
+        """True if the player falls within the 18 - 23 age bracket."""
         return PLAYER_MIN_AGE <= self.age <= PLAYER_MAX_AGE
 
     @property
@@ -1003,7 +1003,7 @@ class Player(models.Model):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  PLAYER VERIFICATION LOG — Audit Trail
+#  PLAYER VERIFICATION LOG - Audit Trail
 # ══════════════════════════════════════════════════════════════════════════════
 
 class VerificationStep(models.TextChoices):
@@ -1033,7 +1033,7 @@ class PlayerVerificationLog(models.Model):
         verbose_name_plural = "Verification Logs"
 
     def __str__(self):
-        return f"{self.player.get_full_name()} — {self.get_step_display()} — {self.action}"
+        return f"{self.player.get_full_name()} - {self.get_step_display()} - {self.action}"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1114,7 +1114,7 @@ class ScoutShortlistSubmission(models.Model):
         verbose_name_plural = "Scout Shortlist Submissions"
 
     def __str__(self):
-        return f"{self.scout.get_full_name()} — {self.get_status_display()}"
+        return f"{self.scout.get_full_name()} - {self.get_status_display()}"
 
     @property
     def can_edit(self):
@@ -1136,7 +1136,7 @@ class ScoutShortlistSubmission(models.Model):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SCOUTING CRITERIA — INTERNATIONAL STANDARDS PER DISCIPLINE
+#   SCOUTING CRITERIA - INTERNATIONAL STANDARDS PER DISCIPLINE
 # ══════════════════════════════════════════════════════════════════════════════
 
 SCOUTING_CRITERIA = {
@@ -1203,7 +1203,7 @@ SCOUTING_CRITERIA = {
     "handball": {
         "label": "Handball (IHF)",
         "criteria": [
-            {"key": "throwing", "label": "Throwing", "description": "Power, accuracy, variety — jump shot, spin shot, hip shot, lob"},
+            {"key": "throwing", "label": "Throwing", "description": "Power, accuracy, variety - jump shot, spin shot, hip shot, lob"},
             {"key": "passing", "label": "Passing", "description": "Accuracy, speed, creativity, bounce pass, lob pass"},
             {"key": "dribbling", "label": "Dribbling & Ball Handling", "description": "Ball control, speed dribble, change of direction"},
             {"key": "defense", "label": "Defensive Play", "description": "Positioning, blocking, tackling, interceptions, 6-0 / 5-1 systems"},
@@ -1226,7 +1226,7 @@ def get_scouting_criteria(sport_type):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SCOUT REPORT — DETAILED PLAYER EVALUATION
+#   SCOUT REPORT - DETAILED PLAYER EVALUATION
 # ══════════════════════════════════════════════════════════════════════════════
 
 class ScoutReport(models.Model):
@@ -1256,7 +1256,7 @@ class ScoutReport(models.Model):
     # Sport-specific criteria scores: {"technical": 8, "tactical": 7, ...}
     criteria_scores = models.JSONField(default=dict)
     overall_rating = models.PositiveSmallIntegerField(
-        help_text="Overall rating 1–10",
+        help_text="Overall rating 1 - 10",
     )
 
     strengths = models.TextField(blank=True)

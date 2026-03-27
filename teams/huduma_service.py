@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP — IPRS Identity Verification via Smile Identity
+MKJ SUPA CUP - IPRS Identity Verification via Smile Identity
 ======================================================
 Verifies player identity (name, DOB, gender, photo) against Kenya's
 IPRS (Integrated Population Registration System) using Smile Identity
@@ -212,7 +212,7 @@ class HudumaKenyaService:
         """
         Look up a person's details by National ID from IPRS.
 
-        This is used on the player registration form — when a team manager
+        This is used on the player registration form - when a team manager
         enters a National ID, this method returns the person's name, date
         of birth, and age so the form fields can be auto-populated.
 
@@ -247,7 +247,7 @@ class HudumaKenyaService:
             )
 
     # ──────────────────────────────────────────────────────────────────────────
-    #  Private — Smile Identity Enhanced KYC API
+    #  Private - Smile Identity Enhanced KYC API
     # ──────────────────────────────────────────────────────────────────────────
 
     def _call_smile_iprs(self, national_id: str) -> dict:
@@ -344,7 +344,7 @@ class HudumaKenyaService:
             }
 
         full_name = raw.get("FullName", "")
-        # Smile returns full name as one string — split into first/last
+        # Smile returns full name as one string - split into first/last
         name_parts = full_name.split() if full_name else []
         first = name_parts[0] if len(name_parts) >= 1 else ""
         last = name_parts[-1] if len(name_parts) >= 2 else ""
@@ -371,7 +371,7 @@ class HudumaKenyaService:
         """Call IPRS for a player object."""
         national_id = player.national_id_number
         if not national_id and player.birth_cert_number:
-            # Birth cert can't be looked up via IPRS — return simulation
+            # Birth cert can't be looked up via IPRS - return simulation
             return self._simulate_iprs(player.birth_cert_number)
         return self._call_smile_iprs(national_id)
 
@@ -380,7 +380,7 @@ class HudumaKenyaService:
         national_id = payload.get("national_id", "")
         if national_id:
             return self._call_smile_iprs(national_id)
-        # No national ID — fall back to simulation
+        # No national ID - fall back to simulation
         return self._simulate_iprs(
             payload.get("birth_cert_number", "") or payload.get("full_name", "unknown")
         )
@@ -398,7 +398,7 @@ class HudumaKenyaService:
         Deterministic simulation of an IPRS response.
         Used when AT_API_KEY is not set (development / demo mode).
         """
-        logger.info("IPRS SIMULATION mode — ID: %s", seed_id)
+        logger.info("IPRS SIMULATION mode - ID: %s", seed_id)
 
         ref = f"SIM-{hashlib.md5(seed_id.encode()).hexdigest()[:10].upper()}"
         id_hash = int(hashlib.md5(seed_id.encode()).hexdigest(), 16)
@@ -480,7 +480,7 @@ class HudumaKenyaService:
                 (today.month, today.day) < (verified_dob.month, verified_dob.day)
             )
 
-        # Check if DOB matches — in simulation mode without DOB from API,
+        # Check if DOB matches - in simulation mode without DOB from API,
         # we rely on the admin to manually confirm
         age_matches = False
         if verified_dob and claimed_dob:
@@ -488,7 +488,7 @@ class HudumaKenyaService:
         elif raw.get("_simulation") and person_found:
             # In simulation mode, mark as needing manual confirmation
             # Admin will finalize the status
-            age_matches = True  # Placeholder — admin must confirm
+            age_matches = True  # Placeholder - admin must confirm
 
         return HudumaResult(
             success=True,
@@ -504,7 +504,7 @@ class HudumaKenyaService:
         )
 
     # ──────────────────────────────────────────────────────────────────────────
-    #  Private — Response parsing
+    #  Private - Response parsing
     # ──────────────────────────────────────────────────────────────────────────
 
     def _parse_iprs_lookup(self, raw: dict, national_id: str) -> IPRSLookupResult:

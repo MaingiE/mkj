@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Appeals — Email Notification System
+MKJ SUPA CUP Appeals - Email Notification System
 
 Sends email notifications to affected parties for:
 1. Appeal submission → respondent team manager
@@ -81,7 +81,7 @@ def notify_appeal_submitted(appeal):
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>Appeal #{appeal.pk} — Response Required</h3>
+            <h3>Appeal #{appeal.pk} - Response Required</h3>
             <p>An appeal has been filed against <strong>{appeal.respondent_team.name}</strong>.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
@@ -102,7 +102,7 @@ def notify_appeal_submitted(appeal):
             <p>Please log in to the MKJ SUPA CUP CMS to review the appeal and submit your response with supporting evidence.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -118,7 +118,7 @@ def notify_appeal_submitted(appeal):
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>Appeal #{appeal.pk} — Submitted Successfully</h3>
+            <h3>Appeal #{appeal.pk} - Submitted Successfully</h3>
             <p>Your appeal against <strong>{appeal.respondent_team.name}</strong> has been submitted.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
@@ -133,7 +133,7 @@ def notify_appeal_submitted(appeal):
             <p>The respondent team has been notified. You will receive further updates as the appeal progresses.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -156,7 +156,7 @@ def notify_hearing_scheduled(hearing):
     hearing_tm = hearing.hearing_time.strftime("%H:%M")
     location_text = hearing.location or "To be confirmed"
 
-    subject = f"[MKJ SUPA CUP] Hearing Scheduled — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Hearing Scheduled - Appeal #{appeal.pk}"
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -164,12 +164,12 @@ def notify_hearing_scheduled(hearing):
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>📅 Hearing Scheduled — Appeal #{appeal.pk}</h3>
+            <h3>📅 Hearing Scheduled - Appeal #{appeal.pk}</h3>
             <p>The Chair of the Jury has scheduled a hearing for this appeal.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} — {appeal.subject}</td></tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appellant:</strong></td>
                     <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.appellant_team.name}</td></tr>
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Respondent:</strong></td>
@@ -192,7 +192,7 @@ def notify_hearing_scheduled(hearing):
             </p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -239,7 +239,7 @@ def notify_decision_published(decision):
             f"This is the final opportunity to challenge this decision.</p>"
         )
 
-    subject = f"[MKJ SUPA CUP] Decision Published — Appeal #{appeal.pk}: {outcome_display}"
+    subject = f"[MKJ SUPA CUP] Decision Published - Appeal #{appeal.pk}: {outcome_display}"
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -247,12 +247,12 @@ def notify_decision_published(decision):
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>🏛️ Decision Published — Appeal #{appeal.pk}</h3>
+            <h3>🏛️ Decision Published - Appeal #{appeal.pk}</h3>
             <p>The Chair of the Jury has published a decision on this appeal.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} — {appeal.subject}</td></tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appellant:</strong></td>
                     <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.appellant_team.name}</td></tr>
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Respondent:</strong></td>
@@ -280,7 +280,7 @@ def notify_decision_published(decision):
             <p>Log in to the MKJ SUPA CUP CMS for full details and evidence.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -296,7 +296,7 @@ def notify_response_submitted(appeal):
     """Notify the appellant team that the respondent has submitted a response."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
 
-    subject = f"[MKJ SUPA CUP] Response Received — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Response Received - Appeal #{appeal.pk}"
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -304,21 +304,21 @@ def notify_response_submitted(appeal):
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>📩 Response Received — Appeal #{appeal.pk}</h3>
+            <h3>📩 Response Received - Appeal #{appeal.pk}</h3>
             <p><strong>{appeal.respondent_team.name}</strong> has submitted a response to your appeal.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} — {appeal.subject}</td></tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Status:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">Response Received — Awaiting Jury Review</td></tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">Response Received - Awaiting Jury Review</td></tr>
             </table>
 
             <p>The appeal will now proceed to the Chair of the Jury for review and determination.</p>
             <p>Log in to the MKJ SUPA CUP CMS to view the full response and evidence.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -344,7 +344,7 @@ def notify_reappeal_filed(appeal):
         .values_list('email', flat=True)
     )
 
-    subject = f"[MKJ SUPA CUP] Re-Appeal Filed — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Re-Appeal Filed - Appeal #{appeal.pk}"
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -352,7 +352,7 @@ def notify_reappeal_filed(appeal):
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>🔄 Re-Appeal Filed — Appeal #{appeal.pk}</h3>
+            <h3>🔄 Re-Appeal Filed - Appeal #{appeal.pk}</h3>
             <p><strong>{appeal.appellant_team.name}</strong> has filed a re-appeal against <strong>{appeal.respondent_team.name}</strong>.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
@@ -372,7 +372,7 @@ def notify_reappeal_filed(appeal):
             <p>Log in to the MKJ SUPA CUP CMS for full details.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -388,14 +388,14 @@ def notify_reappeal_filed(appeal):
 def notify_fee_verified(appeal):
     """Notify appellant that their fee payment has been verified."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
-    subject = f"[MKJ SUPA CUP] Appeal Fee Verified — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Appeal Fee Verified - Appeal #{appeal.pk}"
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>✅ Fee Payment Verified — Appeal #{appeal.pk}</h3>
+            <h3>✅ Fee Payment Verified - Appeal #{appeal.pk}</h3>
             <p>Your appeal fee payment of <strong>KES {appeal.fee_amount:,.0f}</strong> has been verified.</p>
             <p>Reference: <strong>{appeal.fee_reference}</strong></p>
             <p style="background: #e8f5e9; padding: 12px; border-radius: 4px; border-left: 4px solid #4caf50;">
@@ -405,7 +405,7 @@ def notify_fee_verified(appeal):
             <p>Log in to the MKJ SUPA CUP CMS to submit your appeal.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -415,14 +415,14 @@ def notify_fee_verified(appeal):
 def notify_fee_rejected(appeal):
     """Notify appellant that their fee payment was rejected."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
-    subject = f"[MKJ SUPA CUP] Appeal Fee Rejected — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Appeal Fee Rejected - Appeal #{appeal.pk}"
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>❌ Fee Payment Rejected — Appeal #{appeal.pk}</h3>
+            <h3>❌ Fee Payment Rejected - Appeal #{appeal.pk}</h3>
             <p>Your appeal fee payment for appeal <strong>#{appeal.pk}</strong> has been rejected.</p>
             <p style="background: #fce4ec; padding: 12px; border-radius: 4px; border-left: 4px solid #e91e63;">
                 Please resubmit a valid M-Pesa or bank reference for KES {appeal.fee_amount:,.0f}.
@@ -430,7 +430,7 @@ def notify_fee_rejected(appeal):
             <p>Log in to the MKJ SUPA CUP CMS to resubmit your payment reference.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -440,14 +440,14 @@ def notify_fee_rejected(appeal):
 def notify_fee_refunded(appeal):
     """Notify appellant that their fee has been refunded."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
-    subject = f"[MKJ SUPA CUP] Appeal Fee Refunded — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Appeal Fee Refunded - Appeal #{appeal.pk}"
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>💰 Fee Refunded — Appeal #{appeal.pk}</h3>
+            <h3>💰 Fee Refunded - Appeal #{appeal.pk}</h3>
             <p>Your appeal fee of <strong>KES {appeal.fee_amount:,.0f}</strong> for appeal <strong>#{appeal.pk}</strong>
             has been marked for refund.</p>
             <p>Reference: <strong>{appeal.fee_reference}</strong></p>
@@ -456,7 +456,7 @@ def notify_fee_refunded(appeal):
             </p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """
@@ -476,23 +476,23 @@ def notify_hearing_cancelled(hearing):
     hearing_dt = hearing.hearing_date.strftime("%d %b %Y")
     hearing_tm = hearing.hearing_time.strftime("%H:%M")
 
-    subject = f"[MKJ SUPA CUP] Hearing Cancelled — Appeal #{appeal.pk}"
+    subject = f"[MKJ SUPA CUP] Hearing Cancelled - Appeal #{appeal.pk}"
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
             <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
         </div>
         <div style="padding: 20px; background: #f8f9fa;">
-            <h3>🚫 Hearing Cancelled — Appeal #{appeal.pk}</h3>
+            <h3>🚫 Hearing Cancelled - Appeal #{appeal.pk}</h3>
             <p>The hearing scheduled for <strong>{hearing_dt} at {hearing_tm}</strong> has been cancelled.</p>
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} — {appeal.subject}</td></tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
             </table>
             <p>A new hearing may be scheduled. Check the MKJ SUPA CUP CMS for updates.</p>
         </div>
         <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System — This is an automated notification.
+            MKJ SUPA CUP Competition Management System - This is an automated notification.
         </div>
     </div>
     """

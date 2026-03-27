@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Day Team Lists &mdash; {{ discipline_label }} &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Match Day Team Lists - {{ discipline_label }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-people"></i> Match Day Team Lists — {{ discipline_label }}</h2>
+<h2 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"><i class="bi bi-people"></i> Match Day Team Lists - {{ discipline_label }}</h2>
 
 <div class="filter-bar">
     <a href="{% url 'coordinator_squads' %}" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>

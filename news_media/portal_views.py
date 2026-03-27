@@ -1,5 +1,5 @@
 """
-Media Manager Portal — CRUD views for News, Gallery & Videos.
+Media Manager Portal - CRUD views for News, Gallery & Videos.
 Accessible by admin and competition_manager roles.
 """
 from django.shortcuts import render, get_object_or_404, redirect

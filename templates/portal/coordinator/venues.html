@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Venues &mdash; MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Venues - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -48,7 +48,7 @@
 <div class="venue-card">
     <div>
         <h4>{{ v.name }}</h4>
-        <div class="meta">{{ v.county }} &middot; {{ v.city|default:"—" }} &middot; Capacity: {{ v.capacity|default:"—" }} &middot; {{ v.surface|default:"—" }}</div>
+        <div class="meta">{{ v.county }} &middot; {{ v.city|default:" - " }} &middot; Capacity: {{ v.capacity|default:" - " }} &middot; {{ v.surface|default:" - " }}</div>
     </div>
     <div style="display:flex;gap:.35rem;">
         <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="venue_id" value="{{ v.pk }}"><button class="btn btn-sm btn-outline-warning">Deactivate</button></form>
@@ -64,7 +64,7 @@
 <div class="venue-card" style="opacity:.7;">
     <div>
         <h4>{{ v.name }}</h4>
-        <div class="meta">{{ v.county }} &middot; {{ v.city|default:"—" }}</div>
+        <div class="meta">{{ v.county }} &middot; {{ v.city|default:" - " }}</div>
     </div>
     <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="venue_id" value="{{ v.pk }}"><button class="btn btn-sm btn-outline-success">Activate</button></form>
 </div>

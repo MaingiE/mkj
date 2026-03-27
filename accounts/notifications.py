@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP — Centralized Email Notification System
+MKJ SUPA CUP - Centralized Email Notification System
 
 Sends HTML emails for:
   1. Account creation (welcome + credentials)
@@ -11,7 +11,7 @@ Sends HTML emails for:
   7. Team registration → admin, subcounty officer
 
 All emails are dispatched on a background daemon thread so they never
-block the web request — timeouts / SMTP errors only appear in server logs.
+block the web request - timeouts / SMTP errors only appear in server logs.
 """
 import logging
 import threading
@@ -32,7 +32,7 @@ FROM_EMAIL = getattr(settings, 'DEFAULT_FROM_EMAIL', 'MKJ SUPA CUP <info@mkjsupa
 def _send(subject, html_body, recipients, fail_silently=True):
     """
     Send an HTML email on a background daemon thread.
-    Returns immediately — never blocks the web request.
+    Returns immediately - never blocks the web request.
     Filters out blank addresses.  Retries up to 3 times on transient errors.
     """
     recipients = [r for r in (recipients or []) if r]
@@ -55,7 +55,7 @@ def _send(subject, html_body, recipients, fail_silently=True):
             except Exception as exc:
                 if attempt < max_attempts:
                     wait = attempt * 5  # 5s, 10s
-                    logger.warning("✉ Attempt %d/%d failed '%s' → %s: %s — retrying in %ds",
+                    logger.warning("✉ Attempt %d/%d failed '%s' → %s: %s - retrying in %ds",
                                    attempt, max_attempts, subject, recipients, exc, wait)
                     time.sleep(wait)
                 else:
@@ -64,7 +64,7 @@ def _send(subject, html_body, recipients, fail_silently=True):
 
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
-    return True  # fired — delivery result logged asynchronously
+    return True  # fired - delivery result logged asynchronously
 
 
 def _get_subcounty_officers(sub_county):
@@ -128,14 +128,14 @@ body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin:
 <div class="wrap">
  <div class="header">
   <h1>MKJ SUPA CUP</h1>
-  <p>Governor Mutula Kilonzo Junior Super Cup &mdash; Makueni County</p>
+  <p>Governor Mutula Kilonzo Junior Super Cup - Makueni County</p>
  </div>
  <div class="body">
   <h2>{title}</h2>
   {body_content}
  </div>
  <div class="footer">
-  &copy; 2026 MKJ SUPA CUP &mdash; Makueni County Sports Department<br>
+  &copy; 2026 MKJ SUPA CUP - Makueni County Sports Department<br>
   <a href="{SITE_URL}" style="color:#124491">{SITE_URL}</a>
  </div>
 </div>
@@ -143,7 +143,7 @@ body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  1. ACCOUNT CREATED — Welcome + credentials
+#  1. ACCOUNT CREATED - Welcome + credentials
 # ══════════════════════════════════════════════════════════════════════════════
 
 def notify_account_created(user, temporary_password, role_label=None):
@@ -167,7 +167,7 @@ def notify_account_created(user, temporary_password, role_label=None):
   If you did not request this account, please ignore this email.</p>"""
 
     _send(
-        f"Welcome to MKJ SUPA CUP — {role_display}",
+        f"Welcome to MKJ SUPA CUP - {role_display}",
         _base_html("Welcome to the Portal", body),
         [user.email],
     )
@@ -201,7 +201,7 @@ def notify_new_player(player, team=None):
     recipients = list(set(recipients))
 
     _send(
-        f"New Player Registered — {player_name} ({team_name})",
+        f"New Player Registered - {player_name} ({team_name})",
         _base_html("New Player Registration", body),
         recipients,
     )
@@ -248,7 +248,7 @@ def notify_fixture_update(fixture, action='updated'):
     recipients = list(set(recipients))
 
     _send(
-        f"Fixture {action.title()} — {match_label}",
+        f"Fixture {action.title()} - {match_label}",
         _base_html(f"Fixture {action.title()}", body),
         recipients,
     )
@@ -276,7 +276,7 @@ def notify_verification_needed(player, team=None):
 
     recipients = _get_users_by_role('verification_officer')
     _send(
-        f"Verification Required — {player_name}",
+        f"Verification Required - {player_name}",
         _base_html("Player Verification Required", body),
         recipients,
     )
@@ -305,7 +305,7 @@ def notify_squad_submitted(submission):
     recipients = _get_coordinators_for_discipline(discipline)
 
     _send(
-        f"Squad Submitted — {team.name} for {match_label}",
+        f"Squad Submitted - {team.name} for {match_label}",
         _base_html("Squad Submission", body),
         recipients,
     )
@@ -334,7 +334,7 @@ def notify_match_report_submitted(match_report):
     recipients = _get_coordinators_for_discipline(discipline)
 
     _send(
-        f"Match Report Submitted — {match_label}",
+        f"Match Report Submitted - {match_label}",
         _base_html("Match Report for Review", body),
         recipients,
     )
@@ -361,7 +361,7 @@ def notify_team_status(team, action='registered'):
     recipients = list(set(recipients))
 
     _send(
-        f"Team {action.title()} — {team.name}",
+        f"Team {action.title()} - {team.name}",
         _base_html(f"Team {action.title()}", body),
         recipients,
     )
@@ -384,7 +384,7 @@ def notify_password_reset(user, new_password):
 <a href="{SITE_URL}/portal/login/" class="btn">Login Now</a>"""
 
     _send(
-        "Password Reset — MKJ SUPA CUP",
+        "Password Reset - MKJ SUPA CUP",
         _base_html("Password Reset", body),
         [user.email],
     )
@@ -405,7 +405,7 @@ def notify_action_needed(recipients, title, message, action_url=None):
 {action_btn}"""
 
     _send(
-        f"Action Required — {title}",
+        f"Action Required - {title}",
         _base_html(title, body),
         recipients if isinstance(recipients, list) else [recipients],
     )

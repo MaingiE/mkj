@@ -6,7 +6,7 @@
 - Tracks whether credential emails actually send successfully (`email_sent` flag)
 - Falls back to `send_welcome_email` if `send_credentials_email` fails
 - Success message ("password sent to email") only shows when email was **actually delivered**
-- If both email attempts fail, warns admin to reset password manually — **no password is ever displayed in the UI**
+- If both email attempts fail, warns admin to reset password manually - **no password is ever displayed in the UI**
 
 ## 2. Sentry Error Tracking
 **Files:** `requirements.txt`, `mkj_cms/settings.py`
@@ -40,8 +40,8 @@ SERVER_EMAIL=noreply@mkjsupacup.go.ke
 ## 4. Improved Logging
 **File:** `mkj_cms/settings.py`
 
-- Added `mail_admins` handler with `require_debug_false` filter — only fires in production
-- Added `django.request` logger — captures all request errors (4xx/5xx)
+- Added `mail_admins` handler with `require_debug_false` filter - only fires in production
+- Added `django.request` logger - captures all request errors (4xx/5xx)
 - `django.security` logger now also routes to `mail_admins`
 - Verbose formatter includes process and thread IDs for debugging
 

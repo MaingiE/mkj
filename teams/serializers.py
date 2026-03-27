@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Teams — Serializers
+MKJ SUPA CUP Teams - Serializers
 """
 from rest_framework import serializers
 from .models import Team, Player

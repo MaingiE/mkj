@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Accounts — Serializers
+MKJ SUPA CUP Accounts - Serializers
 """
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -10,7 +10,7 @@ User = get_user_model()
 
 class MKJTokenObtainSerializer(TokenObtainPairSerializer):
     """
-    Custom JWT serializer — embeds user role and name in the token payload
+    Custom JWT serializer - embeds user role and name in the token payload
     and returns user profile with the tokens.
     """
     @classmethod

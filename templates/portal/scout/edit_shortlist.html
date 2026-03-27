@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Edit Shortlist Entry — Scout — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Edit Shortlist Entry - Scout - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -26,7 +26,7 @@
             <div>
                 <h3 style="margin:0;font-size:1.1rem;">{{ entry.player.first_name }} {{ entry.player.last_name }}</h3>
                 <div style="font-size:.85rem;color:#666;">{{ entry.player.discipline.registration.get_county_display }} · {{ entry.player.discipline.get_sport_type_display }}</div>
-                <div style="font-size:.85rem;color:#888;">Age: {{ entry.player.age }} · Position: {{ entry.player.position|default:"—" }}</div>
+                <div style="font-size:.85rem;color:#888;">Age: {{ entry.player.age }} · Position: {{ entry.player.position|default:" - " }}</div>
             </div>
         </div>
 

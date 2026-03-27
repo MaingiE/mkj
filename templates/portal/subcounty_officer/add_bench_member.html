@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Add Technical Bench Member &mdash; MKJ SUPA CUP{% endblock %}
+{% block title %}Add Technical Bench Member - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
         <span>Add Bench Member</span>
     </div>
     <h1><i class="bi bi-person-badge"></i> Add Technical Bench Member</h1>
-    <p>{{ reg.county }} County &mdash; {{ discipline.get_sport_type_display }}</p>
+    <p>{{ reg.county }} County - {{ discipline.get_sport_type_display }}</p>
 </div>
 
 <div style="background:#e8edf5;border:1px solid #90caf9;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:.6rem;align-items:flex-start;">
@@ -37,7 +37,7 @@
             <tr style="border-bottom:1px solid #eee">
                 <td style="padding:.5rem .8rem;font-weight:600">{{ m.get_role_display }}</td>
                 <td style="padding:.5rem .8rem">{{ m.get_full_name }}</td>
-                <td style="padding:.5rem .8rem">{{ m.phone|default:"—" }}</td>
+                <td style="padding:.5rem .8rem">{{ m.phone|default:" - " }}</td>
                 <td style="padding:.5rem .8rem">
                     <form method="post" action="{% url 'subcounty_officer_delete_bench_member' member_pk=m.pk %}" style="margin:0"
                           onsubmit="return confirm('Remove {{ m.get_full_name }}?')">

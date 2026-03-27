@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Verification Logs — {{ player.get_full_name }} — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Verification Logs - {{ player.get_full_name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -48,14 +48,14 @@
                             {% endif %}
                         </td>
                         <td style="font-size:.85rem">{% if log.performed_by %}{{ log.performed_by.get_full_name }}{% else %}System{% endif %}</td>
-                        <td style="font-size:.85rem;max-width:250px">{{ log.notes|default:"—" }}</td>
+                        <td style="font-size:.85rem;max-width:250px">{{ log.notes|default:" - " }}</td>
                         <td style="font-size:.8rem;max-width:200px;word-break:break-all;color:#888">
                             {% if log.details %}
                             <details>
                                 <summary style="cursor:pointer;color:#124491">View</summary>
                                 <pre style="font-size:.75rem;margin-top:.25rem;white-space:pre-wrap">{{ log.details }}</pre>
                             </details>
-                            {% else %}—{% endif %}
+                            {% else %} - {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

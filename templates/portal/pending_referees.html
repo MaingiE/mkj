@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Pending Referees — MKJ SUPA CUP Portal{% endblock %}
+{% block title %}Pending Referees - MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -57,7 +57,7 @@
                         <td>
                             <span class="badge" style="background:#e8f5ed;color:#124491">{{ profile.get_level_display }}</span>
                         </td>
-                        <td>{{ profile.county|default:"—" }}</td>
+                        <td>{{ profile.county|default:" - " }}</td>
                         <td>{{ profile.years_experience }} yr{{ profile.years_experience|pluralize }}</td>
                         <td style="white-space:nowrap">{{ profile.created_at|date:"d M Y" }}</td>
                         <td style="white-space:nowrap">

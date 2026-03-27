@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Matches — Views
+MKJ SUPA CUP Matches - Views
 """
 from rest_framework import generics, status, permissions
 from rest_framework.exceptions import PermissionDenied
@@ -202,7 +202,7 @@ class MatchReportApproveView(APIView):
 
 def _update_standings(fixture):
     """
-    Legacy helper — delegates to stats_engine.
+    Legacy helper - delegates to stats_engine.
     Kept for backward compatibility with web_views.py calls.
     """
     from matches.stats_engine import update_pool_standings

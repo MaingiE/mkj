@@ -752,7 +752,7 @@ tr:hover .al-ip { border-color: rgba(74,222,128,.28); box-shadow: 0 0 8px rgba(7
               {% if log.ip_address %}
               <span class="al-ip"><span class="ip-dot"></span>{{ log.ip_address }}</span>
               {% else %}
-              <span style="font-family:var(--f-mono);font-size:12px;color:var(--t3)">—</span>
+              <span style="font-family:var(--f-mono);font-size:12px;color:var(--t3)"> - </span>
               {% endif %}
             </td>
 
@@ -785,7 +785,7 @@ tr:hover .al-ip { border-color: rgba(74,222,128,.28); box-shadow: 0 0 8px rgba(7
     {% if page_obj.has_other_pages %}
     <div class="al-pag-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
       <div class="al-pag-info">
-        Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+        Showing <strong>{{ page_obj.start_index }} - {{ page_obj.end_index }}</strong>
         of <strong>{{ page_obj.paginator.count|intcomma }}</strong> entries
       </div>
       <nav>

@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP Teams — Payment Receipt Notifications
+MKJ SUPA CUP Teams - Payment Receipt Notifications
 
 Sends email receipts when payments are confirmed by the treasurer.
 Recipients:Z
@@ -67,7 +67,7 @@ def send_payment_receipt(team, confirmed_by_user):
         logger.warning("No recipients found for payment receipt for team %s", team.name)
         return False
     
-    subject = f"[MKJ SUPA CUP] Payment Receipt — {team.name} Registration Confirmed"
+    subject = f"[MKJ SUPA CUP] Payment Receipt - {team.name} Registration Confirmed"
     
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; border: 2px solid #004D1A; border-radius: 8px;">
@@ -125,7 +125,7 @@ def send_payment_receipt(team, confirmed_by_user):
             
             <!-- Status Banner -->
             <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 6px; text-align: center; margin: 20px 0;">
-                <strong>✅ PAYMENT CONFIRMED — Team Registration Approved</strong>
+                <strong>✅ PAYMENT CONFIRMED - Team Registration Approved</strong>
             </div>
             
             <!-- Important Notes -->

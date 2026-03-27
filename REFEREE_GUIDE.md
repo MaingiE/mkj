@@ -1,4 +1,4 @@
-# MKJ SUPA CUP — Referee Guide
+# MKJ SUPA CUP - Referee Guide
 
 ## Overview
 
@@ -49,21 +49,21 @@ Referees can edit:
 **URL:** `/portal/referee/`
 
 The referee's home screen shows:
-- **Pending confirmations** — appointments waiting for accept/decline
-- **Today's matches** — current day fixtures
-- **Upcoming matches** — future confirmed appointments
-- **Completed matches** — past fixtures
-- **Pending match reports** — completed matches needing reports (head officials only)
-- **Draft/returned reports** — reports in progress or sent back for revision
-- **Pending squads** — team lists awaiting referee approval (head officials only)
+- **Pending confirmations** - appointments waiting for accept/decline
+- **Today's matches** - current day fixtures
+- **Upcoming matches** - future confirmed appointments
+- **Completed matches** - past fixtures
+- **Pending match reports** - completed matches needing reports (head officials only)
+- **Draft/returned reports** - reports in progress or sent back for revision
+- **Pending squads** - team lists awaiting referee approval (head officials only)
 
 ### 4. Appointment Management
 
 #### Coordinator Side
 
 **URLs:**
-- `/portal/coordinator/appointments/` — Overview of all fixtures with staffing status
-- `/portal/coordinator/appointments/<fixture_pk>/` — Appoint officials to a specific fixture
+- `/portal/coordinator/appointments/` - Overview of all fixtures with staffing status
+- `/portal/coordinator/appointments/<fixture_pk>/` - Appoint officials to a specific fixture
 
 **Sport-specific roles:**
 
@@ -72,7 +72,7 @@ The referee's home screen shows:
 | Referee (head) | 1st Referee | Crew Chief | Referee 1 |
 | Assistant Referee 1 | 2nd Referee | Umpire 1 | Referee 2 |
 | Assistant Referee 2 | Scorer | Umpire 2 | Timekeeper |
-| Reserve Referee | Line Judge 1–4 | Commissioner | Scorekeeper |
+| Reserve Referee | Line Judge 1 - 4 | Commissioner | Scorekeeper |
 | Fourth Official | Assistant Scorer | Shot Clock Operator | Delegate |
 | Match Commissioner | | Scorer | |
 
@@ -99,7 +99,7 @@ Referees confirm or decline via the dashboard or API (`POST /api/v1/referees/app
 
 ### 5. Availability Declaration
 
-**Model:** `RefereeAvailability` — one entry per referee per date
+**Model:** `RefereeAvailability` - one entry per referee per date
 
 | Status | Meaning |
 |--------|---------|
@@ -139,7 +139,7 @@ Only the **head official** (or admin) can submit match reports.
 | **Duration** | Match duration, added time (HT/FT) |
 | **Conditions** | Pitch condition (excellent/good/fair/poor), weather |
 | **Attendance** | Spectator count |
-| **Events** | Goal, yellow card, red card, substitution, penalty, own goal — with player, team, minute |
+| **Events** | Goal, yellow card, red card, substitution, penalty, own goal - with player, team, minute |
 | **Abandonment** | Flag + reason if match abandoned |
 | **Sport-specific** | Sets won (volleyball), suspensions (handball), overtime periods |
 | **Notes** | Referee freeform notes |
@@ -165,9 +165,9 @@ Auto-populated data:
 
 ### 8. Performance Reviews
 
-**Model:** `RefereeReview` — one per referee per fixture
+**Model:** `RefereeReview` - one per referee per fixture
 
-Coordinators rate referees after matches on a 1–10 scale:
+Coordinators rate referees after matches on a 1 - 10 scale:
 
 | Criterion | Description |
 |-----------|-------------|
@@ -258,7 +258,7 @@ Post-match: Head official submits match report (scores, events, cards)
             └── RETURNED ──► referee revises
         │
         ▼
-Coordinator rates referee performance (1–10 on 5 criteria)
+Coordinator rates referee performance (1 - 10 on 5 criteria)
         │
         ▼
 avg_rating updated on referee profile

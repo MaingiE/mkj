@@ -1,4 +1,4 @@
-# MKJ SUPA CUP — Team Manager Guide
+# MKJ SUPA CUP - Team Manager Guide
 
 ## Overview
 
@@ -19,7 +19,7 @@ Team Managers are responsible for managing their team's match-day squads, monito
 
 ### 1. Team Manager Onboarding
 
-- A county registers a discipline (e.g., Football Men — Makueni Sub-County)
+- A county registers a discipline (e.g., Football Men - Makueni Sub-County)
 - The **Technical Bench** is populated: Team Manager, Head Coach, Assistant Coach
 - When a Team Manager is added to the Technical Bench, a **user account** is auto-created with:
   - Role: `team_manager`
@@ -43,7 +43,7 @@ The Team Manager's home screen shows:
 
 - Lists all **verified** county players in the manager's discipline
 - Only verified players (ID + Huduma + FIFA Connect cleared) are eligible for squad selection
-- Read-only view — players are registered and verified at the county/sub-county level
+- Read-only view - players are registered and verified at the county/sub-county level
 
 ### 4. Match-Day Squad Selection
 
