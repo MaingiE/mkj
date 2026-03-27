@@ -79,12 +79,19 @@ MKJ SUPA CUP Administration
     from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.org')
 
     def _worker():
-        try:
-            email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
-            email.send(fail_silently=False)
-            log.info("Welcome email sent to %s", recipient)
-        except Exception as exc:
-            log.error("Welcome email failed for %s: %s", recipient, exc)
+        import time
+        for attempt in range(1, 4):
+            try:
+                email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
+                email.send(fail_silently=False)
+                log.info("Welcome email sent to %s", recipient)
+                return
+            except Exception as exc:
+                if attempt < 3:
+                    log.warning("Welcome email attempt %d/3 failed for %s: %s — retrying", attempt, recipient, exc)
+                    time.sleep(attempt * 5)
+                else:
+                    log.error("Welcome email failed for %s after 3 attempts: %s", recipient, exc)
 
     threading.Thread(target=_worker, daemon=True).start()
     return True
@@ -114,12 +121,19 @@ MKJ SUPA CUP Administration
     from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.org')
 
     def _worker():
-        try:
-            email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
-            email.send(fail_silently=False)
-            log.info("Password reset email sent to %s", recipient)
-        except Exception as exc:
-            log.error("Password reset email failed for %s: %s", recipient, exc)
+        import time
+        for attempt in range(1, 4):
+            try:
+                email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
+                email.send(fail_silently=False)
+                log.info("Password reset email sent to %s", recipient)
+                return
+            except Exception as exc:
+                if attempt < 3:
+                    log.warning("Password reset email attempt %d/3 failed for %s: %s — retrying", attempt, recipient, exc)
+                    time.sleep(attempt * 5)
+                else:
+                    log.error("Password reset email failed for %s after 3 attempts: %s", recipient, exc)
 
     threading.Thread(target=_worker, daemon=True).start()
     return True

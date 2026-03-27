@@ -5218,6 +5218,10 @@ def county_admin_delegation_members_view(request):
     """Sub-county officer manages county-level delegation officials."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
 
+    if reg is None:
+        messages.error(request, 'No county registration found. Please ensure your county is set in your profile.')
+        return redirect('subcounty_officer_dashboard')
+
     if not reg.is_approved:
         messages.warning(request, 'Registration must be approved before adding delegation members.')
         return redirect('subcounty_officer_dashboard')
@@ -5286,6 +5290,9 @@ def county_admin_delegation_members_view(request):
 def county_admin_delete_delegation_member_view(request, member_pk):
     """Remove a county-level delegation member and linked account if present."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
+    if reg is None:
+        messages.error(request, 'No county registration found. Please ensure your county is set in your profile.')
+        return redirect('subcounty_officer_dashboard')
     member = get_object_or_404(CountyDelegationMember, pk=member_pk, registration=reg)
 
     if request.method == 'POST':
@@ -5307,6 +5314,9 @@ def county_admin_delete_delegation_member_view(request, member_pk):
 def county_admin_verification_view(request):
     """Sub-county officer views verification status of all their players."""
     reg = _get_primary_registration_for_user(request.user, auto_create=True)
+    if reg is None:
+        messages.error(request, 'No county registration found. Please ensure your county is set in your profile.')
+        return redirect('subcounty_officer_dashboard')
     disciplines = _discipline_queryset_for_user(request.user).prefetch_related('players')
 
     approved_players = []
@@ -7012,6 +7022,9 @@ def subcounty_officer_dashboard_view(request):
     user = request.user
     sub_county = user.sub_county or 'Unassigned'
     county_reg = _get_primary_registration_for_user(user, auto_create=True)
+    if county_reg is None:
+        messages.warning(request, 'Assign a county before accessing the dashboard.')
+        return redirect('dashboard')
     disciplines = _discipline_queryset_for_user(user)
     players_count = CountyPlayer.objects.filter(discipline__in=disciplines).count()
     teams = Team.objects.filter(source_discipline__in=disciplines)

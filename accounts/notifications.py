@@ -33,7 +33,7 @@ def _send(subject, html_body, recipients, fail_silently=True):
     """
     Send an HTML email on a background daemon thread.
     Returns immediately — never blocks the web request.
-    Filters out blank addresses.
+    Filters out blank addresses.  Retries up to 3 times on transient errors.
     """
     recipients = [r for r in (recipients or []) if r]
     if not recipients:
@@ -43,13 +43,24 @@ def _send(subject, html_body, recipients, fail_silently=True):
     plain = strip_tags(html_body)
 
     def _worker():
-        try:
-            msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients)
-            msg.attach_alternative(html_body, "text/html")
-            msg.send(fail_silently=False)
-            logger.info("✉ Sent '%s' → %s", subject, recipients)
-        except Exception as exc:
-            logger.error("✉ FAILED '%s' → %s: %s", subject, recipients, exc)
+        import time
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients)
+                msg.attach_alternative(html_body, "text/html")
+                msg.send(fail_silently=False)
+                logger.info("✉ Sent '%s' → %s", subject, recipients)
+                return
+            except Exception as exc:
+                if attempt < max_attempts:
+                    wait = attempt * 5  # 5s, 10s
+                    logger.warning("✉ Attempt %d/%d failed '%s' → %s: %s — retrying in %ds",
+                                   attempt, max_attempts, subject, recipients, exc, wait)
+                    time.sleep(wait)
+                else:
+                    logger.error("✉ FAILED '%s' → %s after %d attempts: %s",
+                                 subject, recipients, max_attempts, exc)
 
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
