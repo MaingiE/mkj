@@ -75,6 +75,7 @@ img { max-width: 100%; }
     background: rgba(255,255,255,.9);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     transition: background .3s, box-shadow .3s;
+    pointer-events: auto;
 }
 .fkf-nav--solid {
     background: rgba(255,255,255,.97);
@@ -151,13 +152,19 @@ img { max-width: 100%; }
 /* Hamburger */
 .fkf-nav-toggle {
     display: none; background: none; border: none; cursor: pointer;
-    width: 44px; height: 44px; position: relative; z-index: 10002;
+    width: 48px; height: 48px; position: relative; z-index: 10002;
     padding: 10px 6px;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    pointer-events: auto !important;
+    -webkit-user-select: none;
+    user-select: none;
 }
 .fkf-nav-toggle span {
-    display: block; width: 100%; height: 2px; background: #124491;
+    display: block; width: 100%; height: 2.5px; background: #124491;
     position: absolute; left: 6px; right: 6px; width: calc(100% - 12px); transition: all .3s;
+    pointer-events: none;
+    border-radius: 2px;
 }
 .fkf-nav-toggle span:nth-child(1) { top: 12px; }
 .fkf-nav-toggle span:nth-child(2) { top: 21px; }
@@ -166,6 +173,10 @@ img { max-width: 100%; }
 .fkf-nav-toggle.open span:nth-child(1) { top: 21px; transform: rotate(45deg); }
 .fkf-nav-toggle.open span:nth-child(2) { opacity: 0; }
 .fkf-nav-toggle.open span:nth-child(3) { top: 21px; transform: rotate(-45deg); }
+
+/* When navbar is transparent (over dark hero), make hamburger bars white */
+.fkf-nav:not(.fkf-nav--solid) .fkf-nav-toggle span { background: #fff; }
+.fkf-nav:not(.fkf-nav--solid) .fkf-nav-toggle.open span { background: #124491; }
 
 /* ──────────────────────────────────────────────────────────────────────────
    HERO - DARK CINEMATIC

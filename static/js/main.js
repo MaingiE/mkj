@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var pubNavToggle = document.querySelector('.pub-nav-toggle, .fkf-nav-toggle');
     var pubNavLinks = document.querySelector('.pub-nav-links, .fkf-nav-links');
     if (pubNavToggle && pubNavLinks) {
+        var pubNavBusy = false; // debounce guard
+
         function publicNavIsOpen() {
             return pubNavLinks.classList.contains('show') || pubNavLinks.classList.contains('open');
         }
@@ -95,6 +97,14 @@ document.addEventListener('DOMContentLoaded', function () {
             pubNavToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             document.body.classList.toggle('public-nav-open', isOpen);
         }
+        function handleToggle(e) {
+            if (pubNavBusy) return;
+            pubNavBusy = true;
+            e.preventDefault();
+            e.stopPropagation();
+            setPublicNavState(!publicNavIsOpen());
+            setTimeout(function(){ pubNavBusy = false; }, 300);
+        }
 
         if (!pubNavToggle.getAttribute('aria-expanded')) {
             pubNavToggle.setAttribute('aria-expanded', 'false');
@@ -103,11 +113,13 @@ document.addEventListener('DOMContentLoaded', function () {
             pubNavToggle.setAttribute('aria-controls', pubNavLinks.id);
         }
 
-        pubNavToggle.addEventListener('click', function (e) {
+        // Click handler (works on desktop + most mobile)
+        pubNavToggle.addEventListener('click', handleToggle);
+        // Touchstart fallback for mobile browsers that may not fire click on buttons
+        pubNavToggle.addEventListener('touchend', function (e) {
             e.preventDefault();
-            e.stopPropagation();
-            setPublicNavState(!publicNavIsOpen());
-        });
+            handleToggle(e);
+        }, { passive: false });
 
         // Close public nav when a link is clicked
         pubNavLinks.querySelectorAll('a').forEach(function (link) {
