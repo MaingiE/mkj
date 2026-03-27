@@ -262,7 +262,13 @@
             {% if steps.2.passed %}background:#2E7D32;color:#fff{% elif steps.2.failed %}background:#C62828;color:#fff{% elif steps.2.active %}background:#124491;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
             {% if steps.2.passed %}✓{% elif steps.2.failed %}✗{% else %}3{% endif %}
         </span>
-        <h3 style="margin:0">🏆 Step 3 — Higher Leagues (National Teams, KUSF, FIFA Connect)</h3>
+        <h3 style="margin:0">
+                {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
+                ⚽ Step 3 — FIFA Connect &amp; Higher Leagues (FKF, KUSF, FIFA Connect)
+                {% else %}
+                🏆 Step 3 — Higher Leagues Check (National Teams, KUSF Federation)
+                {% endif %}
+            </h3>
         {% if steps.2.passed %}<span style="margin-left:auto;background:#e8f5ed;color:#2E7D32;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">CLEAR</span>{% endif %}
         {% if steps.2.failed %}<span style="margin-left:auto;background:#fce4ec;color:#C62828;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">FLAGGED</span>{% endif %}
         {% if steps.2.locked %}<span style="margin-left:auto;color:#bbb;font-size:.8rem"><i class="bi bi-lock-fill"></i> Complete Step 2 first</span>{% endif %}
@@ -270,13 +276,31 @@
     {% if not steps.2.locked %}
     <div class="card-body">
         {% if steps.2.active %}
+        <!-- What to check — discipline-specific guidance -->
+        <div style="background:#f0f4ff;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#333">
+            {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
+            <strong>⚽ Football — check:</strong> FKF registered clubs (KPL, NSL, FKF-PL), KUSF (university teams), FIFA Connect player registry.
+            {% elif player.discipline.sport_type == 'volleyball_men' or player.discipline.sport_type == 'volleyball_women' %}
+            <strong>🏐 Volleyball — check:</strong> KVF (Kenya Volleyball Federation) national teams, KUSF university competitions, Division 1 clubs.
+            {% elif 'basketball' in player.discipline.sport_type %}
+            <strong>🏀 Basketball — check:</strong> Basketball Kenya Federation (BKF) national teams, KUSF competitions, KBL clubs.
+            {% elif 'handball' in player.discipline.sport_type %}
+            <strong>🤾 Handball — check:</strong> Kenya Handball Federation national teams, KUSF competitions, premier league clubs.
+            {% else %}
+            <strong>🏆 Check:</strong> National federation teams, KUSF university competitions, higher league clubs.
+            {% endif %}
+        </div>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
             <form method="post" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="league_clear">
                 <div>
                     <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">Notes (optional)</label>
+                    {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
                     <input type="text" name="higher_league_details" placeholder="e.g. Checked FKF, KUSF, FIFA Connect — clear" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px">
+                    {% else %}
+                    <input type="text" name="higher_league_details" placeholder="e.g. Checked national teams, KUSF — clear" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px">
+                    {% endif %}
                 </div>
                 <button type="submit" style="padding:.6rem 1.5rem;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">✅ Player is Clear</button>
             </form>
@@ -284,10 +308,32 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="league_flag">
                 <div>
-                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">League / Team details</label>
+                    <label style="font-size:.75rem;font-weight:600;display:block;margin-bottom:.25rem">
+                        {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
+                        League / Club (FKF, FIFA Connect)
+                        {% else %}
+                        Federation / Team details
+                        {% endif %}
+                    </label>
+                    {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
                     <input type="text" name="higher_league_details" placeholder="e.g. KPL — Gor Mahia FC" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                    {% elif player.discipline.sport_type == 'volleyball_men' or player.discipline.sport_type == 'volleyball_women' %}
+                    <input type="text" name="higher_league_details" placeholder="e.g. Kenya Volleyball National Team" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                    {% elif 'basketball' in player.discipline.sport_type %}
+                    <input type="text" name="higher_league_details" placeholder="e.g. Kenya Basketball National Team / KUSF" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                    {% elif 'handball' in player.discipline.sport_type %}
+                    <input type="text" name="higher_league_details" placeholder="e.g. Kenya Handball National Team" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                    {% else %}
+                    <input type="text" name="higher_league_details" placeholder="e.g. National Team / KUSF" style="padding:.5rem .75rem;border:1px solid #ddd;border-radius:6px;min-width:250px" required>
+                    {% endif %}
                 </div>
-                <button type="submit" style="padding:.6rem 1.5rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">🚩 Flag — Higher League</button>
+                <button type="submit" style="padding:.6rem 1.5rem;background:#C62828;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem">
+                    {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
+                    🚩 Flag — Higher League / FIFA
+                    {% else %}
+                    🚩 Flag — Higher League / National Team
+                    {% endif %}
+                </button>
             </form>
         </div>
         {% elif steps.2.failed %}

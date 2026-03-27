@@ -1,4 +1,4 @@
-<!-- Sidebar Navigation -->
+﻿<!-- Sidebar Navigation -->
 <aside class="sidebar">
     {% if user.role == 'admin' %}
     <!-- ADMIN SIDEBAR -->
@@ -31,7 +31,7 @@
     <div class="sidebar-section">
         <div class="sidebar-section-toggle"><h4>System</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
-            <a href="{% url 'manage_league_admins' %}" class="sidebar-link"><span class="icon"><i class="bi bi-people-fill"></i></span> User Management</a>
+            <a href="{% url 'manage_users' %}" class="sidebar-link"><span class="icon"><i class="bi bi-people-fill"></i></span> User Management</a>
             <a href="{% url 'activity_logs' %}" class="sidebar-link"><span class="icon"><i class="bi bi-journal-text"></i></span> Activity Logs</a>
             <a href="{% url 'audit_report' %}" class="sidebar-link"><span class="icon"><i class="bi bi-shield-check"></i></span> Audit Report</a>
             <a href="{% url 'appeals_list' %}" class="sidebar-link"><span class="icon"><i class="bi bi-briefcase"></i></span> Appeals</a>
@@ -296,7 +296,7 @@
         <div class="sidebar-section-body">
             <a href="{% url 'subcounty_officer_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
             <a href="{% url 'subcounty_officer_disciplines' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_disciplines' or request.resolver_match.url_name == 'subcounty_officer_discipline_players' or request.resolver_match.url_name == 'subcounty_officer_add_player' %}active{% endif %}"><span class="icon"><i class="bi bi-person-vcard"></i></span> Disciplines &amp; Players</a>
-            <a href="{% url 'subcounty_officer_delegation_members' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_delegation_members' %}active{% endif %}"><span class="icon"><i class="bi bi-person-badge"></i></span> Delegation Members</a>
+            <a href="{% url 'subcounty_officer_delegation_members' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_delegation_members' %}active{% endif %}"><span class="icon"><i class="bi bi-person-badge"></i></span> Sub-County Delegation</a>
             <a href="{% url 'subcounty_officer_referees' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_referees' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
             <a href="{% url 'subcounty_officer_verification' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_verification' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-check"></i></span> Verification Status</a>
             <a href="{% url 'subcounty_verified_players' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_verified_players' %}active{% endif %}"><span class="icon"><i class="bi bi-patch-check-fill"></i></span> Verified Players</a>
@@ -344,7 +344,7 @@
     {% elif user.role == 'chief_officer_sports' %}
     <!-- CHIEF OFFICER SPORTS SIDEBAR -->
     <div class="sidebar-section">
-        <div class="sidebar-section-toggle"><h4>Chief Officer — Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-toggle"><h4>Chief Officer â€” Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'chief_officer_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chief_officer_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-award"></i></span> Dashboard</a>
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>
@@ -374,7 +374,7 @@
     {% elif user.role == 'waziri_sports' %}
     <!-- WAZIRI SPORTS SIDEBAR -->
     <div class="sidebar-section">
-        <div class="sidebar-section-toggle"><h4>Waziri — Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-toggle"><h4>Waziri â€” Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'waziri_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'waziri_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-mortarboard-fill"></i></span> Dashboard</a>
             <a href="{% url 'competitions_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'competitions_list' %}active{% endif %}"><span class="icon"><i class="bi bi-trophy"></i></span> Competitions</a>

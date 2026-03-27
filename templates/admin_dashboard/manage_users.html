@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}User Management - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
@@ -147,7 +147,7 @@
         flex: 1;
     }
 
-    /* ═══ MODERNIZED USER TABLE ═══ */
+    /* â•â•â• MODERNIZED USER TABLE â•â•â• */
     .user-table {
         width: 100%;
         border-collapse: separate;
@@ -259,7 +259,7 @@
         color: #212121;
     }
 
-    /* ═══ ACTIONS DROPDOWN ═══ */
+    /* â•â•â• ACTIONS DROPDOWN â•â•â• */
     .actions-dropdown {
         position: relative;
         display: inline-block;
@@ -537,7 +537,7 @@
         <h3 style="color:#fff;">+ Create New User</h3>
     </div>
     <div class="card-body">
-        <form method="post" action="{% url 'create_league_admin' %}">
+        <form method="post" action="{% url 'create_user' %}">
             {% csrf_token %}
             <div class="create-form-grid">
                 <div>
@@ -637,7 +637,7 @@
                         value="{{ search_query }}">
                     <button type="submit" class="btn btn-primary btn-sm">Search</button>
                     {% if search_query %}
-                    <a href="{% url 'manage_league_admins' %}" class="btn btn-outline btn-sm" title="Clear">&times;</a>
+                    <a href="{% url 'manage_users' %}" class="btn btn-outline btn-sm" title="Clear">&times;</a>
                     {% endif %}
                 </div>
             </div>
@@ -713,7 +713,7 @@
                             style="color:#bbb;">Never</span>{% endif %}
                     </td>
                     <td>
-                        <!-- ═══ ACTIONS DROPDOWN ═══ -->
+                        <!-- â•â•â• ACTIONS DROPDOWN â•â•â• -->
                         <div class="actions-dropdown">
                             <button type="button" class="actions-trigger" onclick="toggleDropdown(this)">
                                 Actions
@@ -734,7 +734,7 @@
                                 </a>
                                 <div class="menu-divider"></div>
                                 <div class="menu-label">Account</div>
-                                <a href="{% url 'toggle_league_admin_status' user_id=user.id %}"
+                                <a href="{% url 'toggle_user_status' user_id=user.id %}"
                                     onclick="return confirm('{% if user.is_active %}Deactivate{% else %}Activate{% endif %} {{ user.email }}?')">
                                     <span class="menu-icon toggle">
                                         {% if user.is_active %}<i class="bi bi-pause-fill"></i>{% else %}<i
@@ -742,7 +742,7 @@
                                     </span>
                                     {% if user.is_active %}Deactivate{% else %}Activate{% endif %} User
                                 </a>
-                                <a href="{% url 'reset_league_admin_password' user_id=user.id %}"
+                                <a href="{% url 'reset_user_password' user_id=user.id %}"
                                     onclick="return confirm('Reset password for {{ user.email }}?')">
                                     <span class="menu-icon key"><i class="bi bi-key"></i></span>
                                     Reset Password

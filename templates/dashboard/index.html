@@ -1,5 +1,5 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard — MKJ SUPA CUP Portal{% endblock %}
+﻿{% extends 'base.html' %}
+{% block title %}Dashboard â€” MKJ SUPA CUP Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -87,7 +87,7 @@
             </a>
             {% endif %}
 
-            {# ── SYSTEM ADMIN FULL PORTAL HUB (testing convenience) ── #}
+            {# â”€â”€ SYSTEM ADMIN FULL PORTAL HUB (testing convenience) â”€â”€ #}
             {% if user.role == 'admin' or user.is_superuser %}
             </div><!-- end quick-actions -->
             </div><!-- end card-body -->
@@ -96,7 +96,7 @@
             <!-- Admin Portal Hub -->
             <div class="card mb-1">
                 <div class="card-header" style="background:linear-gradient(90deg,#0C1B3A,#1A6FB5);color:#fff;">
-                    <h3 style="color:#fff;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>System Admin — All Portals</h3>
+                    <h3 style="color:#fff;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>System Admin â€” All Portals</h3>
                     <small style="color:#E8B91E;">Full system access for testing</small>
                 </div>
                 <div class="card-body">
@@ -206,8 +206,8 @@
                         </a>
                         <a href="{% url 'subcounty_officer_delegation_members' %}" class="action-card">
                             <div class="action-icon"><i class="bi bi-people-fill"></i></div>
-                            <h4>Delegation</h4>
-                            <p>County delegation members</p>
+                            <h4>Sub-County Delegation</h4>
+                            <p>Sub-county delegation members</p>
                         </a>
                     </div>
 
@@ -364,7 +364,7 @@
                             <h4>Statistics</h4>
                             <p>System-wide statistics</p>
                         </a>
-                        <a href="{% url 'manage_league_admins' %}" class="action-card">
+                        <a href="{% url 'manage_users' %}" class="action-card">
                             <div class="action-icon"><i class="bi bi-person-plus"></i></div>
                             <h4>Create Users</h4>
                             <p>Add system users</p>
@@ -510,7 +510,7 @@
                             {% if f.home_score is not None %}
                             <strong>{{ f.home_score }} - {{ f.away_score }}</strong>
                             {% else %}
-                            —
+                            â€”
                             {% endif %}
                         </td>
                     </tr>

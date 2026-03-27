@@ -40,12 +40,12 @@ urlpatterns = [
     path('transfers/override/<int:transfer_id>/', views.admin_override_transfer, name='override_transfer'),
     
     # User Management (Super Admin Only)
-    path('users/', views.manage_league_admins, name='manage_league_admins'),
-    path('users/create/', views.create_league_admin, name='create_league_admin'),
+    path('users/', views.manage_users, name='manage_users'),
+    path('users/create/', views.create_user, name='create_user'),
     path('users/<int:user_id>/', views.user_detail_view, name='user_detail'),
     path('users/<int:user_id>/edit/', views.user_edit_profile, name='user_edit_profile'),
-    path('users/<int:user_id>/toggle/', views.toggle_league_admin_status, name='toggle_league_admin_status'),
-    path('users/<int:user_id>/reset-password/', views.reset_league_admin_password, name='reset_league_admin_password'),
+    path('users/<int:user_id>/toggle/', views.toggle_user_status, name='toggle_user_status'),
+    path('users/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
     path('users/<int:user_id>/set-password/', views.user_force_password, name='user_force_password'),
     path('users/<int:user_id>/edit-roles/', views.edit_user_roles, name='edit_user_roles'),
     path('users/<int:user_id>/suspend/', views.user_suspend_toggle, name='user_suspend_toggle'),

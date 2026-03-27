@@ -231,15 +231,24 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE          = "Africa/Nairobi"
 
 # ── EMAIL ──────────────────────────────────────────────────────────────────────
-EMAIL_BACKEND    = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST       = env("EMAIL_HOST", default="smtp.gmail.com")
-EMAIL_PORT       = env.int("EMAIL_PORT", default=465)
-EMAIL_USE_TLS    = env.bool("EMAIL_USE_TLS", default=False)
-EMAIL_USE_SSL    = env.bool("EMAIL_USE_SSL", default=True)
-EMAIL_TIMEOUT    = 30
-EMAIL_HOST_USER  = env("EMAIL_HOST_USER",     default="")
+# Use SMTP backend only when EMAIL_HOST_USER is set; fall back to console locally.
+_email_host_user = env("EMAIL_HOST_USER", default="")
+EMAIL_BACKEND    = env(
+    "EMAIL_BACKEND",
+    default=(
+        "django.core.mail.backends.smtp.EmailBackend"
+        if _email_host_user
+        else "django.core.mail.backends.console.EmailBackend"
+    ),
+)
+EMAIL_HOST       = env("EMAIL_HOST",     default="smtp.gmail.com")
+EMAIL_PORT       = env.int("EMAIL_PORT", default=587)   # 587+STARTTLS works on Railway; 465/SSL is often blocked
+EMAIL_USE_TLS    = env.bool("EMAIL_USE_TLS", default=True)   # STARTTLS
+EMAIL_USE_SSL    = env.bool("EMAIL_USE_SSL", default=False)  # mutually exclusive with TLS
+EMAIL_TIMEOUT    = env.int("EMAIL_TIMEOUT", default=15)       # fail fast; sending is async (background thread)
+EMAIL_HOST_USER  = _email_host_user
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
+DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
 SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
 
 # ── LOCALISATION ───────────────────────────────────────────────────────────────

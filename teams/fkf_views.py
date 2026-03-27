@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -12,7 +12,7 @@ from .forms import TeamRegistrationForm, PlayerRegistrationForm, TeamKitForm
 from .officials_forms import TeamOfficialForm
 from payments.models import Payment
 
-def admin_or_league_manager_required(user):
+def admin_or_manager_required(user):
     """Check if user is staff or in League Admin or League Manager group"""
     return user.is_staff or user.groups.filter(name__in=['League Admin', 'League Manager']).exists()
 
@@ -22,7 +22,7 @@ def team_registration(request):
     if not settings.team_registration_open:
         return render(request, 'teams/registration_closed.html', {
             'title': 'Team Registration Closed',
-            'message': 'Team registration is currently closed. Please check back later or contact the league administrator for more information.',
+            'message': 'Team registration is currently closed. Please check back later or contact the system administrator for more information.',
             'deadline': settings.team_registration_deadline
         })
     
@@ -50,7 +50,7 @@ def team_registration(request):
                 
                 # Add success message
                 messages.success(request, 
-                    f'✅ Team "{team.team_name}" registered successfully! '
+                    f'âœ… Team "{team.team_name}" registered successfully! '
                     f'Please proceed to payment.'
                 )
                 
@@ -105,7 +105,7 @@ def add_players(request):
                     messages.error(request, f'ID Number {player.id_number} is already registered.')
                 else:
                     player.save()
-                    messages.success(request, f'✅ Player {player.full_name} added successfully!')
+                    messages.success(request, f'âœ… Player {player.full_name} added successfully!')
                     
                     # FIXED: Check for 'action' parameter instead of button names
                     action = request.POST.get('action', 'add_more')
@@ -128,7 +128,7 @@ def add_players(request):
                         
                         # Add final success message
                         messages.success(request, 
-                            f'🎉 REGISTRATION COMPLETE!<br>'
+                            f'ðŸŽ‰ REGISTRATION COMPLETE!<br>'
                             f'<strong>Team:</strong> {team_name}<br>'
                             f'<strong>Team Code:</strong> {team_code}<br>'
                             f'<strong>Status:</strong> Pending Approval<br>'
@@ -293,7 +293,7 @@ def team_dashboard(request, team_id=None):
     logger.info(f"Prepared {len(matches_data)} matches with squad info. Current round: {current_round}")
     logger.info(f"Active match: {active_match}")
 
-    # ── Tournament data ─────────────────────────────────────────────────
+    # â”€â”€ Tournament data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # Tournaments this league team is registered in
     team_tournament_regs = TournamentTeamRegistration.objects.filter(
         team=team
@@ -328,7 +328,7 @@ def team_dashboard(request, team_id=None):
     })
 
 def all_teams(request):
-    """View all teams - accessible to staff, superuser, League Admin, and League Manager"""
+    """View all teams - accessible to staff, superuser, League Admin, and League Manager groups"""
     if not request.user.is_authenticated:
         messages.error(request, "Please log in to access this page.")
         return redirect('login')
@@ -354,8 +354,8 @@ def team_detail(request, team_id):
         'players': players
     })
 
-def league_admin_dashboard(request):
-    """Dashboard for league admin to manage all teams"""
+def system_admin_dashboard(request):
+    """Dashboard for system admin to manage all teams"""
     from django.utils import timezone
     from datetime import timedelta
     
@@ -402,7 +402,7 @@ def update_team_kits(request, team_id=None):
             team = form.save(commit=False)
             team.kit_colors_set = True  # mark as completed
             team.save()
-            messages.success(request, '✅ Team kit colors updated successfully!')
+            messages.success(request, 'âœ… Team kit colors updated successfully!')
             return redirect('teams:team_dashboard', team_id=team.id)
         else:
             for error in form.non_field_errors():
@@ -477,7 +477,7 @@ def select_kit_colors(request):
         
         try:
             team.save()
-            messages.success(request, "✅ Kit colors and images saved successfully!")
+            messages.success(request, "âœ… Kit colors and images saved successfully!")
             # Redirect to team officials form instead of dashboard
             return redirect('teams:team_officials')
         except Exception as e:
@@ -610,7 +610,7 @@ def team_manager_dashboard(request):
     
     logger.info(f"Prepared {len(matches_data)} matches with squad info. Current round: {current_round}")
 
-    # ── Tournament data ─────────────────────────────────────────────────
+    # â”€â”€ Tournament data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     from tournaments.models import (
         Tournament, TournamentTeamRegistration, TournamentMatch,
         TournamentMatchdaySquad, ExternalTeam,
@@ -691,7 +691,7 @@ def add_player_action(request):
     if not settings.player_registration_open and not is_admin:
         return render(request, 'teams/registration_closed.html', {
             'title': 'Player Registration Closed',
-            'message': 'Player registration is currently closed. Please check back later or contact the league administrator.',
+            'message': 'Player registration is currently closed. Please check back later or contact the system administrator.',
             'back_url': 'teams:team_manager_dashboard',
             'deadline': settings.player_registration_deadline
         })
@@ -771,9 +771,9 @@ def add_player_action(request):
                 player.photo = request.FILES['photo']
                 player.save()
             
-            messages.success(request, f'✅ Player {player.full_name} added successfully!')
+            messages.success(request, f'âœ… Player {player.full_name} added successfully!')
             
-            # ── Notify subcounty officers & verification officers ────
+            # â”€â”€ Notify subcounty officers & verification officers â”€â”€â”€â”€
             try:
                 from accounts.notifications import notify_new_player
                 notify_new_player(player, team)
@@ -808,7 +808,7 @@ def add_players_to_approved_team(request):
         if not (request.user.is_staff or request.user.is_superuser):
             return render(request, 'teams/registration_closed.html', {
                 'title': 'Player Registration Closed',
-                'message': 'Player registration is currently closed. Please check back later or contact the league admin.',
+                'message': 'Player registration is currently closed. Please check back later or contact the system admin.',
                 'deadline': settings.player_registration_deadline,
                 'back_url': request.META.get('HTTP_REFERER', '/'),
             })
@@ -944,14 +944,14 @@ def request_transfer(request, player_id):
             requested_by=request.user
         )
         messages.success(request, 
-            f"✅ Transfer Request Successful! "
+            f"âœ… Transfer Request Successful! "
             f"You have successfully requested {player.full_name} "
             f"(#{player.jersey_number}, {player.get_position_display()}) from {from_team.team_name}. "
             f"The request is now waiting for approval from {from_team.team_name}'s manager. "
             f"You will be notified once they respond to your request."
         )
     except Exception as e:
-        messages.error(request, f"❌ Error: Could not create transfer request. {str(e)}")
+        messages.error(request, f"âŒ Error: Could not create transfer request. {str(e)}")
     
     return redirect('teams:my_transfer_requests')
 
@@ -1005,7 +1005,7 @@ def approve_transfer(request, transfer_id):
     transfer.approve_by_parent(user=request.user, execute_transfer=True)
     
     messages.success(request, 
-        f"✅ Transfer approved! {transfer.player.full_name} has been transferred to {transfer.to_team.team_name}."
+        f"âœ… Transfer approved! {transfer.player.full_name} has been transferred to {transfer.to_team.team_name}."
     )
     return redirect('teams:my_transfer_requests')
 
@@ -1035,7 +1035,7 @@ def reject_transfer(request, transfer_id):
         transfer.reject_by_parent(user=request.user, reason=reason)
         
         messages.success(request, 
-            f"❌ Transfer rejected. {transfer.to_team.team_name} has been notified."
+            f"âŒ Transfer rejected. {transfer.to_team.team_name} has been notified."
         )
         return redirect('teams:my_transfer_requests')
     
@@ -1147,7 +1147,7 @@ def delete_official(request, official_id):
 # =============================================================================
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_manage_players(request):
     """Admin view to manage all players - list, search, filter"""
     search_query = request.GET.get('search', '')
@@ -1200,7 +1200,7 @@ def admin_manage_players(request):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_delete_player(request, player_id):
     """Admin delete a player with confirmation"""
     player = get_object_or_404(Player, id=player_id)
@@ -1209,7 +1209,7 @@ def admin_delete_player(request, player_id):
         team = player.team
         player_name = player.full_name
         player.delete()
-        messages.success(request, f'✅ Player {player_name} deleted successfully from {team.team_name}')
+        messages.success(request, f'âœ… Player {player_name} deleted successfully from {team.team_name}')
         return redirect('teams:admin_manage_players')
     
     context = {'player': player}
@@ -1217,7 +1217,7 @@ def admin_delete_player(request, player_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_suspend_player(request, player_id):
     """Admin suspend a player with reason and duration"""
     player = get_object_or_404(Player, id=player_id)
@@ -1227,7 +1227,7 @@ def admin_suspend_player(request, player_id):
         suspension_reason = request.POST.get('suspension_reason')
         
         if not suspension_matches or not suspension_reason:
-            messages.error(request, '❌ Both suspension matches and reason are required')
+            messages.error(request, 'âŒ Both suspension matches and reason are required')
             return redirect('teams:admin_suspend_player', player_id=player_id)
         
         try:
@@ -1242,11 +1242,11 @@ def admin_suspend_player(request, player_id):
             player.suspension_matches = matches
             player.save()
             
-            messages.success(request, f'✅ {player.full_name} suspended for {matches} match(es): {suspension_reason}')
+            messages.success(request, f'âœ… {player.full_name} suspended for {matches} match(es): {suspension_reason}')
             return redirect('teams:admin_manage_players')
             
         except ValueError:
-            messages.error(request, '❌ Invalid number of matches')
+            messages.error(request, 'âŒ Invalid number of matches')
             return redirect('teams:admin_suspend_player', player_id=player_id)
     
     context = {'player': player}
@@ -1254,7 +1254,7 @@ def admin_suspend_player(request, player_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_unsuspend_player(request, player_id):
     """Admin unsuspend a player"""
     player = get_object_or_404(Player, id=player_id)
@@ -1267,7 +1267,7 @@ def admin_unsuspend_player(request, player_id):
             player.suspension_matches = 0
         player.save()
         
-        messages.success(request, f'✅ {player.full_name} unsuspended successfully')
+        messages.success(request, f'âœ… {player.full_name} unsuspended successfully')
         return redirect('teams:admin_manage_players')
     
     context = {'player': player}
@@ -1275,7 +1275,7 @@ def admin_unsuspend_player(request, player_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_edit_player(request, player_id):
     """Admin edit player information"""
     player = get_object_or_404(Player, id=player_id)
@@ -1305,7 +1305,7 @@ def admin_edit_player(request, player_id):
                 team = Team.objects.get(id=team_id, status='approved')
                 player.team = team
             except Team.DoesNotExist:
-                messages.error(request, '❌ Invalid team selected')
+                messages.error(request, 'âŒ Invalid team selected')
                 return redirect('teams:admin_edit_player', player_id=player_id)
         
         player.position = request.POST.get('position', player.position)
@@ -1319,7 +1319,7 @@ def admin_edit_player(request, player_id):
             player.red_cards = int(request.POST.get('red_cards', player.red_cards))
             player.matches_played = int(request.POST.get('matches_played', player.matches_played))
         except ValueError:
-            messages.error(request, '❌ Invalid number in statistics')
+            messages.error(request, 'âŒ Invalid number in statistics')
             return redirect('teams:admin_edit_player', player_id=player_id)
         
         # Handle photo upload
@@ -1328,10 +1328,10 @@ def admin_edit_player(request, player_id):
         
         try:
             player.save()
-            messages.success(request, f'✅ Player {player.full_name} updated successfully')
+            messages.success(request, f'âœ… Player {player.full_name} updated successfully')
             return redirect('teams:admin_manage_players')
         except Exception as e:
-            messages.error(request, f'❌ Error updating player: {str(e)}')
+            messages.error(request, f'âŒ Error updating player: {str(e)}')
             return redirect('teams:admin_edit_player', player_id=player_id)
     
     # GET request - show form
@@ -1346,7 +1346,7 @@ def admin_edit_player(request, player_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_add_team_official(request):
     """Admin add team official with team selection"""
     if request.method == 'POST':
@@ -1359,7 +1359,7 @@ def admin_add_team_official(request):
         # Validate phone format: +254 followed by 9 digits
         import re
         if not re.match(r'^\+254\d{9}$', phone_number):
-            messages.error(request, '❌ Phone number must be in the format +254XXXXXXXXX (country code + 9 digits)')
+            messages.error(request, 'âŒ Phone number must be in the format +254XXXXXXXXX (country code + 9 digits)')
             teams = Team.objects.filter(status='approved').order_by('team_name')
             positions = TeamOfficial.POSITION_CHOICES
             return render(request, 'teams/admin_add_official.html', {'teams': teams, 'positions': positions})
@@ -1375,13 +1375,13 @@ def admin_add_team_official(request):
                 email=email
             )
             
-            messages.success(request, f'✅ Official {full_name} added to {team.team_name}')
+            messages.success(request, f'âœ… Official {full_name} added to {team.team_name}')
             return redirect('teams:admin_manage_officials')
             
         except Team.DoesNotExist:
-            messages.error(request, '❌ Invalid team selected')
+            messages.error(request, 'âŒ Invalid team selected')
         except Exception as e:
-            messages.error(request, f'❌ Error adding official: {str(e)}')
+            messages.error(request, f'âŒ Error adding official: {str(e)}')
     
     teams = Team.objects.filter(status='approved').order_by('team_name')
     positions = TeamOfficial.POSITION_CHOICES
@@ -1395,7 +1395,7 @@ def admin_add_team_official(request):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_manage_officials(request):
     """Admin view to manage all team officials"""
     search_query = request.GET.get('search', '')
@@ -1452,7 +1452,7 @@ def admin_manage_officials(request):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_suspend_official(request, official_id):
     """Admin suspend a team official"""
     official = get_object_or_404(TeamOfficial, id=official_id)
@@ -1467,10 +1467,10 @@ def admin_suspend_official(request, official_id):
             official.suspension_reason = suspension_reason
             official.save()
             
-            messages.success(request, f'✅ Official {official.full_name} suspended for {suspension_matches} matches')
+            messages.success(request, f'âœ… Official {official.full_name} suspended for {suspension_matches} matches')
             return redirect('teams:admin_manage_officials')
         except Exception as e:
-            messages.error(request, f'❌ Error suspending official: {str(e)}')
+            messages.error(request, f'âŒ Error suspending official: {str(e)}')
     
     context = {
         'official': official,
@@ -1479,7 +1479,7 @@ def admin_suspend_official(request, official_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_unsuspend_official(request, official_id):
     """Admin unsuspend a team official"""
     official = get_object_or_404(TeamOfficial, id=official_id)
@@ -1491,7 +1491,7 @@ def admin_unsuspend_official(request, official_id):
         official.suspension_end = None
         official.save()
         
-        messages.success(request, f'✅ Official {official.full_name} suspension lifted')
+        messages.success(request, f'âœ… Official {official.full_name} suspension lifted')
         return redirect('teams:admin_manage_officials')
     
     context = {
@@ -1581,7 +1581,7 @@ def view_approved_squad(request, match_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_manage_officials(request):
     """Admin view to manage team officials"""
     officials = TeamOfficial.objects.select_related('team').order_by('team__team_name', 'full_name')
@@ -1594,7 +1594,7 @@ def admin_manage_officials(request):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_add_team_official(request):
     """Admin add a team official"""
     if request.method == 'POST':
@@ -1638,7 +1638,7 @@ def admin_add_team_official(request):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_suspend_official(request, official_id):
     """Admin suspend a team official"""
     official = get_object_or_404(TeamOfficial, id=official_id)
@@ -1664,7 +1664,7 @@ def admin_suspend_official(request, official_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_unsuspend_official(request, official_id):
     """Admin unsuspend a team official"""
     official = get_object_or_404(TeamOfficial, id=official_id)
@@ -1687,7 +1687,7 @@ def admin_unsuspend_official(request, official_id):
 
 
 @login_required
-@user_passes_test(admin_or_league_manager_required)
+@user_passes_test(admin_or_manager_required)
 def admin_delete_official(request, official_id):
     """Admin delete a team official"""
     official = get_object_or_404(TeamOfficial, id=official_id)

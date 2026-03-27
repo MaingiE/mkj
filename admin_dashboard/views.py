@@ -1,10 +1,11 @@
-# admin_dashboard/views.py — Adapted for MKJ SUPA CUP CMS models
+﻿# admin_dashboard/views.py â€” Adapted for MKJ SUPA CUP CMS models
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
+import threading
 from django.db.models import Sum, Count, Q
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
@@ -50,8 +51,10 @@ def superadmin_required(user):
 
 
 def send_welcome_email(user_obj, password, role):
-    """Send welcome email to newly created user with login credentials."""
+    """Send welcome email on a background thread â€” never blocks the web request."""
     from django.core.mail import EmailMultiAlternatives
+    import logging
+    log = logging.getLogger(__name__)
 
     subject = f'Welcome to MKJ SUPA CUP Competition Management System - {role}'
     text_content = f"""
@@ -72,22 +75,26 @@ Please change your password after your first login.
 Best regards,
 MKJ SUPA CUP Administration
 """
-    try:
-        email = EmailMultiAlternatives(
-            subject, text_content,
-            getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkj_supacup.org'),
-            [user_obj.email]
-        )
-        email.send(fail_silently=False)
-        return True
-    except Exception as e:
-        print(f"Email error: {e}")
-        return False
+    recipient = user_obj.email
+    from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.org')
+
+    def _worker():
+        try:
+            email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
+            email.send(fail_silently=False)
+            log.info("Welcome email sent to %s", recipient)
+        except Exception as exc:
+            log.error("Welcome email failed for %s: %s", recipient, exc)
+
+    threading.Thread(target=_worker, daemon=True).start()
+    return True
 
 
 def send_password_reset_email(user_obj, new_password):
-    """Send password reset email."""
+    """Send password reset email on a background thread â€” never blocks the web request."""
     from django.core.mail import EmailMultiAlternatives
+    import logging
+    log = logging.getLogger(__name__)
 
     subject = 'MKJ SUPA CUP CMS - Password Reset'
     text_content = f"""
@@ -103,17 +110,19 @@ Please change your password immediately after login.
 Best regards,
 MKJ SUPA CUP Administration
 """
-    try:
-        email = EmailMultiAlternatives(
-            subject, text_content,
-            getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkj_supacup.org'),
-            [user_obj.email]
-        )
-        email.send(fail_silently=True)
-        return True
-    except Exception as e:
-        print(f"Email error: {e}")
-        return False
+    recipient = user_obj.email
+    from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.org')
+
+    def _worker():
+        try:
+            email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
+            email.send(fail_silently=False)
+            log.info("Password reset email sent to %s", recipient)
+        except Exception as exc:
+            log.error("Password reset email failed for %s: %s", recipient, exc)
+
+    threading.Thread(target=_worker, daemon=True).start()
+    return True
 
 
 # Require discipline for scout/coordinator
@@ -125,9 +134,9 @@ def require_discipline_for_scout_coordinator(user_obj, assigned_discipline):
     return True
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   ADMIN DASHBOARD
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(admin_required)
@@ -165,9 +174,9 @@ def admin_dashboard(request):
     return render(request, 'admin_dashboard/dashboard.html', context)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   MATCH REPORT APPROVAL
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(admin_required)
@@ -198,9 +207,9 @@ def approve_reports(request):
     })
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   PLAYER SUSPENSIONS
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(admin_required)
@@ -239,9 +248,9 @@ def manage_suspension(request, player_id):
     })
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   STATISTICS
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(admin_required)
@@ -289,9 +298,9 @@ def statistics_dashboard(request):
     return render(request, 'admin_dashboard/statistics.html', context)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   COMPETITION ASSIGNMENT (replaces FKFSYS Zone assignment)
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(admin_required)
@@ -313,7 +322,7 @@ def assign_zones(request):
 
         # Only treasurer-approved teams can participate
         if not team.payment_confirmed:
-            messages.error(request, f'{team.name} cannot be assigned — payment has not been confirmed by the treasurer.')
+            messages.error(request, f'{team.name} cannot be assigned â€” payment has not been confirmed by the treasurer.')
             return redirect('assign_zones')
         if team.status != 'registered':
             messages.error(request, f'{team.name} is not approved. Only registered teams can participate.')
@@ -348,9 +357,9 @@ def assign_zones(request):
     })
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   VIEW MATCH REPORT
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 def view_report(request, report_id):
@@ -369,14 +378,14 @@ def view_report(request, report_id):
     })
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   USER MANAGEMENT (Super Admin Only)
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
-@user_passes_test(superadmin_required)
-def manage_league_admins(request):
-    """Manage all users — filter, search, view."""
+@user_passes_test(admin_required)
+def manage_users(request):
+    """Manage all users â€” filter, search, view."""
     role_filter = request.GET.get('role', 'all')
     status_filter = request.GET.get('status', 'all')
     search_query = request.GET.get('search', '')
@@ -444,12 +453,12 @@ def manage_league_admins(request):
         'county_choices': KenyaCounty.choices,
         'subcounty_choices': MakueniSubCounty.choices,
     }
-    return render(request, 'admin_dashboard/manage_league_admins.html', context)
+    return render(request, 'admin_dashboard/manage_users.html', context)
 
 
 @login_required
-@user_passes_test(superadmin_required)
-def create_league_admin(request):
+@user_passes_test(admin_required)
+def create_user(request):
     """Create a new user with selected role."""
     import random, string
 
@@ -467,15 +476,15 @@ def create_league_admin(request):
             phone = validate_kenya_phone_or_raise(phone, 'Phone number')
         except ValidationError as exc:
             messages.error(request, str(exc))
-            return redirect('manage_league_admins')
+            return redirect('manage_users')
 
         if User.objects.filter(email=email).exists():
             messages.error(request, f"Email '{email}' already registered.")
-            return redirect('manage_league_admins')
+            return redirect('manage_users')
 
         if role in (UserRole.SUBCOUNTY_SPORTS_OFFICER, UserRole.TEAM_MANAGER) and not sub_county:
             messages.error(request, 'Sub-county is required for this role.')
-            return redirect('manage_league_admins')
+            return redirect('manage_users')
 
         if role == UserRole.SUBCOUNTY_SPORTS_OFFICER and sub_county:
             existing = User.objects.filter(
@@ -485,28 +494,28 @@ def create_league_admin(request):
             ).exists()
             if existing:
                 messages.error(request, f'A Sub-County Sports Officer already exists for {sub_county}. Only one is allowed per sub-county.')
-                return redirect('manage_league_admins')
+                return redirect('manage_users')
 
         if role in (UserRole.COORDINATOR, UserRole.SCOUT) and not assigned_discipline:
             if role == UserRole.COORDINATOR:
                 messages.error(request, 'Choose a coordinator sport.')
             else:
                 messages.error(request, 'Choose a scout sport and gender.')
-            return redirect('manage_league_admins')
+            return redirect('manage_users')
 
         if role == UserRole.COORDINATOR and assigned_discipline:
             valid_coordinator_codes = {code for code, _ in COORDINATOR_DISCIPLINE_CHOICES}
             if assigned_discipline not in valid_coordinator_codes:
                 messages.error(request, 'Invalid coordinator sport selection.')
-                return redirect('manage_league_admins')
+                return redirect('manage_users')
 
         if role == UserRole.SCOUT and assigned_discipline:
             valid_scout_codes = {code for code, _ in SCOUT_DISCIPLINE_CHOICES}
             if assigned_discipline not in valid_scout_codes:
                 messages.error(request, 'Invalid scout sport/gender selection.')
-                return redirect('manage_league_admins')
+                return redirect('manage_users')
 
-        # ── One-user-per-role / per-discipline uniqueness checks ──────────
+        # â”€â”€ One-user-per-role / per-discipline uniqueness checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         # Roles with global uniqueness (only one person per system)
         SINGLETON_ROLES = {
             UserRole.COMPETITION_MANAGER,
@@ -524,7 +533,7 @@ def create_league_admin(request):
                     f'A user with the "{role_label}" role already exists. '
                     f'Deactivate the existing user before creating a new one.'
                 )
-                return redirect('manage_league_admins')
+                return redirect('manage_users')
 
         # Coordinator: unique per assigned discipline
         if role == UserRole.COORDINATOR and assigned_discipline:
@@ -535,7 +544,7 @@ def create_league_admin(request):
                     f'A Coordinator for "{disc_label}" already exists. '
                     f'Deactivate the existing coordinator first.'
                 )
-                return redirect('manage_league_admins')
+                return redirect('manage_users')
 
         # Scout: unique per assigned discipline (sport + gender)
         if role == UserRole.SCOUT and assigned_discipline:
@@ -546,7 +555,7 @@ def create_league_admin(request):
                     f'A Scout for "{disc_label}" already exists. '
                     f'Deactivate the existing scout first.'
                 )
-                return redirect('manage_league_admins')
+                return redirect('manage_users')
 
         try:
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
@@ -613,30 +622,30 @@ def create_league_admin(request):
         except Exception as e:
             messages.error(request, f"Error: {e}")
 
-    return redirect('manage_league_admins')
+    return redirect('manage_users')
 
 
 @login_required
 @user_passes_test(superadmin_required)
-def toggle_league_admin_status(request, user_id):
+def toggle_user_status(request, user_id):
     """Activate or deactivate a user."""
     user_obj = get_object_or_404(User, id=user_id)
 
     if user_obj == request.user:
         messages.error(request, "Cannot deactivate your own account!")
-        return redirect('manage_league_admins')
+        return redirect('manage_users')
 
     user_obj.is_active = not user_obj.is_active
     user_obj.save()
 
     status = "activated" if user_obj.is_active else "deactivated"
     messages.success(request, f"{user_obj.email} has been {status}.")
-    return redirect('manage_league_admins')
+    return redirect('manage_users')
 
 
 @login_required
 @user_passes_test(superadmin_required)
-def reset_league_admin_password(request, user_id):
+def reset_user_password(request, user_id):
     """Reset password for any user."""
     import random, string
 
@@ -656,7 +665,7 @@ def reset_league_admin_password(request, user_id):
         f'Password reset for {user_obj.email}.<br>'
         f'New password has been sent to the user\'s email.'
     ))
-    return redirect('manage_league_admins')
+    return redirect('manage_users')
 
 
 @login_required
@@ -744,14 +753,14 @@ def edit_user_roles(request, user_id):
             action='USER_UPDATE',
             description=(
                 f'{request.user.get_full_name()} changed role for {user_obj.email}: '
-                f'{dict(UserRole.choices).get(old_role, old_role)} → '
+                f'{dict(UserRole.choices).get(old_role, old_role)} â†’ '
                 f'{dict(UserRole.choices).get(new_role, new_role)}'
             ),
             object_repr=str(user_obj),
             ip_address=request.META.get('REMOTE_ADDR', ''),
         )
 
-        messages.success(request, f"Role updated for {user_obj.email} → {dict(UserRole.choices).get(new_role, new_role)}.")
+        messages.success(request, f"Role updated for {user_obj.email} â†’ {dict(UserRole.choices).get(new_role, new_role)}.")
         return redirect('user_detail', user_id=user_obj.id)
 
     context = {
@@ -773,11 +782,11 @@ def delete_user(request, user_id):
 
     if user_obj == request.user:
         messages.error(request, "Cannot delete your own account!")
-        return redirect('manage_league_admins')
+        return redirect('manage_users')
 
     if user_obj.is_superuser:
         messages.error(request, "Cannot delete superuser accounts!")
-        return redirect('manage_league_admins')
+        return redirect('manage_users')
 
     email = user_obj.email
 
@@ -792,17 +801,17 @@ def delete_user(request, user_id):
 
     user_obj.delete()
     messages.success(request, f"User '{email}' deleted.")
-    return redirect('manage_league_admins')
+    return redirect('manage_users')
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   USER DETAIL / EDIT PROFILE (Super Admin)
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(superadmin_required)
 def user_detail_view(request, user_id):
-    """Comprehensive user detail page — view and edit all profile fields."""
+    """Comprehensive user detail page â€” view and edit all profile fields."""
     from accounts.models import KenyaCounty
     from django.core.paginator import Paginator
 
@@ -831,7 +840,7 @@ def user_detail_view(request, user_id):
             'fixture__home_team', 'fixture__away_team', 'fixture__competition'
         ).order_by('-fixture__match_date')[:10]
 
-    # ── Full Activity Log with filters & pagination ──
+    # â”€â”€ Full Activity Log with filters & pagination â”€â”€
     all_logs = ActivityLog.objects.filter(user=user_obj).order_by('-timestamp')
 
     # Filters from query string
@@ -952,22 +961,22 @@ def user_edit_profile(request, user_id):
 
         changes = []
         if new_email and new_email != user_obj.email:
-            changes.append(f'email: {user_obj.email} → {new_email}')
+            changes.append(f'email: {user_obj.email} â†’ {new_email}')
             user_obj.email = new_email
         if first_name and first_name != user_obj.first_name:
-            changes.append(f'first_name: {user_obj.first_name} → {first_name}')
+            changes.append(f'first_name: {user_obj.first_name} â†’ {first_name}')
             user_obj.first_name = first_name
         if last_name and last_name != user_obj.last_name:
-            changes.append(f'last_name: {user_obj.last_name} → {last_name}')
+            changes.append(f'last_name: {user_obj.last_name} â†’ {last_name}')
             user_obj.last_name = last_name
         if phone != user_obj.phone:
-            changes.append(f'phone: {user_obj.phone or "(empty)"} → {phone or "(empty)"}')
+            changes.append(f'phone: {user_obj.phone or "(empty)"} â†’ {phone or "(empty)"}')
             user_obj.phone = phone
         if county != user_obj.county:
-            changes.append(f'county: {user_obj.county or "(empty)"} → {county or "(empty)"}')
+            changes.append(f'county: {user_obj.county or "(empty)"} â†’ {county or "(empty)"}')
             user_obj.county = county
         if sub_county != (user_obj.sub_county or ''):
-            changes.append(f'sub_county: {user_obj.sub_county or "(empty)"} → {sub_county or "(empty)"}')
+            changes.append(f'sub_county: {user_obj.sub_county or "(empty)"} â†’ {sub_county or "(empty)"}')
             user_obj.sub_county = sub_county
 
         if changes:
@@ -1024,9 +1033,9 @@ def user_suspend_toggle(request, user_id):
     )
 
     if user_obj.is_suspended:
-        messages.warning(request, f'🚫 {user_obj.email} has been suspended. They can no longer log in.')
+        messages.warning(request, f'ðŸš« {user_obj.email} has been suspended. They can no longer log in.')
     else:
-        messages.success(request, f'✅ {user_obj.email} has been unsuspended. Access restored.')
+        messages.success(request, f'âœ… {user_obj.email} has been unsuspended. Access restored.')
 
     return redirect('user_detail', user_id=user_obj.id)
 
@@ -1099,9 +1108,9 @@ def user_toggle_staff(request, user_id):
     return redirect('user_detail', user_id=user_obj.id)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 #   PLACEHOLDER VIEWS for features referenced in urls.py
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
 @user_passes_test(admin_required)

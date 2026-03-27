@@ -9,8 +9,12 @@ Sends HTML emails for:
   5. Squad submitted → coordinator
   6. Match report submitted → coordinator
   7. Team registration → admin, subcounty officer
+
+All emails are dispatched on a background daemon thread so they never
+block the web request — timeouts / SMTP errors only appear in server logs.
 """
 import logging
+import threading
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
@@ -26,21 +30,30 @@ FROM_EMAIL = getattr(settings, 'DEFAULT_FROM_EMAIL', 'MKJ SUPA CUP <info@mkjsupa
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _send(subject, html_body, recipients, fail_silently=True):
-    """Send an HTML email. Filters out blank addresses. Never raises."""
+    """
+    Send an HTML email on a background daemon thread.
+    Returns immediately — never blocks the web request.
+    Filters out blank addresses.
+    """
     recipients = [r for r in (recipients or []) if r]
     if not recipients:
         logger.warning("No valid recipients for: %s", subject)
         return False
+
     plain = strip_tags(html_body)
-    try:
-        msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients)
-        msg.attach_alternative(html_body, "text/html")
-        msg.send(fail_silently=False)
-        logger.info("✉ Sent '%s' → %s", subject, recipients)
-        return True
-    except Exception as exc:
-        logger.error("✉ FAILED '%s' → %s: %s", subject, recipients, exc)
-        return False
+
+    def _worker():
+        try:
+            msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients)
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
+            logger.info("✉ Sent '%s' → %s", subject, recipients)
+        except Exception as exc:
+            logger.error("✉ FAILED '%s' → %s: %s", subject, recipients, exc)
+
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    return True  # fired — delivery result logged asynchronously
 
 
 def _get_subcounty_officers(sub_county):

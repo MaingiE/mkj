@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Change Role: {{ edit_user.get_full_name }} - MKJ SUPA CUP Portal{% endblock %}
 
 {% block extra_css %}
@@ -57,7 +57,7 @@
 <div class="page-header">
     <div class="breadcrumb">
         <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'manage_league_admins' %}">User Management</a>
+        <a href="{% url 'manage_users' %}">User Management</a>
         <a href="{% url 'user_detail' user_id=edit_user.id %}">{{ edit_user.get_full_name }}</a>
         <span>Change Role</span>
     </div>
@@ -169,13 +169,13 @@
                         Coordinators are scoped to a sport family and cover both men and women.
                     </p>
                     <select id="coordinator-discipline-select" name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;display:none;" disabled>
-                        <option value="">— Not Assigned —</option>
+                        <option value="">â€” Not Assigned â€”</option>
                         {% for val, label in sport_type_choices %}
                         <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     <select id="scout-discipline-select" name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;display:none;" disabled>
-                        <option value="">— Not Assigned —</option>
+                        <option value="">â€” Not Assigned â€”</option>
                         {% for val, label in scout_sport_type_choices %}
                         <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -190,7 +190,7 @@
                         <input type="hidden" name="county" value="Makueni">
                         <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">Sub-County</label>
                         <select name="sub_county" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
-                            <option value="">— Select Sub-County —</option>
+                            <option value="">â€” Select Sub-County â€”</option>
                             {% for val, label in subcounty_choices %}
                             <option value="{{ val }}" {% if edit_user.sub_county == val %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
