@@ -1226,7 +1226,7 @@ img { max-width: 100%; }
     align-items: center; justify-content: center;
     color: rgba(255,255,255,.4); font-size: .8rem; transition: all .3s;
 }
-.fkf-social a:hover { background: #124491; border-color: #124491; color: #fff; }
+.fkf-social a:hover { background: #2563EB; border-color: #2563EB; color: #fff; }
 
 .fkf-footer-bottom {
     border-top: 1px solid rgba(255,255,255,.06);
