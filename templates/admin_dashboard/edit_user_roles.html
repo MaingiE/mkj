@@ -169,13 +169,13 @@
                         Coordinators are scoped to a sport family and cover both men and women.
                     </p>
                     <select id="coordinator-discipline-select" name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;display:none;" disabled>
-                        <option value="">â€” Not Assigned â€”</option>
+                        <option value="">&mdash; Not Assigned &mdash;</option>
                         {% for val, label in sport_type_choices %}
                         <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     <select id="scout-discipline-select" name="assigned_discipline" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;display:none;" disabled>
-                        <option value="">â€” Not Assigned â€”</option>
+                        <option value="">&mdash; Not Assigned &mdash;</option>
                         {% for val, label in scout_sport_type_choices %}
                         <option value="{{ val }}" {% if edit_user.assigned_discipline == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -190,7 +190,7 @@
                         <input type="hidden" name="county" value="Makueni">
                         <label style="font-size:.8rem;color:#757575;display:block;margin-bottom:.4rem;">Sub-County</label>
                         <select name="sub_county" style="width:100%;padding:.5rem .8rem;border:1px solid #ccc;border-radius:8px;font-size:.9rem;">
-                            <option value="">â€” Select Sub-County â€”</option>
+                            <option value="">&mdash; Select Sub-County &mdash;</option>
                             {% for val, label in subcounty_choices %}
                             <option value="{{ val }}" {% if edit_user.sub_county == val %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
