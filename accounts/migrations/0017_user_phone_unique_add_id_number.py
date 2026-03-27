@@ -4,6 +4,12 @@ import django.core.validators
 from django.db import migrations, models
 
 
+def empty_phone_to_null(apps, schema_editor):
+    """Convert empty-string phone values to NULL so the unique constraint can be applied."""
+    User = apps.get_model('accounts', 'User')
+    User.objects.filter(phone='').update(phone=None)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,14 +17,24 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # 1. Add id_number field
         migrations.AddField(
             model_name='user',
             name='id_number',
             field=models.CharField(blank=True, help_text='National ID number (digits only, 5-10 chars)', max_length=20, null=True, unique=True, validators=[django.core.validators.RegexValidator(message='ID number must contain 5 to 10 digits.', regex='^\\d{5,10}$')]),
         ),
+        # 2. First make phone nullable (no unique yet) so we can set NULLs
         migrations.AlterField(
             model_name='user',
             name='phone',
-            field=models.CharField(max_length=13, unique=True, validators=[django.core.validators.RegexValidator(message='Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).', regex='^\\+254\\d{9}$')]),
+            field=models.CharField(blank=True, max_length=13, null=True, validators=[django.core.validators.RegexValidator(message='Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).', regex='^\\+254\\d{9}$')]),
+        ),
+        # 3. Convert empty strings to NULL
+        migrations.RunPython(empty_phone_to_null, migrations.RunPython.noop),
+        # 4. Now apply unique constraint
+        migrations.AlterField(
+            model_name='user',
+            name='phone',
+            field=models.CharField(blank=True, max_length=13, null=True, unique=True, validators=[django.core.validators.RegexValidator(message='Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).', regex='^\\+254\\d{9}$')]),
         ),
     ]

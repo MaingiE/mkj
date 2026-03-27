@@ -151,7 +151,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email       = models.EmailField(unique=True)
     first_name  = models.CharField(max_length=100)
     last_name   = models.CharField(max_length=100)
-    phone       = models.CharField(max_length=13, unique=True, validators=[kenya_phone_validator])
+    phone       = models.CharField(max_length=13, unique=True, blank=True, null=True, validators=[kenya_phone_validator])
     id_number   = models.CharField(
         max_length=20, unique=True, blank=True, null=True,
         validators=[national_id_validator],
