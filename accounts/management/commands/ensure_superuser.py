@@ -41,8 +41,15 @@ class Command(BaseCommand):
             return
 
         if User.objects.filter(email=email).exists():
+            user = User.objects.get(email=email)
+            user.set_password(password)
+            user.is_superuser = True
+            user.is_staff = True
+            user.role = 'admin'
+            user.must_change_password = False
+            user.save()
             self.stdout.write(self.style.SUCCESS(
-                f"Superuser '{email}' already exists — skipping."
+                f"Superuser '{email}' already exists — password synced from env."
             ))
             return
 
