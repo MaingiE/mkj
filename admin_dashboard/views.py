@@ -647,6 +647,11 @@ def reset_league_admin_password(request, user_id):
     user_obj.save(update_fields=['password', 'must_change_password'])
 
     send_password_reset_email(user_obj, new_password)
+    try:
+        from accounts.notifications import notify_password_reset
+        notify_password_reset(user_obj, new_password)
+    except Exception:
+        pass
     messages.success(request, mark_safe(
         f'Password reset for {user_obj.email}.<br>'
         f'New password has been sent to the user\'s email.'
