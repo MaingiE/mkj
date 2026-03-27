@@ -18,24 +18,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 40 + i * 40);
     });
 
-    // ── Auto-dismiss alerts with slide-out ──────────────────────────────
-    document.querySelectorAll('.alert').forEach(function (alert) {
-        setTimeout(function () {
-            alert.style.transition = 'opacity .35s ease, transform .35s ease';
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateY(-8px)';
-            setTimeout(function () { alert.remove(); }, 350);
-        }, 4500);
+    // ── Toast notifications with progress bar ────────────────────────────
+    document.querySelectorAll('.toast').forEach(function (toast) {
+        // Auto-dismiss after 5s (matches CSS progress animation)
+        var autoDismiss = setTimeout(function () { removeToast(toast); }, 5000);
         // Manual close
-        const closeBtn = alert.querySelector('.alert-close, [data-dismiss]');
+        var closeBtn = toast.querySelector('.toast-close');
         if (closeBtn) {
             closeBtn.addEventListener('click', function () {
-                alert.style.transition = 'opacity .25s ease';
-                alert.style.opacity = '0';
-                setTimeout(function () { alert.remove(); }, 250);
+                clearTimeout(autoDismiss);
+                removeToast(toast);
             });
         }
     });
+
+    function removeToast(toast) {
+        toast.classList.add('toast-removing');
+        toast.addEventListener('animationend', function () { toast.remove(); }, { once: true });
+    }
 
     // ── Mobile nav toggle (hamburger) ────────────────────────────────────
     var navToggle = document.querySelector('.nav-toggle');

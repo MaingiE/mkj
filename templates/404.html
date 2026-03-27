@@ -1,0 +1,21 @@
+{% extends "public/base.html" %}
+{% load static %}
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;">
+    <div style="max-width:500px;">
+        <div style="font-size:6rem;font-weight:800;background:linear-gradient(135deg,#003388,#1a5db8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;">404</div>
+        <h2 style="margin:1rem 0 .5rem;color:#333;font-size:1.5rem;">Page Not Found</h2>
+        <p style="color:#666;margin-bottom:2rem;">The page you're looking for doesn't exist or has been moved.</p>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+            <a href="/" style="display:inline-block;background:linear-gradient(135deg,#124491,#1a5db8);color:#fff;padding:.75rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">
+                Go Home
+            </a>
+            <a href="/portal/dashboard/" style="display:inline-block;background:#fff;color:#124491;padding:.75rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;border:2px solid #124491;">
+                Portal Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

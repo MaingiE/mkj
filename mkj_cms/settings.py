@@ -61,6 +61,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "accounts.middleware.ForcePasswordChangeMiddleware",
     "admin_dashboard.activity_middleware.ActivityLoggingMiddleware",
 ]
@@ -83,10 +84,11 @@ TEMPLATES = [{
 
 # ── DATABASE ───────────────────────────────────────────────────────────────────
 DATABASES = {
-    "default": env.db(
-        "DATABASE_URL",
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
+    "default": {
+        **env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+        "CONN_MAX_AGE": env.int("DB_CONN_MAX_AGE", default=0 if DEBUG else 600),
+        "CONN_HEALTH_CHECKS": not DEBUG,
+    }
 }
 
 # ── AUTH ───────────────────────────────────────────────────────────────────────
@@ -218,9 +220,22 @@ else:
             "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "RETRY_ON_TIMEOUT": True,
             },
         }
     }
+
+# ── SESSIONS (Redis-backed in production for speed + no more corruption) ───────
+if DEBUG:
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+else:
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+
+SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 hours
+SESSION_SAVE_EVERY_REQUEST = True
 
 # ── CELERY ─────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL        = env("REDIS_URL", default="redis://127.0.0.1:6379/0")

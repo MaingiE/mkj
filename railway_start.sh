@@ -11,4 +11,13 @@ echo "=== Ensuring superuser ==="
 python manage.py ensure_superuser
 
 echo "=== Starting gunicorn ==="
-exec gunicorn mkj_cms.wsgi --bind 0.0.0.0:$PORT --workers 3 --timeout 120
+exec gunicorn mkj_cms.wsgi \
+  --bind 0.0.0.0:$PORT \
+  --workers 3 \
+  --threads 2 \
+  --timeout 120 \
+  --max-requests 1000 \
+  --max-requests-jitter 50 \
+  --preload \
+  --access-logfile - \
+  --access-logformat '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" %(D)sms'
