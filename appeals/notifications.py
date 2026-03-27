@@ -2,17 +2,66 @@
 MKJ SUPA CUP Appeals - Email Notification System
 
 Sends email notifications to affected parties for:
-1. Appeal submission → respondent team manager
-2. Hearing schedule → both team managers
-3. Decision published → both team managers
+1. Appeal submission - respondent team manager
+2. Hearing schedule - both team managers
+3. Decision published - both team managers
 """
 import logging
 from django.conf import settings
 from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)
+
+SITE_URL = getattr(settings, 'SITE_URL', 'https://mkjsupacup.com')
+
+
+def _appeals_base_html(title, body_content):
+    """Branded HTML email template for appeals - matches main CMS design."""
+    logo_base = f"{SITE_URL}/static/img"
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 0; }}
+.wrap {{ max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden;
+         box-shadow: 0 4px 24px rgba(0,0,0,.08); }}
+.logo-bar {{ background: #fff; padding: 20px 32px; text-align: center; border-bottom: 1px solid #e8edf5; }}
+.logo-bar img {{ height: 56px; margin: 0 12px; vertical-align: middle; }}
+.header {{ background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+           padding: 28px 32px; text-align: center; }}
+.header h1 {{ color: #fff; margin: 0; font-size: 16px; letter-spacing: 0.5px; font-weight: 600; line-height: 1.5; }}
+.header p {{ color: rgba(255,255,255,.75); margin: 8px 0 0; font-size: 12px; }}
+.body {{ padding: 32px; color: #333; line-height: 1.7; font-size: 14px; }}
+.body h2 {{ color: #1a237e; margin: 0 0 20px; font-size: 18px; font-weight: 700; }}
+table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
+table td {{ padding: 10px; border-bottom: 1px solid #e8edf5; font-size: 14px; }}
+.footer {{ background: #f8f9fb; padding: 24px 32px; text-align: center; font-size: 11px; color: #888;
+           border-top: 1px solid #e8edf5; }}
+.footer p {{ margin: 4px 0; }}
+.footer .sign-off {{ font-weight: 600; color: #1a237e; font-size: 12px; margin-bottom: 8px; }}
+</style></head><body>
+<div style="padding:20px 0;">
+<div class="wrap">
+ <div class="logo-bar">
+  <img src="{logo_base}/TINA.jpeg" alt="Tina" style="height:56px;">
+  <img src="{logo_base}/makueni_logo.png" alt="Makueni County" style="height:56px;">
+ </div>
+ <div class="header">
+  <h1>MKJ SUPA CUP Appeals System</h1>
+  <p>Makueni County Sports Department</p>
+ </div>
+ <div class="body">
+  <h2>{title}</h2>
+  {body_content}
+ </div>
+ <div class="footer">
+  <p class="sign-off">MKJ SUPA CUP Administration</p>
+  <p>&copy; 2026 MKJ SUPA CUP - Makueni County Sports Department</p>
+  <p><a href="{SITE_URL}" style="color:#1a237e;text-decoration:none;">{SITE_URL}</a></p>
+ </div>
+</div>
+</div>
+</body></html>"""
 
 
 def _get_team_manager_email(team):
@@ -75,69 +124,34 @@ def notify_appeal_submitted(appeal):
 
     subject = f"[MKJ SUPA CUP] Appeal #{appeal.pk} Filed Against {appeal.respondent_team.name}"
 
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>Appeal #{appeal.pk} - Response Required</h3>
-            <p>An appeal has been filed against <strong>{appeal.respondent_team.name}</strong>.</p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Subject:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.subject}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Filed By:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.appellant_team.name}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Competition:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.competition or 'N/A'}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Response Deadline:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #dc3545; font-weight: bold;">{deadline_str}</td></tr>
-            </table>
-
-            <p style="background: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ffc107;">
-                ⚠️ {deadline_context}
-            </p>
-
-            <p>Please log in to the MKJ SUPA CUP CMS to review the appeal and submit your response with supporting evidence.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p>An appeal has been filed against <strong>{appeal.respondent_team.name}</strong>.</p>
+    <table>
+        <tr><td><strong>Subject:</strong></td><td>{appeal.subject}</td></tr>
+        <tr><td><strong>Filed By:</strong></td><td>{appeal.appellant_team.name}</td></tr>
+        <tr><td><strong>Competition:</strong></td><td>{appeal.competition or 'N/A'}</td></tr>
+        <tr><td><strong>Response Deadline:</strong></td>
+            <td style="color: #dc3545; font-weight: bold;">{deadline_str}</td></tr>
+    </table>
+    <p style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107;">
+        {deadline_context}
+    </p>
+    <p>Please log in to the MKJ SUPA CUP CMS to review the appeal and submit your response with supporting evidence.</p>
     """
-
-    # Send to respondent
-    _safe_send(subject, html_message, [respondent_email])
+    _safe_send(subject, _appeals_base_html(f"Appeal #{appeal.pk} - Response Required", body), [respondent_email])
 
     # Also notify the appellant that appeal was received
     appellant_subject = f"[MKJ SUPA CUP] Your Appeal #{appeal.pk} Has Been Submitted"
-    appellant_html = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>Appeal #{appeal.pk} - Submitted Successfully</h3>
-            <p>Your appeal against <strong>{appeal.respondent_team.name}</strong> has been submitted.</p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Subject:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.subject}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Against:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.respondent_team.name}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Response Deadline:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{deadline_str}</td></tr>
-            </table>
-
-            <p>The respondent team has been notified. You will receive further updates as the appeal progresses.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    appellant_body = f"""
+    <p>Your appeal against <strong>{appeal.respondent_team.name}</strong> has been submitted.</p>
+    <table>
+        <tr><td><strong>Subject:</strong></td><td>{appeal.subject}</td></tr>
+        <tr><td><strong>Against:</strong></td><td>{appeal.respondent_team.name}</td></tr>
+        <tr><td><strong>Response Deadline:</strong></td><td>{deadline_str}</td></tr>
+    </table>
+    <p>The respondent team has been notified. You will receive further updates as the appeal progresses.</p>
     """
-    _safe_send(appellant_subject, appellant_html, [appellant_email])
+    _safe_send(appellant_subject, _appeals_base_html(f"Appeal #{appeal.pk} - Submitted Successfully", appellant_body), [appellant_email])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -158,46 +172,23 @@ def notify_hearing_scheduled(hearing):
 
     subject = f"[MKJ SUPA CUP] Hearing Scheduled - Appeal #{appeal.pk}"
 
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>📅 Hearing Scheduled - Appeal #{appeal.pk}</h3>
-            <p>The Chair of the Jury has scheduled a hearing for this appeal.</p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appellant:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.appellant_team.name}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Respondent:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.respondent_team.name}</td></tr>
-                <tr style="background: #e3f2fd;">
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>📅 Hearing Date:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">{hearing_dt}</td></tr>
-                <tr style="background: #e3f2fd;">
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🕐 Hearing Time:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">{hearing_tm}</td></tr>
-                <tr style="background: #e3f2fd;">
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>📍 Location:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">{location_text}</td></tr>
-            </table>
-
-            {"<p><strong>Notes:</strong> " + hearing.notes + "</p>" if hearing.notes else ""}
-
-            <p style="background: #e8f5e9; padding: 12px; border-radius: 4px; border-left: 4px solid #4caf50;">
-                Both teams are required to attend. Please ensure your representatives are available at the scheduled date and time.
-            </p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p>The Chair of the Jury has scheduled a hearing for this appeal.</p>
+    <table>
+        <tr><td><strong>Appeal:</strong></td><td>#{appeal.pk} - {appeal.subject}</td></tr>
+        <tr><td><strong>Appellant:</strong></td><td>{appeal.appellant_team.name}</td></tr>
+        <tr><td><strong>Respondent:</strong></td><td>{appeal.respondent_team.name}</td></tr>
+        <tr style="background: #e3f2fd;"><td><strong>Hearing Date:</strong></td><td style="font-weight: bold;">{hearing_dt}</td></tr>
+        <tr style="background: #e3f2fd;"><td><strong>Hearing Time:</strong></td><td style="font-weight: bold;">{hearing_tm}</td></tr>
+        <tr style="background: #e3f2fd;"><td><strong>Location:</strong></td><td style="font-weight: bold;">{location_text}</td></tr>
+    </table>
+    {"<p><strong>Notes:</strong> " + hearing.notes + "</p>" if hearing.notes else ""}
+    <p style="background: #e8f5e9; padding: 12px; border-radius: 6px; border-left: 4px solid #4caf50;">
+        Both teams are required to attend. Please ensure your representatives are available at the scheduled date and time.
+    </p>
     """
 
-    _safe_send(subject, html_message, [appellant_email, respondent_email])
+    _safe_send(subject, _appeals_base_html(f"Hearing Scheduled - Appeal #{appeal.pk}", body), [appellant_email, respondent_email])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -241,51 +232,26 @@ def notify_decision_published(decision):
 
     subject = f"[MKJ SUPA CUP] Decision Published - Appeal #{appeal.pk}: {outcome_display}"
 
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>🏛️ Decision Published - Appeal #{appeal.pk}</h3>
-            <p>The Chair of the Jury has published a decision on this appeal.</p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appellant:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.appellant_team.name}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Respondent:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.respondent_team.name}</td></tr>
-                <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Outcome:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">
-                        <span style="background: {outcome_color}; color: #fff; padding: 4px 12px; border-radius: 4px; font-weight: bold;">
-                            {outcome_display}
-                        </span>
-                    </td>
-                </tr>
-            </table>
-
-            <div style="background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #ddd; margin: 15px 0;">
-                <h4 style="margin: 0 0 8px;">Reasoning:</h4>
-                <p style="margin: 0; white-space: pre-wrap;">{decision.reasoning}</p>
-            </div>
-
-            {"<div style='background: #fff3cd; padding: 15px; border-radius: 4px; border: 1px solid #ffc107; margin: 15px 0;'><h4 style='margin: 0 0 8px;'>Sanctions / Remedies:</h4><p style='margin: 0;'>" + decision.sanctions + "</p></div>" if decision.sanctions else ""}
-
-            {fee_refund_html}
-            {reappeal_html}
-
-            <p>Log in to the MKJ SUPA CUP CMS for full details and evidence.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
+    body = f"""
+    <p>The Chair of the Jury has published a decision on this appeal.</p>
+    <table>
+        <tr><td><strong>Appeal:</strong></td><td>#{appeal.pk} - {appeal.subject}</td></tr>
+        <tr><td><strong>Appellant:</strong></td><td>{appeal.appellant_team.name}</td></tr>
+        <tr><td><strong>Respondent:</strong></td><td>{appeal.respondent_team.name}</td></tr>
+        <tr><td><strong>Outcome:</strong></td>
+            <td><span style="background: {outcome_color}; color: #fff; padding: 4px 12px; border-radius: 4px; font-weight: bold;">{outcome_display}</span></td></tr>
+    </table>
+    <div style="background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e8edf5; margin: 15px 0;">
+        <h4 style="margin: 0 0 8px; color: #1a237e;">Reasoning:</h4>
+        <p style="margin: 0; white-space: pre-wrap;">{decision.reasoning}</p>
     </div>
+    {"<div style='background: #fff3cd; padding: 15px; border-radius: 6px; border: 1px solid #ffc107; margin: 15px 0;'><h4 style='margin: 0 0 8px;'>Sanctions / Remedies:</h4><p style='margin: 0;'>" + decision.sanctions + "</p></div>" if decision.sanctions else ""}
+    {fee_refund_html}
+    {reappeal_html}
+    <p>Log in to the MKJ SUPA CUP CMS for full details and evidence.</p>
     """
 
-    _safe_send(subject, html_message, [appellant_email, respondent_email])
+    _safe_send(subject, _appeals_base_html(f"Decision Published - Appeal #{appeal.pk}", body), [appellant_email, respondent_email])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -298,32 +264,17 @@ def notify_response_submitted(appeal):
 
     subject = f"[MKJ SUPA CUP] Response Received - Appeal #{appeal.pk}"
 
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>📩 Response Received - Appeal #{appeal.pk}</h3>
-            <p><strong>{appeal.respondent_team.name}</strong> has submitted a response to your appeal.</p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Status:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">Response Received - Awaiting Jury Review</td></tr>
-            </table>
-
-            <p>The appeal will now proceed to the Chair of the Jury for review and determination.</p>
-            <p>Log in to the MKJ SUPA CUP CMS to view the full response and evidence.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p><strong>{appeal.respondent_team.name}</strong> has submitted a response to your appeal.</p>
+    <table>
+        <tr><td><strong>Appeal:</strong></td><td>#{appeal.pk} - {appeal.subject}</td></tr>
+        <tr><td><strong>Status:</strong></td><td>Response Received - Awaiting Jury Review</td></tr>
+    </table>
+    <p>The appeal will now proceed to the Chair of the Jury for review and determination.</p>
+    <p>Log in to the MKJ SUPA CUP CMS to view the full response and evidence.</p>
     """
 
-    _safe_send(subject, html_message, [appellant_email])
+    _safe_send(subject, _appeals_base_html(f"Response Received - Appeal #{appeal.pk}", body), [appellant_email])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -346,39 +297,22 @@ def notify_reappeal_filed(appeal):
 
     subject = f"[MKJ SUPA CUP] Re-Appeal Filed - Appeal #{appeal.pk}"
 
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>🔄 Re-Appeal Filed - Appeal #{appeal.pk}</h3>
-            <p><strong>{appeal.appellant_team.name}</strong> has filed a re-appeal against <strong>{appeal.respondent_team.name}</strong>.</p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Subject:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{appeal.subject}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Original Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.original_appeal_id}</td></tr>
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Re-Appeal Fee:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">KES {REAPPEAL_FEE_KES:,}</td></tr>
-            </table>
-
-            <p style="background: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ffc107;">
-                ⚠️ This is a re-appeal. The decision on this re-appeal will be <strong>final and binding</strong>.
-                The respondent team has 30 minutes to submit a response once the appeal is formally submitted.
-            </p>
-
-            <p>Log in to the MKJ SUPA CUP CMS for full details.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p><strong>{appeal.appellant_team.name}</strong> has filed a re-appeal against <strong>{appeal.respondent_team.name}</strong>.</p>
+    <table>
+        <tr><td><strong>Subject:</strong></td><td>{appeal.subject}</td></tr>
+        <tr><td><strong>Original Appeal:</strong></td><td>#{appeal.original_appeal_id}</td></tr>
+        <tr><td><strong>Re-Appeal Fee:</strong></td><td>KES {REAPPEAL_FEE_KES:,}</td></tr>
+    </table>
+    <p style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107;">
+        This is a re-appeal. The decision on this re-appeal will be <strong>final and binding</strong>.
+        The respondent team has 30 minutes to submit a response once the appeal is formally submitted.
+    </p>
+    <p>Log in to the MKJ SUPA CUP CMS for full details.</p>
     """
 
     all_recipients = [respondent_email, appellant_email] + jury_emails
-    _safe_send(subject, html_message, all_recipients)
+    _safe_send(subject, _appeals_base_html(f"Re-Appeal Filed - Appeal #{appeal.pk}", body), all_recipients)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -389,78 +323,45 @@ def notify_fee_verified(appeal):
     """Notify appellant that their fee payment has been verified."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
     subject = f"[MKJ SUPA CUP] Appeal Fee Verified - Appeal #{appeal.pk}"
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>✅ Fee Payment Verified - Appeal #{appeal.pk}</h3>
-            <p>Your appeal fee payment of <strong>KES {appeal.fee_amount:,.0f}</strong> has been verified.</p>
-            <p>Reference: <strong>{appeal.fee_reference}</strong></p>
-            <p style="background: #e8f5e9; padding: 12px; border-radius: 4px; border-left: 4px solid #4caf50;">
-                You can now finalize and submit your appeal. Remember: the appeal fee is
-                <strong>refundable only if the appeal is successful</strong>.
-            </p>
-            <p>Log in to the MKJ SUPA CUP CMS to submit your appeal.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p>Your appeal fee payment of <strong>KES {appeal.fee_amount:,.0f}</strong> has been verified.</p>
+    <p>Reference: <strong>{appeal.fee_reference}</strong></p>
+    <p style="background: #e8f5e9; padding: 12px; border-radius: 6px; border-left: 4px solid #4caf50;">
+        You can now finalize and submit your appeal. Remember: the appeal fee is
+        <strong>refundable only if the appeal is successful</strong>.
+    </p>
+    <p>Log in to the MKJ SUPA CUP CMS to submit your appeal.</p>
     """
-    _safe_send(subject, html_message, [appellant_email])
+    _safe_send(subject, _appeals_base_html(f"Fee Payment Verified - Appeal #{appeal.pk}", body), [appellant_email])
 
 
 def notify_fee_rejected(appeal):
     """Notify appellant that their fee payment was rejected."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
     subject = f"[MKJ SUPA CUP] Appeal Fee Rejected - Appeal #{appeal.pk}"
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>❌ Fee Payment Rejected - Appeal #{appeal.pk}</h3>
-            <p>Your appeal fee payment for appeal <strong>#{appeal.pk}</strong> has been rejected.</p>
-            <p style="background: #fce4ec; padding: 12px; border-radius: 4px; border-left: 4px solid #e91e63;">
-                Please resubmit a valid M-Pesa or bank reference for KES {appeal.fee_amount:,.0f}.
-            </p>
-            <p>Log in to the MKJ SUPA CUP CMS to resubmit your payment reference.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p>Your appeal fee payment for appeal <strong>#{appeal.pk}</strong> has been rejected.</p>
+    <p style="background: #fce4ec; padding: 12px; border-radius: 6px; border-left: 4px solid #e91e63;">
+        Please resubmit a valid M-Pesa or bank reference for KES {appeal.fee_amount:,.0f}.
+    </p>
+    <p>Log in to the MKJ SUPA CUP CMS to resubmit your payment reference.</p>
     """
-    _safe_send(subject, html_message, [appellant_email])
+    _safe_send(subject, _appeals_base_html(f"Fee Payment Rejected - Appeal #{appeal.pk}", body), [appellant_email])
 
 
 def notify_fee_refunded(appeal):
     """Notify appellant that their fee has been refunded."""
     appellant_email = _get_team_manager_email(appeal.appellant_team)
     subject = f"[MKJ SUPA CUP] Appeal Fee Refunded - Appeal #{appeal.pk}"
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>💰 Fee Refunded - Appeal #{appeal.pk}</h3>
-            <p>Your appeal fee of <strong>KES {appeal.fee_amount:,.0f}</strong> for appeal <strong>#{appeal.pk}</strong>
-            has been marked for refund.</p>
-            <p>Reference: <strong>{appeal.fee_reference}</strong></p>
-            <p style="background: #e8f5e9; padding: 12px; border-radius: 4px; border-left: 4px solid #4caf50;">
-                The refund will be processed to the original payment method. Please allow 2-3 business days.
-            </p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p>Your appeal fee of <strong>KES {appeal.fee_amount:,.0f}</strong> for appeal <strong>#{appeal.pk}</strong>
+    has been marked for refund.</p>
+    <p>Reference: <strong>{appeal.fee_reference}</strong></p>
+    <p style="background: #e8f5e9; padding: 12px; border-radius: 6px; border-left: 4px solid #4caf50;">
+        The refund will be processed to the original payment method. Please allow 2-3 business days.
+    </p>
     """
-    _safe_send(subject, html_message, [appellant_email])
+    _safe_send(subject, _appeals_base_html(f"Fee Refunded - Appeal #{appeal.pk}", body), [appellant_email])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -477,23 +378,11 @@ def notify_hearing_cancelled(hearing):
     hearing_tm = hearing.hearing_time.strftime("%H:%M")
 
     subject = f"[MKJ SUPA CUP] Hearing Cancelled - Appeal #{appeal.pk}"
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #1a237e; color: #fff; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">⚖️ MKJ SUPA CUP Appeals System</h2>
-        </div>
-        <div style="padding: 20px; background: #f8f9fa;">
-            <h3>🚫 Hearing Cancelled - Appeal #{appeal.pk}</h3>
-            <p>The hearing scheduled for <strong>{hearing_dt} at {hearing_tm}</strong> has been cancelled.</p>
-            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Appeal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">#{appeal.pk} - {appeal.subject}</td></tr>
-            </table>
-            <p>A new hearing may be scheduled. Check the MKJ SUPA CUP CMS for updates.</p>
-        </div>
-        <div style="background: #e8eaf6; padding: 15px; text-align: center; font-size: 0.85rem; color: #666;">
-            MKJ SUPA CUP Competition Management System - This is an automated notification.
-        </div>
-    </div>
+    body = f"""
+    <p>The hearing scheduled for <strong>{hearing_dt} at {hearing_tm}</strong> has been cancelled.</p>
+    <table>
+        <tr><td><strong>Appeal:</strong></td><td>#{appeal.pk} - {appeal.subject}</td></tr>
+    </table>
+    <p>A new hearing may be scheduled. Check the MKJ SUPA CUP CMS for updates.</p>
     """
-    _safe_send(subject, html_message, [appellant_email, respondent_email])
+    _safe_send(subject, _appeals_base_html(f"Hearing Cancelled - Appeal #{appeal.pk}", body), [appellant_email, respondent_email])

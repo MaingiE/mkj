@@ -106,38 +106,58 @@ def _get_coordinators_for_discipline(discipline):
 
 def _base_html(title, body_content):
     """Wrap body content in a branded HTML email template."""
+    logo_base = f"{SITE_URL}/static/img"
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 0; }}
-.wrap {{ max-width: 600px; margin: 0 auto; background: #fff; }}
-.header {{ background: linear-gradient(135deg, #003388, #124491); padding: 24px 32px; text-align: center; }}
-.header h1 {{ color: #fff; margin: 0; font-size: 20px; letter-spacing: 1px; }}
-.header p {{ color: rgba(255,255,255,.7); margin: 4px 0 0; font-size: 12px; }}
-.body {{ padding: 32px; color: #333; line-height: 1.6; font-size: 14px; }}
-.body h2 {{ color: #124491; margin: 0 0 16px; font-size: 18px; }}
-.info-box {{ background: #e8edf5; border-left: 4px solid #124491; padding: 16px; margin: 16px 0; border-radius: 4px; }}
-.info-box dt {{ font-weight: 700; color: #003388; margin-top: 8px; }}
+body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 0; }}
+.wrap {{ max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden;
+         box-shadow: 0 4px 24px rgba(0,0,0,.08); }}
+.logo-bar {{ background: #fff; padding: 20px 32px; text-align: center; border-bottom: 1px solid #e8edf5; }}
+.logo-bar img {{ height: 56px; margin: 0 12px; vertical-align: middle; }}
+.header {{ background: linear-gradient(135deg, #003388 0%, #124491 50%, #1a5db8 100%);
+           padding: 28px 32px; text-align: center; }}
+.header h1 {{ color: #fff; margin: 0; font-size: 16px; letter-spacing: 0.5px; font-weight: 600; line-height: 1.5; }}
+.header p {{ color: rgba(255,255,255,.75); margin: 8px 0 0; font-size: 12px; letter-spacing: 0.3px; }}
+.body {{ padding: 32px; color: #333; line-height: 1.7; font-size: 14px; }}
+.body h2 {{ color: #124491; margin: 0 0 20px; font-size: 18px; font-weight: 700; }}
+.info-box {{ background: linear-gradient(135deg, #e8edf5 0%, #f0f4ff 100%); border-left: 4px solid #124491;
+             padding: 18px 20px; margin: 20px 0; border-radius: 6px; }}
+.info-box dt {{ font-weight: 700; color: #003388; margin-top: 10px; font-size: 12px; text-transform: uppercase;
+                letter-spacing: 0.5px; }}
 .info-box dt:first-child {{ margin-top: 0; }}
-.info-box dd {{ margin: 2px 0 0 0; color: #333; }}
-.btn {{ display: inline-block; background: #124491; color: #fff; padding: 12px 28px; border-radius: 6px;
-        text-decoration: none; font-weight: 600; margin-top: 16px; }}
-.footer {{ background: #f4f6f8; padding: 16px 32px; text-align: center; font-size: 11px; color: #999; }}
-.alert {{ background: #fff3e0; border-left: 4px solid #fcb900; padding: 12px 16px; margin: 16px 0; border-radius: 4px; color: #856404; }}
+.info-box dd {{ margin: 4px 0 0 0; color: #333; font-size: 14px; }}
+.btn {{ display: inline-block; background: linear-gradient(135deg, #124491, #1a5db8); color: #fff !important;
+        padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;
+        margin-top: 20px; font-size: 14px; letter-spacing: 0.3px; }}
+.footer {{ background: #f8f9fb; padding: 24px 32px; text-align: center; font-size: 11px; color: #888;
+           border-top: 1px solid #e8edf5; }}
+.footer p {{ margin: 4px 0; }}
+.footer .sign-off {{ font-weight: 600; color: #124491; font-size: 12px; margin-bottom: 8px; }}
+.alert {{ background: #fff3e0; border-left: 4px solid #fcb900; padding: 14px 18px; margin: 20px 0;
+          border-radius: 6px; color: #856404; font-size: 13px; }}
+.divider {{ height: 1px; background: #e8edf5; margin: 24px 0; }}
 </style></head><body>
+<div style="padding:20px 0;">
 <div class="wrap">
+ <div class="logo-bar">
+  <img src="{logo_base}/TINA.jpeg" alt="Tina" style="height:56px;">
+  <img src="{logo_base}/makueni_logo.png" alt="Makueni County" style="height:56px;">
+ </div>
  <div class="header">
-  <h1>MKJ SUPA CUP</h1>
-  <p>Governor Mutula Kilonzo Junior Super Cup - Makueni County</p>
+  <h1>Welcome to Mutula Kilonzo Junior Supa Cup<br>Competition Management System</h1>
+  <p>Makueni County Sports Department</p>
  </div>
  <div class="body">
   <h2>{title}</h2>
   {body_content}
  </div>
  <div class="footer">
-  &copy; 2026 MKJ SUPA CUP - Makueni County Sports Department<br>
-  <a href="{SITE_URL}" style="color:#124491">{SITE_URL}</a>
+  <p class="sign-off">MKJ SUPA CUP Administration</p>
+  <p>&copy; 2026 MKJ SUPA CUP - Makueni County Sports Department</p>
+  <p><a href="{SITE_URL}" style="color:#124491;text-decoration:none;">{SITE_URL}</a></p>
  </div>
+</div>
 </div>
 </body></html>"""
 

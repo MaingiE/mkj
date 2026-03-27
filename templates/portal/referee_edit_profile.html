@@ -9,7 +9,7 @@
         <span>Edit Profile</span>
     </div>
     <h1>👤 Edit My Profile</h1>
-    <p>Update your referee details and official type</p>
+    <p>Update your referee details and specialisation</p>
 </div>
 
 <form method="post" enctype="multipart/form-data">
@@ -53,12 +53,12 @@
 <!-- Referee Type & Level -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header" style="background:#e8f5ed;">
-        <h3>⚽ Official Type & Credentials</h3>
+        <h3>⚽ Specialisation & Credentials</h3>
     </div>
     <div class="card-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
             <div>
-                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Official Type *</label>
+                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Specialisation *</label>
                 <select name="referee_type"
                         style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;" required>
                     {% for val, label in referee_types %}
@@ -85,11 +85,6 @@
                     <option value="{{ val }}" {% if profile.county == val %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-            </div>
-            <div>
-                <label style="font-weight:600;display:block;margin-bottom:.3rem;">Years of Experience</label>
-                <input type="number" name="years_experience" value="{{ profile.years_experience }}" min="0"
-                       style="width:100%;padding:.6rem;border:1px solid #ddd;border-radius:8px;">
             </div>
         </div>
         <div style="margin-top:1rem;">

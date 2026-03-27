@@ -2617,9 +2617,6 @@ def referee_edit_profile_view(request):
         profile.level = request.POST.get('level', profile.level)
         profile.county = request.POST.get('county', profile.county)
         profile.bio = request.POST.get('bio', profile.bio)
-        years_exp = request.POST.get('years_experience', '')
-        if years_exp.isdigit():
-            profile.years_experience = int(years_exp)
 
         # Profile picture
         if 'profile_picture' in request.FILES:
@@ -2642,12 +2639,12 @@ def referee_edit_profile_view(request):
         messages.success(request, 'Profile updated successfully.')
         return redirect('referee_edit_profile')
 
-    from referees.models import RefereeLevel, RefereeType as RT
+    from referees.models import RefereeLevel, Specialisation
     from accounts.models import KenyaCounty as KC
 
     return render(request, 'portal/referee_edit_profile.html', {
         'profile': profile,
-        'referee_types': RT.choices,
+        'referee_types': Specialisation.choices,
         'levels': RefereeLevel.choices,
         'counties': KC.choices,
     })
@@ -3716,7 +3713,7 @@ def coordinator_statistics_view(request, pk):
 def coordinator_referees_view(request):
     """Coordinator: View all referees and manage pending approvals, filtered by discipline."""
     from accounts.models import MakueniSubCounty
-    from referees.models import RefereeLevel, RefereeType
+    from referees.models import RefereeLevel, Specialisation
 
     discipline = _coordinator_discipline(request.user)
     ref_qs = RefereeProfile.objects.select_related('user')
@@ -3820,7 +3817,7 @@ def coordinator_referees_view(request):
         'discipline_label': _coordinator_label(discipline) if discipline else '',
         'sub_counties': MakueniSubCounty.choices,
         'levels': RefereeLevel.choices,
-        'referee_types': RefereeType.choices,
+        'referee_types': Specialisation.choices,
     })
 
 
@@ -7226,7 +7223,7 @@ def subcounty_officer_delete_player_view(request, player_pk):
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_referees_view(request):
     """Sub-county officer: Add referees per discipline for their sub-county."""
-    from referees.models import RefereeLevel, RefereeType
+    from referees.models import RefereeLevel, Specialisation
 
     user_sub_county = (request.user.sub_county or '').strip()
     if not user_sub_county:
@@ -7308,7 +7305,7 @@ def subcounty_officer_referees_view(request):
         'discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
         'discipline_counts': discipline_counts,
         'levels': RefereeLevel.choices,
-        'referee_types': RefereeType.choices,
+        'referee_types': Specialisation.choices,
         'user_sub_county': user_sub_county,
     })
 

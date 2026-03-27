@@ -43,7 +43,6 @@
                         <th>License</th>
                         <th>Level</th>
                         <th>County</th>
-                        <th>Experience</th>
                         <th>Applied</th>
                         <th>Actions</th>
                     </tr>
@@ -58,7 +57,6 @@
                             <span class="badge" style="background:#e8f5ed;color:#124491">{{ profile.get_level_display }}</span>
                         </td>
                         <td>{{ profile.county|default:" - " }}</td>
-                        <td>{{ profile.years_experience }} yr{{ profile.years_experience|pluralize }}</td>
                         <td style="white-space:nowrap">{{ profile.created_at|date:"d M Y" }}</td>
                         <td style="white-space:nowrap">
                             <form method="post" style="display:inline">

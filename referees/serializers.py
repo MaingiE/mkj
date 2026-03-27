@@ -29,7 +29,7 @@ class RefereeProfileSerializer(serializers.ModelSerializer):
             "id", "user", "full_name", "email", "phone",
             "license_number", "level", "level_display",
             "county", "is_approved", "approved_at",
-            "id_number", "bio", "years_experience",
+            "id_number", "bio",
             "total_matches", "avg_rating",
             "certifications", "created_at",
         ]

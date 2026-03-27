@@ -118,16 +118,6 @@ class RefereeRegistrationForm(forms.Form):
         }),
         label='National ID',
     )
-    years_experience = forms.IntegerField(
-        required=False,
-        min_value=0,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '0',
-            'min': '0',
-        }),
-        label='Years of Experience',
-    )
     profile_picture = forms.ImageField(
         required=False,
         widget=forms.FileInput(attrs={

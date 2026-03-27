@@ -10,13 +10,20 @@ from accounts.models import national_id_validator
 
 
 class RefereeLevel(models.TextChoices):
-    FIFA     = "FIFA",     "FIFA Referee"
-    CAF      = "CAF",      "CAF Referee"
-    NATIONAL = "National", "FKF National"
-    COUNTY   = "County",   "County Level"
+    FIFA_ELITE            = "FIFA Elite",            "FIFA Elite"
+    FKF_PREMIER_LEAGUE    = "FKF Premier League",    "FKF Premier League"
+    FKF_NATIONAL_SUPER    = "FKF National Super League", "FKF National Super League"
+    FKF_DIVISION_1        = "FKF Division 1",        "FKF Division 1"
+    REGIONAL              = "Regional",              "Regional"
+    COUNTY_GRASSROOT      = "County Grassroot",      "County Grassroot"
 
 
 class RefereeType(models.TextChoices):
+    REFEREE            = "referee",            "Referee"
+    ASSISTANT_REFEREE  = "assistant_referee",  "Assistant Referee"
+
+
+class Specialisation(models.TextChoices):
     REFEREE            = "referee",            "Referee"
     ASSISTANT_REFEREE  = "assistant_referee",  "Assistant Referee"
 
@@ -31,7 +38,7 @@ class RefereeProfile(models.Model):
         related_name="referee_profile"
     )
     license_number = models.CharField(max_length=50, unique=True, blank=True)
-    level          = models.CharField(max_length=20, choices=RefereeLevel.choices, default=RefereeLevel.COUNTY)
+    level          = models.CharField(max_length=40, choices=RefereeLevel.choices, default=RefereeLevel.COUNTY_GRASSROOT)
     county         = models.CharField(max_length=100)
     is_approved    = models.BooleanField(default=False)
     approved_by    = models.ForeignKey(
@@ -42,8 +49,9 @@ class RefereeProfile(models.Model):
     id_number      = models.CharField(max_length=20, blank=True, validators=[national_id_validator], help_text="National ID")
     profile_picture = models.ImageField(upload_to="referee_photos/", null=True, blank=True, help_text="Passport-size photo")
     referee_type    = models.CharField(
-        max_length=20, choices=RefereeType.choices,
-        default=RefereeType.REFEREE,
+        max_length=20, choices=Specialisation.choices,
+        default=Specialisation.REFEREE,
+        verbose_name="Specialisation",
         help_text="Whether this official is a Referee or Assistant Referee",
     )
     discipline      = models.CharField(
@@ -51,7 +59,6 @@ class RefereeProfile(models.Model):
         help_text="Sport discipline family e.g. football, volleyball, basketball, handball",
     )
     bio            = models.TextField(blank=True)
-    years_experience = models.PositiveIntegerField(default=0)
 
     # Aggregated stats (updated after each match)
     total_matches  = models.PositiveIntegerField(default=0)
