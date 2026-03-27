@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Articles - Media Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .media-page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:.75rem; }
+    .media-page-header h1 { font-size:1.5rem; font-weight:700; }
+    .filter-row { display:flex; gap:.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center; }
+    .filter-row .form-control, .filter-row .form-select { max-width:200px; font-size:.85rem; }
+    .article-card { background:#fff; border-radius:10px; padding:1rem 1.25rem; margin-bottom:.6rem; box-shadow:0 1px 4px rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .article-card .ac-info { flex:1; min-width:0; }
+    .article-card .ac-title { font-weight:600; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .article-card .ac-meta { font-size:.78rem; color:#757575; margin-top:.15rem; }
+    .article-card .ac-actions { display:flex; gap:.4rem; flex-shrink:0; }
+    .status-badge { font-size:.68rem; padding:.15rem .45rem; border-radius:4px; font-weight:600; }
+    .status-published { background:#e8f5ed; color:#2E7D32; }
+    .status-draft { background:#FFF3E0; color:#E65100; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="media-page-header">
+    <h1><i class="bi bi-newspaper"></i> Articles</h1>
+    <a href="{% url 'media_article_create' %}" class="btn btn-primary btn-sm">+ New Article</a>
+</div>
+
+<div class="filter-row">
+    <form method="get" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+        </select>
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search articles..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Search</button>
+    </form>
+</div>
+
+{% if articles %}
+{% for article in articles %}
+<div class="article-card">
+    <div class="ac-info">
+        <div class="ac-title">{{ article.title }}</div>
+        <div class="ac-meta">
+            <span class="status-badge {% if article.status == 'published' %}status-published{% else %}status-draft{% endif %}">{{ article.get_status_display }}</span>
+            &middot; {{ article.category|default:"Uncategorized" }}
+            &middot; {{ article.created_at|date:"d M Y" }}
+            {% if article.author %}&middot; {{ article.author.get_full_name }}{% endif %}
+        </div>
+    </div>
+    <div class="ac-actions">
+        <a href="{% url 'media_article_edit' article.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+        <a href="{% url 'media_article_delete' article.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="text-center" style="padding:3rem 1rem;color:#757575;">
+    <i class="bi bi-newspaper" style="font-size:2.5rem;"></i>
+    <p style="margin-top:.75rem;">No articles found.</p>
+    <a href="{% url 'media_article_create' %}" class="btn btn-primary btn-sm">Create First Article</a>
+</div>
+{% endif %}
+{% endblock %}

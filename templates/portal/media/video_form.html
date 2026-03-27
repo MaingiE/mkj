@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit Video{% else %}New Video{% endif %} - Media Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container { max-width:720px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:1.5rem; }
+    .form-container h1 { font-size:1.4rem; font-weight:700; margin-bottom:1.2rem; }
+    .form-container label { font-weight:600; font-size:.88rem; margin-bottom:.25rem; display:inline-block; }
+    .form-container .form-control,
+    .form-container .form-select { border-radius:8px; font-size:.88rem; }
+    .form-container textarea.form-control { min-height:100px; }
+    .form-group { margin-bottom:1rem; }
+    .form-check-label { font-weight:400 !important; }
+    .existing-thumb { max-width:180px; border-radius:8px; margin-top:.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1><i class="bi bi-play-circle"></i> {% if editing %}Edit Video{% else %}New Video{% endif %}</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+            <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Title -->
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Title</label>
+            {{ form.title }}
+            {% if form.title.errors %}<small class="text-danger">{{ form.title.errors.0 }}</small>{% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}<small class="text-danger">{{ form.description.errors.0 }}</small>{% endif %}
+        </div>
+
+        <!-- Source -->
+        <div class="form-group">
+            <label for="{{ form.source.id_for_label }}">Source</label>
+            {{ form.source }}
+            {% if form.source.errors %}<small class="text-danger">{{ form.source.errors.0 }}</small>{% endif %}
+        </div>
+
+        <!-- Video File -->
+        <div class="form-group" id="field-video-file">
+            <label for="{{ form.video_file.id_for_label }}">Video File</label>
+            {{ form.video_file }}
+            {% if form.video_file.errors %}<small class="text-danger">{{ form.video_file.errors.0 }}</small>{% endif %}
+            {% if editing and video.video_file %}
+            <small class="text-muted d-block mt-1">Current: {{ video.video_file.name }}</small>
+            {% endif %}
+        </div>
+
+        <!-- Video URL -->
+        <div class="form-group" id="field-video-url">
+            <label for="{{ form.video_url.id_for_label }}">Video URL</label>
+            {{ form.video_url }}
+            <small class="text-muted">YouTube link or external video URL</small>
+            {% if form.video_url.errors %}<small class="text-danger d-block">{{ form.video_url.errors.0 }}</small>{% endif %}
+        </div>
+
+        <!-- Thumbnail -->
+        <div class="form-group">
+            <label for="{{ form.thumbnail.id_for_label }}">Thumbnail</label>
+            {{ form.thumbnail }}
+            {% if form.thumbnail.errors %}<small class="text-danger">{{ form.thumbnail.errors.0 }}</small>{% endif %}
+            {% if editing and video.thumbnail %}
+            <img src="{{ video.thumbnail.url }}" alt="Current thumbnail" class="existing-thumb d-block">
+            {% endif %}
+        </div>
+
+        <!-- Duration -->
+        <div class="form-group">
+            <label for="{{ form.duration.id_for_label }}">Duration</label>
+            {{ form.duration }}
+            <small class="text-muted">e.g. 05:30</small>
+            {% if form.duration.errors %}<small class="text-danger d-block">{{ form.duration.errors.0 }}</small>{% endif %}
+        </div>
+
+        <!-- Checkboxes -->
+        <div class="form-group d-flex gap-3 flex-wrap">
+            <div class="form-check">
+                {{ form.is_featured }}
+                <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">Featured</label>
+            </div>
+            <div class="form-check">
+                {{ form.is_published }}
+                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">Published</label>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> {% if editing %}Update{% else %}Create{% endif %}</button>
+            <a href="{% url 'media_video_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const srcField = document.getElementById('{{ form.source.id_for_label }}');
+    const fileGroup = document.getElementById('field-video-file');
+    const urlGroup = document.getElementById('field-video-url');
+
+    function toggleFields() {
+        if (!srcField) return;
+        const v = srcField.value;
+        fileGroup.style.display = v === 'upload' ? '' : 'none';
+        urlGroup.style.display = (v === 'youtube' || v === 'external') ? '' : 'none';
+    }
+    toggleFields();
+    if (srcField) srcField.addEventListener('change', toggleFields);
+});
+</script>
+{% endblock %}

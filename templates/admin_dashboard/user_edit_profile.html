@@ -100,6 +100,12 @@
                         </div>
                     </div>
                     <div class="field">
+                        <label>ID Number</label>
+                        <input type="text" name="id_number" class="form-control" value="{{ detail_user.id_number|default:'' }}" placeholder="e.g. 12345678" pattern="\d{5,10}" minlength="5" maxlength="10" inputmode="numeric" title="National ID: 5-10 digits">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="field">
                         <input type="hidden" name="county" value="Makueni">
                         <label>Sub-County</label>
                         <select name="sub_county" class="form-control" required>

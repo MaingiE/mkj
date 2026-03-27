@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Media Dashboard - MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .media-hero {
+        background: linear-gradient(135deg, #1565C0 0%, #0D47A1 50%, #01579B 100%);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .media-hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .media-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+    .media-hero p { opacity: .85; font-size: .95rem; position: relative; }
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .m-stat {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        text-align: center;
+        border-top: 3px solid #E0E0E0;
+    }
+    .m-stat .num { font-size: 1.6rem; font-weight: 800; line-height: 1.2; }
+    .m-stat .lbl { font-size: .72rem; color: #757575; text-transform: uppercase; letter-spacing: .5px; }
+    .m-stat.blue { border-top-color: #1565C0; }
+    .m-stat.blue .num { color: #1565C0; }
+    .m-stat.green { border-top-color: #2E7D32; }
+    .m-stat.green .num { color: #2E7D32; }
+    .m-stat.amber { border-top-color: #E65100; }
+    .m-stat.amber .num { color: #E65100; }
+    .m-stat.purple { border-top-color: #6A1B9A; }
+    .m-stat.purple .num { color: #6A1B9A; }
+    .quick-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .quick-link {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        text-decoration: none;
+        color: #333;
+        transition: all .2s;
+    }
+    .quick-link:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.12); color: #1565C0; }
+    .quick-link i { font-size: 1.4rem; color: #1565C0; }
+    .quick-link .ql-text .ql-title { font-weight: 600; font-size: .95rem; }
+    .quick-link .ql-text .ql-desc { font-size: .78rem; color: #757575; }
+    .recent-section { margin-bottom: 2rem; }
+    .recent-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .75rem; }
+    .recent-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .6rem .75rem;
+        background: #fff;
+        border-radius: 8px;
+        margin-bottom: .4rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        font-size: .88rem;
+    }
+    .recent-item .ri-title { font-weight: 500; }
+    .recent-item .ri-meta { font-size: .75rem; color: #757575; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="media-hero">
+    <h1><i class="bi bi-camera-reels"></i> Media Dashboard</h1>
+    <p>Manage news, photo galleries, and video content</p>
+</div>
+
+<div class="stat-row">
+    <div class="m-stat blue">
+        <div class="num">{{ total_articles }}</div>
+        <div class="lbl">Articles</div>
+    </div>
+    <div class="m-stat green">
+        <div class="num">{{ published_articles }}</div>
+        <div class="lbl">Published</div>
+    </div>
+    <div class="m-stat amber">
+        <div class="num">{{ draft_articles }}</div>
+        <div class="lbl">Drafts</div>
+    </div>
+    <div class="m-stat blue">
+        <div class="num">{{ total_albums }}</div>
+        <div class="lbl">Albums</div>
+    </div>
+    <div class="m-stat purple">
+        <div class="num">{{ total_photos }}</div>
+        <div class="lbl">Photos</div>
+    </div>
+    <div class="m-stat green">
+        <div class="num">{{ total_videos }}</div>
+        <div class="lbl">Videos</div>
+    </div>
+    <div class="m-stat amber">
+        <div class="num">{{ total_categories }}</div>
+        <div class="lbl">Categories</div>
+    </div>
+</div>
+
+<div class="quick-links">
+    <a href="{% url 'media_article_create' %}" class="quick-link">
+        <i class="bi bi-pencil-square"></i>
+        <div class="ql-text">
+            <div class="ql-title">New Article</div>
+            <div class="ql-desc">Write a news article</div>
+        </div>
+    </a>
+    <a href="{% url 'media_album_create' %}" class="quick-link">
+        <i class="bi bi-image"></i>
+        <div class="ql-text">
+            <div class="ql-title">New Album</div>
+            <div class="ql-desc">Upload photo gallery</div>
+        </div>
+    </a>
+    <a href="{% url 'media_video_create' %}" class="quick-link">
+        <i class="bi bi-camera-video"></i>
+        <div class="ql-text">
+            <div class="ql-title">New Video</div>
+            <div class="ql-desc">Add video content</div>
+        </div>
+    </a>
+    <a href="{% url 'media_categories' %}" class="quick-link">
+        <i class="bi bi-tags"></i>
+        <div class="ql-text">
+            <div class="ql-title">Categories</div>
+            <div class="ql-desc">Manage news categories</div>
+        </div>
+    </a>
+</div>
+
+{% if recent_articles %}
+<div class="recent-section">
+    <h3><i class="bi bi-newspaper"></i> Recent Articles</h3>
+    {% for article in recent_articles %}
+    <div class="recent-item">
+        <div>
+            <span class="ri-title">{{ article.title|truncatechars:60 }}</span>
+            <span class="badge" style="font-size:.65rem;margin-left:.5rem;padding:.15rem .4rem;border-radius:4px;{% if article.status == 'published' %}background:#e8f5ed;color:#2E7D32;{% else %}background:#FFF3E0;color:#E65100;{% endif %}">{{ article.get_status_display }}</span>
+        </div>
+        <span class="ri-meta">{{ article.created_at|date:"d M Y" }}</span>
+    </div>
+    {% endfor %}
+    <a href="{% url 'media_article_list' %}" style="display:inline-block;margin-top:.5rem;font-size:.85rem;">View all articles &rarr;</a>
+</div>
+{% endif %}
+
+{% if recent_albums %}
+<div class="recent-section">
+    <h3><i class="bi bi-images"></i> Recent Albums</h3>
+    {% for album in recent_albums %}
+    <div class="recent-item">
+        <span class="ri-title">{{ album.title|truncatechars:50 }}</span>
+        <span class="ri-meta">{{ album.photo_count }} photos</span>
+    </div>
+    {% endfor %}
+    <a href="{% url 'media_album_list' %}" style="display:inline-block;margin-top:.5rem;font-size:.85rem;">View all albums &rarr;</a>
+</div>
+{% endif %}
+
+{% if recent_videos %}
+<div class="recent-section">
+    <h3><i class="bi bi-play-circle"></i> Recent Videos</h3>
+    {% for video in recent_videos %}
+    <div class="recent-item">
+        <span class="ri-title">{{ video.title|truncatechars:50 }}</span>
+        <span class="ri-meta">{{ video.get_source_display }}</span>
+    </div>
+    {% endfor %}
+    <a href="{% url 'media_video_list' %}" style="display:inline-block;margin-top:.5rem;font-size:.85rem;">View all videos &rarr;</a>
+</div>
+{% endif %}
+{% endblock %}

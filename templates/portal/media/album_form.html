@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit Album{% else %}New Album{% endif %} - Media Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-page-header { margin-bottom:1.5rem; }
+    .form-page-header h1 { font-size:1.4rem; font-weight:700; }
+    .album-form .form-group { margin-bottom:1rem; }
+    .album-form label { font-weight:600; font-size:.85rem; margin-bottom:.25rem; display:block; }
+    .album-form .form-control, .album-form .form-select { font-size:.9rem; }
+    .form-actions { display:flex; gap:.75rem; margin-top:1.5rem; }
+    .existing-photos { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:.5rem; margin-top:.75rem; }
+    .photo-thumb { position:relative; border-radius:8px; overflow:hidden; }
+    .photo-thumb img { width:100%; height:100px; object-fit:cover; }
+    .photo-thumb .delete-btn {
+        position:absolute; top:4px; right:4px;
+        background:rgba(198,40,40,.85); color:#fff; border:none; border-radius:50%;
+        width:24px; height:24px; font-size:.7rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page-header">
+    <h1><i class="bi bi-image"></i> {% if editing %}Edit Album{% else %}New Album{% endif %}</h1>
+</div>
+
+<div class="card" style="max-width:700px;">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="album-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Title *</label>
+                {{ form.title }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label for="{{ form.cover_image.id_for_label }}">Cover Image</label>
+                    {{ form.cover_image }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.event_date.id_for_label }}">Event Date</label>
+                    {{ form.event_date }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Upload Photos</label>
+                <input type="file" name="photos" class="form-control" multiple accept="image/*">
+                <small class="text-muted">Select multiple images to upload at once.</small>
+            </div>
+            <div class="form-group">
+                <label>{{ form.is_published }} Published</label>
+            </div>
+
+            {% if editing and images %}
+            <div class="form-group">
+                <label>Existing Photos ({{ images.count }})</label>
+                <div class="existing-photos">
+                    {% for img in images %}
+                    <div class="photo-thumb">
+                        <img src="{{ img.image.url }}" alt="{{ img.caption }}">
+                        <form method="post" action="{% url 'media_photo_delete' img.pk %}" style="margin:0;" onsubmit="return confirm('Delete this photo?');">
+                            {% csrf_token %}
+                            <button type="submit" class="delete-btn" title="Delete"><i class="bi bi-x"></i></button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger" style="font-size:.85rem;">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}<div>{{ error }}</div>{% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% if editing %}Save Changes{% else %}Create Album{% endif %}</button>
+                <a href="{% url 'media_album_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

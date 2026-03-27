@@ -21,7 +21,7 @@ from functools import wraps
 import csv
 import secrets, string, json, re
 
-from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or_raise, MAKUENI_SUBCOUNTY_WARDS
+from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or_raise, validate_national_id_or_raise, normalize_kenya_phone, MAKUENI_SUBCOUNTY_WARDS
 from competitions.models import (
     Competition, Fixture, SportType, EXHIBITION_SPORTS,
     CompetitionStatus,
@@ -3752,30 +3752,45 @@ def coordinator_referees_view(request):
             last_name = request.POST.get('last_name', '').strip()
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
+            id_number_raw = request.POST.get('id_number', '').strip()
             sub_county = request.POST.get('sub_county', '').strip()
             level = request.POST.get('level', 'County')
             referee_type = request.POST.get('referee_type', 'referee')
+
+            # Normalise phone
+            try:
+                phone = validate_kenya_phone_or_raise(phone, 'Phone number')
+            except ValidationError:
+                messages.error(request, 'Phone number must be a valid Kenyan number (+254XXXXXXXXX).')
+                return redirect('coordinator_referees')
+
+            # Normalise ID number (optional)
+            id_number = None
+            if id_number_raw:
+                try:
+                    id_number = validate_national_id_or_raise(id_number_raw, 'ID number')
+                except ValidationError as exc:
+                    messages.error(request, str(exc))
+                    return redirect('coordinator_referees')
 
             if not first_name or not last_name or not email or not sub_county:
                 messages.error(request, 'First name, last name, email, and sub-county are required.')
             elif User.objects.filter(email=email).exists():
                 messages.error(request, f'A user with email {email} already exists.')
+            elif User.objects.filter(phone=phone).exists():
+                messages.error(request, f'Phone number {phone} is already registered to another account.')
+            elif id_number and User.objects.filter(id_number=id_number).exists():
+                messages.error(request, f'ID number {id_number} is already registered to another account.')
             else:
-                username = email.split('@')[0]
-                base_username = username
-                counter = 1
-                while User.objects.filter(username=username).exists():
-                    username = f'{base_username}{counter}'
-                    counter += 1
-
                 temp_pw = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
                 user = User.objects.create_user(
-                    username=username, email=email,
+                    email=email,
                     first_name=first_name, last_name=last_name,
                     password=temp_pw,
+                    phone=phone,
+                    id_number=id_number,
                 )
                 user.role = UserRole.REFEREE
-                user.phone = phone
                 user.must_change_password = True
                 user.is_active = True
                 user.save()
@@ -3786,6 +3801,7 @@ def coordinator_referees_view(request):
                     level=level,
                     referee_type=referee_type,
                     discipline=discipline or '',
+                    id_number=id_number or '',
                     is_approved=True,
                     approved_by=request.user,
                     approved_at=timezone.now(),
@@ -5106,10 +5122,19 @@ def county_admin_add_bench_member_view(request, discipline_pk):
 
                 # Team Manager must always be wired to a Team Manager account.
                 if member.role == TechnicalBenchRole.TEAM_MANAGER:
+                    # Normalise phone for uniqueness check
+                    tm_phone = normalize_kenya_phone(member.phone)
+
                     existing_user = User.objects.filter(email__iexact=member.email).first()
 
                     if existing_user and existing_user.technical_bench_profile:
                         messages.error(request, 'This Team Manager email is already linked to another technical bench profile.')
+                        member.delete()
+                        return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
+
+                    # Phone uniqueness: skip if same user already owns it
+                    if tm_phone and User.objects.filter(phone=tm_phone).exclude(pk=existing_user.pk if existing_user else None).exists():
+                        messages.error(request, f'Phone number {tm_phone} is already registered to another account.')
                         member.delete()
                         return redirect('subcounty_officer_discipline_players', discipline_pk=discipline_pk)
 
@@ -5260,6 +5285,8 @@ def county_admin_delegation_members_view(request):
                 messages.error(request, 'A CECM Sports member has already been added for this county.')
             elif member.role == CountyDelegationRole.CECM_SPORTS and User.objects.filter(email__iexact=member.email).exists():
                 messages.error(request, 'A user account with this email already exists. Use a different email for CECM account creation.')
+            elif member.role == CountyDelegationRole.CECM_SPORTS and member.phone and User.objects.filter(phone=normalize_kenya_phone(member.phone)).exists():
+                messages.error(request, f'Phone number {member.phone} is already registered to another account.')
             else:
                 member.save()
 
@@ -7264,32 +7291,47 @@ def subcounty_officer_referees_view(request):
             last_name = request.POST.get('last_name', '').strip()
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
+            id_number_raw = request.POST.get('id_number', '').strip()
             discipline = request.POST.get('discipline', '').strip()
             level = request.POST.get('level', 'County')
             referee_type = request.POST.get('referee_type', 'referee')
+
+            # Normalise phone
+            try:
+                phone = validate_kenya_phone_or_raise(phone, 'Phone number')
+            except ValidationError:
+                messages.error(request, 'Phone number must be a valid Kenyan number (+254XXXXXXXXX).')
+                return redirect('subcounty_officer_referees')
+
+            # Normalise ID number (optional)
+            id_number = None
+            if id_number_raw:
+                try:
+                    id_number = validate_national_id_or_raise(id_number_raw, 'ID number')
+                except ValidationError as exc:
+                    messages.error(request, str(exc))
+                    return redirect('subcounty_officer_referees')
 
             if not first_name or not last_name or not email or not discipline:
                 messages.error(request, 'First name, last name, email, and discipline are required.')
             elif User.objects.filter(email=email).exists():
                 messages.error(request, f'A user with email {email} already exists.')
+            elif User.objects.filter(phone=phone).exists():
+                messages.error(request, f'Phone number {phone} is already registered to another account.')
+            elif id_number and User.objects.filter(id_number=id_number).exists():
+                messages.error(request, f'ID number {id_number} is already registered to another account.')
             elif discipline not in dict(COORDINATOR_DISCIPLINE_CHOICES):
                 messages.error(request, 'Invalid discipline selected.')
             else:
-                username = email.split('@')[0]
-                base_username = username
-                counter = 1
-                while User.objects.filter(username=username).exists():
-                    username = f'{base_username}{counter}'
-                    counter += 1
-
                 temp_pw = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
                 user = User.objects.create_user(
-                    username=username, email=email,
+                    email=email,
                     first_name=first_name, last_name=last_name,
                     password=temp_pw,
+                    phone=phone,
+                    id_number=id_number,
                 )
                 user.role = UserRole.REFEREE
-                user.phone = phone
                 user.must_change_password = True
                 user.is_active = True
                 user.save()
@@ -7300,6 +7342,7 @@ def subcounty_officer_referees_view(request):
                     level=level,
                     referee_type=referee_type,
                     discipline=discipline,
+                    id_number=id_number or '',
                     is_approved=True,
                     approved_by=request.user,
                     approved_at=timezone.now(),

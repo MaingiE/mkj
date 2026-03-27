@@ -36,8 +36,12 @@
                     <input type="email" name="email" class="form-control form-control-sm" required>
                 </div>
                 <div>
-                    <label class="form-label" style="font-size:.8rem;">Phone</label>
-                    <input type="text" name="phone" class="form-control form-control-sm" placeholder="07xxxxxxxx">
+                    <label class="form-label" style="font-size:.8rem;">Phone <span style="color:#e53935;">*</span></label>
+                    <input type="tel" name="phone" class="form-control form-control-sm" placeholder="07xxxxxxxx" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:.8rem;">ID Number</label>
+                    <input type="text" name="id_number" class="form-control form-control-sm" placeholder="e.g. 12345678" pattern="\d{5,10}" minlength="5" maxlength="10" inputmode="numeric" title="National ID: 5-10 digits">
                 </div>
                 <div>
                     <label class="form-label" style="font-size:.8rem;">Sub-County <span style="color:#e53935;">*</span></label>

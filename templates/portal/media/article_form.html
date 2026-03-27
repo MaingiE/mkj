@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit Article{% else %}New Article{% endif %} - Media Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-page-header { margin-bottom:1.5rem; }
+    .form-page-header h1 { font-size:1.4rem; font-weight:700; }
+    .article-form .form-group { margin-bottom:1rem; }
+    .article-form label { font-weight:600; font-size:.85rem; margin-bottom:.25rem; display:block; }
+    .article-form .form-control, .article-form .form-select { font-size:.9rem; }
+    .article-form textarea { resize:vertical; }
+    .form-actions { display:flex; gap:.75rem; margin-top:1.5rem; }
+    .checkbox-row { display:flex; gap:1.5rem; margin-bottom:1rem; }
+    .checkbox-row label { font-weight:400; display:flex; align-items:center; gap:.4rem; cursor:pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page-header">
+    <h1><i class="bi bi-pencil-square"></i> {% if editing %}Edit Article{% else %}New Article{% endif %}</h1>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="article-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Title *</label>
+                {{ form.title }}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}">Status</label>
+                    {{ form.status }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.featured_image.id_for_label }}">Featured Image</label>
+                {{ form.featured_image }}
+                {% if editing and article.featured_image %}
+                <small class="text-muted">Current: {{ article.featured_image.name }}</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.excerpt.id_for_label }}">Excerpt</label>
+                {{ form.excerpt }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.content.id_for_label }}">Content *</label>
+                {{ form.content }}
+            </div>
+            <div class="checkbox-row">
+                <label>{{ form.is_highlight }} Highlight</label>
+                <label>{{ form.is_featured }} Featured</label>
+            </div>
+            {% if form.errors %}
+            <div class="alert alert-danger" style="font-size:.85rem;">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}<div>{{ error }}</div>{% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% if editing %}Save Changes{% else %}Create Article{% endif %}</button>
+                <a href="{% url 'media_article_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
