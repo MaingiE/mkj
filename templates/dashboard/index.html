@@ -87,6 +87,300 @@
             </a>
             {% endif %}
 
+            {# ── SYSTEM ADMIN FULL PORTAL HUB (testing convenience) ── #}
+            {% if user.role == 'admin' or user.is_superuser %}
+            </div><!-- end quick-actions -->
+            </div><!-- end card-body -->
+            </div><!-- end card -->
+
+            <!-- Admin Portal Hub -->
+            <div class="card mb-1">
+                <div class="card-header" style="background:linear-gradient(90deg,#0C1B3A,#1A6FB5);color:#fff;">
+                    <h3 style="color:#fff;"><i class="bi bi-grid-3x3-gap-fill me-2"></i>System Admin — All Portals</h3>
+                    <small style="color:#E8B91E;">Full system access for testing</small>
+                </div>
+                <div class="card-body">
+
+                    <!-- Competition Management -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-trophy me-1"></i>Competition Management</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'cm_dashboard' %}" class="action-card accent-purple">
+                            <div class="action-icon"><i class="bi bi-clipboard2-data"></i></div>
+                            <h4>CM Dashboard</h4>
+                            <p>Organising Secretary portal</p>
+                        </a>
+                        <a href="{% url 'cm_create_competition' %}" class="action-card accent-purple">
+                            <div class="action-icon"><i class="bi bi-plus-circle"></i></div>
+                            <h4>Create Competition</h4>
+                            <p>New competition setup</p>
+                        </a>
+                        <a href="{% url 'coordinator_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-diagram-3"></i></div>
+                            <h4>Coordinator Portal</h4>
+                            <p>Manage fixtures &amp; pools</p>
+                        </a>
+                        <a href="{% url 'coordinator_competitions' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-list-ul"></i></div>
+                            <h4>Competitions List</h4>
+                            <p>Coordinator competitions</p>
+                        </a>
+                        <a href="{% url 'coordinator_venues' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-geo-alt"></i></div>
+                            <h4>Venues</h4>
+                            <p>Manage match venues</p>
+                        </a>
+                    </div>
+
+                    <!-- Match Day -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-calendar-event me-1"></i>Match Day</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'matches_list' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-calendar-check"></i></div>
+                            <h4>Fixtures</h4>
+                            <p>All scheduled matches</p>
+                        </a>
+                        <a href="{% url 'squad_review_list' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-lines-fill"></i></div>
+                            <h4>Squad Review</h4>
+                            <p>Approve match squads</p>
+                        </a>
+                        <a href="{% url 'coordinator_match_reports' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-file-earmark-text"></i></div>
+                            <h4>Match Reports</h4>
+                            <p>Review &amp; approve reports</p>
+                        </a>
+                        <a href="{% url 'coordinator_squads' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-people"></i></div>
+                            <h4>Squads</h4>
+                            <p>All squad submissions</p>
+                        </a>
+                        <a href="{% url 'approve_reports' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-check2-square"></i></div>
+                            <h4>Approve Reports</h4>
+                            <p>Admin report approvals</p>
+                        </a>
+                    </div>
+
+                    <!-- Referees -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-flag me-1"></i>Referees</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'coordinator_referees' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-badge"></i></div>
+                            <h4>Referees List</h4>
+                            <p>All registered referees</p>
+                        </a>
+                        <a href="{% url 'coordinator_appointments' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-calendar-plus"></i></div>
+                            <h4>Appointments</h4>
+                            <p>Manage referee appointments</p>
+                        </a>
+                        <a href="{% url 'referee_appointments' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-clipboard-check"></i></div>
+                            <h4>Admin Appointments</h4>
+                            <p>Override &amp; assign referees</p>
+                        </a>
+                        <a href="{% url 'pending_referees' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-hourglass-split"></i></div>
+                            <h4>Pending Referees</h4>
+                            <p>Approve referees</p>
+                        </a>
+                    </div>
+
+                    <!-- Sub-County & County -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-geo me-1"></i>Sub-County &amp; County</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'subcounty_officer_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-map"></i></div>
+                            <h4>Sub-County Officer</h4>
+                            <p>Sub-county sports portal</p>
+                        </a>
+                        <a href="{% url 'subcounty_officer_disciplines' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-layers"></i></div>
+                            <h4>Disciplines</h4>
+                            <p>Sub-county disciplines</p>
+                        </a>
+                        <a href="{% url 'subcounty_officer_referees' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-badge"></i></div>
+                            <h4>Sub-County Referees</h4>
+                            <p>Local referee management</p>
+                        </a>
+                        <a href="{% url 'subcounty_officer_delegation_members' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-people-fill"></i></div>
+                            <h4>Delegation</h4>
+                            <p>County delegation members</p>
+                        </a>
+                    </div>
+
+                    <!-- Player Management -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-person-vcard me-1"></i>Player Management</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'player_verification_list' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-shield-check"></i></div>
+                            <h4>Player Verification</h4>
+                            <p>Verify submitted documents</p>
+                        </a>
+                        <a href="{% url 'player_clearance_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+                            <h4>Player Clearance</h4>
+                            <p>Huduma Kenya + FIFA Connect</p>
+                        </a>
+                        <a href="{% url 'vo_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-eye"></i></div>
+                            <h4>Verification Officer</h4>
+                            <p>VO sequential verification</p>
+                        </a>
+                        <a href="{% url 'subcounty_verified_players' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-check"></i></div>
+                            <h4>Verified Players</h4>
+                            <p>Sub-county verified list</p>
+                        </a>
+                        <a href="{% url 'director_sports_verified_players' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-check-circle"></i></div>
+                            <h4>Director Players</h4>
+                            <p>Approve &amp; lock player lists</p>
+                        </a>
+                        <a href="{% url 'view_suspensions' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-ban"></i></div>
+                            <h4>Suspensions</h4>
+                            <p>Manage player suspensions</p>
+                        </a>
+                    </div>
+
+                    <!-- Finance & Teams -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-cash-stack me-1"></i>Finance &amp; Teams</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'treasurer_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-currency-dollar"></i></div>
+                            <h4>Treasurer Portal</h4>
+                            <p>Payments &amp; finances</p>
+                        </a>
+                        <a href="{% url 'treasurer_teams' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-people"></i></div>
+                            <h4>Team Payments</h4>
+                            <p>Confirm team payments</p>
+                        </a>
+                        <a href="{% url 'treasurer_county_payments' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-bank"></i></div>
+                            <h4>County Payments</h4>
+                            <p>County registration fees</p>
+                        </a>
+                        <a href="{% url 'teams_list' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-shield"></i></div>
+                            <h4>All Teams</h4>
+                            <p>View all registered teams</p>
+                        </a>
+                        <a href="{% url 'pending_teams' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-hourglass"></i></div>
+                            <h4>Pending Teams</h4>
+                            <p>Teams awaiting approval</p>
+                        </a>
+                    </div>
+
+                    <!-- Leadership / Oversight -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-building me-1"></i>Leadership &amp; Oversight</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'director_sports_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-bar-chart-line"></i></div>
+                            <h4>Director of Sports</h4>
+                            <p>Executive oversight</p>
+                        </a>
+                        <a href="{% url 'chief_sports_officer_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-star"></i></div>
+                            <h4>Chief Sports Officer</h4>
+                            <p>County-level oversight</p>
+                        </a>
+                        <a href="{% url 'chief_officer_sports_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-building-check"></i></div>
+                            <h4>Chief Officer Sports</h4>
+                            <p>Government oversight</p>
+                        </a>
+                        <a href="{% url 'governor_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-award"></i></div>
+                            <h4>Governor Portal</h4>
+                            <p>Top-level dashboard</p>
+                        </a>
+                        <a href="{% url 'waziri_sports_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-workspace"></i></div>
+                            <h4>Waziri Sports</h4>
+                            <p>Sports minister portal</p>
+                        </a>
+                        <a href="{% url 'sg_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-briefcase"></i></div>
+                            <h4>Secretary General</h4>
+                            <p>SG oversight &amp; reports</p>
+                        </a>
+                    </div>
+
+                    <!-- Scouting & Appeals -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-binoculars me-1"></i>Scouting &amp; Appeals</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'scout_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-binoculars"></i></div>
+                            <h4>Scout Portal</h4>
+                            <p>Player scouting &amp; shortlists</p>
+                        </a>
+                        <a href="{% url 'director_sports_shortlist_requests' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-list-check"></i></div>
+                            <h4>Shortlist Requests</h4>
+                            <p>Review scout edit requests</p>
+                        </a>
+                        <a href="{% url 'leadership_scout_reports' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-file-earmark-bar-graph"></i></div>
+                            <h4>Scout Reports</h4>
+                            <p>Leadership scout reports</p>
+                        </a>
+                        <a href="{% url 'jury_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-gavel"></i></div>
+                            <h4>Jury Portal</h4>
+                            <p>Appeals &amp; hearings</p>
+                        </a>
+                    </div>
+
+                    <!-- Media & Admin Tools -->
+                    <h5 class="mb-2" style="color:#1A6FB5;border-bottom:2px solid #e8f0f8;padding-bottom:6px;"><i class="bi bi-tools me-1"></i>Media &amp; Admin Tools</h5>
+                    <div class="quick-actions mb-3">
+                        <a href="{% url 'media_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-camera-video"></i></div>
+                            <h4>Media Portal</h4>
+                            <p>Articles, albums &amp; videos</p>
+                        </a>
+                        <a href="{% url 'director_sports_system_users' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-gear"></i></div>
+                            <h4>System Users</h4>
+                            <p>View all user accounts</p>
+                        </a>
+                        <a href="{% url 'director_sports_audit' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-journal-text"></i></div>
+                            <h4>Audit Trail</h4>
+                            <p>Director sports audit log</p>
+                        </a>
+                        <a href="{% url 'activity_logs' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-activity"></i></div>
+                            <h4>Activity Logs</h4>
+                            <p>Full system activity log</p>
+                        </a>
+                        <a href="{% url 'statistics_dashboard' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-graph-up"></i></div>
+                            <h4>Statistics</h4>
+                            <p>System-wide statistics</p>
+                        </a>
+                        <a href="{% url 'manage_league_admins' %}" class="action-card">
+                            <div class="action-icon"><i class="bi bi-person-plus"></i></div>
+                            <h4>Create Users</h4>
+                            <p>Add system users</p>
+                        </a>
+                        <a href="/admin/" class="action-card" style="border-color:#dc3545;">
+                            <div class="action-icon"><i class="bi bi-shield-exclamation"></i></div>
+                            <h4>Django Admin</h4>
+                            <p>Database-level administration</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-1"><div class="card-header"><h3>Quick Actions</h3></div><div class="card-body"><div class="quick-actions">
+            {% endif %}
+
             {% if user.role == 'coordinator' %}
             <a href="{% url 'coordinator_dashboard' %}" class="action-card">
                 <div class="action-icon"><i class="bi bi-clipboard2-pulse"></i></div>
@@ -168,9 +462,9 @@
                 <h4>My Profile</h4>
                 <p>View account details</p>
             </a>
-        </div>
-    </div>
-</div>
+            </div><!-- end quick-actions -->
+            </div><!-- end card-body -->
+            </div><!-- end card -->
 
 <!-- Recent Fixtures -->
 {% if recent_fixtures %}
