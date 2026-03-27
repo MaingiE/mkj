@@ -249,6 +249,7 @@ EMAIL_TIMEOUT    = env.int("EMAIL_TIMEOUT", default=15)       # fail fast; sendi
 EMAIL_HOST_USER  = _email_host_user
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
+BREVO_API_KEY       = env("BREVO_API_KEY", default="")
 SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
 
 # ── LOCALISATION ───────────────────────────────────────────────────────────────
