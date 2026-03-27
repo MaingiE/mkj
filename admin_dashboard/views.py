@@ -570,7 +570,8 @@ def create_league_admin(request):
             # Send credentials email
             email_sent = False
             try:
-                send_credentials_email(user_obj, password, dict(UserRole.choices).get(role, role))
+                from accounts.notifications import notify_account_created
+                notify_account_created(user_obj, password, dict(UserRole.choices).get(role, role))
                 email_sent = True
             except Exception:
                 pass

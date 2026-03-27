@@ -888,11 +888,7 @@ def web_login_view(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
-        from accounts.models import User as _User
-        _exists = _User.objects.filter(email=email).exists()
-        logger.warning("LOGIN ATTEMPT: email=%r exists_in_db=%s", email, _exists)
         user = authenticate(request, email=email, password=password)
-        logger.warning("LOGIN RESULT: user=%r authenticated=%s", user, user is not None)
         if user is not None:
             if getattr(user, 'is_suspended', False):
                 return render(request, 'accounts/login.html', {
