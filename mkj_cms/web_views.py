@@ -928,7 +928,7 @@ def force_change_password_view(request):
             request.user.set_password(new_password)
             request.user.must_change_password = False
             request.user.save(update_fields=['password', 'must_change_password'])
-            login(request, request.user)
+            login(request, request.user, backend='accounts.backends.EmailBackend')
             messages.success(request, 'Password changed successfully! Welcome to MKJ SUPA CUP CMS.')
             return redirect('dashboard')
 
