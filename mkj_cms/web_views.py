@@ -888,7 +888,7 @@ def web_login_view(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, email=email, password=password)
         if user is not None:
             if getattr(user, 'is_suspended', False):
                 return render(request, 'accounts/login.html', {
