@@ -151,21 +151,21 @@ img { max-width: 100%; }
 /* Hamburger */
 .fkf-nav-toggle {
     display: none; background: none; border: none; cursor: pointer;
-    width: 32px; height: 24px; position: relative; z-index: 10002;
-    padding: 4px;
+    width: 44px; height: 44px; position: relative; z-index: 10002;
+    padding: 10px 6px;
     -webkit-tap-highlight-color: transparent;
 }
 .fkf-nav-toggle span {
     display: block; width: 100%; height: 2px; background: #124491;
-    position: absolute; left: 0; transition: all .3s;
+    position: absolute; left: 6px; right: 6px; width: calc(100% - 12px); transition: all .3s;
 }
-.fkf-nav-toggle span:nth-child(1) { top: 2px; }
-.fkf-nav-toggle span:nth-child(2) { top: 11px; }
-.fkf-nav-toggle span:nth-child(3) { top: 20px; }
+.fkf-nav-toggle span:nth-child(1) { top: 12px; }
+.fkf-nav-toggle span:nth-child(2) { top: 21px; }
+.fkf-nav-toggle span:nth-child(3) { top: 30px; }
 .fkf-nav-toggle.open span { background: #124491; }
-.fkf-nav-toggle.open span:nth-child(1) { top: 11px; transform: rotate(45deg); }
+.fkf-nav-toggle.open span:nth-child(1) { top: 21px; transform: rotate(45deg); }
 .fkf-nav-toggle.open span:nth-child(2) { opacity: 0; }
-.fkf-nav-toggle.open span:nth-child(3) { top: 11px; transform: rotate(-45deg); }
+.fkf-nav-toggle.open span:nth-child(3) { top: 21px; transform: rotate(-45deg); }
 
 /* ──────────────────────────────────────────────────────────────────────────
    HERO - DARK CINEMATIC
@@ -2010,17 +2010,24 @@ img { max-width: 100%; }
     .fkf-nav-links a {
         font-size: 1.15rem; padding: .85rem 1rem; color: #333;
         display: block; border-radius: 8px; transition: background .2s;
+        min-height: 44px; display: flex; align-items: center; justify-content: center;
     }
     .fkf-nav-links a:hover,
     .fkf-nav-links a.active { background: #e8edf5; color: #124491; }
     .fkf-nav-actions { display: none; }
-    .nav-login-mobile { display: list-item !important; margin-top: auto; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+    .nav-login-mobile { display: list-item !important; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
     .nav-login-mobile a {
-        background: #124491; color: #fff !important;
-        border-radius: 8px; padding: .75rem 2rem !important;
-        font-weight: 700; font-size: 1.05rem !important;
-        text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
-        box-shadow: 0 4px 12px rgba(18,68,145,.25);
+        background: linear-gradient(135deg, #124491, #1a5bb5); color: #fff !important;
+        border-radius: 10px; padding: .85rem 2rem !important;
+        font-weight: 700; font-size: 1.1rem !important;
+        text-align: center; display: flex; align-items: center; justify-content: center; gap: .5rem;
+        box-shadow: 0 4px 16px rgba(18,68,145,.3);
+        min-height: 48px; width: 100%; max-width: 320px; margin: 0 auto;
+        transition: transform .15s, box-shadow .15s;
+    }
+    .nav-login-mobile a:hover,
+    .nav-login-mobile a:active {
+        transform: translateY(-1px); box-shadow: 0 6px 20px rgba(18,68,145,.4);
     }
     /* Mobile dropdown */
     .nav-dropdown .dropdown-menu {

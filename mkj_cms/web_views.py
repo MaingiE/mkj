@@ -891,7 +891,7 @@ def web_login_view(request):
         timeout_msg = 'Your session expired due to inactivity. Please log in again.'
 
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         password = request.POST.get('password', '')
         user = authenticate(request, email=email, password=password)
         if user is not None:
