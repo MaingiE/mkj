@@ -4,10 +4,27 @@ import django.core.validators
 from django.db import migrations, models
 
 
-def empty_phone_to_null(apps, schema_editor):
-    """Convert empty-string phone values to NULL so the unique constraint can be applied."""
+def deduplicate_phones(apps, schema_editor):
+    """
+    Wipe ALL duplicate phone values — every copy gets set to NULL.
+    Users with duplicates simply re-enter their phone on next login.
+    """
     User = apps.get_model('accounts', 'User')
+    from django.db.models import Count
+
+    # 1. Empty strings -> NULL
     User.objects.filter(phone='').update(phone=None)
+
+    # 2. Find every phone that appears more than once and NULL them all
+    dupes = (
+        User.objects.filter(phone__isnull=False)
+        .values('phone')
+        .annotate(cnt=Count('id'))
+        .filter(cnt__gt=1)
+        .values_list('phone', flat=True)
+    )
+    if dupes:
+        User.objects.filter(phone__in=list(dupes)).update(phone=None)
 
 
 class Migration(migrations.Migration):
@@ -29,8 +46,8 @@ class Migration(migrations.Migration):
             name='phone',
             field=models.CharField(blank=True, max_length=13, null=True, validators=[django.core.validators.RegexValidator(message='Phone number must be in the format +254XXXXXXXXX (country code + 9 digits).', regex='^\\+254\\d{9}$')]),
         ),
-        # 3. Convert empty strings to NULL
-        migrations.RunPython(empty_phone_to_null, migrations.RunPython.noop),
+        # 3. Deduplicate: empty strings -> NULL, duplicate phones -> keep latest, NULL rest
+        migrations.RunPython(deduplicate_phones, migrations.RunPython.noop),
         # 4. Now apply unique constraint
         migrations.AlterField(
             model_name='user',
