@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260327b">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260328c">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Critical inline CSS so above-the-fold always renders correctly -->
     <style>
@@ -62,7 +62,7 @@
             </div>
         </a>
 
-        <button class="fkf-nav-toggle" id="navToggle" aria-label="Menu" onclick="this.classList.toggle('open');document.getElementById('navLinks').classList.toggle('open');">
+        <button class="fkf-nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
             <span></span><span></span><span></span>
         </button>
 
@@ -81,9 +81,9 @@
             <li><a href="{% url 'contact' %}" class="{% if active_page == 'contact' %}active{% endif %}">Contact</a></li>
             <!-- Login/Portal link visible inside mobile nav -->
             {% if user.is_authenticated %}
-                <li class="nav-login-mobile"><a href="{% url 'dashboard' %}">Portal</a></li>
+                <li class="nav-login-mobile"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Open Portal</a></li>
             {% else %}
-                <li class="nav-login-mobile"><a href="{% url 'web_login' %}">Staff Login</a></li>
+                <li class="nav-login-mobile"><a href="{% url 'web_login' %}"><i class="bi bi-box-arrow-in-right"></i> Staff Login</a></li>
             {% endif %}
         </ul>
 
@@ -161,7 +161,7 @@
     </div>
 </footer>
 
-<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/main.js' %}?v=20260328c"></script>
 <script>
 /* Preloader: fill bar then hide */
 (function(){

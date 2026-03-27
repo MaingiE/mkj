@@ -85,20 +85,54 @@ document.addEventListener('DOMContentLoaded', function () {
     var pubNavToggle = document.querySelector('.pub-nav-toggle, .fkf-nav-toggle');
     var pubNavLinks = document.querySelector('.pub-nav-links, .fkf-nav-links');
     if (pubNavToggle && pubNavLinks) {
-        pubNavToggle.addEventListener('click', function () {
-            pubNavToggle.classList.toggle('open');
-            pubNavLinks.classList.toggle('show');
-            pubNavLinks.classList.toggle('open');
+        function publicNavIsOpen() {
+            return pubNavLinks.classList.contains('show') || pubNavLinks.classList.contains('open');
+        }
+        function setPublicNavState(isOpen) {
+            pubNavToggle.classList.toggle('open', isOpen);
+            pubNavLinks.classList.toggle('show', isOpen);
+            pubNavLinks.classList.toggle('open', isOpen);
+            pubNavToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            document.body.classList.toggle('public-nav-open', isOpen);
+        }
+
+        if (!pubNavToggle.getAttribute('aria-expanded')) {
+            pubNavToggle.setAttribute('aria-expanded', 'false');
+        }
+        if (pubNavLinks.id && !pubNavToggle.getAttribute('aria-controls')) {
+            pubNavToggle.setAttribute('aria-controls', pubNavLinks.id);
+        }
+
+        pubNavToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setPublicNavState(!publicNavIsOpen());
         });
+
         // Close public nav when a link is clicked
         pubNavLinks.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function (e) {
                 if (window.innerWidth <= 768 && !e.defaultPrevented) {
-                    pubNavToggle.classList.remove('open');
-                    pubNavLinks.classList.remove('show');
-                    pubNavLinks.classList.remove('open');
+                    setPublicNavState(false);
                 }
             });
+        });
+
+        // Close menu when tapping outside, pressing Escape, or resizing up
+        document.addEventListener('click', function (e) {
+            if (window.innerWidth <= 768 && publicNavIsOpen() && !e.target.closest('.fkf-nav') && !e.target.closest('.pub-nav')) {
+                setPublicNavState(false);
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && publicNavIsOpen()) {
+                setPublicNavState(false);
+            }
+        });
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 768 && publicNavIsOpen()) {
+                setPublicNavState(false);
+            }
         });
     }
 
