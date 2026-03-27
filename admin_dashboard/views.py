@@ -78,7 +78,7 @@ MKJ SUPA CUP Administration
             getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkj_supacup.org'),
             [user_obj.email]
         )
-        email.send(fail_silently=True)
+        email.send(fail_silently=False)
         return True
     except Exception as e:
         print(f"Email error: {e}")

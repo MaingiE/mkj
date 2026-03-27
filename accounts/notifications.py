@@ -35,7 +35,7 @@ def _send(subject, html_body, recipients, fail_silently=True):
     try:
         msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients)
         msg.attach_alternative(html_body, "text/html")
-        msg.send(fail_silently=fail_silently)
+        msg.send(fail_silently=False)
         logger.info("✉ Sent '%s' → %s", subject, recipients)
         return True
     except Exception as exc:
