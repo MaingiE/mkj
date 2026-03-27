@@ -51,24 +51,25 @@
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
         {% include 'includes/sidebar.html' %}
         <main class="main-content">
-            {% if messages %}
-            <div class="toast-container" id="toastContainer">
-                {% for message in messages %}
-                <div class="toast toast-{{ message.tags }}" role="alert">
-                    <div class="toast-icon">
-                        <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'danger' or message.tags == 'error' %}bi-exclamation-triangle-fill{% elif message.tags == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
-                    </div>
-                    <div class="toast-body">{{ message|safe }}</div>
-                    <button type="button" class="toast-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
-                    <div class="toast-progress"></div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
             {% block content %}{% endblock %}
             {% block extra_js_content %}{% endblock %}
         </main>
     </div>
+
+    {% if messages %}
+    <div class="toast-container" id="toastContainer">
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}" role="alert">
+            <div class="toast-icon">
+                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'danger' or message.tags == 'error' %}bi-exclamation-triangle-fill{% elif message.tags == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+            </div>
+            <div class="toast-body">{{ message|safe }}</div>
+            <button type="button" class="toast-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            <div class="toast-progress"></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="footer">
