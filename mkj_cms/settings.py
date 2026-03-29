@@ -277,6 +277,30 @@ DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjs
 BREVO_API_KEY       = env("BREVO_API_KEY", default="")
 SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
 
+# ── SEO CONFIGURATION ──────────────────────────────────────────────────────────
+SITE_NAME = "MKJ SUPA CUP"
+SITE_DESCRIPTION = (
+    "Governor Mutula Kilonzo Junior Super Cup - Official youth sports championship "
+    "for Makueni County, Kenya. Football, Volleyball, Basketball and Handball."
+)
+SEO_KEYWORDS = [
+    "MKJ SUPA CUP",
+    "Mutula Kilonzo Junior",
+    "Super Cup",
+    "Makueni County sports",
+    "youth championship Kenya",
+    "Makueni football",
+    "Makueni volleyball",
+    "Makueni basketball",
+    "Makueni handball",
+    "Kenya youth sports",
+    "sub-county sports",
+    "MKJ TINA",
+    "Governor Mutula Kilonzo Junior",
+    "Wote sports",
+    "Makueni competition",
+]
+
 # ── IMAP (inbound mail fetch) ──────────────────────────────────────────────────
 # IMAP credentials are for the actual info@mkjsupacup.com mailbox (Namecheap
 # Private Email), which is separate from the SMTP relay (Brevo) used for sending.

@@ -372,16 +372,33 @@ def _ensure_competition_for_sport_type(sport_type):
 #   SEO: robots.txt & sitemap.xml
 # ══════════════════════════════════════════════════════════════════════════════
 
-@cache_page(60 * 60)  # cache 1 hour
+@cache_page(60 * 60 * 24)  # cache 24 hours
 def robots_txt_view(request):
     """Serve robots.txt that tells search engines how to crawl the site."""
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
     lines = [
+        "# MKJ SUPA CUP - robots.txt",
+        "# Governor Mutula Kilonzo Junior Super Cup - mkjsupacup.com",
+        "",
         "User-agent: *",
         "Allow: /",
+        "",
+        "# Private portal and admin areas - do not index",
         "Disallow: /portal/",
         "Disallow: /admin/",
         "Disallow: /api/",
+        "Disallow: /accounts/",
+        "",
+        "# Allow public pages explicitly",
+        "Allow: /about/",
+        "Allow: /fixtures/",
+        "Allow: /results/",
+        "Allow: /competitions/public/",
+        "Allow: /contact/",
+        "Allow: /media-hub/",
+        "",
+        "# Crawl-delay for respectful crawling",
+        "Crawl-delay: 5",
         "",
         f"Sitemap: {site_url}/sitemap.xml",
     ]
@@ -390,29 +407,52 @@ def robots_txt_view(request):
 
 @cache_page(60 * 30)  # cache 30 minutes
 def sitemap_xml_view(request):
-    """Serve a simple XML sitemap for search engine indexing."""
+    """Serve a dynamic XML sitemap for search engine indexing.
+
+    Includes all public pages with appropriate priority and changefreq values,
+    plus individual competition detail pages with lastmod dates.
+    """
+    from datetime import datetime
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
+    today = date.today().isoformat()
+
+    # (loc, changefreq, priority, lastmod)
     urls = [
-        (f"{site_url}/", "daily", "1.0"),
-        (f"{site_url}/about/", "weekly", "0.8"),
-        (f"{site_url}/fixtures/", "daily", "0.9"),
-        (f"{site_url}/results/", "daily", "0.9"),
-        (f"{site_url}/results/statistics/", "weekly", "0.7"),
-        (f"{site_url}/contact/", "monthly", "0.5"),
-        (f"{site_url}/media-hub/", "daily", "0.7"),
+        (f"{site_url}/",                      "daily",   "1.0", today),
+        (f"{site_url}/about/",                "monthly", "0.8", today),
+        (f"{site_url}/competitions/public/",  "weekly",  "0.8", today),
+        (f"{site_url}/fixtures/",             "daily",   "0.9", today),
+        (f"{site_url}/results/",              "daily",   "0.9", today),
+        (f"{site_url}/results/statistics/",   "weekly",  "0.7", today),
+        (f"{site_url}/contact/",              "monthly", "0.5", today),
+        (f"{site_url}/media-hub/",            "daily",   "0.7", today),
     ]
-    # Add individual competition detail pages
-    for comp in Competition.objects.exclude(status='cancelled'):
+
+    # Add individual competition detail pages with real lastmod dates
+    for comp in Competition.objects.exclude(status='cancelled').order_by('-pk'):
+        is_active = comp.status in ('active', 'group_stage', 'knockout')
+        lastmod = (
+            comp.end_date.isoformat() if comp.end_date and comp.status == 'completed'
+            else today
+        )
         urls.append((
             f"{site_url}/competitions/public/{comp.pk}/",
-            "daily" if comp.status in ('active', 'group_stage', 'knockout') else "weekly",
-            "0.8",
+            "daily" if is_active else "weekly",
+            "0.8" if is_active else "0.6",
+            lastmod,
         ))
 
     xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
-    for loc, changefreq, priority in urls:
-        xml_lines.append(f"  <url><loc>{loc}</loc><changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>")
+    for loc, changefreq, priority, lastmod in urls:
+        xml_lines.append(
+            f"  <url>"
+            f"<loc>{loc}</loc>"
+            f"<lastmod>{lastmod}</lastmod>"
+            f"<changefreq>{changefreq}</changefreq>"
+            f"<priority>{priority}</priority>"
+            f"</url>"
+        )
     xml_lines.append('</urlset>')
     return HttpResponse("\n".join(xml_lines), content_type="application/xml")
 

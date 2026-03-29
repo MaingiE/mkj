@@ -3,150 +3,196 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Governor Mutula Kilonzo Junior Super Cup - Official Portal" />
-    <meta name="theme-color" content="#0a0a0a" />
-    <link rel="icon" type="image/jpeg" href="/static/img/TINA.jpeg" />
+
+    <!-- Primary SEO Meta Tags -->
+    <title>MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup | Makueni County</title>
+    <meta name="description" content="MKJ SUPA CUP — Governor Mutula Kilonzo Junior Super Cup. Makueni County's premier youth multi-sport championship featuring Football, Volleyball, Basketball and Handball. Live fixtures, results, standings and team registration." />
+    <meta name="keywords" content="MKJ SUPA CUP, Mutula Kilonzo Junior, Super Cup, Makueni County sports, youth championship Kenya, Makueni football, Makueni volleyball, Makueni basketball, Makueni handball, Kenya youth sports, sub-county sports, MKJ TINA, Governor Mutula Kilonzo Junior, Wote sports, Makueni competition" />
+    <meta name="author" content="County Government of Makueni - MKJ TINA" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0D47A1" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://mkjsupacup.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MKJ SUPA CUP" />
+    <meta property="og:title" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup" />
+    <meta property="og:description" content="Makueni County's premier youth multi-sport championship. Football, Volleyball, Basketball and Handball — live fixtures, results and standings." />
+    <meta property="og:url" content="https://mkjsupacup.com/" />
+    <meta property="og:image" content="https://mkjsupacup.com/static/img/mkj_supa_cup_logo.png" />
+    <meta property="og:image:alt" content="MKJ SUPA CUP Logo - Governor Mutula Kilonzo Junior Super Cup" />
+    <meta property="og:locale" content="en_KE" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup" />
+    <meta name="twitter:description" content="Makueni County's premier youth multi-sport championship. Football, Volleyball, Basketball and Handball — live fixtures, results and standings." />
+    <meta name="twitter:image" content="https://mkjsupacup.com/static/img/mkj_supa_cup_logo.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/img/mkj_supa_cup_logo.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <title>MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup</title>
+
+    <!-- JSON-LD: Organization Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsOrganization",
+      "name": "MKJ SUPA CUP",
+      "alternateName": "Governor Mutula Kilonzo Junior Super Cup",
+      "url": "https://mkjsupacup.com/",
+      "logo": "https://mkjsupacup.com/static/img/mkj_supa_cup_logo.png",
+      "description": "MKJ SUPA CUP is Makueni County's premier youth multi-sport championship, organised by the County Government of Makueni under the MKJ TINA initiative. Featuring Football, Volleyball, Basketball and Handball competitions across all six sub-counties.",
+      "sport": ["Football", "Volleyball", "Basketball", "Handball"],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "P.O BOX 78-90300",
+        "addressLocality": "Wote",
+        "addressRegion": "Makueni County",
+        "addressCountry": "KE"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "info@mkjsupacup.com",
+        "contactType": "customer support"
+      },
+      "parentOrganization": {
+        "@type": "GovernmentOrganization",
+        "name": "County Government of Makueni",
+        "url": "https://www.makueni.go.ke/"
+      },
+      "sameAs": [
+        "https://mkjsupacup.com/"
+      ]
+    }
+    </script>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%);
+      font-family: 'Inter', Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero {
+      background: rgba(255,255,255,0.08);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(13,71,161,0.18);
+      padding: 2.5rem 2rem 2rem 2rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo-row.modern-logos {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .logo-row .tina-logo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #FFD54F;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(21,101,192,.12);
+      transition: transform .2s;
+    }
+    .logo-row .tina-logo:hover {
+      transform: scale(1.07) rotate(-3deg);
+    }
+    .logo-row .makueni-logo {
+      width: 90px;
+      height: 90px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 4px solid #FFD54F;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(21,101,192,.12);
+      transition: transform .2s;
+    }
+    .logo-row .makueni-logo:hover {
+      transform: scale(1.07) rotate(3deg);
+    }
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin-bottom: .5rem;
+    }
+    .hero h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #FFD54F;
+      margin-bottom: 1.2rem;
+      letter-spacing: 2px;
+    }
+    .hero p {
+      font-size: 1.05rem;
+      color: #e3e3e3;
+      margin-bottom: 1.5rem;
+    }
+    .hero .desc {
+      font-size: 1.1rem;
+      color: #fff;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+    .hero .govt-label {
+      font-size: .95rem;
+      color: #FFD54F;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+    .cta-btn {
+      display: inline-block;
+      padding: .85rem 2.2rem;
+      background: #FFD54F;
+      color: #0D47A1;
+      font-weight: 800;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 2px 12px rgba(21,101,192,.18);
+      transition: background .2s, color .2s;
+    }
+    .cta-btn:hover {
+      background: #fff;
+      color: #1565C0;
+    }
+    @media (max-width: 600px) {
+      .hero { padding: 1.2rem .5rem; }
+      .hero h1 { font-size: 1.3rem; }
+    }
+  </style>
   </head>
   <body>
-    <div class="hero">
-      <div class="logo-row modern-logos">
-        <img src="/static/img/TINA.jpeg" alt="MKJ TINA Logo" class="logo tina-logo" />
-        <img src="/static/img/Makueni%20logo.png" alt="County Government of Makueni Logo" class="logo makueni-logo" />
-      </div>
-      <div class="govt-label">County Government of Makueni &nbsp;|&nbsp; MKJ TINA</div>
-      <h1>MKJ SUPA CUP</h1>
-      <h2>Governor Mutula Kilonzo Junior Super Cup</h2>
-      <div class="desc">The official youth sports championship for Makueni County, empowering the next generation through fair play, unity, and excellence.</div>
-      <p>Welcome to the digital home of the MKJ SUPA CUP. Register, manage teams, and follow the action - all in one place.</p>
-      <a href="/accounts/login/" class="cta-btn">Login to Portal</a>
-    </div>
-          .logo-row.modern-logos {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 2.5rem;
-            margin-bottom: 1.5rem;
-          }
-          .logo-row .tina-logo {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #FFD54F;
-            background: #fff;
-            box-shadow: 0 2px 12px rgba(21,101,192,.12);
-            transition: transform .2s;
-          }
-          .logo-row .tina-logo:hover {
-            transform: scale(1.07) rotate(-3deg);
-          }
-          .logo-row .makueni-logo {
-            width: 90px;
-            height: 90px;
-            border-radius: 16px;
-            object-fit: cover;
-            border: 4px solid #FFD54F;
-            background: #fff;
-            box-shadow: 0 2px 12px rgba(21,101,192,.12);
-            transition: transform .2s;
-          }
-          .logo-row .makueni-logo:hover {
-            transform: scale(1.07) rotate(3deg);
-          }
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%);
-        font-family: 'Inter', Arial, sans-serif;
-        color: #fff;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-      }
-      .hero {
-        background: rgba(255,255,255,0.08);
-        border-radius: 24px;
-        box-shadow: 0 8px 32px rgba(13,71,161,0.18);
-        padding: 2.5rem 2rem 2rem 2rem;
-        max-width: 480px;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 2rem;
-      }
-      .hero img.logo {
-        width: 110px;
-        height: 110px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid #fff;
-        margin-bottom: 1.2rem;
-        background: #fff;
-      }
-      .hero img.govt {
-        width: 80px;
-        height: 80px;
-        border-radius: 16px;
-        object-fit: cover;
-        border: 2px solid #fff;
-        margin-bottom: 1.2rem;
-        background: #fff;
-      }
-      .hero h1 {
-        font-size: 2.2rem;
-        font-weight: 900;
-        letter-spacing: 3px;
-        margin-bottom: .5rem;
-      }
-      .hero h2 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #FFD54F;
-        margin-bottom: 1.2rem;
-        letter-spacing: 2px;
-      }
-      .hero p {
-        font-size: 1.05rem;
-        color: #e3e3e3;
-        margin-bottom: 1.5rem;
-      }
-      .hero .desc {
-        font-size: 1.1rem;
-        color: #fff;
-        font-weight: 500;
-        margin-bottom: 1.5rem;
-      }
-      .hero .govt-label {
-        font-size: .95rem;
-        color: #FFD54F;
-        font-weight: 700;
-        margin-bottom: .5rem;
-      }
-      .cta-btn {
-        display: inline-block;
-        padding: .85rem 2.2rem;
-        background: #FFD54F;
-        color: #0D47A1;
-        font-weight: 800;
-        font-size: 1.1rem;
-        border-radius: 50px;
-        text-decoration: none;
-        box-shadow: 0 2px 12px rgba(21,101,192,.18);
-        transition: background .2s, color .2s;
-      }
-      .cta-btn:hover {
-        background: #fff;
-        color: #1565C0;
-      }
-      @media (max-width: 600px) {
-        .hero { padding: 1.2rem .5rem; }
-        .hero h1 { font-size: 1.3rem; }
-      }
-    </style>
+    <main>
+      <section class="hero" aria-label="MKJ SUPA CUP Welcome">
+        <div class="logo-row modern-logos">
+          <img src="/static/img/TINA.jpeg" alt="MKJ TINA - Governor Mutula Kilonzo Junior Initiative Logo" class="logo tina-logo" width="90" height="90" />
+          <img src="/static/img/makueni_logo.png" alt="County Government of Makueni Official Logo" class="logo makueni-logo" width="90" height="90" />
+        </div>
+        <p class="govt-label">County Government of Makueni &nbsp;|&nbsp; MKJ TINA</p>
+        <h1>MKJ SUPA CUP</h1>
+        <h2>Governor Mutula Kilonzo Junior Super Cup</h2>
+        <p class="desc">The official youth sports championship for Makueni County, empowering the next generation through fair play, unity, and excellence.</p>
+        <p>Welcome to the digital home of the MKJ SUPA CUP. Register, manage teams, and follow the action — all in one place.</p>
+        <a href="/accounts/login/" class="cta-btn">Login to Portal</a>
+      </section>
+    </main>
   </body>
 </html>
