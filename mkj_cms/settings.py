@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 
 # ── MIDDLEWARE ─────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
+    "accounts.middleware.BotBlockerMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -87,8 +88,8 @@ TEMPLATES = [{
 DATABASES = {
     "default": {
         **env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-        "CONN_MAX_AGE": env.int("DB_CONN_MAX_AGE", default=0 if DEBUG else 600),
-        "CONN_HEALTH_CHECKS": not DEBUG,
+        "CONN_MAX_AGE": env.int("DB_CONN_MAX_AGE", default=0 if DEBUG else 300),
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 
@@ -237,7 +238,7 @@ else:
     SESSION_CACHE_ALIAS = "default"
 
 SESSION_COOKIE_AGE = 60 * 60 * 2               # max 2 hours even if active
-SESSION_SAVE_EVERY_REQUEST = True               # refresh expiry on every request
+SESSION_SAVE_EVERY_REQUEST = False              # only write session when modified (huge perf win)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True          # kill session when browser closes
 SESSION_COOKIE_HTTPONLY = True                   # JS cannot read the session cookie
 AUTO_LOGOUT_IDLE_MINUTES = 15                   # log out after 15 min inactivity

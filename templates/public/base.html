@@ -4,7 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="yIBGmAY6RcUc_YZcaMEax1v4PbmDfVdFSJR6SK2Nvoo">
     <title>{% block title %}MKJ SUPA CUP{% endblock %} - Governor Mutula Kilonzo Junior Super Cup - Makueni County</title>
+    {% block meta_description %}<meta name="description" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup. Makueni County's premier multi-sport competition featuring Football, Volleyball, Basketball, and Handball. Live fixtures, results, standings & team registration.">{% endblock %}
+    <meta name="keywords" content="MKJ SUPA CUP, Mutula Kilonzo Junior, Super Cup, Makueni County, Sports, Football, Volleyball, Basketball, Handball, Kenya, Competition, Fixtures, Results">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{% block canonical_url %}https://mkjsupacup.com/{% endblock %}">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MKJ SUPA CUP">
+    {% block og_meta %}
+    <meta property="og:title" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup">
+    <meta property="og:description" content="Makueni County's premier multi-sport competition. Live fixtures, results & standings for Football, Volleyball, Basketball & Handball.">
+    <meta property="og:url" content="https://mkjsupacup.com/">
+    {% endblock %}
+    <meta property="og:image" content="{% static 'img/mkj_supa_cup_logo.png' %}">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MKJ SUPA CUP - Makueni County Super Cup">
+    <meta name="twitter:description" content="Live fixtures, results & standings for Makueni County's premier multi-sport competition.">
+    <meta name="twitter:image" content="{% static 'img/mkj_supa_cup_logo.png' %}">
     <link rel="icon" href="{% static 'img/mkj_supa_cup_logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

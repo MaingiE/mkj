@@ -2864,7 +2864,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     width: calc(100% - 2rem);
     pointer-events: none;
 }
-.toast {
+.toast.show {
     display: flex;
     align-items: flex-start;
     gap: .65rem;
@@ -2878,6 +2878,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     position: relative;
     overflow: hidden;
     pointer-events: auto;
+    opacity: 1;
     animation: toastSlideIn .35s cubic-bezier(.4,0,.2,1);
 }
 .toast.toast-removing {

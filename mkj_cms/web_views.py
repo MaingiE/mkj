@@ -20,6 +20,7 @@ from django.conf import settings as django_settings
 from functools import wraps
 import csv
 import secrets, string, json, re
+from django.views.decorators.cache import cache_page
 
 from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or_raise, validate_national_id_or_raise, normalize_kenya_phone, MAKUENI_SUBCOUNTY_WARDS
 from competitions.models import (
@@ -368,9 +369,59 @@ def _ensure_competition_for_sport_type(sport_type):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#   SEO: robots.txt & sitemap.xml
+# ══════════════════════════════════════════════════════════════════════════════
+
+@cache_page(60 * 60)  # cache 1 hour
+def robots_txt_view(request):
+    """Serve robots.txt that tells search engines how to crawl the site."""
+    site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /portal/",
+        "Disallow: /admin/",
+        "Disallow: /api/",
+        "",
+        f"Sitemap: {site_url}/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+@cache_page(60 * 30)  # cache 30 minutes
+def sitemap_xml_view(request):
+    """Serve a simple XML sitemap for search engine indexing."""
+    site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
+    urls = [
+        (f"{site_url}/", "daily", "1.0"),
+        (f"{site_url}/about/", "weekly", "0.8"),
+        (f"{site_url}/fixtures/", "daily", "0.9"),
+        (f"{site_url}/results/", "daily", "0.9"),
+        (f"{site_url}/results/statistics/", "weekly", "0.7"),
+        (f"{site_url}/contact/", "monthly", "0.5"),
+        (f"{site_url}/media-hub/", "daily", "0.7"),
+    ]
+    # Add individual competition detail pages
+    for comp in Competition.objects.exclude(status='cancelled'):
+        urls.append((
+            f"{site_url}/competitions/public/{comp.pk}/",
+            "daily" if comp.status in ('active', 'group_stage', 'knockout') else "weekly",
+            "0.8",
+        ))
+
+    xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml_lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    for loc, changefreq, priority in urls:
+        xml_lines.append(f"  <url><loc>{loc}</loc><changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>")
+    xml_lines.append('</urlset>')
+    return HttpResponse("\n".join(xml_lines), content_type="application/xml")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #   PUBLIC WEBSITE VIEWS (No login required)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@cache_page(60 * 2)  # cache 2 minutes
 def home_view(request):
     """Public homepage with hero, upcoming fixtures, recent results, stats."""
     now = timezone.now()
@@ -400,6 +451,7 @@ def home_view(request):
     })
 
 
+@cache_page(60 * 5)  # cache 5 minutes
 def about_view(request):
     """Public about page with mission, values, and county list."""
     stats = {
@@ -485,6 +537,7 @@ def public_competitions_view(request):
     })
 
 
+@cache_page(60 * 2)  # cache 2 minutes
 def public_fixtures_results_view(request):
     """
     Public Fixtures & Results page - replaces old Competitions page.
@@ -2685,6 +2738,7 @@ def _auto_generate_pool_fixtures(pool, competition, user):
     Auto-generate round-robin fixtures for a pool when it has >=2 teams.
     Re-generates fixtures for the pool (clearing old ones first) so
     every new team addition produces a complete round-robin.
+    Only notifies for NEW fixtures (matchups that didn't exist before).
     Returns list of created fixtures (empty if <2 teams).
     """
     from competitions.models import Fixture, PoolTeam
@@ -2695,6 +2749,13 @@ def _auto_generate_pool_fixtures(pool, competition, user):
     if len(teams) < 2:
         return []
 
+    # Remember existing matchups so we only notify for new ones
+    existing_matchups = set(
+        Fixture.objects.filter(
+            competition=competition, pool=pool, is_knockout=False
+        ).values_list('home_team_id', 'away_team_id')
+    )
+
     # Clear existing pool fixtures and regenerate
     Fixture.objects.filter(competition=competition, pool=pool, is_knockout=False).delete()
 
@@ -2703,6 +2764,7 @@ def _auto_generate_pool_fixtures(pool, competition, user):
     current_date = start_date
     round_number = 1
     created = []
+    new_fixtures = []  # only truly new matchups
 
     matchups = list(combinations(teams, 2))
     for home, away in matchups:
@@ -2720,14 +2782,17 @@ def _auto_generate_pool_fixtures(pool, competition, user):
             created_by=user,
         )
         created.append(fixture)
+        # Only notify if this matchup didn't exist before
+        if (home.pk, away.pk) not in existing_matchups and (away.pk, home.pk) not in existing_matchups:
+            new_fixtures.append(fixture)
         round_number += 1
         if round_number % 3 == 0:
             current_date += timedelta(days=7)
 
-    # ── Notify team managers & subcounty officers for all new fixtures ────
+    # ── Notify team managers & subcounty officers for NEW fixtures only ────
     try:
         from accounts.notifications import notify_fixture_update
-        for fx in created:
+        for fx in new_fixtures:
             notify_fixture_update(fx, action='created')
     except Exception:
         pass

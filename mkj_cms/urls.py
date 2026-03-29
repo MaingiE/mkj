@@ -46,6 +46,8 @@ from .web_views import (
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
     contact_view,
+    # SEO
+    robots_txt_view, sitemap_xml_view,
     # CMS portal
     web_login_view, web_logout_view, dashboard_view,
     force_change_password_view,
@@ -191,6 +193,8 @@ from .web_views import (
 
 urlpatterns = [
     # ── PUBLIC WEBSITE ────────────────────────────────────────────────────────
+    path("robots.txt",                    robots_txt_view,                name="robots_txt"),
+    path("sitemap.xml",                   sitemap_xml_view,               name="sitemap_xml"),
     path("",                              home_view,                      name="home"),
     path("about/",                        about_view,                     name="about"),
     path("fixtures/",                     public_fixtures_results_view,   name="public_fixtures_results"),

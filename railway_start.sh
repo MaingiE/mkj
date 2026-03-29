@@ -15,7 +15,7 @@ exec gunicorn mkj_cms.wsgi \
   --bind 0.0.0.0:$PORT \
   --workers 3 \
   --threads 2 \
-  --timeout 120 \
+  --timeout 180 \
   --max-requests 1000 \
   --max-requests-jitter 50 \
   --preload \

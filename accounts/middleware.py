@@ -7,6 +7,7 @@ visit are the change-password page, logout, and static/media files.
 """
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.http import HttpResponseNotFound
 
 
 # URL names the user may still visit while forced to change password
@@ -30,6 +31,37 @@ ALLOWED_PATHS = {
     "/portal/logout/",
     "/portal/login/",
 }
+
+# WordPress/scanning bot paths to reject immediately (saves CPU)
+_WP_SCANNER_PREFIXES = (
+    "/wp-admin/",
+    "/wp-login",
+    "/wp-includes/",
+    "/wordpress/",
+    "/wp-content/",
+    "/xmlrpc.php",
+    "/wp/",
+)
+
+
+class BotBlockerMiddleware:
+    """
+    Immediately reject known scanner/bot paths (WordPress probes, etc.)
+    with a minimal 404 before any other processing.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path.lower()
+        if any(path.startswith(prefix) or path.startswith("/" + prefix.lstrip("/"))
+               for prefix in _WP_SCANNER_PREFIXES):
+            return HttpResponseNotFound("Not Found")
+        # Also catch paths containing wp-includes or wp-admin deeper in the path
+        if "/wp-admin/" in path or "/wp-includes/" in path or "/wp-login" in path:
+            return HttpResponseNotFound("Not Found")
+        return self.get_response(request)
 
 
 class AutoLogoutMiddleware:
@@ -58,7 +90,9 @@ class AutoLogoutMiddleware:
                 logout(request)
                 from django.shortcuts import redirect
                 return redirect("web_login")
-            request.session["_last_activity"] = now
+            # Only update timestamp every 60s to avoid a session write on every request
+            if last is None or (now - last) > 60:
+                request.session["_last_activity"] = now
 
         return self.get_response(request)
 
