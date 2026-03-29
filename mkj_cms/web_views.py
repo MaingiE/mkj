@@ -3860,16 +3860,18 @@ def coordinator_referees_view(request):
                 user.is_active = True
                 user.save()
 
-                RefereeProfile.objects.create(
+                RefereeProfile.objects.update_or_create(
                     user=user,
-                    county=sub_county,
-                    level=level,
-                    referee_type=referee_type,
-                    discipline=discipline or '',
-                    id_number=id_number or '',
-                    is_approved=True,
-                    approved_by=request.user,
-                    approved_at=timezone.now(),
+                    defaults={
+                        'county': sub_county,
+                        'level': level,
+                        'referee_type': referee_type,
+                        'discipline': discipline or '',
+                        'id_number': id_number or '',
+                        'is_approved': True,
+                        'approved_by': request.user,
+                        'approved_at': timezone.now(),
+                    },
                 )
 
                 try:
@@ -7401,16 +7403,18 @@ def subcounty_officer_referees_view(request):
                 user.is_active = True
                 user.save()
 
-                RefereeProfile.objects.create(
+                RefereeProfile.objects.update_or_create(
                     user=user,
-                    county=user_sub_county,
-                    level=level,
-                    referee_type=referee_type,
-                    discipline=discipline,
-                    id_number=id_number or '',
-                    is_approved=True,
-                    approved_by=request.user,
-                    approved_at=timezone.now(),
+                    defaults={
+                        'county': user_sub_county,
+                        'level': level,
+                        'referee_type': referee_type,
+                        'discipline': discipline,
+                        'id_number': id_number or '',
+                        'is_approved': True,
+                        'approved_by': request.user,
+                        'approved_at': timezone.now(),
+                    },
                 )
 
                 try:

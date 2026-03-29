@@ -278,11 +278,13 @@ BREVO_API_KEY       = env("BREVO_API_KEY", default="")
 SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
 
 # ── IMAP (inbound mail fetch) ──────────────────────────────────────────────────
+# IMAP credentials are for the actual info@mkjsupacup.com mailbox (Namecheap
+# Private Email), which is separate from the SMTP relay (Brevo) used for sending.
 IMAP_HOST     = env("IMAP_HOST",     default="mail.privateemail.com")
 IMAP_PORT     = env.int("IMAP_PORT",  default=993)
 IMAP_USE_SSL  = env.bool("IMAP_USE_SSL", default=True)
-IMAP_USER     = env("IMAP_USER",     default=_email_host_user)
-IMAP_PASSWORD = env("IMAP_PASSWORD", default=env("EMAIL_HOST_PASSWORD", default=""))
+IMAP_USER     = env("IMAP_USER",     default="info@mkjsupacup.com")
+IMAP_PASSWORD = env("IMAP_PASSWORD", default="")
 
 # ── LOCALISATION ───────────────────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"

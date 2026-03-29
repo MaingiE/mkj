@@ -10,6 +10,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
+from datetime import timedelta
 
 from .models import EmailLog
 
@@ -112,9 +113,16 @@ def email_compose(request):
             )
             msg.send()
 
-            # If using the console backend (dev), log manually since
-            # LoggingSMTPBackend won't be active.
-            if 'console' in settings.EMAIL_BACKEND.lower():
+            # Ensure the compose email is logged for backends that
+            # don't auto-log (e.g. console).  Backends that already
+            # log (Brevo, LoggingSMTP) will create a row; the extra
+            # row from compose is acceptable for dashboard-sent mail
+            # to guarantee visibility.
+            if not EmailLog.objects.filter(
+                direction='OUT', subject=subject,
+                to_emails=', '.join(to_list),
+                sent_at__gte=timezone.now() - timedelta(seconds=30),
+            ).exists():
                 EmailLog.objects.create(
                     direction='OUT',
                     status='sent',
