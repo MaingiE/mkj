@@ -2,6 +2,44 @@
 {% load static %}
 
 {% block title %}{{ competition.name }}{% endblock %}
+{% block meta_description %}<meta name="description" content="{{ competition.name }} — MKJ SUPA CUP {{ competition.get_sport_type_display }} competition in Makueni County. {{ competition.description|default:'View fixtures, results and standings for this competition.' }}">{% endblock %}
+{% block canonical_url %}https://mkjsupacup.com/competitions/public/{{ competition.pk }}/{% endblock %}
+{% block og_meta %}
+<meta property="og:title" content="{{ competition.name }} - MKJ SUPA CUP">
+<meta property="og:description" content="{{ competition.name }} — MKJ SUPA CUP {{ competition.get_sport_type_display }} competition in Makueni County. View fixtures, results and standings.">
+<meta property="og:url" content="https://mkjsupacup.com/competitions/public/{{ competition.pk }}/">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ competition.name }}",
+  "description": "{{ competition.description|default:competition.name }} — MKJ SUPA CUP competition in Makueni County, Kenya.",
+  "url": "https://mkjsupacup.com/competitions/public/{{ competition.pk }}/",
+  "sport": "{{ competition.get_sport_type_display }}",
+  "startDate": "{{ competition.start_date|date:'Y-m-d' }}",
+  {% if competition.end_date %}"endDate": "{{ competition.end_date|date:'Y-m-d' }}",{% endif %}
+  "location": {
+    "@type": "Place",
+    "name": "Makueni County",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Wote",
+      "addressRegion": "Makueni County",
+      "addressCountry": "KE"
+    }
+  },
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "MKJ SUPA CUP",
+    "url": "https://mkjsupacup.com/"
+  },
+  "eventStatus": "{% if competition.status == 'active' %}https://schema.org/EventScheduled{% elif competition.status == 'completed' %}https://schema.org/EventScheduled{% elif competition.status == 'cancelled' %}https://schema.org/EventCancelled{% else %}https://schema.org/EventScheduled{% endif %}"
+}
+</script>
+{% endblock structured_data %}
 
 {% block content %}
 
