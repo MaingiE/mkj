@@ -111,7 +111,6 @@ def fetch_inbox(folder='INBOX', limit=50):
         existing_ids = set(
             EmailLog.objects.filter(
                 direction='IN',
-                message_id__in=[],  # will be populated below
             ).values_list('message_id', flat=True)
         )
         # We need to fetch headers first to know message_ids, then bulk check
@@ -142,7 +141,7 @@ def fetch_inbox(folder='INBOX', limit=50):
                     continue
 
                 # Skip if already imported
-                if EmailLog.objects.filter(message_id=message_id).exists():
+                if message_id in existing_ids:
                     skipped += 1
                     continue
 
@@ -174,6 +173,7 @@ def fetch_inbox(folder='INBOX', limit=50):
                     sent_at=sent_dt,
                     message_id=message_id[:500],
                 )
+                existing_ids.add(message_id)
                 new_count += 1
 
         return new_count, skipped

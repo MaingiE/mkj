@@ -34,6 +34,7 @@
             <a href="{% url 'manage_users' %}" class="sidebar-link"><span class="icon"><i class="bi bi-people-fill"></i></span> User Management</a>
             <a href="{% url 'activity_logs' %}" class="sidebar-link"><span class="icon"><i class="bi bi-journal-text"></i></span> Activity Logs</a>
             <a href="{% url 'audit_report' %}" class="sidebar-link"><span class="icon"><i class="bi bi-shield-check"></i></span> Audit Report</a>
+            <a href="{% url 'email_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'email_dashboard' or request.resolver_match.url_name == 'email_compose' or request.resolver_match.url_name == 'email_detail' %}active{% endif %}"><span class="icon"><i class="bi bi-envelope"></i></span> Email Dashboard</a>
             <a href="{% url 'appeals_list' %}" class="sidebar-link"><span class="icon"><i class="bi bi-briefcase"></i></span> Appeals</a>
         </div>
     </div>
