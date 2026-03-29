@@ -17,7 +17,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # ── SECURITY ───────────────────────────────────────────────────────────────────
 SECRET_KEY = env("SECRET_KEY")
 DEBUG      = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["mkjsupacup.com", "www.mkjsupacup.com", ".railway.app"])
 
 # ── APPS ───────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -148,7 +148,10 @@ CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
 ])
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
+    "https://mkjsupacup.com",
+    "https://www.mkjsupacup.com",
+])
 
 # ── SPECTACULAR (API DOCS) ─────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
@@ -272,7 +275,7 @@ EMAIL_HOST_USER  = _email_host_user
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
 BREVO_API_KEY       = env("BREVO_API_KEY", default="")
-SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
+SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
 
 # ── IMAP (inbound mail fetch) ──────────────────────────────────────────────────
 IMAP_HOST     = env("IMAP_HOST",     default="mail.privateemail.com")
