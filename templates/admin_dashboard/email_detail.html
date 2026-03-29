@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Email Detail | MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+.email-hero {
+    background: linear-gradient(135deg, #003388 0%, #124491 50%, #2E7D32 100%);
+    border-radius: 16px; padding: 2rem 2.5rem; color: #fff;
+    margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.email-hero::before {
+    content: ""; position: absolute; top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.email-hero h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+.email-hero p  { opacity: .85; font-size: .88rem; position: relative; margin: 0; }
+.hero-actions { position: relative; display: flex; gap: .5rem; }
+.hero-actions a {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem 1rem; border-radius: 8px; font-size: .78rem; font-weight: 600;
+    text-decoration: none; transition: all .2s; border: 1px solid rgba(255,255,255,.25); color: #fff;
+}
+.hero-actions a:hover { background: rgba(255,255,255,.15); }
+
+.email-card {
+    background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07); margin-bottom: 1.5rem;
+}
+.email-meta-head {
+    padding: 1.25rem 1.75rem; border-bottom: 1px solid #f0f0f0;
+}
+.email-meta-head h2 { font-size: 1.15rem; font-weight: 700; color: #212121; margin-bottom: .75rem; }
+
+.meta-row {
+    display: flex; gap: .5rem; align-items: baseline; margin-bottom: .35rem;
+    font-size: .82rem;
+}
+.meta-label { font-weight: 600; color: #999; min-width: 60px; text-transform: uppercase; font-size: .68rem; letter-spacing: .5px; }
+.meta-value { color: #424242; word-break: break-all; }
+
+.dir-badge {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .2rem .55rem; border-radius: 6px;
+    font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+}
+.dir-out { background: #e8f5ed; color: #2E7D32; }
+.dir-in  { background: #e8edf5; color: #124491; }
+
+.status-pill {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .2rem .6rem; border-radius: 6px;
+    font-size: .72rem; font-weight: 600; text-transform: capitalize;
+}
+.status-pill.sent   { background: #e8f5ed; color: #2E7D32; }
+.status-pill.failed { background: #FFEBEE; color: #C62828; }
+.status-pill.draft  { background: #FFF8E1; color: #F57F17; }
+
+.error-box {
+    background: #FFF5F5; border: 1px solid #FFCDD2; border-radius: 10px;
+    padding: 1rem 1.25rem; margin-top: .75rem;
+}
+.error-box .err-title { font-size: .72rem; font-weight: 600; color: #C62828; text-transform: uppercase; letter-spacing: .5px; margin-bottom: .3rem; }
+.error-box .err-msg   { font-size: .82rem; color: #B71C1C; font-family: monospace; word-break: break-all; }
+
+.email-body-section {
+    padding: 1.5rem 1.75rem;
+}
+.email-body-section .body-label {
+    font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; margin-bottom: .5rem;
+}
+.email-body-text {
+    font-size: .88rem; color: #424242; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-word;
+}
+.email-body-html {
+    border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;
+    margin-top: .75rem;
+}
+.email-body-html iframe {
+    width: 100%; border: none; min-height: 300px;
+}
+
+@media (max-width: 768px) {
+    .email-hero { padding: 1.5rem; }
+    .email-hero h1 { font-size: 1.2rem; }
+    .email-meta-head { padding: 1rem 1.25rem; }
+    .email-body-section { padding: 1rem 1.25rem; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="max-width:1000px">
+
+    <!-- ── HERO ──────────────────────────── -->
+    <div class="email-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="bi bi-envelope-open me-2" style="opacity:.7"></i>Email Detail</h1>
+                <p>Sent {{ email.sent_at|date:"d M Y, H:i" }}</p>
+            </div>
+            <div class="hero-actions">
+                <a href="{% url 'email_dashboard' %}">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── EMAIL CARD ────────────────────── -->
+    <div class="email-card">
+        <div class="email-meta-head">
+            <h2>{{ email.subject|default:"(no subject)" }}</h2>
+            <div class="meta-row">
+                <span class="meta-label">From</span>
+                <span class="meta-value">{{ email.from_email }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">To</span>
+                <span class="meta-value">{{ email.to_emails }}</span>
+            </div>
+            {% if email.cc_emails %}
+            <div class="meta-row">
+                <span class="meta-label">CC</span>
+                <span class="meta-value">{{ email.cc_emails }}</span>
+            </div>
+            {% endif %}
+            {% if email.bcc_emails %}
+            <div class="meta-row">
+                <span class="meta-label">BCC</span>
+                <span class="meta-value">{{ email.bcc_emails }}</span>
+            </div>
+            {% endif %}
+            <div class="meta-row">
+                <span class="meta-label">Date</span>
+                <span class="meta-value">{{ email.sent_at|date:"d M Y, H:i:s" }}</span>
+            </div>
+            <div class="meta-row mt-2">
+                <span class="dir-badge {% if email.direction == 'OUT' %}dir-out{% else %}dir-in{% endif %}">
+                    <i class="bi bi-{% if email.direction == 'OUT' %}send{% else %}inbox{% endif %}"></i>
+                    {{ email.get_direction_display }}
+                </span>
+                <span class="status-pill {{ email.status }} ms-1">
+                    {{ email.status }}
+                </span>
+            </div>
+
+            {% if email.sent_by %}
+            <div class="meta-row mt-2">
+                <span class="meta-label">By</span>
+                <span class="meta-value">{{ email.sent_by.get_full_name|default:email.sent_by.email }}</span>
+            </div>
+            {% endif %}
+
+            {% if email.error_message %}
+            <div class="error-box">
+                <div class="err-title"><i class="bi bi-exclamation-triangle me-1"></i> Error</div>
+                <div class="err-msg">{{ email.error_message }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="email-body-section">
+            {% if email.body_html %}
+            <div class="body-label">HTML Body</div>
+            <div class="email-body-html">
+                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_html }}"></iframe>
+            </div>
+            {% endif %}
+
+            {% if email.body_text %}
+            <div class="body-label {% if email.body_html %}mt-4{% endif %}">Plain Text</div>
+            <div class="email-body-text">{{ email.body_text }}</div>
+            {% endif %}
+
+            {% if not email.body_text and not email.body_html %}
+            <p style="color:#999; font-size:.85rem;">(No body content)</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-resize iframe to fit content
+document.addEventListener('DOMContentLoaded', function() {
+    const frame = document.getElementById('htmlFrame');
+    if (frame) {
+        frame.onload = function() {
+            try {
+                frame.style.height = frame.contentDocument.body.scrollHeight + 20 + 'px';
+            } catch(e) {}
+        };
+    }
+});
+</script>
+{% endblock %}

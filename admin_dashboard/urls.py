@@ -8,6 +8,7 @@ from . import reschedule_admin_views
 from . import activity_views
 from . import export_views
 from . import audit_report_views
+from . import email_views
 
 
 urlpatterns = [
@@ -55,4 +56,10 @@ urlpatterns = [
     # Per-user activity log exports
     path('users/<int:user_id>/export/excel/', export_views.export_user_logs_excel, name='export_user_logs_excel'),
     path('users/<int:user_id>/export/pdf/', export_views.export_user_logs_pdf, name='export_user_logs_pdf'),
+
+    # Email Monitor
+    path('emails/', email_views.email_dashboard, name='email_dashboard'),
+    path('emails/compose/', email_views.email_compose, name='email_compose'),
+    path('emails/fetch/', email_views.fetch_inbox_view, name='fetch_inbox'),
+    path('emails/<int:email_id>/', email_views.email_detail, name='email_detail'),
 ]

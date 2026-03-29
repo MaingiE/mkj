@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Compose Email | MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+.email-hero {
+    background: linear-gradient(135deg, #003388 0%, #124491 50%, #2E7D32 100%);
+    border-radius: 16px; padding: 2rem 2.5rem; color: #fff;
+    margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.email-hero::before {
+    content: ""; position: absolute; top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.email-hero h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+.email-hero p  { opacity: .85; font-size: .88rem; position: relative; margin: 0; }
+.hero-actions { position: relative; display: flex; gap: .5rem; }
+.hero-actions a {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem 1rem; border-radius: 8px; font-size: .78rem; font-weight: 600;
+    text-decoration: none; transition: all .2s; border: 1px solid rgba(255,255,255,.25); color: #fff;
+}
+.hero-actions a:hover { background: rgba(255,255,255,.15); }
+
+.compose-card {
+    background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+}
+.compose-card .card-body { padding: 1.75rem 2rem; }
+
+.compose-card label {
+    font-size: .72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; margin-bottom: .3rem; display: block;
+}
+.compose-card .form-control {
+    font-size: .88rem; border-radius: 10px; border-color: #e0e0e0;
+}
+.compose-card .form-control:focus {
+    border-color: #124491; box-shadow: 0 0 0 3px rgba(18,68,145,.1);
+}
+.compose-card textarea { min-height: 200px; line-height: 1.7; }
+
+.from-display {
+    font-size: .88rem; color: #424242; background: #F9F9F9;
+    padding: .55rem 1rem; border-radius: 10px; border: 1px solid #e0e0e0;
+}
+
+.btn-send {
+    background: #124491; color: #fff; border: none; font-size: .85rem;
+    font-weight: 600; padding: .6rem 1.5rem; border-radius: 10px;
+    transition: all .25s;
+}
+.btn-send:hover { background: #2E7D32; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,125,50,.3); }
+
+.btn-discard {
+    background: #fff; color: #757575; border: 1px solid #e0e0e0;
+    font-size: .85rem; font-weight: 600; padding: .6rem 1.2rem; border-radius: 10px;
+    text-decoration: none; transition: all .2s;
+}
+.btn-discard:hover { border-color: #C62828; color: #C62828; background: #FFF5F5; }
+
+@media (max-width: 768px) {
+    .email-hero { padding: 1.5rem; }
+    .email-hero h1 { font-size: 1.2rem; }
+    .compose-card .card-body { padding: 1.25rem; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="max-width:860px">
+
+    <!-- ── HERO ──────────────────────────── -->
+    <div class="email-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="bi bi-pencil-square me-2" style="opacity:.7"></i>Compose Email</h1>
+                <p>Send as info@mkjsupacup.com</p>
+            </div>
+            <div class="hero-actions">
+                <a href="{% url 'email_dashboard' %}">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── COMPOSE FORM ──────────────────── -->
+    <div class="compose-card">
+        <div class="card-body">
+            <form method="post" id="composeForm">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label>From</label>
+                    <div class="from-display">
+                        <i class="bi bi-lock me-1" style="font-size:.72rem; opacity:.5;"></i>
+                        MKJ SUPA CUP &lt;info@mkjsupacup.com&gt;
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label>To <span style="color:#C62828">*</span></label>
+                    <input type="text" name="to" class="form-control" value="{{ to|default:'' }}"
+                           placeholder="recipient@example.com (comma-separate multiple)" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>CC</label>
+                    <input type="text" name="cc" class="form-control" value="{{ cc|default:'' }}"
+                           placeholder="Optional CC addresses (comma-separated)">
+                </div>
+
+                <div class="mb-3">
+                    <label>Subject <span style="color:#C62828">*</span></label>
+                    <input type="text" name="subject" class="form-control" value="{{ subject|default:'' }}"
+                           placeholder="Email subject" required>
+                </div>
+
+                <div class="mb-4">
+                    <label>Body <span style="color:#C62828">*</span></label>
+                    <textarea name="body" class="form-control" placeholder="Write your message here..." required>{{ body|default:'' }}</textarea>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'email_dashboard' %}" class="btn-discard">
+                        <i class="bi bi-x-lg me-1"></i> Discard
+                    </a>
+                    <button type="submit" class="btn-send">
+                        <i class="bi bi-send me-1"></i> Send Email
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

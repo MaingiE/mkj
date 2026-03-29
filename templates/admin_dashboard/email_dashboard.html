@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Email Monitor | MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Hero ──────────────────────────────── */
+.email-hero {
+    background: linear-gradient(135deg, #003388 0%, #124491 50%, #2E7D32 100%);
+    border-radius: 16px; padding: 2rem 2.5rem; color: #fff;
+    margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.email-hero::before {
+    content: ""; position: absolute; top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.email-hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; position: relative; }
+.email-hero p  { opacity: .85; font-size: .88rem; position: relative; margin: 0; }
+.email-hero .hero-badge {
+    display: inline-block; background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25); padding: .2rem .8rem;
+    border-radius: 20px; font-size: .7rem; letter-spacing: .5px;
+    text-transform: uppercase; margin-bottom: .5rem;
+}
+.hero-actions { position: relative; display: flex; gap: .5rem; }
+.hero-actions a {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem 1rem; border-radius: 8px; font-size: .78rem; font-weight: 600;
+    text-decoration: none; transition: all .2s; border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+}
+.hero-actions a:hover { background: rgba(255,255,255,.15); }
+.hero-actions .btn-compose { background: rgba(255,255,255,.18); }
+.hero-actions .btn-compose:hover { background: rgba(76,175,80,.3); border-color: rgba(76,175,80,.5); }
+
+/* ── Stat Cards ────────────────────────── */
+.stat-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.email-stat {
+    background: #fff; border-radius: 12px; padding: 1.15rem 1.35rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 4px solid transparent;
+    transition: all .2s; position: relative;
+}
+.email-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+.email-stat .st-num { font-size: 1.8rem; font-weight: 800; line-height: 1.1; margin-bottom: .1rem; }
+.email-stat .st-label { font-size: .78rem; color: #757575; font-weight: 500; }
+.email-stat .st-icon { position: absolute; top: 1rem; right: 1.1rem; font-size: 1.6rem; opacity: .12; }
+.email-stat.c-blue  { border-left-color: #124491; }
+.email-stat.c-blue  .st-num { color: #124491; }
+.email-stat.c-green { border-left-color: #2E7D32; }
+.email-stat.c-green .st-num { color: #2E7D32; }
+
+/* ── Filter Bar ────────────────────────── */
+.filter-bar {
+    background: #fff; border-radius: 12px; padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 1rem;
+}
+.filter-bar .form-control,
+.filter-bar .form-select {
+    font-size: .85rem; border-radius: 8px; border-color: #e0e0e0;
+}
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: #124491; box-shadow: 0 0 0 3px rgba(18,68,145,.1);
+}
+.filter-bar label {
+    font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; margin-bottom: .25rem; display: block;
+}
+.btn-search {
+    background: #124491; color: #fff; border: none; font-size: .8rem;
+    font-weight: 600; padding: .5rem 1.2rem; border-radius: 8px; transition: background .2s;
+}
+.btn-search:hover { background: #2E7D32; color: #fff; }
+.btn-clear {
+    background: #fff; color: #757575; border: 1px solid #e0e0e0;
+    font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
+    transition: all .2s; text-decoration: none;
+}
+.btn-clear:hover { border-color: #C62828; color: #C62828; background: #FFF5F5; }
+
+/* ── Table ─────────────────────────────── */
+.table-card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.table-card .card-head {
+    padding: .9rem 1.5rem; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+}
+.card-head .title { font-size: .95rem; font-weight: 600; color: #212121; display: flex; align-items: center; gap: .5rem; }
+.count-pill {
+    font-size: .72rem; font-weight: 600; padding: .15rem .6rem;
+    border-radius: 20px; background: #e8f5ed; color: #124491;
+}
+
+.email-table { width: 100%; border-collapse: collapse; }
+.email-table thead th {
+    background: #FAFAFA; border-bottom: 2px solid #f0f0f0;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: #999; padding: .7rem 1rem; white-space: nowrap;
+}
+.email-table thead th:first-child { padding-left: 1.5rem; }
+.email-table thead th:last-child  { padding-right: 1.5rem; text-align: center; }
+
+.email-table tbody tr { border-bottom: 1px solid #f5f5f5; transition: background .15s; cursor: pointer; }
+.email-table tbody tr:last-child { border-bottom: none; }
+.email-table tbody tr:hover { background: #FAFAFA; }
+
+.email-table tbody td { padding: .75rem 1rem; vertical-align: middle; font-size: .85rem; color: #424242; }
+.email-table tbody td:first-child { padding-left: 1.5rem; }
+.email-table tbody td:last-child  { padding-right: 1.5rem; text-align: center; }
+
+.ts-date { font-size: .82rem; font-weight: 500; color: #212121; }
+.ts-time { font-size: .72rem; color: #999; }
+
+.dir-badge {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .2rem .55rem; border-radius: 6px;
+    font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+}
+.dir-out { background: #e8f5ed; color: #2E7D32; }
+.dir-in  { background: #e8edf5; color: #124491; }
+
+.status-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .3rem;
+}
+.status-dot.sent   { background: #4CAF50; }
+.status-dot.failed { background: #C62828; }
+.status-dot.draft  { background: #FFC107; }
+
+.subj-text { font-size: .82rem; font-weight: 500; color: #212121; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.to-text   { font-size: .78rem; color: #757575; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+.btn-row {
+    width: 30px; height: 30px; border-radius: 6px;
+    background: #FAFAFA; border: 1px solid #e0e0e0;
+    color: #757575; font-size: .7rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none; transition: all .2s;
+}
+.btn-row:hover { border-color: #124491; color: #124491; background: #e8f5ed; }
+
+/* ── Pagination ────────────────────────── */
+.pag-bar { padding: .9rem 1.5rem; border-top: 1px solid #f0f0f0; }
+.pag-info { font-size: .78rem; color: #999; }
+.pag-info strong { color: #424242; }
+.email-pag .page-link {
+    font-size: .8rem; border-radius: 6px !important; margin: 0 2px;
+    padding: .3rem .6rem !important; border-color: #e0e0e0 !important;
+    color: #757575 !important; min-width: 30px; text-align: center;
+}
+.email-pag .page-link:hover { border-color: #124491 !important; color: #124491 !important; background: #e8f5ed !important; }
+.email-pag .page-item.active .page-link { background: #124491 !important; border-color: #124491 !important; color: #fff !important; font-weight: 600; }
+.email-pag .page-item.disabled .page-link { opacity: .35; pointer-events: none; }
+
+/* ── Empty State ───────────────────────── */
+.empty-state { padding: 3.5rem 2rem; text-align: center; }
+.empty-state .icon {
+    width: 52px; height: 52px; border-radius: 12px; margin: 0 auto .8rem;
+    background: #F5F5F5; display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: #bbb;
+}
+.empty-state h3 { font-size: 1rem; font-weight: 600; color: #616161; }
+.empty-state p  { font-size: .82rem; color: #999; margin: 0; }
+
+@media (max-width: 768px) {
+    .email-hero { padding: 1.5rem; }
+    .email-hero h1 { font-size: 1.3rem; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .email-table { font-size: .78rem; }
+}
+@media (max-width: 480px) { .stat-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="max-width:1360px">
+
+    <!-- ── HERO ──────────────────────────── -->
+    <div class="email-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <span class="hero-badge"><i class="bi bi-envelope me-1"></i> Mail Monitor</span>
+                <h1>Email Dashboard</h1>
+                <p>Monitor sent and received emails for info@mkjsupacup.com</p>
+            </div>
+            <div class="hero-actions">
+                <form method="post" action="{% url 'fetch_inbox' %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-fetch" style="background:rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:.35rem;padding:.45rem 1rem;border-radius:8px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;transition:all .2s;">
+                        <i class="bi bi-cloud-download"></i> Fetch Inbox
+                    </button>
+                </form>
+                <a href="{% url 'email_compose' %}" class="btn-compose">
+                    <i class="bi bi-pencil-square"></i> Compose
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STAT CARDS ────────────────────── -->
+    <div class="stat-row">
+        <div class="email-stat c-blue">
+            <div class="st-num">{{ total|default:0|intcomma }}</div>
+            <div class="st-label">Total Emails</div>
+            <i class="bi bi-envelope-paper st-icon"></i>
+        </div>
+        <div class="email-stat c-green">
+            <div class="st-num">{{ today|default:0 }}</div>
+            <div class="st-label">Today</div>
+            <i class="bi bi-clock st-icon"></i>
+        </div>
+        <div class="email-stat" style="border-left-color:#E65100;">
+            <div class="st-num" style="color:#E65100;">{{ outbox_count|default:0|intcomma }}</div>
+            <div class="st-label">Sent (Outbound)</div>
+            <i class="bi bi-send st-icon"></i>
+        </div>
+        <div class="email-stat" style="border-left-color:#6A1B9A;">
+            <div class="st-num" style="color:#6A1B9A;">{{ inbox_count|default:0|intcomma }}</div>
+            <div class="st-label">Received (Inbox)</div>
+            <i class="bi bi-inbox st-icon"></i>
+        </div>
+    </div>
+
+    <!-- ── FILTERS ───────────────────────── -->
+    <div class="filter-bar">
+        <form method="get">
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+                <div class="flex-grow-1" style="min-width:200px">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Search subject, recipient, sender..."
+                           value="{{ search }}">
+                </div>
+                <button type="submit" class="btn btn-search">
+                    <i class="bi bi-search me-1"></i> Search
+                </button>
+                {% if search or direction or date_from or date_to %}
+                <a href="{% url 'email_dashboard' %}" class="btn btn-clear">
+                    <i class="bi bi-x-lg me-1"></i> Clear
+                </a>
+                {% endif %}
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-sm-4 col-md-auto" style="min-width:140px">
+                    <label><i class="bi bi-arrow-left-right me-1"></i>Direction</label>
+                    <select name="direction" class="form-select" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        <option value="OUT" {% if direction == 'OUT' %}selected{% endif %}>Outbound</option>
+                        <option value="IN"  {% if direction == 'IN' %}selected{% endif %}>Inbound</option>
+                    </select>
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto">
+                    <label><i class="bi bi-calendar me-1"></i>From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}" onchange="this.form.submit()">
+                </div>
+                <div class="col-6 col-sm-4 col-md-auto">
+                    <label><i class="bi bi-calendar me-1"></i>To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}" onchange="this.form.submit()">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── TABLE ─────────────────────────── -->
+    <div class="table-card">
+        <div class="card-head">
+            <div class="title">
+                <i class="bi bi-inbox"></i> Emails
+                <span class="count-pill">{{ page_obj.paginator.count|default:0 }} total</span>
+            </div>
+        </div>
+
+        {% if page_obj.object_list %}
+        <div class="table-responsive">
+            <table class="email-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Dir</th>
+                        <th>Status</th>
+                        <th>Subject</th>
+                        <th>To</th>
+                        <th>Sent By</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for em in page_obj %}
+                    <tr onclick="location.href='{% url 'email_detail' em.id %}'">
+                        <td>
+                            <div class="ts-date">{{ em.sent_at|date:"d M Y" }}</div>
+                            <div class="ts-time">{{ em.sent_at|date:"H:i" }}</div>
+                        </td>
+                        <td>
+                            <span class="dir-badge {% if em.direction == 'OUT' %}dir-out{% else %}dir-in{% endif %}">
+                                <i class="bi bi-{% if em.direction == 'OUT' %}send{% else %}inbox{% endif %}"></i>
+                                {{ em.direction }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-dot {{ em.status }}"></span>
+                            <span style="font-size:.78rem; text-transform:capitalize;">{{ em.status }}</span>
+                        </td>
+                        <td><span class="subj-text">{{ em.subject|default:"(no subject)" }}</span></td>
+                        <td><span class="to-text">{{ em.to_emails|default:"-" }}</span></td>
+                        <td style="font-size:.78rem; color:#757575;">
+                            {% if em.sent_by %}{{ em.sent_by.get_full_name|default:em.sent_by.email }}{% else %}System{% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'email_detail' em.id %}" class="btn-row" title="View" onclick="event.stopPropagation()">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ── Pagination ──────────────── -->
+        {% if page_obj.has_other_pages %}
+        <div class="pag-bar d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="pag-info">
+                Showing <strong>{{ page_obj.start_index }}</strong> - <strong>{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count }}</strong> emails
+            </div>
+            <nav>
+                <ul class="pagination email-pag mb-0">
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&direction={{ direction }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                            <i class="bi bi-chevron-left" style="font-size:.65rem"></i>
+                        </a>
+                    </li>
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&direction={{ direction }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&direction={{ direction }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                            <i class="bi bi-chevron-right" style="font-size:.65rem"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="icon"><i class="bi bi-envelope-x"></i></div>
+            <h3>No emails found</h3>
+            <p>{% if search or direction or date_from or date_to %}Try adjusting your filters{% else %}Emails sent from the system will appear here{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

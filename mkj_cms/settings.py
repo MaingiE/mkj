@@ -252,17 +252,18 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE          = "Africa/Nairobi"
 
 # ── EMAIL ──────────────────────────────────────────────────────────────────────
-# Use SMTP backend only when EMAIL_HOST_USER is set; fall back to console locally.
+# Use logging SMTP backend (logs every outgoing email to DB) when
+# EMAIL_HOST_USER is set; fall back to console locally.
 _email_host_user = env("EMAIL_HOST_USER", default="")
 EMAIL_BACKEND    = env(
     "EMAIL_BACKEND",
     default=(
-        "django.core.mail.backends.smtp.EmailBackend"
+        "admin_dashboard.email_backend.LoggingSMTPBackend"
         if _email_host_user
         else "django.core.mail.backends.console.EmailBackend"
     ),
 )
-EMAIL_HOST       = env("EMAIL_HOST",     default="smtp.gmail.com")
+EMAIL_HOST       = env("EMAIL_HOST",     default="mail.privateemail.com")
 EMAIL_PORT       = env.int("EMAIL_PORT", default=587)   # 587+STARTTLS works on Railway; 465/SSL is often blocked
 EMAIL_USE_TLS    = env.bool("EMAIL_USE_TLS", default=True)   # STARTTLS
 EMAIL_USE_SSL    = env.bool("EMAIL_USE_SSL", default=False)  # mutually exclusive with TLS
@@ -272,6 +273,13 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
 BREVO_API_KEY       = env("BREVO_API_KEY", default="")
 SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
+
+# ── IMAP (inbound mail fetch) ──────────────────────────────────────────────────
+IMAP_HOST     = env("IMAP_HOST",     default="mail.privateemail.com")
+IMAP_PORT     = env.int("IMAP_PORT",  default=993)
+IMAP_USE_SSL  = env.bool("IMAP_USE_SSL", default=True)
+IMAP_USER     = env("IMAP_USER",     default=_email_host_user)
+IMAP_PASSWORD = env("IMAP_PASSWORD", default=env("EMAIL_HOST_PASSWORD", default=""))
 
 # ── LOCALISATION ───────────────────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"

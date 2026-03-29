@@ -5,6 +5,56 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 
+class EmailLog(models.Model):
+    """Log every outgoing email sent from the system."""
+    DIRECTION_CHOICES = [
+        ('OUT', 'Sent'),
+        ('IN', 'Received'),
+    ]
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+        ('draft', 'Draft'),
+    ]
+
+    direction = models.CharField(max_length=3, choices=DIRECTION_CHOICES, default='OUT', db_index=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='sent')
+    from_email = models.EmailField()
+    to_emails = models.TextField(help_text="Comma-separated recipient addresses")
+    cc_emails = models.TextField(blank=True, default='')
+    bcc_emails = models.TextField(blank=True, default='')
+    subject = models.CharField(max_length=500)
+    body_text = models.TextField(blank=True, default='')
+    body_html = models.TextField(blank=True, default='')
+    sent_at = models.DateTimeField(default=timezone.now, db_index=True)
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sent_emails',
+    )
+    error_message = models.TextField(blank=True, default='')
+    message_id = models.CharField(max_length=500, blank=True, default='', db_index=True,
+                                   help_text="RFC 2822 Message-ID for IMAP dedup")
+
+    class Meta:
+        ordering = ['-sent_at']
+        indexes = [
+            models.Index(fields=['-sent_at']),
+            models.Index(fields=['direction', '-sent_at']),
+        ]
+        verbose_name = 'Email Log'
+        verbose_name_plural = 'Email Logs'
+
+    def __str__(self):
+        return f"[{self.get_direction_display()}] {self.subject[:60]} -> {self.to_emails[:60]}"
+
+    @property
+    def to_list(self):
+        return [e.strip() for e in self.to_emails.split(',') if e.strip()]
+
+
 class ActivityLog(models.Model):
     """
     Store all user activity/actions in the system for audit trail
