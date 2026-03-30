@@ -144,10 +144,11 @@
                     <td>{{ fx.venue.name|default:"TBA" }}</td>
                     <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>
                     <td style="white-space:nowrap;">
-                        <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+                        <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'coordinator_reschedule_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-warning" title="Reschedule"><i class="bi bi-calendar2-event"></i></a>
                         <form method="post" action="{% url 'coordinator_delete_fixture' pk=competition.pk fixture_pk=fx.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
                 </tr>
@@ -188,10 +189,11 @@
                     <td>{{ fx.venue.name|default:"TBA" }}</td>
                     <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>
                     <td style="white-space:nowrap;">
-                        <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+                        <a href="{% url 'coordinator_edit_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'coordinator_reschedule_fixture' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-sm btn-outline-warning" title="Reschedule"><i class="bi bi-calendar2-event"></i></a>
                         <form method="post" action="{% url 'coordinator_delete_fixture' pk=competition.pk fixture_pk=fx.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
                 </tr>

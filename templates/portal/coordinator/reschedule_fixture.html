@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Reschedule Match - {{ competition.name }} - MKJ SUPA CUP Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:.5rem; }
+    .page-header h2 { font-size:1.3rem; font-weight:700; }
+    .reschedule-card { background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:1.75rem; max-width:600px; }
+    .match-info { background:#FFF8E1; border:1px solid #FFE082; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; }
+    .match-info h4 { font-size:1rem; font-weight:700; color:#E65100; margin-bottom:.4rem; }
+    .match-info .detail { font-size:.85rem; color:#555; line-height:1.7; }
+    .match-info .detail strong { color:#333; }
+    .form-group { margin-bottom:1.1rem; }
+    .form-group label { font-size:.82rem; font-weight:600; color:#374151; display:block; margin-bottom:.35rem; }
+    .form-group .req { color:#ef4444; margin-left:.15rem; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:600px){ .form-row{ grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-calendar2-event"></i> Reschedule Match</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<div class="reschedule-card">
+    <div class="match-info">
+        <h4>{{ fixture.home_team.name|default:"TBA" }} vs {{ fixture.away_team.name|default:"TBA" }}</h4>
+        <div class="detail">
+            <strong>Current Date:</strong> {{ fixture.match_date|date:"l, d M Y" }}<br>
+            <strong>Kickoff:</strong> {{ fixture.kickoff_time|time:"H:i" }}<br>
+            <strong>Venue:</strong> {{ fixture.venue.name|default:"TBA" }}<br>
+            <strong>Status:</strong> {{ fixture.get_status_display }}
+            {% if fixture.pool %}<br><strong>Pool:</strong> {{ fixture.pool.name }}{% endif %}
+            {% if fixture.is_knockout %}<br><strong>Round:</strong> {{ fixture.get_knockout_round_display }}{% endif %}
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="match_date">New Date <span class="req">*</span></label>
+                <input type="date" name="match_date" id="match_date" class="form-control form-control-sm" value="{{ fixture.match_date|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="kickoff_time">New Kickoff Time</label>
+                <input type="time" name="kickoff_time" id="kickoff_time" class="form-control form-control-sm" value="{{ fixture.kickoff_time|time:'H:i' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="venue_name">New Venue (optional)</label>
+            <input type="text" name="venue_name" id="venue_name" class="form-control form-control-sm" placeholder="Leave blank to keep current" list="venue-list">
+            <datalist id="venue-list">{% for v in venues %}<option value="{{ v.name }}">{% endfor %}</datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="reason">Reason for Rescheduling <span class="req">*</span></label>
+            <textarea name="reason" id="reason" class="form-control form-control-sm" rows="3" placeholder="e.g. Venue unavailable, weather conditions, team request..." required minlength="5"></textarea>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+            <button type="submit" class="btn btn-warning"><i class="bi bi-calendar2-event"></i> Reschedule Match</button>
+            <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

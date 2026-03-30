@@ -22,7 +22,10 @@
                     Documents → Age Verification → Higher Leagues
                 </p>
             </div>
-            <div style="margin-left: auto;">
+            <div style="margin-left: auto; display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+                <a href="{% url 'vo_players_by_subcounty' %}" style="background:rgba(255,255,255,.2);color:#fff;padding:.45rem 1rem;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.3);display:inline-flex;align-items:center;gap:.4rem">
+                    <i class="bi bi-geo-alt-fill"></i> All Players by Sub-County
+                </a>
                 <span style="background: rgba(255,255,255,.16); color: #fff; padding: .4rem .8rem; border-radius: 50px; font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,.3);">
                     <i class="bi bi-shield-fill-check"></i> VERIFICATION
                 </span>
@@ -73,23 +76,43 @@
 <!-- Filter by Discipline -->
 <div class="card mb-1">
     <div class="card-body" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-        <label style="font-weight:700;font-size:.85rem"><i class="bi bi-funnel"></i> Filter by Discipline:</label>
-        <a href="{% url 'vo_dashboard' %}?tab={{ tab }}" class="btn btn-outline btn-sm {% if not discipline_filter %}btn-active{% endif %}" style="padding:.3rem .8rem;font-size:.8rem">All</a>
+        <label style="font-weight:700;font-size:.85rem"><i class="bi bi-funnel"></i> Discipline:</label>
+        <a href="{% url 'vo_dashboard' %}?tab={{ tab }}{% if subcounty_filter %}&subcounty={{ subcounty_filter }}{% endif %}" class="btn btn-outline btn-sm {% if not discipline_filter %}btn-active{% endif %}" style="padding:.3rem .8rem;font-size:.8rem">All</a>
         {% for code, label in disciplines %}
-        <a href="{% url 'vo_dashboard' %}?tab={{ tab }}&discipline={{ code }}" class="btn btn-outline btn-sm {% if discipline_filter == code %}btn-active{% endif %}" style="padding:.3rem .8rem;font-size:.8rem">{{ label }}</a>
+        <a href="{% url 'vo_dashboard' %}?tab={{ tab }}&discipline={{ code }}{% if subcounty_filter %}&subcounty={{ subcounty_filter }}{% endif %}" class="btn btn-outline btn-sm {% if discipline_filter == code %}btn-active{% endif %}" style="padding:.3rem .8rem;font-size:.8rem">{{ label }}</a>
         {% endfor %}
+    </div>
+</div>
+
+<!-- Filter by Sub-County -->
+<div class="card mb-1">
+    <div class="card-body" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <label style="font-weight:700;font-size:.85rem"><i class="bi bi-geo-alt"></i> Sub-County:</label>
+        <form method="get" style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            {% if discipline_filter %}<input type="hidden" name="discipline" value="{{ discipline_filter }}">{% endif %}
+            <select name="subcounty" onchange="this.form.submit()" style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;font-size:.85rem;min-width:180px">
+                <option value="">All Sub-Counties</option>
+                {% for sc in subcounty_choices %}
+                <option value="{{ sc }}" {% if subcounty_filter == sc %}selected{% endif %}>{{ sc }}</option>
+                {% endfor %}
+            </select>
+            {% if subcounty_filter %}
+            <a href="{% url 'vo_dashboard' %}?tab={{ tab }}{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="color:#888;font-size:.82rem;text-decoration:none"><i class="bi bi-x-circle"></i> Clear</a>
+            {% endif %}
+        </form>
     </div>
 </div>
 
 <!-- Verification Tabs -->
 <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e0e0e0">
-    <a href="{% url 'vo_dashboard' %}?tab=in_progress{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'in_progress' %}#124491{% else %}transparent{% endif %};color:{% if tab == 'in_progress' %}#124491{% else %}#888{% endif %};margin-bottom:-2px">
+    <a href="{% url 'vo_dashboard' %}?tab=in_progress{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if subcounty_filter %}&subcounty={{ subcounty_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'in_progress' %}#124491{% else %}transparent{% endif %};color:{% if tab == 'in_progress' %}#124491{% else %}#888{% endif %};margin-bottom:-2px">
         ⏳ In Progress ({{ stats.in_progress }})
     </a>
-    <a href="{% url 'vo_dashboard' %}?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#2E7D32{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#2E7D32{% else %}#888{% endif %};margin-bottom:-2px">
+    <a href="{% url 'vo_dashboard' %}?tab=verified{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if subcounty_filter %}&subcounty={{ subcounty_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'verified' %}#2E7D32{% else %}transparent{% endif %};color:{% if tab == 'verified' %}#2E7D32{% else %}#888{% endif %};margin-bottom:-2px">
         ✅ Fully Verified ({{ stats.verified }})
     </a>
-    <a href="{% url 'vo_dashboard' %}?tab=rejected{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px">
+    <a href="{% url 'vo_dashboard' %}?tab=rejected{% if discipline_filter %}&discipline={{ discipline_filter }}{% endif %}{% if subcounty_filter %}&subcounty={{ subcounty_filter }}{% endif %}" style="padding:.75rem 1.5rem;text-decoration:none;font-weight:600;border-bottom:3px solid {% if tab == 'rejected' %}#C62828{% else %}transparent{% endif %};color:{% if tab == 'rejected' %}#C62828{% else %}#888{% endif %};margin-bottom:-2px">
         ❌ Rejected ({{ stats.rejected }})
     </a>
 </div>

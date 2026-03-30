@@ -294,14 +294,10 @@
                     {% if f.venue %}<br>{{ f.venue.name }}{% endif %}
                 </div>
                 <span class="fixture-badge fb-{{ f.status }}">{{ f.get_status_display }}</span>
-                <a href="{% url 'cm_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" style="font-size:.75rem;color:#7B1FA2;" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                <form method="post" action="{% url 'cm_delete_fixture' pk=competition.pk fixture_pk=f.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
-                    {% csrf_token %}
-                    <button type="submit" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:#c62828;" title="Delete"><i class="bi bi-trash"></i></button>
-                </form>
             </div>
             {% endfor %}
         </div>
+        <div style="font-size:.75rem;color:#999;margin-top:.5rem;text-align:right;"><i class="bi bi-info-circle"></i> Fixture edits, reschedules &amp; deletions are managed by the Discipline Coordinator.</div>
         {% else %}
         <div class="no-data" style="background:#fff;border-radius:10px;padding:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05);">
             <i class="bi bi-calendar-x"></i>
@@ -328,11 +324,6 @@
                     {% if f.kickoff_time %}{{ f.kickoff_time|time:"H:i" }}{% endif %}
                 </div>
                 <span class="fixture-badge fb-{{ f.status }}">{{ f.get_status_display }}</span>
-                <a href="{% url 'cm_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" style="font-size:.75rem;color:#7B1FA2;" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                <form method="post" action="{% url 'cm_delete_fixture' pk=competition.pk fixture_pk=f.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
-                    {% csrf_token %}
-                    <button type="submit" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:#c62828;" title="Delete"><i class="bi bi-trash"></i></button>
-                </form>
             </div>
             {% endfor %}
         </div>

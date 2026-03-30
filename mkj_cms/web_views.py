@@ -3676,6 +3676,103 @@ def coordinator_delete_fixture_view(request, pk, fixture_pk):
 
 
 @role_required('coordinator', 'admin')
+def coordinator_reschedule_fixture_view(request, pk, fixture_pk):
+    """Coordinator: Reschedule a fixture — change date, time, and/or venue."""
+    from competitions.models import Competition, Fixture, Venue, FixtureStatus
+
+    competition = get_object_or_404(Competition, pk=pk)
+    discipline = _coordinator_discipline(request.user)
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
+        messages.error(request, 'This competition is not in your discipline.')
+        return redirect('coordinator_dashboard')
+
+    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
+
+    if request.method == 'POST':
+        old_date = fixture.match_date
+        old_time = fixture.kickoff_time
+        old_venue = fixture.venue
+        old_status = fixture.status
+
+        new_date = request.POST.get('match_date', '').strip()
+        new_time = request.POST.get('kickoff_time', '').strip()
+        venue_name = request.POST.get('venue_name', '').strip()
+        reason = request.POST.get('reason', '').strip()
+
+        if not reason or len(reason) < 5:
+            messages.error(request, 'Please provide a reason for rescheduling (at least 5 characters).')
+            return redirect('coordinator_reschedule_fixture', pk=pk, fixture_pk=fixture_pk)
+
+        from datetime import datetime
+        if new_date:
+            try:
+                fixture.match_date = datetime.strptime(new_date, '%Y-%m-%d').date()
+            except ValueError:
+                messages.error(request, 'Invalid date format.')
+                return redirect('coordinator_reschedule_fixture', pk=pk, fixture_pk=fixture_pk)
+
+        if new_time:
+            try:
+                fixture.kickoff_time = datetime.strptime(new_time, '%H:%M').time()
+            except ValueError:
+                pass
+
+        if venue_name:
+            fixture.venue = _resolve_venue_by_name(venue_name)
+
+        # Mark as postponed if date changed to a future date
+        if fixture.match_date != old_date and fixture.status in [FixtureStatus.PENDING, FixtureStatus.CONFIRMED]:
+            fixture.status = FixtureStatus.POSTPONED
+
+        fixture.save()
+
+        # Notify team managers
+        try:
+            from accounts.notifications import notify_fixture_update
+            notify_fixture_update(fixture, action='rescheduled')
+        except Exception:
+            pass
+
+        # Activity log
+        from admin_dashboard.models import ActivityLog
+        ActivityLog.objects.create(
+            user=request.user,
+            action='MATCH_RESCHEDULE',
+            description=(
+                f'{request.user.get_full_name()} rescheduled fixture {fixture}. '
+                f'Reason: {reason}'
+            ),
+            object_repr=str(fixture),
+            ip_address=request.META.get('REMOTE_ADDR', ''),
+            extra_data={
+                'reason': reason,
+                'old_date': str(old_date),
+                'old_time': str(old_time),
+                'old_venue': str(old_venue) if old_venue else '',
+                'old_status': old_status,
+                'new_date': str(fixture.match_date),
+                'new_time': str(fixture.kickoff_time),
+                'new_venue': str(fixture.venue) if fixture.venue else '',
+                'new_status': fixture.status,
+            },
+        )
+
+        messages.success(request, f'Match rescheduled: {fixture}')
+        # Admin users go back to admin dashboard; coordinators go to their competition page
+        if request.user.role == 'admin':
+            return redirect('reschedule_fixtures_admin')
+        return redirect('coordinator_competition_manage', pk=pk)
+
+    venues = Venue.objects.filter(is_active=True).order_by('name')
+
+    return render(request, 'portal/coordinator/reschedule_fixture.html', {
+        'competition': competition,
+        'fixture': fixture,
+        'venues': venues,
+    })
+
+
+@role_required('coordinator', 'admin')
 def coordinator_edit_standings_view(request, pk):
     """Coordinator: Edit pool standings for a competition."""
     from competitions.models import Competition, Pool, PoolTeam
@@ -5161,73 +5258,16 @@ def cm_edit_standings_view(request, pk):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_edit_fixture_view(request, pk, fixture_pk):
-    """Edit a specific fixture (date, time, venue, teams for knockout)."""
-    from competitions.models import Competition, Fixture, Venue
-
-    competition = get_object_or_404(Competition, pk=pk)
-    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
-
-    if request.method == 'POST':
-        fixture.match_date = request.POST.get('match_date', fixture.match_date)
-        kickoff = request.POST.get('kickoff_time', '')
-        if kickoff:
-            from datetime import datetime
-            try:
-                fixture.kickoff_time = datetime.strptime(kickoff, '%H:%M').time()
-            except ValueError:
-                pass
-        venue_name = request.POST.get('venue_name', '').strip()
-        fixture.venue = _resolve_venue_by_name(venue_name)
-
-        status = request.POST.get('status', fixture.status)
-        if status:
-            fixture.status = status
-
-        # For knockout matches, allow team reassignment
-        if fixture.is_knockout:
-            home_id = request.POST.get('home_team_id', '')
-            away_id = request.POST.get('away_team_id', '')
-            if home_id:
-                try:
-                    fixture.home_team = Team.objects.get(pk=home_id)
-                except Team.DoesNotExist:
-                    pass
-            if away_id:
-                try:
-                    fixture.away_team = Team.objects.get(pk=away_id)
-                except Team.DoesNotExist:
-                    pass
-
-        fixture.save()
-        messages.success(request, f'Fixture updated: {fixture}')
-        return redirect('cm_competition_manage', pk=pk)
-
-    venues = Venue.objects.filter(is_active=True).order_by('name')
-    from competitions.models import FixtureStatus
-    teams = Team.objects.filter(
-        status='registered', payment_confirmed=True
-    ).order_by('name')
-
-    return render(request, 'portal/cm/edit_fixture.html', {
-        'competition': competition,
-        'fixture': fixture,
-        'venues': venues,
-        'teams': teams,
-        'status_choices': FixtureStatus.choices,
-    })
+    """Redirect to coordinator edit — fixture CRUD is coordinator-managed."""
+    messages.info(request, 'Fixture edits are managed by the Discipline Coordinator.')
+    return redirect('cm_competition_manage', pk=pk)
 
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 @require_POST
 def cm_delete_fixture_view(request, pk, fixture_pk):
-    """Competition Manager: Delete a specific fixture."""
-    from competitions.models import Competition
-
-    competition = get_object_or_404(Competition, pk=pk)
-    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
-    label = str(fixture)
-    fixture.delete()
-    messages.success(request, f'Match deleted: {label}')
+    """Redirect to coordinator — fixture CRUD is coordinator-managed."""
+    messages.info(request, 'Fixture deletions are managed by the Discipline Coordinator.')
     return redirect('cm_competition_manage', pk=pk)
 
 
@@ -7691,6 +7731,7 @@ def vo_dashboard_view(request):
     """Verification Officer dashboard - 3-step sequential verification."""
     tab = request.GET.get('tab', 'in_progress')
     discipline_filter = request.GET.get('discipline', '')
+    subcounty_filter = request.GET.get('subcounty', '')
 
     players = CountyPlayer.objects.select_related(
         'discipline', 'discipline__registration',
@@ -7698,6 +7739,9 @@ def vo_dashboard_view(request):
 
     if discipline_filter:
         players = players.filter(discipline__sport_type=discipline_filter)
+
+    if subcounty_filter:
+        players = players.filter(discipline__sub_county=subcounty_filter)
 
     # Fully verified = ALL 3 steps passed
     fully_verified = players.filter(
@@ -7726,6 +7770,13 @@ def vo_dashboard_view(request):
     )
     discipline_choices = [(st, dict(SportType.choices).get(st, st)) for st in disciplines]
 
+    # Sub-county choices for filter dropdown
+    subcounty_choices = list(
+        CountyDiscipline.objects.exclude(sub_county='')
+        .values_list('sub_county', flat=True)
+        .distinct().order_by('sub_county')
+    )
+
     # Sub-county registration summary
     registrations = CountyRegistration.objects.select_related('user').order_by('county')
     subcounties = CountyDiscipline.objects.exclude(sub_county='').values(
@@ -7747,6 +7798,8 @@ def vo_dashboard_view(request):
         'rejected_players': rejected,
         'disciplines': discipline_choices,
         'discipline_filter': discipline_filter,
+        'subcounty_choices': subcounty_choices,
+        'subcounty_filter': subcounty_filter,
         'registrations': registrations,
         'subcounties': subcounties,
         'current_competitions': current_competitions,
@@ -7758,6 +7811,71 @@ def vo_dashboard_view(request):
             'total_subcounties': subcounties.count(),
             'total_disciplines': CountyDiscipline.objects.count(),
         },
+    })
+
+
+@role_required('verification_officer', 'admin')
+def vo_players_by_subcounty_view(request):
+    """All players grouped by sub-county for verification overview."""
+    from collections import OrderedDict
+
+    subcounty_filter = request.GET.get('subcounty', '')
+    discipline_filter = request.GET.get('discipline', '')
+    status_filter = request.GET.get('status', '')
+
+    players = CountyPlayer.objects.select_related(
+        'discipline', 'discipline__registration',
+    ).order_by('discipline__sub_county', 'last_name', 'first_name')
+
+    if subcounty_filter:
+        players = players.filter(discipline__sub_county=subcounty_filter)
+    if discipline_filter:
+        players = players.filter(discipline__sport_type=discipline_filter)
+    if status_filter == 'verified':
+        players = players.filter(
+            doc_status='verified', iprs_age_status='verified',
+            higher_league_status='clear',
+        )
+    elif status_filter == 'pending':
+        players = players.exclude(
+            doc_status='verified', iprs_age_status='verified',
+            higher_league_status='clear',
+        ).exclude(
+            Q(doc_status='rejected') | Q(iprs_age_status='failed')
+            | Q(higher_league_status='flagged')
+        )
+    elif status_filter == 'rejected':
+        players = players.filter(
+            Q(doc_status='rejected') | Q(iprs_age_status='failed')
+            | Q(higher_league_status='flagged')
+        )
+
+    # Group by sub-county
+    grouped = OrderedDict()
+    for p in players:
+        sc = p.discipline.sub_county or 'Unassigned'
+        grouped.setdefault(sc, []).append(p)
+
+    # Sub-county choices and discipline choices for dropdowns
+    subcounty_choices = list(
+        CountyDiscipline.objects.exclude(sub_county='')
+        .values_list('sub_county', flat=True)
+        .distinct().order_by('sub_county')
+    )
+    disciplines = (
+        CountyDiscipline.objects.values_list('sport_type', flat=True)
+        .distinct().order_by('sport_type')
+    )
+    discipline_choices = [(st, dict(SportType.choices).get(st, st)) for st in disciplines]
+
+    return render(request, 'portal/verification_officer/players_by_subcounty.html', {
+        'grouped_players': grouped,
+        'total_players': players.count(),
+        'subcounty_choices': subcounty_choices,
+        'subcounty_filter': subcounty_filter,
+        'disciplines': discipline_choices,
+        'discipline_filter': discipline_filter,
+        'status_filter': status_filter,
     })
 
 

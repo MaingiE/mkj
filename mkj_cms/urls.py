@@ -113,6 +113,7 @@ from .web_views import (
     coordinator_edit_fixture_view,
     coordinator_create_fixture_view,
     coordinator_delete_fixture_view,
+    coordinator_reschedule_fixture_view,
     coordinator_edit_standings_view,
     coordinator_match_reports_view,
     coordinator_squads_view,
@@ -172,6 +173,7 @@ from .web_views import (
     # Verification Officer portal
     vo_dashboard_view,
     vo_verify_county_player_view,
+    vo_players_by_subcounty_view,
     # Verified player lists
     subcounty_verified_players_view,
     team_manager_verified_players_view,
@@ -340,6 +342,8 @@ urlpatterns = [
          coordinator_edit_fixture_view, name="coordinator_edit_fixture"),
     path("portal/coordinator/competitions/<int:pk>/fixtures/<int:fixture_pk>/delete/",
          coordinator_delete_fixture_view, name="coordinator_delete_fixture"),
+    path("portal/coordinator/competitions/<int:pk>/fixtures/<int:fixture_pk>/reschedule/",
+         coordinator_reschedule_fixture_view, name="coordinator_reschedule_fixture"),
     path("portal/coordinator/competitions/<int:pk>/stats/",              coordinator_statistics_view,          name="coordinator_statistics"),
     path("portal/coordinator/competitions/<int:pk>/rules/",              coordinator_competition_rules_view,   name="coordinator_competition_rules"),
     path("portal/coordinator/venues/",                                   coordinator_venues_view,              name="coordinator_venues"),
@@ -436,6 +440,7 @@ urlpatterns = [
 
     # ── VERIFICATION OFFICER PORTAL ───────────────────────────────────────
     path("portal/verification-officer/", vo_dashboard_view, name="vo_dashboard"),
+    path("portal/verification-officer/players-by-subcounty/", vo_players_by_subcounty_view, name="vo_players_by_subcounty"),
     path("portal/verification-officer/player/<int:player_pk>/verify/", vo_verify_county_player_view, name="vo_verify_county_player"),
 
     # ── LEADERSHIP SCOUTING REPORTS ───────────────────────────────────────

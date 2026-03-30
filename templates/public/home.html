@@ -188,18 +188,18 @@
     line-height: 1.15;
     text-shadow: 0 2px 16px rgba(0,0,0,.4);
 }
-/* Phase 1: fly-in (0 → 800ms) */
+/* Phase 1: fly-in — staggered, visible within overflow:hidden */
 .fly-word--tl {
-    animation: flyFromTL .8s cubic-bezier(.16,1,.3,1) forwards;
+    animation: flyFromTL 1.2s cubic-bezier(.16,1,.3,1) 0.3s forwards;
 }
 .fly-word--tr {
-    animation: flyFromTR .8s cubic-bezier(.16,1,.3,1) forwards;
+    animation: flyFromTR 1.2s cubic-bezier(.16,1,.3,1) 0.7s forwards;
 }
 .fly-word--bl {
-    animation: flyFromBL .8s cubic-bezier(.16,1,.3,1) forwards;
+    animation: flyFromBL 1.2s cubic-bezier(.16,1,.3,1) 1.1s forwards;
 }
 .fly-word--br {
-    animation: flyFromBR .8s cubic-bezier(.16,1,.3,1) forwards;
+    animation: flyFromBR 1.2s cubic-bezier(.16,1,.3,1) 1.5s forwards;
 }
 
 /* Typography per part */
@@ -233,24 +233,24 @@
 }
 
 @keyframes flyFromTL {
-    0%   { opacity: 0; transform: translate(-120vw, -60vh) rotate(-8deg); }
-    60%  { opacity: 1; }
-    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    0%   { opacity: 0; transform: translate(-80%, -60%) rotate(-8deg) scale(.7); }
+    50%  { opacity: .8; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
 }
 @keyframes flyFromTR {
-    0%   { opacity: 0; transform: translate(120vw, -60vh) rotate(8deg); }
-    60%  { opacity: 1; }
-    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    0%   { opacity: 0; transform: translate(80%, -60%) rotate(8deg) scale(.7); }
+    50%  { opacity: .8; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
 }
 @keyframes flyFromBL {
-    0%   { opacity: 0; transform: translate(-120vw, 60vh) rotate(8deg); }
-    60%  { opacity: 1; }
-    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    0%   { opacity: 0; transform: translate(-80%, 60%) rotate(8deg) scale(.7); }
+    50%  { opacity: .8; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
 }
 @keyframes flyFromBR {
-    0%   { opacity: 0; transform: translate(120vw, 60vh) rotate(-8deg); }
-    60%  { opacity: 1; }
-    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+    0%   { opacity: 0; transform: translate(80%, 60%) rotate(-8deg) scale(.7); }
+    50%  { opacity: .8; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
 }
 
 /* ── HERO BUTTONS & TAGLINE ──────────────────────────────── */
@@ -327,11 +327,11 @@
 }
 
 /* ── COUNTDOWN CARD — TOSSABLE ────────────────────────────── */
-/* Entry from corner — one class assigned via JS */
-.cd-enter-tl { animation: cdFromTL .8s cubic-bezier(.16,1,.3,1) .5s both; }
-.cd-enter-tr { animation: cdFromTR .8s cubic-bezier(.16,1,.3,1) .5s both; }
-.cd-enter-bl { animation: cdFromBL .8s cubic-bezier(.16,1,.3,1) .5s both; }
-.cd-enter-br { animation: cdFromBR .8s cubic-bezier(.16,1,.3,1) .5s both; }
+/* Entry from corner — slow graceful glide */
+.cd-enter-tl { animation: cdFromTL 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
+.cd-enter-tr { animation: cdFromTR 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
+.cd-enter-bl { animation: cdFromBL 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
+.cd-enter-br { animation: cdFromBR 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
 
 @keyframes cdFromTL { from { opacity:0; transform: translate(-110%, -80%) rotate(-12deg) scale(.85); } to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
 @keyframes cdFromTR { from { opacity:0; transform: translate(110%, -80%) rotate(12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
@@ -339,24 +339,24 @@
 @keyframes cdFromBR { from { opacity:0; transform: translate(110%, 80%) rotate(-12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
 
 /* Toss-out / toss-in cycle — toggled by JS on slide change */
-.cd-toss-out-tr { animation: cdTossOutTR .6s cubic-bezier(.6,0,1,.4) forwards !important; }
-.cd-toss-out-tl { animation: cdTossOutTL .6s cubic-bezier(.6,0,1,.4) forwards !important; }
-.cd-toss-out-br { animation: cdTossOutBR .6s cubic-bezier(.6,0,1,.4) forwards !important; }
-.cd-toss-out-bl { animation: cdTossOutBL .6s cubic-bezier(.6,0,1,.4) forwards !important; }
-.cd-toss-in-tl  { animation: cdTossInTL .7s cubic-bezier(.16,1,.3,1) forwards !important; }
-.cd-toss-in-tr  { animation: cdTossInTR .7s cubic-bezier(.16,1,.3,1) forwards !important; }
-.cd-toss-in-bl  { animation: cdTossInBL .7s cubic-bezier(.16,1,.3,1) forwards !important; }
-.cd-toss-in-br  { animation: cdTossInBR .7s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-out-tr { animation: cdTossOutTR 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
+.cd-toss-out-tl { animation: cdTossOutTL 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
+.cd-toss-out-br { animation: cdTossOutBR 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
+.cd-toss-out-bl { animation: cdTossOutBL 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
+.cd-toss-in-tl  { animation: cdTossInTL 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-in-tr  { animation: cdTossInTR 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-in-bl  { animation: cdTossInBL 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-in-br  { animation: cdTossInBR 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
 
 @keyframes cdTossOutTR { to { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); } }
 @keyframes cdTossOutTL { to { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } }
 @keyframes cdTossOutBR { to { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); } }
 @keyframes cdTossOutBL { to { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); } }
-/* toss-in lands at a random offset — JS sets --cd-land-x and --cd-land-y custom props */
-@keyframes cdTossInTL  { from { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-@keyframes cdTossInTR  { from { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); }  to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-@keyframes cdTossInBL  { from { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); }  to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-@keyframes cdTossInBR  { from { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); }  to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+/* toss-in flies from corner → through center (50%) → to final landing */
+@keyframes cdTossInTL  { 0% { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } 50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+@keyframes cdTossInTR  { 0% { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); }  50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+@keyframes cdTossInBL  { 0% { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); }  50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+@keyframes cdTossInBR  { 0% { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); }  50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
 
 @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
@@ -1253,12 +1253,13 @@
             cdCard.style.setProperty('--cd-land-y', off.y);
         }
 
-        /* Toss-out then toss-in from different corner, then settle */
+        /* Toss-out slowly, glide back in through center, then settle to top-right */
         function tossAndSettle(settleDelay) {
             var outDir = pickCorner();
             clearCd();
             cdCard.classList.add('cd-toss-out-' + outDir);
 
+            /* After slow toss-out (1.3s), glide back in through center */
             setTimeout(function(){
                 var inDir = pickCorner();
                 while (inDir === outDir && cdCorners.length > 1) { inDir = pickCorner(); }
@@ -1266,9 +1267,9 @@
                 setRandomLand();
                 cdCard.style.opacity = '0';
                 cdCard.classList.add('cd-toss-in-' + inDir);
-                setTimeout(function(){ cdCard.style.opacity = '1'; }, 700);
+                setTimeout(function(){ cdCard.style.opacity = '1'; }, 1600);
 
-                /* Settle after the card is visible */
+                /* Always settle to top-right after toss-in completes */
                 setTimeout(function(){
                     clearCd();
                     cdCard.style.opacity = '1';
@@ -1276,28 +1277,35 @@
                     cdCard.style.removeProperty('--cd-land-y');
                     cdCard.classList.add('cd-settled');
                 }, settleDelay || 3000);
-            }, 650);
+            }, 1300);
         }
 
         /* === SEQUENCE ===
-           0s      : 1st emergence (fly in)
-           3s      : toss out → 2nd emergence → settle after 3s (~6.6s total)
-           +60s    : retoss → re-emerge → settle again
-           +120s   : retoss → re-emerge → settle permanently
+           0s      : 1st emergence (slow glide in, stays 5s) → settle top-right
+           20s     : retoss → through center → settle top-right
+           40s     : retoss → through center → settle top-right
+           60s     : retoss → through center → settle top-right (permanent)
         */
 
-        /* 1st emergence */
+        /* 1st emergence — slow glide in */
         setRandomLand();
         cdCard.classList.add('cd-enter-' + pickCorner());
 
-        /* 3s: 2nd emergence then settle */
-        setTimeout(function(){ tossAndSettle(3000); }, 3000);
+        /* After initial entry (2.3s animation), settle to top-right */
+        setTimeout(function(){
+            clearCd();
+            cdCard.style.opacity = '1';
+            cdCard.classList.add('cd-settled');
+        }, 5000);
 
-        /* ~60s after page load: retoss and resettle */
-        setTimeout(function(){ tossAndSettle(2500); }, 60000);
+        /* 20s: retoss, through center, settle */
+        setTimeout(function(){ tossAndSettle(3000); }, 20000);
 
-        /* ~120s after page load: retoss and settle permanently */
-        setTimeout(function(){ tossAndSettle(2500); }, 120000);
+        /* 40s: retoss, through center, settle */
+        setTimeout(function(){ tossAndSettle(3000); }, 40000);
+
+        /* 60s: final retoss, through center, settle permanently */
+        setTimeout(function(){ tossAndSettle(3000); }, 60000);
     }
 
     /* ── Countdown timer ───────────────────────────────────────────── */

@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Players by Sub-County - Verification{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'vo_dashboard' %}">Verification Officer</a>
+        <span>Players by Sub-County</span>
+    </div>
+    <h1><i class="bi bi-geo-alt"></i> All Players by Sub-County</h1>
+    <p>View all players added for verification from different sub-counties. <strong>{{ total_players }}</strong> player{{ total_players|pluralize }} found.</p>
+</div>
+
+<!-- Filters -->
+<div class="card mb-1">
+    <div class="card-body">
+        <form method="get" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+            <label style="font-weight:700;font-size:.85rem"><i class="bi bi-funnel"></i> Filters:</label>
+            <select name="subcounty" style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;font-size:.85rem;min-width:180px">
+                <option value="">All Sub-Counties</option>
+                {% for sc in subcounty_choices %}
+                <option value="{{ sc }}" {% if subcounty_filter == sc %}selected{% endif %}>{{ sc }}</option>
+                {% endfor %}
+            </select>
+            <select name="discipline" style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;font-size:.85rem;min-width:180px">
+                <option value="">All Disciplines</option>
+                {% for code, label in disciplines %}
+                <option value="{{ code }}" {% if discipline_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" style="padding:.4rem .75rem;border:1px solid #ddd;border-radius:6px;font-size:.85rem;min-width:160px">
+                <option value="">All Statuses</option>
+                <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>✅ Fully Verified</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>⏳ In Progress</option>
+                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>❌ Rejected</option>
+            </select>
+            <button type="submit" style="padding:.4rem 1rem;background:#124491;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.85rem">Apply</button>
+            {% if subcounty_filter or discipline_filter or status_filter %}
+            <a href="{% url 'vo_players_by_subcounty' %}" style="color:#888;font-size:.82rem;text-decoration:none"><i class="bi bi-x-circle"></i> Clear All</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if grouped_players %}
+{% for subcounty, players in grouped_players.items %}
+<!-- Sub-County Section -->
+<div class="card mb-1">
+    <div class="card-header" style="background:linear-gradient(135deg,#003388,#124491);color:#fff;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:1.05rem"><i class="bi bi-geo-alt-fill"></i> {{ subcounty }}</h3>
+        <span style="background:rgba(255,255,255,.2);padding:.25rem .7rem;border-radius:50px;font-size:.78rem;font-weight:700">{{ players|length }} player{{ players|length|pluralize }}</span>
+    </div>
+    <div class="card-body" style="padding:0">
+        <div class="table-responsive">
+            <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+                <thead>
+                    <tr style="background:#f8f9fa;text-align:left">
+                        <th style="padding:.6rem .8rem">Player</th>
+                        <th style="padding:.6rem .8rem">Discipline</th>
+                        <th style="padding:.6rem .8rem">Age</th>
+                        <th style="padding:.6rem .8rem">National ID</th>
+                        <th style="padding:.6rem .8rem;text-align:center">📄 Docs</th>
+                        <th style="padding:.6rem .8rem;text-align:center">🪪 Age</th>
+                        <th style="padding:.6rem .8rem;text-align:center">🏆 Leagues</th>
+                        <th style="padding:.6rem .8rem">Overall</th>
+                        <th style="padding:.6rem .8rem">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in players %}
+                    <tr style="border-bottom:1px solid #eee;{% if p.is_verified %}background:#f1f8e9{% elif p.doc_status == 'rejected' or p.iprs_age_status == 'failed' or p.higher_league_status == 'flagged' %}background:#fce4ec{% endif %}">
+                        <td style="padding:.5rem .8rem"><strong>{{ p.first_name }} {{ p.last_name }}</strong>{% if p.ward %}<br><small style="color:#888">Ward: {{ p.ward }}</small>{% endif %}</td>
+                        <td style="padding:.5rem .8rem"><span style="font-size:.78rem">{{ p.discipline.get_sport_type_display }}</span></td>
+                        <td style="padding:.5rem .8rem">{{ p.age }}</td>
+                        <td style="padding:.5rem .8rem;font-size:.82rem">{{ p.national_id_number|default:"-" }}</td>
+                        <td style="padding:.5rem .8rem;text-align:center">
+                            {% if p.doc_status == 'verified' %}<span style="color:#2E7D32">✓</span>
+                            {% elif p.doc_status == 'rejected' %}<span style="color:#C62828">✗</span>
+                            {% else %}<span style="color:#bbb">○</span>{% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem;text-align:center">
+                            {% if p.iprs_age_status == 'verified' %}<span style="color:#2E7D32">✓</span>
+                            {% elif p.iprs_age_status == 'failed' %}<span style="color:#C62828">✗</span>
+                            {% else %}<span style="color:#bbb">○</span>{% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem;text-align:center">
+                            {% if p.higher_league_status == 'clear' %}<span style="color:#2E7D32">✓</span>
+                            {% elif p.higher_league_status == 'flagged' %}<span style="color:#C62828">✗</span>
+                            {% else %}<span style="color:#bbb">○</span>{% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem">
+                            {% if p.is_verified %}
+                            <span style="display:inline-block;padding:.2rem .5rem;border-radius:50px;font-size:.72rem;font-weight:700;background:#e8f5ed;color:#2E7D32">✅ Verified</span>
+                            {% elif p.doc_status == 'rejected' or p.iprs_age_status == 'failed' or p.higher_league_status == 'flagged' %}
+                            <span style="display:inline-block;padding:.2rem .5rem;border-radius:50px;font-size:.72rem;font-weight:700;background:#fce4ec;color:#C62828">❌ Rejected</span>
+                            {% else %}
+                            <span style="display:inline-block;padding:.2rem .5rem;border-radius:50px;font-size:.72rem;font-weight:700;background:#fff3e0;color:#e65100">⏳ Step {{ p.current_verification_step }}/3</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:.5rem .8rem">
+                            <a href="{% url 'vo_verify_county_player' player_pk=p.pk %}" class="btn btn-outline btn-sm" style="background:#124491;color:#fff;border-color:#124491;padding:.25rem .6rem;font-size:.78rem">Review</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="card">
+    <div class="card-body" style="padding:3rem;text-align:center">
+        <div style="font-size:3rem">📋</div>
+        <h3>No players found</h3>
+        <p style="color:#888">Adjust your filters or check back when players have been registered.</p>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top:1rem">
+    <a href="{% url 'vo_dashboard' %}" class="btn btn-outline" style="padding:.5rem 1.2rem;font-size:.88rem"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

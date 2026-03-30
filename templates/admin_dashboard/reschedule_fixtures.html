@@ -10,12 +10,17 @@
 
 <div class="container mt-4">
     <h2 class="mb-4 text-primary">Reschedule Fixtures</h2>
+    <p class="text-muted mb-3" style="font-size:.88rem;">
+        Fixture rescheduling is managed by the <strong>Discipline Coordinator</strong> for each sport.
+        Below is an overview of all upcoming/pending fixtures that may need rescheduling.
+    </p>
     <div class="card">
         <div class="card-body">
             {% if fixtures %}
             <table class="table table-bordered table-hover">
                 <thead class="table-light">
                     <tr>
+                        <th>Competition</th>
                         <th>Match</th>
                         <th>Date</th>
                         <th>Kickoff Time</th>
@@ -27,14 +32,19 @@
                 <tbody>
                     {% for match in fixtures %}
                     <tr>
+                        <td><span style="font-size:.8rem;">{{ match.competition.get_sport_type_display }}</span></td>
                         <td>{{ match.home_team }} vs {{ match.away_team }}</td>
                         <td>{{ match.match_date|date:'M d, Y' }}</td>
-                        <td>{{ match.kickoff_time }}</td>
-                        <td>{{ match.venue }}</td>
-                        <td>{{ match.get_status_display }}</td>
+                        <td>{{ match.kickoff_time|time:"H:i" }}</td>
+                        <td>{{ match.venue.name|default:"TBA" }}</td>
                         <td>
-                            <a href="{% url 'matches_list' %}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-calendar-alt"></i> Open Fixtures
+                            <span class="badge {% if match.status == 'postponed' %}bg-warning text-dark{% elif match.status == 'confirmed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ match.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'coordinator_reschedule_fixture' pk=match.competition.pk fixture_pk=match.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-calendar-alt"></i> Reschedule
                             </a>
                         </td>
                     </tr>

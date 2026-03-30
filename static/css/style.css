@@ -2038,12 +2038,13 @@ img { max-width: 100%; }
     .fkf-nav-links.open { display: flex !important; }
     .fkf-nav-links li { width: 100%; max-width: 320px; text-align: center; }
     .fkf-nav-links a {
-        font-size: 1.15rem; padding: .85rem 1rem; color: #333;
+        font-size: 1.15rem; padding: .85rem 1rem; color: #333 !important;
+        text-shadow: none !important;
         display: block; border-radius: 8px; transition: background .2s;
         min-height: 44px; display: flex; align-items: center; justify-content: center;
     }
     .fkf-nav-links a:hover,
-    .fkf-nav-links a.active { background: #e8edf5; color: #124491; }
+    .fkf-nav-links a.active { background: #e8edf5; color: #124491 !important; }
     .fkf-nav-actions { display: none; }
     .nav-login-mobile { display: list-item !important; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
     .nav-login-mobile a {

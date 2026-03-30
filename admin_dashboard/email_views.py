@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
 
