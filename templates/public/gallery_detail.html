@@ -5,48 +5,19 @@
 
 {% block extra_css %}
 <style>
-/* ═══════════════════════════════════════
-   GALLERY DETAIL PAGE (Lightbox album)
-═══════════════════════════════════════ */
-.gd-hero {
-    padding: 6rem 0 2rem;
-    background: linear-gradient(135deg, #0C1B3A 0%, #124491 50%, #0C1B3A 100%);
-    position: relative; overflow: hidden;
-    text-align: center; color: #fff;
-}
-.gd-hero .container { position: relative; z-index: 2; }
-.gd-breadcrumb {
-    display: inline-flex; align-items: center; gap: .4rem;
-    font-size: .8rem; color: rgba(255,255,255,.6); margin-bottom: 1.5rem;
-}
-.gd-breadcrumb a { color: rgba(255,255,255,.7); transition: color .2s; }
-.gd-breadcrumb a:hover { color: #fff; }
-.gd-hero h1 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 2rem; font-weight: 800; margin-bottom: .5rem;
-    letter-spacing: -1px;
-}
-.gd-hero-meta {
-    font-size: .88rem; color: rgba(255,255,255,.6);
-    display: flex; justify-content: center; gap: 1.5rem;
-}
-.gd-hero-meta i { margin-right: .3rem; }
-
 /* ── Photo grid ── */
-.gd-grid-section {
-    max-width: 1200px; margin: -1.5rem auto 2.5rem; padding: 0 1.5rem;
-    position: relative; z-index: 5;
-}
 .gd-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: 1.25rem;
 }
 .gd-photo {
-    border-radius: 12px; overflow: hidden; cursor: pointer;
+    border-radius: 14px; overflow: hidden; cursor: pointer;
     position: relative; aspect-ratio: 4/3;
     background: #e8f0f8;
+    transition: transform .3s, box-shadow .3s;
 }
+.gd-photo:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
 .gd-photo img {
     width: 100%; height: 100%; object-fit: cover;
     transition: transform .4s;
@@ -102,40 +73,51 @@
 
 {% block content %}
 <!-- ── HERO ── -->
-<section class="gd-hero">
-    <div class="container">
-        <div class="gd-breadcrumb">
-            <a href="{% url 'home' %}">Home</a> <i class="bi bi-chevron-right"></i>
-            <a href="{% url 'news_media:gallery_list' %}">Gallery</a> <i class="bi bi-chevron-right"></i>
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
+    </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">Gallery</span>
+        <h1 class="page-hero__title reveal">{{ album.title }}</h1>
+        <p class="page-hero__sub reveal">
+            {% if album.event_date %}{{ album.event_date|date:"F d, Y" }} &middot; {% endif %}{{ images|length }} photos
+        </p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <a href="{% url 'news_media:gallery_list' %}">Gallery</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
             <span>{{ album.title|truncatewords:5 }}</span>
         </div>
-        <h1>{{ album.title }}</h1>
-        <div class="gd-hero-meta">
-            {% if album.event_date %}<span><i class="bi bi-calendar3"></i> {{ album.event_date|date:"F d, Y" }}</span>{% endif %}
-            <span><i class="bi bi-images"></i> {{ images|length }} photos</span>
-        </div>
     </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
 </section>
 
 {% if album.description %}
-<div style="max-width:800px;margin:2rem auto 0;padding:0 1.5rem;text-align:center;">
-    <p style="color:#666;font-size:.95rem;line-height:1.7;">{{ album.description }}</p>
-</div>
+<section class="sec" style="padding-bottom:0;">
+    <div class="container" style="max-width:800px;text-align:center;">
+        <p style="color:#666;font-size:.95rem;line-height:1.7;">{{ album.description }}</p>
+    </div>
+</section>
 {% endif %}
 
 <!-- ── PHOTO GRID ── -->
-<div class="gd-grid-section">
-    <div class="gd-grid">
-        {% for img in images %}
-        <div class="gd-photo" onclick="openLightbox({{ forloop.counter0 }})">
-            <img src="{{ img.image.url }}" alt="{{ img.caption|default:album.title }}" loading="lazy">
-            {% if img.caption %}
-            <div class="gd-photo-overlay"><span>{{ img.caption }}</span></div>
-            {% endif %}
+<section class="sec">
+    <div class="container">
+        <div class="gd-grid">
+            {% for img in images %}
+            <div class="gd-photo" onclick="openLightbox({{ forloop.counter0 }})">
+                <img src="{{ img.image.url }}" alt="{{ img.caption|default:album.title }}" loading="lazy">
+                {% if img.caption %}
+                <div class="gd-photo-overlay"><span>{{ img.caption }}</span></div>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
+</section>
 
 <!-- ── LIGHTBOX ── -->
 <div class="gd-lightbox" id="lightbox">
@@ -150,6 +132,33 @@
 {% block extra_js %}
 <script>
 (function() {
+    /* Reveal animations */
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); } });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+
+    /* Canvas particles */
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++) particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(26,111,181,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+
+    /* Lightbox */
     const photos = [
         {% for img in images %}
         { src: "{{ img.image.url }}", caption: "{{ img.caption|escapejs }}" },

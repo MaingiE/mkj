@@ -11,11 +11,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --blue: #2563eb;
-            --blue-dark: #1d4ed8;
-            --blue-light: #3b82f6;
-            --gold: #f59e0b;
-            --gold-light: #fbbf24;
+            --primary: #124491;
+            --primary-dark: #0d3470;
+            --primary-light: #1a6fb5;
+            --accent: #E8B91E;
+            --accent-light: #fbbf24;
+            --dark: #0f172a;
             --white: #ffffff;
             --gray-50: #f8fafc;
             --gray-100: #f1f5f9;
@@ -44,15 +45,14 @@
             display: flex; min-height: 100vh;
             align-items: center; justify-content: center;
             padding: 2rem;
-            background:
-                linear-gradient(135deg, #f0f4ff 0%, var(--gray-50) 50%, #fefce8 100%);
+            background: linear-gradient(135deg, #0C1B3A 0%, #0f172a 50%, #0C1B3A 100%);
         }
 
         .login-card {
             display: flex; width: 100%; max-width: 960px;
             background: var(--white);
             border-radius: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,.05), 0 20px 50px -12px rgba(0,0,0,.08);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,.15), 0 20px 50px -12px rgba(0,0,0,.35);
             overflow: hidden;
             animation: card-in .5s var(--ease) both;
         }
@@ -61,11 +61,20 @@
         /* LEFT - BRANDING */
         .login-brand {
             flex: 0 0 42%; padding: 3rem 2.5rem;
-            background: linear-gradient(160deg, #f8faff 0%, #eef2ff 100%);
-            border-right: 1px solid var(--gray-100);
+            background: linear-gradient(160deg, #0C1B3A 0%, #124491 60%, #0C1B3A 100%);
+            border-right: none;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .login-brand canvas {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+        }
+        .login-brand > *:not(canvas):not(.kenya-stripe-login) { position: relative; z-index: 2; }
+        .kenya-stripe-login {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 4px; z-index: 5;
+            background: linear-gradient(90deg, #000 33.33%, #b00 33.33%, #b00 66.66%, #060 66.66%);
         }
 
         .logo-pair {
@@ -77,30 +86,30 @@
             width: 72px; height: 72px;
             object-fit: contain;
             border-radius: 18px;
-            background: var(--white);
+            background: rgba(255,255,255,.1);
             padding: 6px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+            box-shadow: 0 2px 12px rgba(0,0,0,.2);
             transition: transform .2s;
         }
         .logo-pair img:hover { transform: scale(1.05); }
         .logo-divider {
             width: 1px; height: 40px;
-            background: var(--gray-200);
+            background: rgba(255,255,255,.2);
         }
 
         .brand-title {
             font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 900;
-            color: var(--gray-900); letter-spacing: -.5px; margin-bottom: .35rem;
+            color: var(--white); letter-spacing: -.5px; margin-bottom: .35rem;
             animation: fade-up .5s var(--ease) both .2s;
         }
-        .brand-title span { color: var(--blue); }
+        .brand-title span { color: var(--accent); }
         .brand-sub {
-            font-size: .78rem; color: var(--gray-500); font-weight: 500;
+            font-size: .78rem; color: rgba(255,255,255,.7); font-weight: 500;
             margin-bottom: .6rem; line-height: 1.5;
             animation: fade-up .5s var(--ease) both .3s;
         }
         .brand-motto {
-            font-size: .75rem; color: var(--blue); font-weight: 600;
+            font-size: .75rem; color: var(--accent); font-weight: 600;
             font-style: italic; margin-bottom: 2rem;
             animation: fade-up .5s var(--ease) both .35s;
         }
@@ -108,16 +117,16 @@
         .brand-stats {
             display: flex; gap: 2rem;
             padding-top: 1.5rem;
-            border-top: 1px solid var(--gray-200);
+            border-top: 1px solid rgba(255,255,255,.15);
             animation: fade-up .5s var(--ease) both .4s;
         }
         .brand-stat { text-align: center; }
         .brand-stat-val {
             font-family: 'Outfit', sans-serif; font-size: 1.25rem;
-            font-weight: 800; color: var(--gray-900); display: block;
+            font-weight: 800; color: var(--white); display: block;
         }
         .brand-stat-lbl {
-            font-size: .6rem; color: var(--gray-400);
+            font-size: .6rem; color: rgba(255,255,255,.5);
             text-transform: uppercase; letter-spacing: 1.5px;
             font-weight: 600; margin-top: .15rem;
         }
@@ -129,7 +138,7 @@
         }
         .brand-footer .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse-dot 2s infinite; }
         @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-        .brand-footer span { font-size: .65rem; color: var(--gray-400); font-weight: 600; letter-spacing: .5px; }
+        .brand-footer span { font-size: .65rem; color: rgba(255,255,255,.5); font-weight: 600; letter-spacing: .5px; }
 
         @keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -145,7 +154,7 @@
             font-size: .76rem; color: var(--gray-400); text-decoration: none;
             font-weight: 500; transition: color .2s; margin-bottom: 2rem;
         }
-        .back-link:hover { color: var(--blue); }
+        .back-link:hover { color: var(--primary); }
         .back-link svg { width: 15px; height: 15px; transition: transform .2s; }
         .back-link:hover svg { transform: translateX(-3px); }
 
@@ -167,7 +176,7 @@
         .msg--danger { background: #fef2f2; border: 1px solid #fecaca; color: #cf2e2e; }
         .msg--success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
         .msg--warning { background: #fffbeb; border: 1px solid #fde68a; color: #d97706; }
-        .msg--info { background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; }
+        .msg--info { background: #eff6ff; border: 1px solid #bfdbfe; color: #124491; }
 
         /* Fields */
         .fields { display: flex; flex-direction: column; gap: 1.1rem; }
@@ -185,8 +194,8 @@
         }
         .input-field::placeholder { color: var(--gray-400); font-weight: 400; }
         .input-field:hover { border-color: var(--gray-300); }
-        .input-field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.06); }
-        .input-field:focus ~ .input-wrap__icon { color: var(--blue); }
+        .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(18,68,145,.08); }
+        .input-field:focus ~ .input-wrap__icon { color: var(--primary); }
 
         .eye-toggle {
             position: absolute; right: .7rem; background: none; border: none;
@@ -198,21 +207,21 @@
 
         .options-row { display: flex; align-items: center; justify-content: space-between; }
         .check-wrap { display: flex; align-items: center; gap: .45rem; }
-        .check-wrap input[type="checkbox"] { width: 15px; height: 15px; border-radius: 4px; cursor: pointer; accent-color: var(--blue); }
+        .check-wrap input[type="checkbox"] { width: 15px; height: 15px; border-radius: 4px; cursor: pointer; accent-color: var(--primary); }
         .check-wrap label { font-size: .78rem; color: var(--gray-500); cursor: pointer; user-select: none; }
-        .forgot-link { font-size: .78rem; color: var(--blue); text-decoration: none; font-weight: 600; transition: color .2s; }
-        .forgot-link:hover { color: var(--blue-dark); text-decoration: underline; }
+        .forgot-link { font-size: .78rem; color: var(--primary); text-decoration: none; font-weight: 600; transition: color .2s; }
+        .forgot-link:hover { color: var(--primary-dark); text-decoration: underline; }
 
         .submit-btn {
             width: 100%; margin-top: .4rem; padding: .82rem; border: none;
             border-radius: 10px; font-family: 'Outfit', sans-serif;
             font-size: .9rem; font-weight: 700; color: var(--white); cursor: pointer;
-            background: var(--blue);
-            box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(37,99,235,.18);
+            background: var(--primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(18,68,145,.22);
             transition: all .2s var(--ease); letter-spacing: .2px;
             position: relative; overflow: hidden;
         }
-        .submit-btn:hover { background: var(--blue-dark); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(37,99,235,.25); transform: translateY(-1px); }
+        .submit-btn:hover { background: var(--primary-dark); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(18,68,145,.3); transform: translateY(-1px); }
         .submit-btn:active { transform: translateY(0); }
         .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
         .submit-btn.loading { pointer-events: none; }
@@ -232,7 +241,7 @@
         .form-divider span { font-size: .68rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 
         .form-footer { text-align: center; font-size: .8rem; color: var(--gray-500); }
-        .form-footer a { color: var(--blue); font-weight: 600; text-decoration: none; }
+        .form-footer a { color: var(--primary); font-weight: 600; text-decoration: none; }
         .form-footer a:hover { text-decoration: underline; }
         .form-copy { text-align: center; font-size: .65rem; color: var(--gray-400); margin-top: 1.5rem; }
 
@@ -259,14 +268,14 @@
         .modal-icon {
             width: 48px; height: 48px; background: #eff6ff; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 1rem; color: var(--blue);
+            margin: 0 auto 1rem; color: var(--primary);
         }
         .modal h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--gray-900); margin-bottom: .4rem; text-align: center; }
         .modal p { color: var(--gray-500); font-size: .82rem; line-height: 1.6; margin-bottom: 1.25rem; text-align: center; }
         .modal-actions { display: flex; gap: .6rem; }
         .modal-btn { flex: 1; padding: .65rem; border-radius: 10px; font-weight: 600; font-size: .8rem; cursor: pointer; transition: all .2s; border: none; text-align: center; }
-        .modal-btn-primary { background: var(--blue); color: var(--white); text-decoration: none; display: block; }
-        .modal-btn-primary:hover { background: var(--blue-dark); }
+        .modal-btn-primary { background: var(--primary); color: var(--white); text-decoration: none; display: block; }
+        .modal-btn-primary:hover { background: var(--primary-dark); }
         .modal-btn-secondary { background: var(--gray-100); color: var(--gray-600); }
         .modal-btn-secondary:hover { background: var(--gray-200); }
 
@@ -276,7 +285,7 @@
             .login-card { flex-direction: column; max-width: 100%; border-radius: 18px; }
             .login-brand {
                 flex: none; padding: 1.25rem 1rem .95rem;
-                border-right: none; border-bottom: 1px solid var(--gray-100);
+                border-right: none; border-bottom: none;
             }
             .logo-pair { margin-bottom: 1rem; gap: 1rem; }
             .logo-pair img { width: 52px; height: 52px; border-radius: 12px; }
@@ -306,6 +315,7 @@
         <div class="login-card">
             <!-- LEFT - BRANDING -->
             <div class="login-brand">
+                <canvas id="brandCanvas"></canvas>
                 <div class="logo-pair">
                     <img src="{% static 'img/makueni_logo.png' %}" alt="Makueni County">
                     <div class="logo-divider"></div>
@@ -332,6 +342,7 @@
                     <span class="dot"></span>
                     <span>Season 2026 Active</span>
                 </div>
+                <div class="kenya-stripe-login"></div>
             </div>
 
             <!-- RIGHT - FORM -->
@@ -455,6 +466,25 @@
 
     <script>
     (function() {
+        /* ── canvas particles on branding panel ── */
+        var canvas = document.getElementById('brandCanvas');
+        if(canvas && canvas.getContext){
+            var ctx=canvas.getContext('2d'), w, h, particles=[];
+            function resize(){ w=canvas.width=canvas.parentElement.offsetWidth; h=canvas.height=canvas.parentElement.offsetHeight; }
+            resize(); window.addEventListener('resize', resize);
+            for(var i=0;i<25;i++) particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.3+.3, dx:(Math.random()-.5)*.2, dy:(Math.random()-.5)*.2, o:Math.random()*.2+.04});
+            (function draw(){
+                ctx.clearRect(0,0,w,h);
+                for(var i=0;i<particles.length;i++){
+                    var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                    if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                    ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                    ctx.fillStyle='rgba(232,185,30,'+d.o+')'; ctx.fill();
+                }
+                requestAnimationFrame(draw);
+            })();
+        }
+
         var forgotLink = document.getElementById('forgotLink');
         var forgotModal = document.getElementById('forgotModal');
         var closeModal = document.getElementById('closeModal');

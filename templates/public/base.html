@@ -50,7 +50,8 @@
     .preloader-bar{width:160px;height:2px;background:rgba(26,111,181,.1);border-radius:2px;margin:1.2rem auto 0;overflow:hidden}
     .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#124491,#E8B91E);border-radius:2px;transition:width .12s}
     /* Navbar */
-    .fkf-nav{position:fixed;top:0;left:0;right:0;z-index:10000;padding:0 2rem;height:50px;display:flex;align-items:center;background:transparent;transition:all .3s;pointer-events:auto}
+    .fkf-nav{position:fixed;top:0;left:0;right:0;z-index:10000;padding:0 2rem;height:50px;display:flex;align-items:center;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:all .3s;pointer-events:auto}
+    .fkf-nav--hero-page:not(.fkf-nav--solid){background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
     .fkf-nav--solid{background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 8px rgba(0,0,0,.06)}
     .fkf-nav-toggle{pointer-events:auto!important;touch-action:manipulation;-webkit-user-select:none;user-select:none}
     .fkf-nav-toggle span{pointer-events:none}
@@ -124,12 +125,11 @@
             <li><a href="{% url 'home' %}" class="{% if active_page == 'home' %}active{% endif %}">Home</a></li>
             <li><a href="{% url 'about' %}" class="{% if active_page == 'about' %}active{% endif %}">About</a></li>
             <li><a href="{% url 'public_fixtures_results' %}" class="{% if active_page == 'fixtures' %}active{% endif %}">Fixtures & Results</a></li>
-            <li><a href="{% url 'public_gallery' %}" class="{% if active_page == 'gallery' %}active{% endif %}">Gallery</a></li>
+            <li><a href="{% url 'news_media:gallery_list' %}" class="{% if active_page == 'gallery' %}active{% endif %}">Gallery</a></li>
             <li class="nav-dropdown">
                 <a href="#" class="{% if active_page == 'news_media' %}active{% endif %}" onclick="this.parentElement.classList.toggle('open');return false;">News & Media ▾</a>
                 <ul class="dropdown-menu">
                     <li><a href="{% url 'news_media:news_list' %}">📰 News & Highlights</a></li>
-                    <li><a href="{% url 'news_media:gallery_list' %}">📸 Gallery</a></li>
                     <li><a href="{% url 'news_media:videos_list' %}">🎬 Videos</a></li>
                 </ul>
             </li>

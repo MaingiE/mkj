@@ -56,7 +56,7 @@ def gallery_list_view(request):
     page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(request, "public/gallery_list.html", {
-        "active_page": "news_media",
+        "active_page": "gallery",
         "page_obj": page_obj,
     })
 
@@ -66,7 +66,7 @@ def gallery_detail_view(request, slug):
     album = get_object_or_404(GalleryAlbum, slug=slug, is_published=True)
     images = album.images.all()
     return render(request, "public/gallery_detail.html", {
-        "active_page": "news_media",
+        "active_page": "gallery",
         "album": album,
         "images": images,
     })

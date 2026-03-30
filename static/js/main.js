@@ -148,6 +148,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ── Auto hero-page navbar: white links over dark heroes ─────────────
+    var fkfNav = document.getElementById('fkfNav');
+    if (fkfNav && document.querySelector('.page-hero')) {
+        fkfNav.classList.add('fkf-nav--hero-page');
+        window.addEventListener('scroll', function () {
+            if (window.scrollY > 60) fkfNav.classList.add('fkf-nav--solid');
+            else fkfNav.classList.remove('fkf-nav--solid');
+        });
+    }
+
     // ── Navbar dropdowns: hover on desktop, click on mobile ──────────────
     document.querySelectorAll('.navbar-nav > li').forEach(function (li) {
         var dropdown = li.querySelector('.nav-dropdown-menu');

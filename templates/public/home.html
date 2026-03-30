@@ -91,9 +91,10 @@
     gap: 3rem;
 }
 .hero-left {
-    text-align: left;
+    text-align: center;
     flex: 1;
-    max-width: 540px;
+    max-width: 600px;
+    position: relative;
 }
 /* Slide progress bar */
 .hero-slide-progress {
@@ -137,6 +138,233 @@
     20.1%{ width: 0; }
     100% { width: 0; }
 }
+
+/* ── HERO BRANDING — TINA top-left ───────────────────────── */
+.hero-brand-tl {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    opacity: 0;
+    animation: fadeUp .6s ease forwards .2s;
+    z-index: 6;
+}
+.hero-brand-tl img {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 2px solid rgba(232,185,30,.3);
+    box-shadow: 0 6px 24px rgba(0,0,0,.3);
+}
+.hero-brand-tl .brand-initials {
+    font-family: 'Outfit', sans-serif;
+    font-size: .6rem;
+    font-weight: 800;
+    color: #FFD54F;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 1px 6px rgba(0,0,0,.4);
+}
+/* ── ANIMATED TEXT — FLY FROM CORNERS ─────────────────────── */
+.hero-text-stage {
+    position: relative;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.fly-word {
+    font-family: 'Outfit', sans-serif;
+    color: #fff;
+    opacity: 0;
+    will-change: transform, opacity;
+    text-align: center;
+    line-height: 1.15;
+    text-shadow: 0 2px 16px rgba(0,0,0,.4);
+}
+/* Phase 1: fly-in (0 → 800ms) */
+.fly-word--tl {
+    animation: flyFromTL .8s cubic-bezier(.16,1,.3,1) forwards;
+}
+.fly-word--tr {
+    animation: flyFromTR .8s cubic-bezier(.16,1,.3,1) forwards;
+}
+.fly-word--bl {
+    animation: flyFromBL .8s cubic-bezier(.16,1,.3,1) forwards;
+}
+.fly-word--br {
+    animation: flyFromBR .8s cubic-bezier(.16,1,.3,1) forwards;
+}
+
+/* Typography per part */
+.fly-governor {
+    font-size: clamp(.9rem, 2vw, 1.15rem);
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.7);
+}
+.fly-mkj {
+    font-size: clamp(2rem, 5.5vw, 4rem);
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+.fly-supa {
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #E8B91E, #FFD54F);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+}
+.fly-finals {
+    font-size: clamp(.85rem, 1.8vw, 1.1rem);
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.55);
+}
+
+@keyframes flyFromTL {
+    0%   { opacity: 0; transform: translate(-120vw, -60vh) rotate(-8deg); }
+    60%  { opacity: 1; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes flyFromTR {
+    0%   { opacity: 0; transform: translate(120vw, -60vh) rotate(8deg); }
+    60%  { opacity: 1; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes flyFromBL {
+    0%   { opacity: 0; transform: translate(-120vw, 60vh) rotate(8deg); }
+    60%  { opacity: 1; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes flyFromBR {
+    0%   { opacity: 0; transform: translate(120vw, 60vh) rotate(-8deg); }
+    60%  { opacity: 1; }
+    100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+}
+
+/* ── HERO BUTTONS & TAGLINE ──────────────────────────────── */
+.hero-tagline {
+    font-size: .88rem;
+    color: rgba(255,255,255,.4);
+    font-weight: 400;
+    letter-spacing: .5px;
+    margin-bottom: .5rem;
+    opacity: 0;
+    animation: fadeUp .6s ease forwards 2s;
+}
+.hero-quote {
+    font-size: .82rem;
+    color: rgba(255,255,255,.4);
+    font-style: italic;
+    max-width: 480px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadeUp .6s ease forwards 2.1s;
+}
+.hero-quote strong {
+    color: #FFD54F;
+    font-style: normal;
+    font-weight: 700;
+}
+.hero-btns {
+    display: flex;
+    gap: .75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp .6s ease forwards 2.2s;
+}
+.hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .7rem 1.6rem;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: .85rem;
+    letter-spacing: .3px;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.hero-btn--gold {
+    background: linear-gradient(135deg, #E8B91E, #FFD54F);
+    color: #0b2545;
+    box-shadow: 0 4px 20px rgba(232,185,30,.35);
+    font-weight: 800;
+}
+.hero-btn--gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,185,30,.5);
+}
+.hero-btn--outline {
+    background: rgba(255,255,255,.04);
+    color: rgba(255,255,255,.7);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.hero-btn--outline:hover {
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    border-color: rgba(255,255,255,.25);
+}
+
+/* ── COUNTDOWN CARD — TOSSABLE ────────────────────────────── */
+/* Entry from corner — one class assigned via JS */
+.cd-enter-tl { animation: cdFromTL .8s cubic-bezier(.16,1,.3,1) .5s both; }
+.cd-enter-tr { animation: cdFromTR .8s cubic-bezier(.16,1,.3,1) .5s both; }
+.cd-enter-bl { animation: cdFromBL .8s cubic-bezier(.16,1,.3,1) .5s both; }
+.cd-enter-br { animation: cdFromBR .8s cubic-bezier(.16,1,.3,1) .5s both; }
+
+@keyframes cdFromTL { from { opacity:0; transform: translate(-110%, -80%) rotate(-12deg) scale(.85); } to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
+@keyframes cdFromTR { from { opacity:0; transform: translate(110%, -80%) rotate(12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
+@keyframes cdFromBL { from { opacity:0; transform: translate(-110%, 80%) rotate(12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
+@keyframes cdFromBR { from { opacity:0; transform: translate(110%, 80%) rotate(-12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
+
+/* Toss-out / toss-in cycle — toggled by JS on slide change */
+.cd-toss-out-tr { animation: cdTossOutTR .6s cubic-bezier(.6,0,1,.4) forwards !important; }
+.cd-toss-out-tl { animation: cdTossOutTL .6s cubic-bezier(.6,0,1,.4) forwards !important; }
+.cd-toss-out-br { animation: cdTossOutBR .6s cubic-bezier(.6,0,1,.4) forwards !important; }
+.cd-toss-out-bl { animation: cdTossOutBL .6s cubic-bezier(.6,0,1,.4) forwards !important; }
+.cd-toss-in-tl  { animation: cdTossInTL .7s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-in-tr  { animation: cdTossInTR .7s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-in-bl  { animation: cdTossInBL .7s cubic-bezier(.16,1,.3,1) forwards !important; }
+.cd-toss-in-br  { animation: cdTossInBR .7s cubic-bezier(.16,1,.3,1) forwards !important; }
+
+@keyframes cdTossOutTR { to { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); } }
+@keyframes cdTossOutTL { to { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } }
+@keyframes cdTossOutBR { to { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); } }
+@keyframes cdTossOutBL { to { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); } }
+/* toss-in lands at a random offset — JS sets --cd-land-x and --cd-land-y custom props */
+@keyframes cdTossInTL  { from { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+@keyframes cdTossInTR  { from { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); }  to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+@keyframes cdTossInBL  { from { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); }  to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+@keyframes cdTossInBR  { from { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); }  to { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
+
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+@keyframes cdPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .4; transform: scale(.8); }
+}
+
 /* ── HERO COUNTDOWN CARD ───────────────────────────────────── */
 .hero-countdown-card {
     flex-shrink: 0;
@@ -149,8 +377,7 @@
     padding: 2rem 1.8rem;
     box-shadow: 0 20px 60px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.05), inset 0 1px 0 rgba(255,255,255,.08);
     opacity: 0;
-    transform: translateY(20px);
-    animation: fadeUp .8s ease forwards .5s;
+    will-change: transform, opacity;
 }
 .hcc-header {
     display: flex;
@@ -256,7 +483,7 @@
     background: rgba(232,185,30,.1);
     border: 1px solid rgba(232,185,30,.2);
     border-radius: 50px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     opacity: 0;
     transform: translateY(12px);
     animation: fadeUp .6s ease forwards .15s;
@@ -274,248 +501,93 @@
     letter-spacing: 1.5px;
     text-transform: uppercase;
 }
-.hero-logos {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeUp .6s ease forwards .2s;
-}
-.hero-logos img {
-    border-radius: 50%;
-    object-fit: cover;
-    background: #fff;
-    border: 3px solid rgba(255,255,255,.2);
-    box-shadow: 0 6px 24px rgba(0,0,0,.25);
-    transition: transform .3s, box-shadow .3s;
-}
-.hero-logos img:hover {
-    transform: scale(1.08);
-    box-shadow: 0 10px 32px rgba(0,0,0,.35);
-}
-.hero-logos .logo-sm { width: 52px; height: 52px; }
-.hero-logos .logo-lg { width: 96px; height: 96px; border: 3px solid rgba(251,192,45,.3); box-shadow: 0 8px 32px rgba(0,0,0,.3), 0 0 0 6px rgba(255,255,255,.06); animation: logoGlow 3s ease-in-out infinite; }
-@keyframes logoGlow {
-    0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,.3), 0 0 0 6px rgba(255,255,255,.06), 0 0 20px rgba(232,185,30,.15); }
-    50% { box-shadow: 0 8px 40px rgba(232,185,30,.35), 0 0 0 8px rgba(232,185,30,.12), 0 0 40px rgba(232,185,30,.25); }
-}
-.hero-title-line {
-    display: block;
-    font-family: 'Outfit', sans-serif;
-    color: rgba(255,255,255,.5);
-    font-size: .72rem;
-    font-weight: 600;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: .4rem;
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeUp .6s ease forwards .3s;
-}
-.hero-title-main {
-    font-family: 'Outfit', sans-serif;
-    font-size: clamp(2.2rem, 5.5vw, 3.6rem);
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: 3px;
-    line-height: 1.05;
-    margin-bottom: .6rem;
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeUp .6s ease forwards .4s;
-}
-.hero-title-main .accent {
-    background: linear-gradient(135deg, #E8B91E, #FFD54F);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-.hero-tagline {
-    font-size: .88rem;
-    color: rgba(255,255,255,.4);
-    font-weight: 400;
-    letter-spacing: .5px;
-    margin-bottom: 1rem;
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeUp .6s ease forwards .5s;
-}
-.hero-quote {
-    font-size: .82rem;
-    color: rgba(255,255,255,.4);
-    font-style: italic;
-    max-width: 480px;
-    margin: 0 auto 1.5rem;
-    line-height: 1.6;
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeUp .6s ease forwards .6s;
-}
-.hero-quote strong {
-    color: #FFD54F;
-    font-style: normal;
-    font-weight: 700;
-}
-.hero-btns {
-    display: flex;
-    gap: .75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeUp .6s ease forwards .7s;
-}
-.hero-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    padding: .7rem 1.6rem;
-    border-radius: 10px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    font-size: .85rem;
-    letter-spacing: .3px;
-    transition: all .25s cubic-bezier(.4,0,.2,1);
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-.hero-btn--gold {
-    background: linear-gradient(135deg, #E8B91E, #FFD54F);
-    color: #0b2545;
-    box-shadow: 0 4px 20px rgba(232,185,30,.35);
-    font-weight: 800;
-}
-.hero-btn--gold:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(232,185,30,.5);
-}
-.hero-btn--outline {
-    background: rgba(255,255,255,.04);
-    color: rgba(255,255,255,.7);
-    border: 1px solid rgba(255,255,255,.12);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-}
-.hero-btn--outline:hover {
-    background: rgba(255,255,255,.08);
-    color: #fff;
-    border-color: rgba(255,255,255,.25);
-}
-.hero-scroll-hint {
+
+/* ── HERO FEATURES — VERTICAL LEFT BAR ──────────────────────────────────── */
+.hero-features {
     position: absolute;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 5;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 6;
+    padding: .6rem 0;
+}
+.hero-features-inner {
     display: flex;
     flex-direction: column;
+    gap: .65rem;
+    padding: .5rem .45rem;
+    background: rgba(10,22,40,.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 0 14px 14px 0;
+    border: 1px solid rgba(255,255,255,.08);
+    border-left: none;
+}
+.hero-feat {
+    display: flex;
     align-items: center;
-    gap: .4rem;
+    gap: .5rem;
+    padding: .5rem .6rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,.06);
+    transition: background .25s;
     opacity: 0;
-    animation: fadeUp .6s ease forwards 1.2s;
+    transform: translateX(-30px);
+    animation: featSlideIn .5s ease forwards;
 }
-.hero-scroll-hint span {
-    font-size: .62rem;
-    color: rgba(255,255,255,.25);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-weight: 600;
+.hero-feat:nth-child(1) { animation-delay: 2.4s; }
+.hero-feat:nth-child(2) { animation-delay: 2.55s; }
+.hero-feat:nth-child(3) { animation-delay: 2.7s; }
+@keyframes featSlideIn {
+    to { opacity: 1; transform: translateX(0); }
 }
-.scroll-line {
-    width: 1px;
+.hero-feat:hover {
+    background: rgba(255,255,255,.12);
+}
+.hero-feat-icon {
+    width: 30px;
     height: 30px;
-    background: linear-gradient(to bottom, rgba(255,255,255,.3), transparent);
-    animation: scrollPulse 2s ease infinite;
-}
-@keyframes scrollPulse {
-    0%, 100% { opacity: .3; transform: scaleY(1); }
-    50% { opacity: .8; transform: scaleY(1.2); }
-}
-
-@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-
-@keyframes cdPulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: .4; transform: scale(.8); }
-}
-
-/* ── FEATURES ───────────────────────────────────────────────────────────── */
-.features {
-    padding: 80px 0;
-    background: linear-gradient(180deg, #f0f7ff 0%, #fff 100%);
-}
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    max-width: 940px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-}
-.feature-card {
-    text-align: center;
-    padding: 2rem 1.5rem;
-    border-radius: 16px;
-    border: 1px solid #f1f5f9;
-    background: #fff;
-    transition: all .35s cubic-bezier(.4,0,.2,1);
-    position: relative;
-    overflow: hidden;
-}
-.feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--fc-color, #124491), transparent);
-    opacity: 0;
-    transition: opacity .3s;
-}
-.feature-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0,0,0,.06);
-    border-color: transparent;
-}
-.feature-card:hover::before { opacity: 1; }
-.feature-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1rem;
-    transition: transform .3s;
+    flex-shrink: 0;
 }
-.feature-card:hover .feature-icon { transform: scale(1.1); }
-.feature-icon--blue { background: linear-gradient(135deg, #e8edf5, #d0d9ea); color: #124491; }
-.feature-icon--gold { background: linear-gradient(135deg, #fff8e1, #ffecb3); color: #e65100; }
-.feature-icon--green { background: linear-gradient(135deg, #e8f5ed, #c8e6c9); color: #2e7d32; }
-.feature-card h4 {
+.hero-feat-icon--blue { background: rgba(18,68,145,.35); color: #90caf9; }
+.hero-feat-icon--gold { background: rgba(232,185,30,.25); color: #FFD54F; }
+.hero-feat-icon--green { background: rgba(46,125,50,.3); color: #81c784; }
+.hero-feat h4 {
     font-family: 'Outfit', sans-serif;
-    font-size: .95rem;
+    font-size: .62rem;
     font-weight: 700;
-    color: #1e293b;
-    margin-bottom: .45rem;
+    color: #fff;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
 }
-.feature-card p {
-    font-size: .8rem;
-    color: #64748b;
-    line-height: 1.6;
+.hero-feat p {
+    display: none;
 }
-
-
+@media (max-width: 900px) {
+    .hero-features {
+        top: auto;
+        bottom: 50px;
+        left: 0;
+        right: 0;
+        transform: none;
+    }
+    .hero-features-inner {
+        flex-direction: row;
+        justify-content: center;
+        border-radius: 0;
+        border: none;
+        border-top: 1px solid rgba(255,255,255,.08);
+    }
+}
 @media (max-width: 768px) {
-    .features { padding: 48px 0; }
-    .features-grid { grid-template-columns: 1fr; max-width: 380px; }
+    .hero-feat h4 { font-size: .55rem; }
+    .hero-feat-icon { width: 24px; height: 24px; }
+    .hero-feat-icon svg { width: 14px; height: 14px; }
 }
 
 /* ── SECTION HEADER ─────────────────────────────────────────────────────── */
@@ -621,40 +693,44 @@
     .disc-img-card { min-height: 240px; border-radius: 16px; }
 }
 
-/* ── STATS BAR (compact) ────────────────────────────────────────────────── */
-.stats-bar {
-    padding: 2rem 0;
-    background: linear-gradient(135deg, #0d3b66, #1565a0);
+/* ── HERO STATS STRIP (inside hero, above Kenya stripe) ────────────────── */
+.hero-stats-strip {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    padding: .6rem 0;
 }
-.stats-bar__inner {
+.hero-stats-strip .stats-bar__inner {
     display: flex;
     justify-content: center;
-    gap: 3rem;
+    gap: 2.5rem;
     max-width: 700px;
     margin: 0 auto;
     padding: 0 1.5rem;
     flex-wrap: wrap;
 }
-.stats-bar__item { text-align: center; }
-.stats-bar__num {
+.hero-stats-strip .stats-bar__item { text-align: center; }
+.hero-stats-strip .stats-bar__num {
     display: block;
     font-family: 'Outfit', sans-serif;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 900;
     color: #FFD54F;
     line-height: 1;
-    margin-bottom: .2rem;
+    margin-bottom: .15rem;
 }
-.stats-bar__label {
-    font-size: .6rem;
-    color: rgba(255,255,255,.6);
+.hero-stats-strip .stats-bar__label {
+    font-size: .55rem;
+    color: rgba(255,255,255,.55);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     font-weight: 700;
 }
 @media (max-width: 480px) {
-    .stats-bar__inner { gap: 1.5rem; }
-    .stats-bar__num { font-size: 1.4rem; }
+    .hero-stats-strip .stats-bar__inner { gap: 1.2rem; }
+    .hero-stats-strip .stats-bar__num { font-size: 1.1rem; }
 }
 
 /* ── KENYA STRIPE ───────────────────────────────────────────────────────── */
@@ -677,14 +753,16 @@
 @media (max-width: 900px) {
     .hero-inner { flex-direction: column; gap: 2rem; }
     .hero-left { text-align: center; max-width: 100%; }
-    .hero-badge-top, .hero-logos, .hero-btns { justify-content: center; }
+    .hero-badge-top, .hero-btns { justify-content: center; }
+    .hero-brand-tl { position: relative; top: auto; left: auto; align-items: center; margin: 0 auto 1rem; }
     .hero-countdown-card { width: 100%; max-width: 400px; }
     .hcc-date { justify-content: center; }
 }
 @media (max-width: 768px) {
     .home-hero { min-height: auto; padding: 7rem 0 3rem; }
-    .hero-logos .logo-sm { width: 40px; height: 40px; }
-    .hero-logos .logo-lg { width: 76px; height: 76px; }
+    .hero-brand-tl img { width: 52px; height: 52px; }
+    .hero-brand-tl .brand-initials { font-size: .5rem; }
+    .hero-text-stage { min-height: 180px; }
     .hero-countdown-card { width: 100%; max-width: 360px; padding: 1.5rem 1.2rem; }
     .hcc-num { font-size: 1.3rem; }
     .hcc-num-box { max-width: 58px; }
@@ -889,17 +967,25 @@
     <div class="hero-center">
         <div class="hero-inner">
             <div class="hero-left">
-                <div class="hero-badge-top">
+                <!-- TINA logo — top left with initials -->
+                <div class="hero-brand-tl">
+                    <img src="{% static 'img/TINA.jpeg' %}" alt="TINA">
+                    <span class="brand-initials">MKJ Supa Cup</span>
+                </div>
+
+                <div class="hero-badge-top" style="margin-top: 90px;">
                     <span class="hero-badge-dot"></span>
                     <span>4th Edition &middot; 2026</span>
                 </div>
-                <div class="hero-logos">
-                    <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP" class="logo-lg">
+
+                <!-- Animated text — each word flies from a corner -->
+                <div class="hero-text-stage">
+                    <div class="fly-word fly-word--tl fly-governor">Governor</div>
+                    <div class="fly-word fly-word--tr fly-mkj">Mutula Kilonzo Junior</div>
+                    <div class="fly-word fly-word--bl fly-supa">Supa Cup</div>
+                    <div class="fly-word fly-word--br fly-finals">County Finals 2026</div>
                 </div>
-                <span class="hero-title-line">Governor Mutula Kilonzo Junior</span>
-                <h1 class="hero-title-main">
-                    MKJ <span class="accent">SUPA CUP</span> 2026
-                </h1>
+
                 <p class="hero-tagline">Makueni County Sports Excellence Championship</p>
                 <p class="hero-quote">
                     <strong>&ldquo;Wauni wa Kwika Nesa na Ulungalu&rdquo;</strong> Empowering our youth through sports,
@@ -914,8 +1000,8 @@
                 </div>
             </div>
 
-            <!-- Countdown Card -->
-            <div class="hero-countdown-card">
+            <!-- Countdown Card — tossed around by JS -->
+            <div class="hero-countdown-card" id="cdCard">
                 <div class="hcc-header">
                     <span class="hcc-edition">4th Edition</span>
                     <span class="hcc-live-dot"></span>
@@ -959,46 +1045,62 @@
         <div class="hero-slide-bar"></div>
     </div>
 
-    <div class="hero-scroll-hint">
-        <span>Scroll</span>
-        <div class="scroll-line"></div>
+    <!-- Feature highlights strip -->
+    <div class="hero-features">
+        <div class="hero-features-inner">
+            <div class="hero-feat">
+                <div class="hero-feat-icon hero-feat-icon--blue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div>
+                    <h4>Ligi Mashinani</h4>
+                    <p>Grassroots ward-level to sub-county competition to the ultimate MKJ County Finals championship</p>
+                </div>
+            </div>
+            <div class="hero-feat">
+                <div class="hero-feat-icon hero-feat-icon--gold">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                </div>
+                <div>
+                    <h4>Multiple Disciplines</h4>
+                    <p>Soccer, basketball, volleyball, handball &amp; more</p>
+                </div>
+            </div>
+            <div class="hero-feat">
+                <div class="hero-feat-icon hero-feat-icon--green">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div>
+                    <h4>Digital First</h4>
+                    <p>Registration, fixtures, live scores &amp; results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats strip at bottom of hero -->
+    <div class="hero-stats-strip">
+        <div class="stats-bar__inner">
+            <div class="stats-bar__item">
+                <span class="stats-bar__num" data-count="{{ stats.disciplines|default:'0' }}">0</span>
+                <span class="stats-bar__label">Disciplines</span>
+            </div>
+            <div class="stats-bar__item">
+                <span class="stats-bar__num" data-count="{{ stats.teams|default:'0' }}">0</span>
+                <span class="stats-bar__label">Teams</span>
+            </div>
+            <div class="stats-bar__item">
+                <span class="stats-bar__num" data-count="{{ stats.players|default:'0' }}">0</span>
+                <span class="stats-bar__label">Players</span>
+            </div>
+            <div class="stats-bar__item">
+                <span class="stats-bar__num" data-count="6">0</span>
+                <span class="stats-bar__label">Sub-Counties</span>
+            </div>
+        </div>
     </div>
 
     <div class="kenya-stripe-home" style="position:absolute;bottom:0;left:0;right:0;z-index:5;"></div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════════════════════
-     FEATURES
-     ══════════════════════════════════════════════════════════════════════════ -->
-<section class="features">
-    <div class="section-hdr reveal-up">
-        <span class="section-hdr__tag">Why MKJ SUPA CUP</span>
-        <h2>Empowering Makueni Through Sports</h2>
-        <p>From ward-level Ligi Mashinani to the County Finals, the road to representing Makueni at the prestigious <strong>KYISA Games</strong> (Kenya Youth Inter-County Sports Association).</p>
-    </div>
-    <div class="features-grid">
-        <div class="feature-card reveal-up" style="--fc-color:#124491;">
-            <div class="feature-icon feature-icon--blue">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <h4>Ligi Mashinani</h4>
-            <p>Competition starts at grassroots level in every ward across Makueni;Ward All-Stars are selected to compete at sub-county level.</p>
-        </div>
-        <div class="feature-card reveal-up" style="transition-delay:.1s;--fc-color:#E8B91E;">
-            <div class="feature-icon feature-icon--gold">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-            </div>
-            <h4>Multiple Disciplines</h4>
-            <p>Soccer, basketball, volleyball, handball and more;celebrating the full breadth of Makueni's sporting talent.</p>
-        </div>
-        <div class="feature-card reveal-up" style="transition-delay:.2s;--fc-color:#2e7d32;">
-            <div class="feature-icon feature-icon--green">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <h4>Digital First</h4>
-            <p>Fully digital registration, fixtures, live scores, and results , transparent and accessible to all stakeholders.</p>
-        </div>
-    </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
@@ -1037,29 +1139,7 @@
     </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     STATS BAR (compact)
-     ══════════════════════════════════════════════════════════════════════════ -->
-<section class="stats-bar">
-    <div class="stats-bar__inner">
-        <div class="stats-bar__item reveal-up">
-            <span class="stats-bar__num" data-count="{{ stats.disciplines|default:'0' }}">0</span>
-            <span class="stats-bar__label">Disciplines</span>
-        </div>
-        <div class="stats-bar__item reveal-up" style="transition-delay:.05s">
-            <span class="stats-bar__num" data-count="{{ stats.teams|default:'0' }}">0</span>
-            <span class="stats-bar__label">Teams</span>
-        </div>
-        <div class="stats-bar__item reveal-up" style="transition-delay:.1s">
-            <span class="stats-bar__num" data-count="{{ stats.players|default:'0' }}">0</span>
-            <span class="stats-bar__label">Players</span>
-        </div>
-        <div class="stats-bar__item reveal-up" style="transition-delay:.15s">
-            <span class="stats-bar__num" data-count="6">0</span>
-            <span class="stats-bar__label">Sub-Counties</span>
-        </div>
-    </div>
-</section>
+
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      FLOATING FIXTURES / RESULTS CARD
@@ -1131,6 +1211,64 @@
 {% block extra_js %}
 <script>
 (function(){
+    /* ── Countdown card — toss from random corner, re-enter on slide change ─ */
+    var cdCard = document.getElementById('cdCard');
+    if (cdCard) {
+        var cdCorners = ['tl','tr','bl','br'];
+        var cdAllClasses = [
+            'cd-enter-tl','cd-enter-tr','cd-enter-bl','cd-enter-br',
+            'cd-toss-out-tl','cd-toss-out-tr','cd-toss-out-bl','cd-toss-out-br',
+            'cd-toss-in-tl','cd-toss-in-tr','cd-toss-in-bl','cd-toss-in-br'
+        ];
+        function clearCd() { cdAllClasses.forEach(function(c){ cdCard.classList.remove(c); }); }
+        function pickCorner() { return cdCorners[Math.floor(Math.random() * cdCorners.length)]; }
+
+        /* Random landing offsets so card settles at different spots each time */
+        var landOffsets = [
+            {x: '0px',    y: '0px'},
+            {x: '-60px',  y: '-30px'},
+            {x: '50px',   y: '-20px'},
+            {x: '-40px',  y: '25px'},
+            {x: '60px',   y: '30px'},
+            {x: '0px',    y: '-40px'},
+            {x: '-70px',  y: '0px'},
+            {x: '70px',   y: '0px'},
+            {x: '30px',   y: '40px'},
+            {x: '-50px',  y: '-40px'}
+        ];
+        function setRandomLand() {
+            var off = landOffsets[Math.floor(Math.random() * landOffsets.length)];
+            cdCard.style.setProperty('--cd-land-x', off.x);
+            cdCard.style.setProperty('--cd-land-y', off.y);
+        }
+
+        /* Initial entry from random corner at random position */
+        setRandomLand();
+        cdCard.classList.add('cd-enter-' + pickCorner());
+
+        /* Toss cycle synced with slideshow (every 5s = slide interval) */
+        var slideInterval = 5000;
+        setInterval(function(){
+            var outDir = pickCorner();
+            clearCd();
+            cdCard.classList.add('cd-toss-out-' + outDir);
+
+            /* After toss-out (600ms), bring back from a different corner at new random position */
+            setTimeout(function(){
+                var inDir = pickCorner();
+                while (inDir === outDir && cdCorners.length > 1) { inDir = pickCorner(); }
+                clearCd();
+                setRandomLand();
+                cdCard.style.opacity = '0';
+                cdCard.classList.add('cd-toss-in-' + inDir);
+
+                setTimeout(function(){
+                    cdCard.style.opacity = '1';
+                }, 700);
+            }, 650);
+        }, slideInterval);
+    }
+
     /* ── Countdown timer ───────────────────────────────────────────── */
     var eventStartDate = new Date('2026-03-31T08:00:00+03:00').getTime();
     var eventEndDate = new Date('2026-04-02T23:59:59+03:00').getTime();

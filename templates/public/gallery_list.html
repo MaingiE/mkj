@@ -5,46 +5,12 @@
 
 {% block extra_css %}
 <style>
-/* ═══════════════════════════════════════
-   GALLERY LIST PAGE
-═══════════════════════════════════════ */
-.gallery-hero {
-    padding: 6rem 0 2rem;
-    background: linear-gradient(135deg, #0C1B3A 0%, #124491 50%, #0C1B3A 100%);
-    position: relative; overflow: hidden;
-    text-align: center; color: #fff;
-}
-.gallery-hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    pointer-events: none;
-}
-.gallery-hero .container { position: relative; z-index: 2; }
-.gallery-hero-badge {
-    display: inline-flex; align-items: center; gap: .5rem;
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
-    border-radius: 50px; padding: .4rem 1.2rem;
-    font-size: .75rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 1.5rem; color: rgba(255,255,255,.9);
-}
-.gallery-hero h1 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 2.2rem; font-weight: 800; margin-bottom: .5rem;
-    letter-spacing: -1px;
-}
-.gallery-hero p { font-size: .95rem; opacity: .8; max-width: 600px; margin: 0 auto; }
-
 /* ── Albums grid ── */
-.gallery-section {
-    max-width: 1200px; margin: -1.5rem auto 2.5rem; padding: 0 1.5rem;
-    position: relative; z-index: 5;
-}
 .ga-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
 }
 .ga-card {
-    background: #fff; border-radius: 16px; overflow: hidden;
+    background: #fff; border-radius: 14px; overflow: hidden;
     box-shadow: 0 2px 16px rgba(0,0,0,.05);
     transition: transform .3s, box-shadow .3s;
     text-decoration: none; display: block;
@@ -52,7 +18,7 @@
 }
 .ga-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
 .ga-card-img {
-    height: 180px; overflow: hidden; position: relative;
+    height: 200px; overflow: hidden; position: relative;
     background: #e8f0f8;
 }
 .ga-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
@@ -68,10 +34,10 @@
     color: #fff; font-size: .82rem; font-weight: 600;
     display: flex; align-items: center; gap: .4rem;
 }
-.ga-card-body { padding: 1rem; }
+.ga-card-body { padding: 1.15rem; }
 .ga-card-body h3 {
     font-family: 'Outfit', sans-serif;
-    font-size: 1rem; font-weight: 600; color: #1a1a1a;
+    font-size: 1rem; font-weight: 700; color: #1a1a1a;
     margin-bottom: .4rem;
 }
 .ga-card-meta {
@@ -107,16 +73,27 @@
 
 {% block content %}
 <!-- ── HERO ── -->
-<section class="gallery-hero">
-    <div class="container">
-        <div class="gallery-hero-badge"><i class="bi bi-images"></i> GALLERY</div>
-        <h1>Photo Gallery</h1>
-        <p>Relive the best moments from MKJ SUPA CUP events, matches, and ceremonies across Kenya's sub-counties.</p>
+<section class="page-hero">
+    <div class="page-hero__bg">
+        <div class="page-hero__gradient"></div>
+        <canvas class="page-hero__canvas" id="pageCanvas"></canvas>
     </div>
+    <div class="container page-hero__inner">
+        <span class="page-hero__badge reveal">Gallery</span>
+        <h1 class="page-hero__title reveal">Photo <span class="text-gold">Gallery</span></h1>
+        <p class="page-hero__sub reveal">Relive the best moments from MKJ SUPA CUP events, matches, and ceremonies across Makueni County.</p>
+        <div class="page-hero__breadcrumb reveal">
+            <a href="{% url 'home' %}">Home</a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <span>Gallery</span>
+        </div>
+    </div>
+    <div class="kenya-stripe" style="position:absolute;bottom:0;left:0;right:0;z-index:5"></div>
 </section>
 
 <!-- ── ALBUMS GRID ── -->
-<div class="gallery-section">
+<section class="sec">
+    <div class="container">
     {% if page_obj %}
     <div class="ga-grid">
         {% for album in page_obj %}
@@ -171,5 +148,39 @@
         <p>Photo galleries will appear here as events are covered.</p>
     </div>
     {% endif %}
-</div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if(e.isIntersecting){ e.target.classList.add('in-view'); revealObs.unobserve(e.target); }
+        });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ revealObs.observe(el); });
+    var canvas = document.getElementById('pageCanvas');
+    if(canvas && canvas.getContext){
+        var ctx = canvas.getContext('2d'), w, h, particles = [];
+        function resize(){ w = canvas.width = canvas.parentElement.offsetWidth; h = canvas.height = canvas.parentElement.offsetHeight; }
+        resize(); window.addEventListener('resize', resize);
+        for(var i=0;i<35;i++){
+            particles.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+.4, dx:(Math.random()-.5)*.25, dy:(Math.random()-.5)*.25, o:Math.random()*.3+.06});
+        }
+        (function draw(){
+            ctx.clearRect(0,0,w,h);
+            for(var i=0;i<particles.length;i++){
+                var d=particles[i]; d.x+=d.dx; d.y+=d.dy;
+                if(d.x<0||d.x>w) d.dx*=-1; if(d.y<0||d.y>h) d.dy*=-1;
+                ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle='rgba(26,111,181,'+d.o+')'; ctx.fill();
+            }
+            requestAnimationFrame(draw);
+        })();
+    }
+})();
+</script>
 {% endblock %}
