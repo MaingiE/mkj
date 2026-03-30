@@ -5,6 +5,7 @@ Accessible by admin and competition_manager roles.
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 
 from mkj_cms.web_views import role_required
 from .models import NewsArticle, NewsCategory, GalleryAlbum, GalleryImage, Video
@@ -16,22 +17,24 @@ from .forms import NewsArticleForm, NewsCategoryForm, GalleryAlbumForm, VideoFor
 @login_required
 @role_required('admin', 'competition_manager', 'media_manager')
 def media_dashboard_view(request):
-    articles = NewsArticle.objects.all()
-    albums = GalleryAlbum.objects.all()
-    videos = Video.objects.all()
-    categories = NewsCategory.objects.all()
+    from django.db.models import Count, Q
+    article_counts = NewsArticle.objects.aggregate(
+        total=Count('id'),
+        published=Count('id', filter=Q(status='published')),
+        draft=Count('id', filter=Q(status='draft')),
+    )
 
     return render(request, 'portal/media/dashboard.html', {
-        'total_articles': articles.count(),
-        'published_articles': articles.filter(status='published').count(),
-        'draft_articles': articles.filter(status='draft').count(),
-        'total_albums': albums.count(),
+        'total_articles': article_counts['total'],
+        'published_articles': article_counts['published'],
+        'draft_articles': article_counts['draft'],
+        'total_albums': GalleryAlbum.objects.count(),
         'total_photos': GalleryImage.objects.count(),
-        'total_videos': videos.count(),
-        'total_categories': categories.count(),
-        'recent_articles': articles[:5],
-        'recent_albums': albums[:5],
-        'recent_videos': videos[:5],
+        'total_videos': Video.objects.count(),
+        'total_categories': NewsCategory.objects.count(),
+        'recent_articles': NewsArticle.objects.order_by('-created_at')[:5],
+        'recent_albums': GalleryAlbum.objects.order_by('-created_at')[:5],
+        'recent_videos': Video.objects.order_by('-created_at')[:5],
     })
 
 
@@ -50,8 +53,12 @@ def article_list_view(request):
     if q:
         articles = articles.filter(title__icontains=q)
 
+    paginator = Paginator(articles.order_by('-created_at'), 30)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'portal/media/article_list.html', {
-        'articles': articles,
+        'articles': page_obj,
+        'page_obj': page_obj,
         'status_filter': status,
         'search_query': q,
     })

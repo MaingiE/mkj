@@ -18,6 +18,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils import timezone
+from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, F
 
 from accounts.models import UserRole
@@ -66,8 +67,12 @@ def jury_teams_view(request):
         teams = teams.filter(Q(name__icontains=search) | Q(contact_email__icontains=search))
 
     competitions = Competition.objects.all().order_by("name")
+    teams_qs = teams.order_by("name")
+    paginator = Paginator(teams_qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "jury/teams.html", {
-        "teams": teams.order_by("name"),
+        "teams": page_obj,
+        "page_obj": page_obj,
         "competitions": competitions,
         "filters": {
             "competition": competition_filter,
@@ -111,8 +116,12 @@ def jury_players_view(request):
 
     teams = Team.objects.filter(status="registered").order_by("name")
     competitions = Competition.objects.all().order_by("name")
+    players_qs = players.order_by("team__name", "last_name")
+    paginator = Paginator(players_qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "jury/players.html", {
-        "players": players.order_by("team__name", "last_name"),
+        "players": page_obj,
+        "page_obj": page_obj,
         "teams": teams,
         "competitions": competitions,
         "filters": {
@@ -150,8 +159,12 @@ def jury_fixtures_view(request):
         )
 
     competitions = Competition.objects.all().order_by("name")
+    fixtures_qs = fixtures.order_by("-match_date", "-kickoff_time")
+    paginator = Paginator(fixtures_qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "jury/fixtures.html", {
-        "fixtures": fixtures.order_by("-match_date", "-kickoff_time"),
+        "fixtures": page_obj,
+        "page_obj": page_obj,
         "competitions": competitions,
         "filters": {
             "competition": competition_filter,
@@ -190,8 +203,12 @@ def jury_match_reports_view(request):
         )
 
     competitions = Competition.objects.all().order_by("name")
+    reports_qs = reports.order_by("-submitted_at")
+    paginator = Paginator(reports_qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "jury/match_reports.html", {
-        "reports": reports.order_by("-submitted_at"),
+        "reports": page_obj,
+        "page_obj": page_obj,
         "competitions": competitions,
         "filters": {
             "competition": competition_filter,
@@ -227,8 +244,12 @@ def jury_squads_view(request):
 
     competitions = Competition.objects.all().order_by("name")
     teams = Team.objects.filter(status="registered").order_by("name")
+    squads_qs = squads.order_by("-fixture__match_date")
+    paginator = Paginator(squads_qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "jury/squads.html", {
-        "squads": squads.order_by("-fixture__match_date"),
+        "squads": page_obj,
+        "page_obj": page_obj,
         "competitions": competitions,
         "teams": teams,
         "filters": {
@@ -316,8 +337,12 @@ def jury_disciplinary_view(request):
 
     competitions = Competition.objects.all().order_by("name")
     teams = Team.objects.filter(status="registered").order_by("name")
+    events_qs = events.order_by("-report__fixture__match_date", "-minute")
+    paginator = Paginator(events_qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "jury/disciplinary.html", {
-        "events": events.order_by("-report__fixture__match_date", "-minute"),
+        "events": page_obj,
+        "page_obj": page_obj,
         "team_summary": team_summary,
         "competitions": competitions,
         "teams": teams,

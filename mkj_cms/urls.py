@@ -45,7 +45,7 @@ from .web_views import (
     public_fixtures_results_view,
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
-    contact_view,
+    contact_view, public_gallery_view,
     # SEO
     robots_txt_view, sitemap_xml_view,
     # CMS portal
@@ -91,6 +91,7 @@ from .web_views import (
     cm_allocate_venue_view,
     cm_edit_standings_view,
     cm_edit_fixture_view,
+    cm_delete_fixture_view,
     cm_competition_rules_view,
     # Shared subcounty views (bench, delegation, verification, kit)
     county_admin_add_bench_member_view,
@@ -204,6 +205,7 @@ urlpatterns = [
     path("results/statistics/",            public_statistics_view,         name="public_statistics"),
     path("results/competitions/<int:pk>/standings/", public_competition_standings_view, name="public_competition_standings"),
     path("contact/",                      contact_view,                   name="contact"),
+    path("gallery/",                      public_gallery_view,            name="public_gallery"),
 
     # ── NEWS & MEDIA ──────────────────────────────────────────────────────────
     path("media-hub/", include("news_media.urls")),
@@ -314,6 +316,8 @@ urlpatterns = [
     path("portal/cm/competitions/<int:pk>/standings/edit/", cm_edit_standings_view,       name="cm_edit_standings"),
     path("portal/cm/competitions/<int:pk>/fixtures/<int:fixture_pk>/edit/",
          cm_edit_fixture_view, name="cm_edit_fixture"),
+    path("portal/cm/competitions/<int:pk>/fixtures/<int:fixture_pk>/delete/",
+         cm_delete_fixture_view, name="cm_delete_fixture"),
     path("portal/cm/competitions/<int:pk>/rules/",         cm_competition_rules_view,     name="cm_competition_rules"),
     path("portal/cm/venues/",                              cm_manage_venues_view,         name="cm_venues"),
 

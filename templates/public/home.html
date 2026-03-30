@@ -24,74 +24,57 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: linear-gradient(160deg, #0a2f5c 0%, #0f3d6e 40%, #1a6fb5 100%);
+    background: #0a1628;
 }
-.hero-mesh {
+/* Blue top strip behind navbar */
+.hero-nav-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: linear-gradient(135deg, #0a2f5c, #124491);
+    z-index: 3;
+}
+/* ── SLIDESHOW ─────────────────────────────────────── */
+.hero-slideshow {
     position: absolute;
     inset: 0;
-    background:
-        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(26,111,181,.4) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,185,30,.25) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(66,165,245,.22) 0%, transparent 70%);
-    animation: meshShift 12s ease-in-out infinite alternate;
+    z-index: 0;
 }
-@keyframes meshShift {
-    0% { opacity: .8; transform: scale(1); }
-    100% { opacity: 1; transform: scale(1.05); }
-}
-.hero-grain {
+.hero-slide {
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
+    opacity: 0;
+    animation: heroSlide 25s ease-in-out infinite;
 }
-.hero-grid-bg {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(26,111,181,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(26,111,181,.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-}
-.home-hero canvas {
-    position: absolute;
-    inset: 0;
+.hero-slide img {
     width: 100%;
     height: 100%;
-    pointer-events: none;
+    object-fit: cover;
+    display: block;
 }
-.hero-orb {
+.hero-slide:nth-child(1) { animation-delay: 0s; }
+.hero-slide:nth-child(2) { animation-delay: 5s; }
+.hero-slide:nth-child(3) { animation-delay: 10s; }
+.hero-slide:nth-child(4) { animation-delay: 15s; }
+.hero-slide:nth-child(5) { animation-delay: 20s; }
+@keyframes heroSlide {
+    0%      { opacity: 0; transform: scale(1.05); }
+    2.5%    { opacity: 1; transform: scale(1); }
+    20%     { opacity: 1; transform: scale(1.03); }
+    22.5%   { opacity: 0; transform: scale(1.05); }
+    100%    { opacity: 0; transform: scale(1.05); }
+}
+/* Dark overlay so text is always readable */
+.hero-overlay {
     position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    animation: orbFloat 18s ease-in-out infinite;
-    pointer-events: none;
-}
-.hero-orb--1 {
-    width: 400px; height: 400px;
-    background: rgba(66,165,245,.28);
-    top: -10%; left: -5%;
-    animation-duration: 20s;
-}
-.hero-orb--2 {
-    width: 300px; height: 300px;
-    background: rgba(232,185,30,.2);
-    bottom: -5%; right: -5%;
-    animation-delay: -7s;
-    animation-duration: 24s;
-}
-.hero-orb--3 {
-    width: 200px; height: 200px;
-    background: rgba(26,111,181,.22);
-    top: 40%; right: 20%;
-    animation-delay: -12s;
-}
-@keyframes orbFloat {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(30px, -40px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(.95); }
+    inset: 0;
+    background: linear-gradient(180deg,
+        rgba(10,22,40,.55) 0%,
+        rgba(10,22,40,.45) 40%,
+        rgba(10,22,40,.65) 100%);
+    z-index: 1;
 }
 .hero-center {
     position: relative;
@@ -111,6 +94,48 @@
     text-align: left;
     flex: 1;
     max-width: 540px;
+}
+/* Slide progress bar */
+.hero-slide-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 4;
+    display: flex;
+    gap: 4px;
+    padding: 0 2rem;
+}
+.hero-slide-bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,.15);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+.hero-slide-bar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #E8B91E, #FFD54F);
+    border-radius: 2px;
+}
+.hero-slide-bar:nth-child(1)::after { animation: slideBar 25s linear infinite 0s; }
+.hero-slide-bar:nth-child(2)::after { animation: slideBar 25s linear infinite 5s; }
+.hero-slide-bar:nth-child(3)::after { animation: slideBar 25s linear infinite 10s; }
+.hero-slide-bar:nth-child(4)::after { animation: slideBar 25s linear infinite 15s; }
+.hero-slide-bar:nth-child(5)::after { animation: slideBar 25s linear infinite 20s; }
+@keyframes slideBar {
+    0%   { width: 0; }
+    2.5% { width: 10%; }
+    20%  { width: 100%; }
+    20.1%{ width: 0; }
+    100% { width: 0; }
 }
 /* ── HERO COUNTDOWN CARD ───────────────────────────────────── */
 .hero-countdown-card {
@@ -422,7 +447,7 @@
 
 /* ── FEATURES ───────────────────────────────────────────────────────────── */
 .features {
-    padding: 3rem 0 2.5rem;
+    padding: 80px 0;
     background: linear-gradient(180deg, #f0f7ff 0%, #fff 100%);
 }
 .features-grid {
@@ -486,8 +511,10 @@
     color: #64748b;
     line-height: 1.6;
 }
+
+
 @media (max-width: 768px) {
-    .features { padding: 2.5rem 0 2rem; }
+    .features { padding: 48px 0; }
     .features-grid { grid-template-columns: 1fr; max-width: 380px; }
 }
 
@@ -528,79 +555,70 @@
     line-height: 1.6;
 }
 
-/* ── DISCIPLINES (compact row) ───────────────────────────────────────────── */
+/* ── DISCIPLINES IMAGE CARDS ─────────────────────────────────────────────── */
 .disciplines-section {
-    padding: 3rem 0 2.5rem;
+    padding: 80px 0;
     background: #f8fafc;
 }
-.disciplines-row {
-    display: flex;
-    justify-content: center;
-    gap: 1.2rem;
-    max-width: 720px;
+.disc-image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 1.5rem;
-    flex-wrap: wrap;
 }
-.disc-card {
-    flex: 1;
-    min-width: 140px;
-    max-width: 160px;
-    text-align: center;
-    padding: 1.5rem 1rem 1.2rem;
-    border-radius: 16px;
-    background: #fff;
-    border: 1px solid #f1f5f9;
-    transition: all .3s cubic-bezier(.4,0,.2,1);
+.disc-img-card {
     position: relative;
+    border-radius: 20px;
     overflow: hidden;
+    min-height: 320px;
+    cursor: pointer;
+    display: block;
+    box-shadow: 0 8px 30px rgba(15,23,42,.1);
+    transition: transform .4s cubic-bezier(.4,0,.2,1), box-shadow .4s cubic-bezier(.4,0,.2,1);
 }
-.disc-card::before {
-    content: '';
+.disc-img-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(15,23,42,.18);
+}
+.disc-img-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    inset: 0;
+    transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.disc-img-card:hover img {
+    transform: scale(1.08);
+}
+.disc-img-card__overlay {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: var(--disc-accent, #1565a0);
-    opacity: 0;
-    transition: opacity .3s;
+    padding: 1.2rem 1.5rem;
+    background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.25) 60%, transparent 100%);
+    z-index: 2;
 }
-.disc-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 30px rgba(0,0,0,.06);
-    border-color: transparent;
-}
-.disc-card:hover::before { opacity: 1; }
-.disc-card__icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto .7rem;
-    background: linear-gradient(135deg, rgba(21,101,160,.06), rgba(21,101,160,.12));
-    color: var(--disc-accent, #1565a0);
-    transition: transform .3s;
-}
-.disc-card:hover .disc-card__icon { transform: scale(1.1); }
-.disc-card__name {
+.disc-img-card__overlay h4 {
     font-family: 'Outfit', sans-serif;
-    font-size: .88rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: .15rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: .5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
-.disc-card__sub {
-    font-size: .7rem;
-    color: #94a3b8;
-    font-weight: 500;
+@media (max-width: 900px) {
+    .disciplines-section { padding: 48px 0; }
+    .disc-image-grid { grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+    .disc-img-card { min-height: 260px; }
 }
 @media (max-width: 600px) {
-    .disciplines-section { padding: 2.5rem 0 2rem; }
-    .disciplines-row { gap: .8rem; }
-    .disc-card { min-width: calc(50% - 1rem); max-width: none; }
+    .disc-image-grid { grid-template-columns: 1fr; gap: 1rem; padding: 0 1rem; }
+    .disc-img-card { min-height: 240px; border-radius: 16px; }
 }
 
 /* ── STATS BAR (compact) ────────────────────────────────────────────────── */
@@ -838,6 +856,7 @@
     .float-fixtures { bottom: 1rem; right: 1rem; }
     .float-fixtures-panel { width: 300px; }
 }
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -854,13 +873,18 @@
      HERO
      ══════════════════════════════════════════════════════════════════════════ -->
 <section class="home-hero" id="hero">
-    <div class="hero-mesh"></div>
-    <div class="hero-grain"></div>
-    <div class="hero-grid-bg"></div>
-    <div class="hero-orb hero-orb--1"></div>
-    <div class="hero-orb hero-orb--2"></div>
-    <div class="hero-orb hero-orb--3"></div>
-    <canvas id="heroCanvas"></canvas>
+    <!-- Blue navbar strip -->
+    <div class="hero-nav-strip"></div>
+
+    <!-- Full-page animated slideshow -->
+    <div class="hero-slideshow">
+        <div class="hero-slide"><img src="{% static 'img/ttr.jpeg' %}" alt="TTR - MKJ SUPA CUP"></div>
+        <div class="hero-slide"><img src="{% static 'img/mkj .jpeg' %}" alt="MKJ - Trophy Presentation"></div>
+        <div class="hero-slide"><img src="{% static 'img/cit.jpeg' %}" alt="CIT - Community Engagement"></div>
+        <div class="hero-slide"><img src="{% static 'img/vl.jpeg' %}" alt="VL - Volleyball Action"></div>
+        <div class="hero-slide"><img src="{% static 'img/soccer men.jpeg' %}" alt="Men's Football Action"></div>
+    </div>
+    <div class="hero-overlay"></div>
 
     <div class="hero-center">
         <div class="hero-inner">
@@ -870,8 +894,7 @@
                     <span>4th Edition &middot; 2026</span>
                 </div>
                 <div class="hero-logos">
-                    <img src="{% static 'img/makueni_logo.png' %}" alt="County Government of Makueni" class="logo-lg">
-                    <img src="{% static 'img/TINA.jpeg' %}" alt="MKJ TINA" class="logo-sm">
+                    <img src="{% static 'img/mkj_supa_cup_logo.png' %}" alt="MKJ SUPA CUP" class="logo-lg">
                 </div>
                 <span class="hero-title-line">Governor Mutula Kilonzo Junior</span>
                 <h1 class="hero-title-main">
@@ -924,6 +947,16 @@
                 <p class="hcc-status"><strong>Countdown</strong> to kickoff</p>
             </div>
         </div>
+
+    </div>
+
+    <!-- Slide progress indicator -->
+    <div class="hero-slide-progress">
+        <div class="hero-slide-bar"></div>
+        <div class="hero-slide-bar"></div>
+        <div class="hero-slide-bar"></div>
+        <div class="hero-slide-bar"></div>
+        <div class="hero-slide-bar"></div>
     </div>
 
     <div class="hero-scroll-hint">
@@ -971,39 +1004,35 @@
 <!-- ══════════════════════════════════════════════════════════════════════════
      DISCIPLINES SHOWCASE
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="disciplines-section" id="news">
+<section class="disciplines-section" id="disciplines">
     <div class="section-hdr reveal-up">
         <span class="section-hdr__tag">Disciplines</span>
         <h2>Sports We Celebrate</h2>
     </div>
-    <div class="disciplines-row">
-        <div class="disc-card reveal-up" style="--disc-accent:#1565a0;">
-            <div class="disc-card__icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-            </div>
-            <h4 class="disc-card__name">Soccer</h4>
-            <p class="disc-card__sub">Men's &amp; Women's</p>
+    <div class="disc-image-grid">
+        <div class="disc-img-card reveal-up">
+            <img src="{% static 'img/ladies soccer.jpeg' %}" alt="Women's Football">
+            <div class="disc-img-card__overlay"><h4>Women&#8217;s Football</h4></div>
         </div>
-        <div class="disc-card reveal-up" style="transition-delay:.06s;--disc-accent:#8d6e63;">
-            <div class="disc-card__icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/><path d="M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
-            </div>
-            <h4 class="disc-card__name">Basketball</h4>
-            <p class="disc-card__sub">Court Action</p>
+        <div class="disc-img-card reveal-up" style="transition-delay:.06s">
+            <img src="{% static 'img/basketball.jpeg' %}" alt="Basketball">
+            <div class="disc-img-card__overlay"><h4>Basketball</h4></div>
         </div>
-        <div class="disc-card reveal-up" style="transition-delay:.12s;--disc-accent:#4CAF50;">
-            <div class="disc-card__icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M2 12c2.5-3 5.5-3 10 0s7.5 3 10 0"/></svg>
-            </div>
-            <h4 class="disc-card__name">Volleyball</h4>
-            <p class="disc-card__sub">Net Skills</p>
+        <div class="disc-img-card reveal-up" style="transition-delay:.12s">
+            <img src="{% static 'img/baste.jpeg' %}" alt="Court Action">
+            <div class="disc-img-card__overlay"><h4>Court Action</h4></div>
         </div>
-        <div class="disc-card reveal-up" style="transition-delay:.18s;--disc-accent:#e53935;">
-            <div class="disc-card__icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2c-2 4-2 8 0 10s2 6 0 10"/><path d="M2 12h20"/></svg>
-            </div>
-            <h4 class="disc-card__name">Handball</h4>
-            <p class="disc-card__sub">Power &amp; Precision</p>
+        <div class="disc-img-card reveal-up" style="transition-delay:.18s">
+            <img src="{% static 'img/fans.jpeg' %}" alt="Fan Zone">
+            <div class="disc-img-card__overlay"><h4>Fan Zone</h4></div>
+        </div>
+        <div class="disc-img-card reveal-up" style="transition-delay:.24s">
+            <img src="{% static 'img/fans1.jpeg' %}" alt="Match Day">
+            <div class="disc-img-card__overlay"><h4>Match Day</h4></div>
+        </div>
+        <div class="disc-img-card reveal-up" style="transition-delay:.30s">
+            <img src="{% static 'img/fans3.jpeg' %}" alt="Celebrations">
+            <div class="disc-img-card__overlay"><h4>Celebrations</h4></div>
         </div>
     </div>
 </section>
@@ -1228,77 +1257,10 @@
     }, {threshold: 0.5});
     document.querySelectorAll('.stats-bar__num').forEach(function(el){ cObs.observe(el); });
 
-    /* ── Canvas particles (constellation effect) ───────────────────── */
-    var canvas = document.getElementById('heroCanvas');
-    if(canvas && canvas.getContext){
-        var ctx = canvas.getContext('2d');
-        var w, h, particles = [];
-        var mouse = {x: -999, y: -999};
-        function resize(){
-            w = canvas.width = canvas.parentElement.offsetWidth;
-            h = canvas.height = canvas.parentElement.offsetHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
-        canvas.parentElement.addEventListener('mousemove', function(e){
-            var r = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - r.left;
-            mouse.y = e.clientY - r.top;
-        });
-        canvas.parentElement.addEventListener('mouseleave', function(){
-            mouse.x = -999; mouse.y = -999;
-        });
-        for(var i=0; i<35; i++){
-            particles.push({
-                x: Math.random()*2000, y: Math.random()*2000,
-                r: Math.random()*1.5+0.3,
-                dx: (Math.random()-0.5)*0.15,
-                dy: (Math.random()-0.5)*0.15,
-                o: Math.random()*0.3+0.05
-            });
-        }
-        function draw(){
-            ctx.clearRect(0,0,w,h);
-            for(var j=0;j<particles.length;j++){
-                var p = particles[j];
-                p.x += p.dx; p.y += p.dy;
-                if(p.x<0||p.x>w) p.dx*=-1;
-                if(p.y<0||p.y>h) p.dy*=-1;
-                var mdx = p.x - mouse.x, mdy = p.y - mouse.y;
-                var md = mdx*mdx + mdy*mdy;
-                if(md < 10000){
-                    var f = (1 - md/10000) * 0.5;
-                    p.x += mdx * f * 0.02;
-                    p.y += mdy * f * 0.02;
-                }
-                ctx.beginPath();
-                ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-                ctx.fillStyle='rgba(255,255,255,'+p.o+')';
-                ctx.fill();
-            }
-            for(var a=0;a<particles.length;a++){
-                for(var b=a+1;b<particles.length;b++){
-                    var dx2=particles[a].x-particles[b].x;
-                    var dy2=particles[a].y-particles[b].y;
-                    var dist=dx2*dx2+dy2*dy2;
-                    if(dist<18000){
-                        ctx.beginPath();
-                        ctx.moveTo(particles[a].x,particles[a].y);
-                        ctx.lineTo(particles[b].x,particles[b].y);
-                        ctx.strokeStyle='rgba(26,111,181,'+(0.06*(1-dist/18000))+')';
-                        ctx.lineWidth=0.5;
-                        ctx.stroke();
-                    }
-                }
-            }
-            requestAnimationFrame(draw);
-        }
-        draw();
-    }
-
     /* ── Navbar solid on scroll ─────────────────────────────────────── */
     var nav = document.getElementById('fkfNav');
     if(nav){
+        nav.classList.add('fkf-nav--hero-page');
         window.addEventListener('scroll', function(){
             if(window.scrollY > 60) nav.classList.add('fkf-nav--solid');
             else nav.classList.remove('fkf-nav--solid');

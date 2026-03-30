@@ -28,7 +28,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260328b">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260328c">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Critical inline CSS so above-the-fold always renders correctly -->
     <style>
@@ -91,6 +91,7 @@
             <li><a href="{% url 'home' %}" class="{% if active_page == 'home' %}active{% endif %}">Home</a></li>
             <li><a href="{% url 'about' %}" class="{% if active_page == 'about' %}active{% endif %}">About</a></li>
             <li><a href="{% url 'public_fixtures_results' %}" class="{% if active_page == 'fixtures' %}active{% endif %}">Fixtures & Results</a></li>
+            <li><a href="{% url 'public_gallery' %}" class="{% if active_page == 'gallery' %}active{% endif %}">Gallery</a></li>
             <li class="nav-dropdown">
                 <a href="#" class="{% if active_page == 'news_media' %}active{% endif %}" onclick="this.parentElement.classList.toggle('open');return false;">News & Media ▾</a>
                 <ul class="dropdown-menu">

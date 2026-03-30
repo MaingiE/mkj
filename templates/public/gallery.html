@@ -1,0 +1,327 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Gallery{% endblock %}
+{% block meta_description %}<meta name="description" content="MKJ SUPA CUP 2026 Photo Gallery - Sports We Celebrate. Action shots from Makueni County's biggest multi-sport championship.">{% endblock %}
+{% block canonical_url %}https://mkjsupacup.com/gallery/{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   GALLERY PAGE - MKJ SUPA CUP 2026
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gallery-page {
+    padding: 7rem 0 4rem;
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+/* ── HEADER ─────────────────────────────────────────────────────────────── */
+.gp-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding: 0 1.5rem;
+}
+.gp-header__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .8rem;
+    background: rgba(26,111,181,.06);
+    border: 1px solid rgba(26,111,181,.1);
+    border-radius: 50px;
+    font-size: .62rem;
+    font-weight: 700;
+    color: #124491;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: .7rem;
+}
+.gp-header h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -.5px;
+    margin-bottom: .4rem;
+}
+.gp-header p {
+    font-size: .88rem;
+    color: #64748b;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+.gp-accent {
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #E8B91E, #FFD54F);
+    border-radius: 2px;
+    margin: .6rem auto 0;
+}
+
+/* ── COMPACT GRID ───────────────────────────────────────────────────────── */
+.gp-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .6rem;
+}
+.gp-item {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    aspect-ratio: 1;
+    background: #e2e8f0;
+}
+.gp-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .45s cubic-bezier(.4,0,.2,1);
+}
+.gp-item:hover img {
+    transform: scale(1.08);
+}
+/* Span variations for visual interest */
+.gp-item--wide {
+    grid-column: span 2;
+    aspect-ratio: 2/1;
+}
+.gp-item--tall {
+    grid-row: span 2;
+    aspect-ratio: auto;
+}
+/* Hover overlay */
+.gp-item__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10,22,40,.6) 100%);
+    opacity: 0;
+    transition: opacity .3s;
+    display: flex;
+    align-items: flex-end;
+    padding: .75rem;
+    z-index: 2;
+}
+.gp-item:hover .gp-item__overlay { opacity: 1; }
+.gp-item__overlay svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    color: #fff;
+    opacity: .9;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+}
+
+@media (max-width: 900px) {
+    .gp-grid { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    .gp-item--wide { grid-column: span 2; }
+}
+@media (max-width: 600px) {
+    .gallery-page { padding: 5.5rem 0 2rem; }
+    .gp-grid { grid-template-columns: repeat(2, 1fr); gap: .4rem; padding: 0 .5rem; }
+    .gp-item { border-radius: 6px; }
+    .gp-item--wide { grid-column: span 2; }
+    .gp-item--tall { grid-row: span 1; aspect-ratio: 1; }
+}
+
+/* ── LIGHTBOX ───────────────────────────────────────────────────────────── */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(0,0,0,.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s, visibility .3s;
+}
+.lightbox.active { opacity: 1; visibility: visible; }
+.lightbox__img {
+    max-width: 90vw;
+    max-height: 88vh;
+    border-radius: 6px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    object-fit: contain;
+}
+.lightbox.active .lightbox__img {
+    animation: lbZoom .3s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes lbZoom {
+    from { transform: scale(.88); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.lightbox__close {
+    position: absolute; top: 1.2rem; right: 1.2rem;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.2);
+    background: rgba(0,0,0,.5); color: #fff;
+    font-size: 1.6rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .3s; z-index: 3; line-height: 1;
+}
+.lightbox__close:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.4); transform: rotate(90deg); }
+.lightbox__nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.15);
+    background: rgba(0,0,0,.4); color: #fff;
+    font-size: 1.4rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .3s; z-index: 3;
+}
+.lightbox__nav:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.35); }
+.lightbox__nav--prev { left: 1.2rem; }
+.lightbox__nav--next { right: 1.2rem; }
+.lightbox__counter {
+    position: absolute; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+    font-size: .75rem; color: rgba(255,255,255,.5); font-weight: 600;
+    letter-spacing: 1px; z-index: 3;
+}
+@media (max-width: 600px) {
+    .lightbox__close { top: .75rem; right: .75rem; width: 38px; height: 38px; font-size: 1.2rem; }
+    .lightbox__nav { width: 40px; height: 40px; font-size: 1.1rem; }
+    .lightbox__nav--prev { left: .5rem; }
+    .lightbox__nav--next { right: .5rem; }
+    .lightbox__img { max-width: 96vw; max-height: 80vh; border-radius: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="gallery-page">
+    <div class="gp-header">
+        <span class="gp-header__tag"><i class="bi bi-camera-fill"></i> Gallery</span>
+        <h1>Sports We Celebrate</h1>
+        <p>Moments from MKJ SUPA CUP 2026 — Makueni County's biggest multi-sport championship.</p>
+        <div class="gp-accent"></div>
+    </div>
+
+    <div class="gp-grid">
+        <!-- Row 1: wide + square + square -->
+        <div class="gp-item gp-item--wide" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.45 PM.jpeg' %}" alt="MKJ SUPA CUP moment" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <div class="gp-item" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.45 PM (1).jpeg' %}" alt="MKJ SUPA CUP action" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <div class="gp-item" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.48 PM.jpeg' %}" alt="MKJ SUPA CUP highlights" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <!-- Row 2: square + square + wide -->
+        <div class="gp-item" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.49 PM.jpeg' %}" alt="MKJ SUPA CUP event" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <div class="gp-item" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.50 PM.jpeg' %}" alt="MKJ SUPA CUP celebrations" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <div class="gp-item gp-item--wide" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.51 PM.jpeg' %}" alt="MKJ SUPA CUP sports" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <!-- Row 3: square + wide + square -->
+        <div class="gp-item" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.53 PM.jpeg' %}" alt="MKJ SUPA CUP competition" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <div class="gp-item gp-item--wide" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.54 PM.jpeg' %}" alt="MKJ SUPA CUP tournament" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+        <div class="gp-item" data-gallery>
+            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.55 PM.jpeg' %}" alt="MKJ SUPA CUP atmosphere" loading="lazy">
+            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        </div>
+    </div>
+</section>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <button class="lightbox__close" id="lbClose" aria-label="Close">&times;</button>
+    <button class="lightbox__nav lightbox__nav--prev" id="lbPrev" aria-label="Previous">&#10094;</button>
+    <button class="lightbox__nav lightbox__nav--next" id="lbNext" aria-label="Next">&#10095;</button>
+    <img class="lightbox__img" id="lbImg" alt="Gallery image">
+    <span class="lightbox__counter" id="lbCounter"></span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var lightbox = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lbImg');
+    var lbClose = document.getElementById('lbClose');
+    var lbPrev = document.getElementById('lbPrev');
+    var lbNext = document.getElementById('lbNext');
+    var lbCounter = document.getElementById('lbCounter');
+    var items = document.querySelectorAll('[data-gallery]');
+    var srcs = [];
+    var idx = 0;
+
+    items.forEach(function(item, i) {
+        var img = item.querySelector('img');
+        if (img) srcs.push(img.src);
+        item.addEventListener('click', function() {
+            idx = i;
+            openLB(srcs[idx]);
+        });
+    });
+
+    function openLB(src) {
+        if (!lightbox || !lbImg) return;
+        lbImg.src = src;
+        if (lbCounter) lbCounter.textContent = (idx + 1) + ' / ' + srcs.length;
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLB() {
+        if (!lightbox) return;
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    if (lbClose) lbClose.addEventListener('click', closeLB);
+    if (lightbox) lightbox.addEventListener('click', function(e) { if (e.target === lightbox) closeLB(); });
+    if (lbPrev) lbPrev.addEventListener('click', function(e) {
+        e.stopPropagation();
+        idx = (idx - 1 + srcs.length) % srcs.length;
+        lbImg.src = srcs[idx];
+        if (lbCounter) lbCounter.textContent = (idx + 1) + ' / ' + srcs.length;
+    });
+    if (lbNext) lbNext.addEventListener('click', function(e) {
+        e.stopPropagation();
+        idx = (idx + 1) % srcs.length;
+        lbImg.src = srcs[idx];
+        if (lbCounter) lbCounter.textContent = (idx + 1) + ' / ' + srcs.length;
+    });
+    document.addEventListener('keydown', function(e) {
+        if (!lightbox || !lightbox.classList.contains('active')) return;
+        if (e.key === 'Escape') closeLB();
+        if (e.key === 'ArrowLeft' && lbPrev) lbPrev.click();
+        if (e.key === 'ArrowRight' && lbNext) lbNext.click();
+    });
+})();
+</script>
+{% endblock %}

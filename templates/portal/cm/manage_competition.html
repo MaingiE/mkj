@@ -295,6 +295,10 @@
                 </div>
                 <span class="fixture-badge fb-{{ f.status }}">{{ f.get_status_display }}</span>
                 <a href="{% url 'cm_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" style="font-size:.75rem;color:#7B1FA2;" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                <form method="post" action="{% url 'cm_delete_fixture' pk=competition.pk fixture_pk=f.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
+                    {% csrf_token %}
+                    <button type="submit" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:#c62828;" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
             </div>
             {% endfor %}
         </div>
@@ -325,6 +329,10 @@
                 </div>
                 <span class="fixture-badge fb-{{ f.status }}">{{ f.get_status_display }}</span>
                 <a href="{% url 'cm_edit_fixture' pk=competition.pk fixture_pk=f.pk %}" style="font-size:.75rem;color:#7B1FA2;" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                <form method="post" action="{% url 'cm_delete_fixture' pk=competition.pk fixture_pk=f.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
+                    {% csrf_token %}
+                    <button type="submit" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:#c62828;" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
             </div>
             {% endfor %}
         </div>

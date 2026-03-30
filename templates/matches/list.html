@@ -134,6 +134,29 @@
                                 {% endif %}
                             {% endif %}
 
+                            {% comment %} COORDINATOR / CM / ADMIN - Edit & Delete Fixture {% endcomment %}
+                            {% if user.role == 'coordinator' or user.role == 'admin' %}
+                                <a href="{% url 'coordinator_edit_fixture' pk=f.competition.pk fixture_pk=f.pk %}" class="btn-action btn-action-link" title="Edit Fixture" style="margin-right:.25rem;">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="{% url 'coordinator_delete_fixture' pk=f.competition.pk fixture_pk=f.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-action btn-action-danger" title="Delete Fixture" style="padding:.15rem .4rem;font-size:.75rem;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            {% elif user.role == 'competition_manager' or user.role == 'chief_sports_officer' %}
+                                <a href="{% url 'cm_edit_fixture' pk=f.competition.pk fixture_pk=f.pk %}" class="btn-action btn-action-link" title="Edit Fixture" style="margin-right:.25rem;">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="{% url 'cm_delete_fixture' pk=f.competition.pk fixture_pk=f.pk %}" style="display:inline;" onsubmit="return confirm('Delete this fixture?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-action btn-action-danger" title="Delete Fixture" style="padding:.15rem .4rem;font-size:.75rem;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+
                             {% comment %} REFEREE MANAGER - Review Report {% endcomment %}
                             {% if user.role == 'coordinator' or user.role == 'admin' %}
                                 {% if fd.report and fd.report.status == 'submitted' %}
@@ -149,6 +172,19 @@
                 </tbody>
             </table>
         </div>
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Fixtures pagination" style="margin-top:1rem;display:flex;justify-content:center;gap:.25rem;">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline-secondary">&laquo; Prev</a>
+            {% endif %}
+            <span style="padding:.35rem .75rem;font-size:.85rem;color:var(--muted);">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline-secondary">Next &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
         {% else %}
         <div class="empty-state">
             <div class="icon"><i class="bi bi-calendar-event"></i></div>

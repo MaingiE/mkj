@@ -1,4 +1,4 @@
-# admin_dashboard/views.py â€” Adapted for MKJ SUPA CUP CMS models
+﻿# admin_dashboard/views.py â€” Adapted for MKJ SUPA CUP CMS models
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -6,16 +6,15 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
-import threading
 from django.db.models import Sum, Count, Q
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
 
-from accounts.models import User, UserRole, KenyaCounty, MakueniSubCounty, validate_kenya_phone_or_raise
+from accounts.models import User, UserRole, KenyaCounty, MakueniSubCounty, validate_kenya_phone_or_raise, validate_national_id_or_raise
 from teams.models import Team, Player
 from referees.models import RefereeProfile, RefereeAppointment
-from competitions.models import Competition, Fixture, SportType
+from competitions.models import Competition, Fixture
 from matches.models import MatchReport
 from .models import ActivityLog
 
@@ -25,19 +24,6 @@ COORDINATOR_DISCIPLINE_CHOICES = [
     ("volleyball", "Volleyball"),
     ("basketball", "Basketball"),
     ("handball", "Handball"),
-]
-
-SCOUT_DISCIPLINE_CHOICES = [
-    (SportType.FOOTBALL_MEN, "Soccer (Men)"),
-    (SportType.FOOTBALL_WOMEN, "Soccer (Women)"),
-    (SportType.VOLLEYBALL_MEN, "Volleyball (Men)"),
-    (SportType.VOLLEYBALL_WOMEN, "Volleyball (Women)"),
-    (SportType.BASKETBALL_MEN, "Basketball 5x5 (Men)"),
-    (SportType.BASKETBALL_WOMEN, "Basketball 5x5 (Women)"),
-    (SportType.BASKETBALL_3X3_MEN, "Basketball 3x3 (Men)"),
-    (SportType.BASKETBALL_3X3_WOMEN, "Basketball 3x3 (Women)"),
-    (SportType.HANDBALL_MEN, "Handball (Men)"),
-    (SportType.HANDBALL_WOMEN, "Handball (Women)"),
 ]
 
 
@@ -52,92 +38,25 @@ def superadmin_required(user):
 
 
 def send_welcome_email(user_obj, password, role):
-    """Send welcome email on a background thread â€” never blocks the web request."""
-    from django.core.mail import EmailMultiAlternatives
-    import logging
-    log = logging.getLogger(__name__)
-
-    subject = f'Welcome to MKJ SUPA CUP Competition Management System - {role}'
-    text_content = f"""
-Dear {user_obj.first_name} {user_obj.last_name},
-
-Welcome to the MKJ SUPA CUP Competition Management System!
-
-Your account has been created:
-
-Login Email: {user_obj.email}
-Temporary Password: {password}
-Role: {role}
-
-Login URL: /portal/login/
-
-Please change your password after your first login.
-
-Best regards,
-MKJ SUPA CUP Administration
-"""
-    recipient = user_obj.email
-    from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.org')
-
-    def _worker():
-        import time
-        for attempt in range(1, 4):
-            try:
-                email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
-                email.send(fail_silently=False)
-                log.info("Welcome email sent to %s", recipient)
-                return
-            except Exception as exc:
-                if attempt < 3:
-                    log.warning("Welcome email attempt %d/3 failed for %s: %s - retrying", attempt, recipient, exc)
-                    time.sleep(attempt * 5)
-                else:
-                    log.error("Welcome email failed for %s after 3 attempts: %s", recipient, exc)
-
-    threading.Thread(target=_worker, daemon=True).start()
-    return True
+    """Send welcome email to newly created user with login credentials."""
+    from accounts.notifications import notify_account_created
+    try:
+        notify_account_created(user_obj, password, role)
+        return True
+    except Exception as e:
+        print(f"Email error: {e}")
+        return False
 
 
 def send_password_reset_email(user_obj, new_password):
-    """Send password reset email on a background thread â€” never blocks the web request."""
-    from django.core.mail import EmailMultiAlternatives
-    import logging
-    log = logging.getLogger(__name__)
-
-    subject = 'MKJ SUPA CUP CMS - Password Reset'
-    text_content = f"""
-Dear {user_obj.first_name} {user_obj.last_name},
-
-Your password has been reset by an administrator.
-
-Login Email: {user_obj.email}
-New Password: {new_password}
-
-Please change your password immediately after login.
-
-Best regards,
-MKJ SUPA CUP Administration
-"""
-    recipient = user_obj.email
-    from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@mkjsupacup.org')
-
-    def _worker():
-        import time
-        for attempt in range(1, 4):
-            try:
-                email = EmailMultiAlternatives(subject, text_content, from_email, [recipient])
-                email.send(fail_silently=False)
-                log.info("Password reset email sent to %s", recipient)
-                return
-            except Exception as exc:
-                if attempt < 3:
-                    log.warning("Password reset email attempt %d/3 failed for %s: %s - retrying", attempt, recipient, exc)
-                    time.sleep(attempt * 5)
-                else:
-                    log.error("Password reset email failed for %s after 3 attempts: %s", recipient, exc)
-
-    threading.Thread(target=_worker, daemon=True).start()
-    return True
+    """Send password reset email."""
+    from accounts.notifications import notify_password_reset
+    try:
+        notify_password_reset(user_obj, new_password)
+        return True
+    except Exception as e:
+        print(f"Email error: {e}")
+        return False
 
 
 # Require discipline for scout/coordinator
@@ -157,15 +76,18 @@ def require_discipline_for_scout_coordinator(user_obj, assigned_discipline):
 @user_passes_test(admin_required)
 def admin_dashboard(request):
     """Main admin dashboard with MKJ SUPA CUP statistics."""
-    total_teams = Team.objects.count()
-    registered_teams = Team.objects.filter(status='registered').count()
-    pending_teams_count = Team.objects.filter(status='pending').count()
-    total_players = Player.objects.count()
-    total_referees = RefereeProfile.objects.count()
-    approved_referees = RefereeProfile.objects.filter(is_approved=True).count()
-    pending_referees_count = RefereeProfile.objects.filter(is_approved=False).count()
-    total_competitions = Competition.objects.count()
-    total_fixtures = Fixture.objects.count()
+    # Consolidate team counts into a single query
+    team_counts = Team.objects.aggregate(
+        total=Count('id'),
+        registered=Count('id', filter=Q(status='registered')),
+        pending=Count('id', filter=Q(status='pending')),
+    )
+    # Consolidate referee counts into a single query
+    ref_counts = RefereeProfile.objects.aggregate(
+        total=Count('id'),
+        approved=Count('id', filter=Q(is_approved=True)),
+        pending=Count('id', filter=Q(is_approved=False)),
+    )
 
     # Recent activities
     recent_teams = Team.objects.order_by('-registered_at')[:5]
@@ -174,15 +96,15 @@ def admin_dashboard(request):
     ).order_by('-match_date')[:5]
 
     context = {
-        'total_teams': total_teams,
-        'registered_teams': registered_teams,
-        'pending_teams': pending_teams_count,
-        'total_players': total_players,
-        'total_referees': total_referees,
-        'approved_referees': approved_referees,
-        'pending_referees': pending_referees_count,
-        'total_competitions': total_competitions,
-        'total_fixtures': total_fixtures,
+        'total_teams': team_counts['total'],
+        'registered_teams': team_counts['registered'],
+        'pending_teams': team_counts['pending'],
+        'total_players': Player.objects.count(),
+        'total_referees': ref_counts['total'],
+        'approved_referees': ref_counts['approved'],
+        'pending_referees': ref_counts['pending'],
+        'total_competitions': Competition.objects.count(),
+        'total_fixtures': Fixture.objects.count(),
         'recent_teams': recent_teams,
         'recent_fixtures': recent_fixtures,
     }
@@ -199,6 +121,9 @@ def approve_reports(request):
     """Approve match reports."""
     pending_reports = MatchReport.objects.filter(
         status='submitted'
+    ).select_related(
+        'fixture__home_team', 'fixture__away_team',
+        'fixture__competition', 'referee__user'
     ).order_by('-submitted_at')
 
     if request.method == 'POST':
@@ -230,7 +155,9 @@ def approve_reports(request):
 @user_passes_test(admin_required)
 def view_suspensions(request):
     """View suspended players."""
-    suspended_players = Player.objects.filter(status='suspended')
+    suspended_players = Player.objects.filter(
+        status='suspended'
+    ).select_related('team', 'team__competition')
     context = {
         'suspended_players': suspended_players,
     }
@@ -398,29 +325,9 @@ def view_report(request, report_id):
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @login_required
-@user_passes_test(admin_required)
+@user_passes_test(superadmin_required)
 def manage_users(request):
     """Manage all users â€” filter, search, view."""
-    # Show success toast from create_user redirect params
-    if request.GET.get('created') == '1':
-        uemail = request.GET.get('uemail', '')
-        urole = request.GET.get('urole', '')
-        sent = request.GET.get('sent') == '1'
-        if sent:
-            messages.success(request, mark_safe(
-                f'User created!<br>'
-                f'Email: <code>{uemail}</code><br>'
-                f'Role: {urole}<br>'
-                f'Temporary password has been sent to the user\'s email.'
-            ))
-        else:
-            messages.warning(request, mark_safe(
-                f'User created but email delivery failed.<br>'
-                f'Email: <code>{uemail}</code><br>'
-                f'Role: {urole}<br>'
-                f'Please reset their password manually or contact them directly.'
-            ))
-
     role_filter = request.GET.get('role', 'all')
     status_filter = request.GET.get('status', 'all')
     search_query = request.GET.get('search', '')
@@ -484,7 +391,6 @@ def manage_users(request):
         'sport_coordinator_rows': sport_coordinator_rows,
         'unassigned_coordinators': unassigned_coordinators,
         'coordinator_discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
-        'scout_discipline_choices': SCOUT_DISCIPLINE_CHOICES,
         'county_choices': KenyaCounty.choices,
         'subcounty_choices': MakueniSubCounty.choices,
     }
@@ -492,7 +398,7 @@ def manage_users(request):
 
 
 @login_required
-@user_passes_test(admin_required)
+@user_passes_test(superadmin_required)
 def create_user(request):
     """Create a new user with selected role."""
     import random, string
@@ -502,6 +408,7 @@ def create_user(request):
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
+        id_number_raw = request.POST.get('id_number', '').strip()
         role = request.POST.get('role', 'team_manager')
         county = 'Makueni'  # MKJ system is Makueni-only
         sub_county = request.POST.get('sub_county', '').strip()
@@ -513,8 +420,25 @@ def create_user(request):
             messages.error(request, str(exc))
             return redirect('manage_users')
 
+        # Validate & normalise ID number (optional but unique when provided)
+        id_number = None
+        if id_number_raw:
+            try:
+                id_number = validate_national_id_or_raise(id_number_raw, 'ID number')
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+                return redirect('manage_users')
+
         if User.objects.filter(email=email).exists():
             messages.error(request, f"Email '{email}' already registered.")
+            return redirect('manage_users')
+
+        if User.objects.filter(phone=phone).exists():
+            messages.error(request, f"Phone number '{phone}' is already registered to another account.")
+            return redirect('manage_users')
+
+        if id_number and User.objects.filter(id_number=id_number).exists():
+            messages.error(request, f"ID number '{id_number}' is already registered to another account.")
             return redirect('manage_users')
 
         if role in (UserRole.SUBCOUNTY_SPORTS_OFFICER, UserRole.TEAM_MANAGER) and not sub_county:
@@ -531,66 +455,9 @@ def create_user(request):
                 messages.error(request, f'A Sub-County Sports Officer already exists for {sub_county}. Only one is allowed per sub-county.')
                 return redirect('manage_users')
 
-        if role in (UserRole.COORDINATOR, UserRole.SCOUT) and not assigned_discipline:
-            if role == UserRole.COORDINATOR:
-                messages.error(request, 'Choose a coordinator sport.')
-            else:
-                messages.error(request, 'Choose a scout sport and gender.')
+        if role == UserRole.COORDINATOR and not assigned_discipline:
+            messages.error(request, 'Choose a sport family for the coordinator.')
             return redirect('manage_users')
-
-        if role == UserRole.COORDINATOR and assigned_discipline:
-            valid_coordinator_codes = {code for code, _ in COORDINATOR_DISCIPLINE_CHOICES}
-            if assigned_discipline not in valid_coordinator_codes:
-                messages.error(request, 'Invalid coordinator sport selection.')
-                return redirect('manage_users')
-
-        if role == UserRole.SCOUT and assigned_discipline:
-            valid_scout_codes = {code for code, _ in SCOUT_DISCIPLINE_CHOICES}
-            if assigned_discipline not in valid_scout_codes:
-                messages.error(request, 'Invalid scout sport/gender selection.')
-                return redirect('manage_users')
-
-        # â”€â”€ One-user-per-role / per-discipline uniqueness checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        # Roles with global uniqueness (only one person per system)
-        SINGLETON_ROLES = {
-            UserRole.COMPETITION_MANAGER,
-            UserRole.TREASURER,
-            UserRole.VERIFICATION_OFFICER,
-            UserRole.SECRETARY_GENERAL,
-            UserRole.MEDIA_MANAGER,
-            UserRole.JURY_CHAIR,
-        }
-        if role in SINGLETON_ROLES:
-            role_label = dict(UserRole.choices).get(role, role)
-            if User.objects.filter(role=role, is_active=True).exists():
-                messages.error(
-                    request,
-                    f'A user with the "{role_label}" role already exists. '
-                    f'Deactivate the existing user before creating a new one.'
-                )
-                return redirect('manage_users')
-
-        # Coordinator: unique per assigned discipline
-        if role == UserRole.COORDINATOR and assigned_discipline:
-            if User.objects.filter(role=UserRole.COORDINATOR, assigned_discipline=assigned_discipline, is_active=True).exists():
-                disc_label = dict(COORDINATOR_DISCIPLINE_CHOICES).get(assigned_discipline, assigned_discipline)
-                messages.error(
-                    request,
-                    f'A Coordinator for "{disc_label}" already exists. '
-                    f'Deactivate the existing coordinator first.'
-                )
-                return redirect('manage_users')
-
-        # Scout: unique per assigned discipline (sport + gender)
-        if role == UserRole.SCOUT and assigned_discipline:
-            if User.objects.filter(role=UserRole.SCOUT, assigned_discipline=assigned_discipline, is_active=True).exists():
-                disc_label = dict(SCOUT_DISCIPLINE_CHOICES).get(assigned_discipline, assigned_discipline)
-                messages.error(
-                    request,
-                    f'A Scout for "{disc_label}" already exists. '
-                    f'Deactivate the existing scout first.'
-                )
-                return redirect('manage_users')
 
         try:
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
@@ -602,6 +469,7 @@ def create_user(request):
                 first_name=first_name,
                 last_name=last_name,
                 phone=phone,
+                id_number=id_number,
                 role=role,
                 county=stored_county,
                 sub_county=stored_sub_county,
@@ -635,14 +503,26 @@ def create_user(request):
 
             if not email_sent:
                 try:
-                    send_welcome_email(user_obj, password, role)
+                    from accounts.notifications import notify_account_created
+                    notify_account_created(user_obj, password, role)
                     email_sent = True
                 except Exception:
                     pass
 
-            from urllib.parse import urlencode
-            params = urlencode({'created': '1', 'sent': '1' if email_sent else '0', 'uemail': email, 'urole': role})
-            return redirect(f"{reverse('manage_users')}?{params}")
+            if email_sent:
+                messages.success(request, mark_safe(
+                    f'User created!<br>'
+                    f'Email: <code>{email}</code><br>'
+                    f'Role: {role}<br>'
+                    f'Temporary password has been sent to the user\'s email.'
+                ))
+            else:
+                messages.warning(request, mark_safe(
+                    f'User created but email delivery failed.<br>'
+                    f'Email: <code>{email}</code><br>'
+                    f'Role: {role}<br>'
+                    f'Please reset their password manually or contact them directly.'
+                ))
         except Exception as e:
             messages.error(request, f"Error: {e}")
 
@@ -680,11 +560,6 @@ def reset_user_password(request, user_id):
     user_obj.save(update_fields=['password', 'must_change_password'])
 
     send_password_reset_email(user_obj, new_password)
-    try:
-        from accounts.notifications import notify_password_reset
-        notify_password_reset(user_obj, new_password)
-    except Exception:
-        pass
     messages.success(request, mark_safe(
         f'Password reset for {user_obj.email}.<br>'
         f'New password has been sent to the user\'s email.'
@@ -731,16 +606,6 @@ def edit_user_roles(request, user_id):
         # Assign discipline for scout / coordinator roles
         update_fields = ['role', 'is_staff']
         if new_role in ('scout', 'coordinator'):
-            if new_role == 'coordinator':
-                valid_codes = {code for code, _ in COORDINATOR_DISCIPLINE_CHOICES}
-                if new_discipline and new_discipline not in valid_codes:
-                    messages.error(request, 'Invalid coordinator sport selection.')
-                    return redirect('edit_user_roles', user_id=user_obj.id)
-            if new_role == 'scout':
-                valid_codes = {code for code, _ in SCOUT_DISCIPLINE_CHOICES}
-                if new_discipline and new_discipline not in valid_codes:
-                    messages.error(request, 'Invalid scout sport/gender selection.')
-                    return redirect('edit_user_roles', user_id=user_obj.id)
             user_obj.assigned_discipline = new_discipline
             update_fields.append('assigned_discipline')
         elif old_role in ('scout', 'coordinator') and new_role not in ('scout', 'coordinator'):
@@ -791,7 +656,6 @@ def edit_user_roles(request, user_id):
         'edit_user': user_obj,
         'role_choices': UserRole.choices,
         'sport_type_choices': COORDINATOR_DISCIPLINE_CHOICES,
-        'scout_sport_type_choices': SCOUT_DISCIPLINE_CHOICES,
         'county_choices': KenyaCounty.choices,
         'subcounty_choices': MakueniSubCounty.choices,
     }
@@ -967,6 +831,7 @@ def user_edit_profile(request, user_id):
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
+        id_number_raw = request.POST.get('id_number', '').strip()
         county = 'Makueni'
         sub_county = request.POST.get('sub_county', '').strip()
 
@@ -977,10 +842,31 @@ def user_edit_profile(request, user_id):
                 messages.error(request, str(exc))
                 return redirect('user_detail', user_id=user_obj.id)
 
+        # Validate & normalise ID number
+        id_number = None
+        if id_number_raw:
+            try:
+                id_number = validate_national_id_or_raise(id_number_raw, 'ID number')
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+                return redirect('user_detail', user_id=user_obj.id)
+
         # Validate email uniqueness
         if new_email and new_email != old_email:
             if User.objects.filter(email=new_email).exclude(pk=user_obj.pk).exists():
                 messages.error(request, f"Email '{new_email}' is already in use by another account.")
+                return redirect('user_detail', user_id=user_obj.id)
+
+        # Validate phone uniqueness
+        if phone and phone != user_obj.phone:
+            if User.objects.filter(phone=phone).exclude(pk=user_obj.pk).exists():
+                messages.error(request, f"Phone number '{phone}' is already in use by another account.")
+                return redirect('user_detail', user_id=user_obj.id)
+
+        # Validate ID number uniqueness
+        if id_number and id_number != (user_obj.id_number or ''):
+            if User.objects.filter(id_number=id_number).exclude(pk=user_obj.pk).exists():
+                messages.error(request, f"ID number '{id_number}' is already in use by another account.")
                 return redirect('user_detail', user_id=user_obj.id)
 
         changes = []
@@ -996,6 +882,10 @@ def user_edit_profile(request, user_id):
         if phone != user_obj.phone:
             changes.append(f'phone: {user_obj.phone or "(empty)"} â†’ {phone or "(empty)"}')
             user_obj.phone = phone
+        new_id = id_number or None
+        if new_id != user_obj.id_number:
+            changes.append(f'id_number: {user_obj.id_number or "(empty)"} â†’ {new_id or "(empty)"}')
+            user_obj.id_number = new_id
         if county != user_obj.county:
             changes.append(f'county: {user_obj.county or "(empty)"} â†’ {county or "(empty)"}')
             user_obj.county = county

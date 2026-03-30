@@ -317,6 +317,8 @@ def _discipline_queryset_for_user(user):
     disciplines = CountyDiscipline.objects.select_related("registration", "linked_team")
     if user.role == UserRole.DIRECTOR_SPORTS:
         return disciplines.filter(registration__user=user)
+    if user.role == UserRole.CHIEF_SPORTS_OFFICER:
+        return disciplines.all()
     if user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
         return disciplines.filter(
             registration__county=user.county,
@@ -448,6 +450,13 @@ def home_view(request):
         'stats': stats,
         'upcoming_fixtures': upcoming_fixtures,
         'recent_results': recent_results,
+    })
+
+
+def public_gallery_view(request):
+    """Public gallery page - Sports We Celebrate."""
+    return render(request, 'public/gallery.html', {
+        'active_page': 'gallery',
     })
 
 
@@ -618,9 +627,8 @@ def public_fixtures_results_view(request):
 
                 pool_standings = []
                 for pool in pools:
-                    teams = pool.pool_teams.select_related('team').all()
                     sorted_teams = sorted(
-                        teams,
+                        pool.pool_teams.all(),
                         key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
                         reverse=True,
                     )
@@ -693,7 +701,7 @@ def public_competition_detail_view(request, pk):
     competition = get_object_or_404(Competition, pk=pk)
     teams = Team.objects.filter(competition=competition)
     fixtures = Fixture.objects.filter(competition=competition).select_related(
-        'home_team', 'away_team', 'venue'
+        'home_team', 'away_team', 'venue', 'pool'
     ).order_by('match_date')
     return render(request, 'public/competition_detail.html', {
         'active_page': 'fixtures',
@@ -1017,6 +1025,31 @@ def dashboard_view(request):
     """Role-based dashboard with stats and recent fixtures."""
     user = request.user
 
+    # For most roles, redirect immediately — skip expensive queries
+    role_redirects = {
+        'treasurer': 'treasurer_dashboard',
+        'referee': 'referee_portal',
+        'competition_manager': 'cm_dashboard',
+        'verification_officer': 'vo_dashboard',
+        'coordinator': 'coordinator_dashboard',
+        'cec_sports': 'dashboard',
+        'team_manager': 'team_manager_dashboard',
+        'secretary_general': 'sg_dashboard',
+        'jury_chair': 'jury_dashboard',
+        'media_manager': 'media_dashboard',
+        'scout': 'scout_dashboard',
+        'subcounty_sports_officer': 'subcounty_officer_dashboard',
+        'chief_sports_officer': 'chief_sports_officer_dashboard',
+        'director_sports': 'director_sports_dashboard',
+        'chief_officer_sports': 'chief_officer_sports_dashboard',
+        'governor': 'governor_dashboard',
+        'waziri_sports': 'waziri_sports_dashboard',
+    }
+    redirect_name = role_redirects.get(user.role)
+    if redirect_name:
+        return redirect(redirect_name)
+
+    # Only admin/generic roles reach here — compute stats
     stats = {
         'competitions': Competition.objects.count(),
         'teams': Team.objects.count(),
@@ -1024,58 +1057,6 @@ def dashboard_view(request):
         'fixtures': Fixture.objects.count(),
         'players': Player.objects.count(),
     }
-
-    # For team managers, show only their team's data
-    if user.role == 'treasurer':
-        return redirect('treasurer_dashboard')
-
-    if user.role == 'referee':
-        return redirect('referee_portal')
-
-    if user.role == 'competition_manager':
-        return redirect('cm_dashboard')
-
-    if user.role == 'verification_officer':
-        return redirect('vo_dashboard')
-
-    if user.role == 'coordinator':
-        return redirect('coordinator_dashboard')
-
-    if user.role == 'cec_sports':
-        return redirect('dashboard')
-
-    if user.role == 'team_manager':
-        return redirect('team_manager_dashboard')
-
-    if user.role == 'secretary_general':
-        return redirect('sg_dashboard')
-
-    if user.role == 'jury_chair':
-        return redirect('jury_dashboard')
-
-    if user.role == 'media_manager':
-        return redirect('media_dashboard')
-
-    if user.role == 'scout':
-        return redirect('scout_dashboard')
-
-    if user.role == 'subcounty_sports_officer':
-        return redirect('subcounty_officer_dashboard')
-
-    if user.role == 'chief_sports_officer':
-        return redirect('chief_sports_officer_dashboard')
-
-    if user.role == 'director_sports':
-        return redirect('director_sports_dashboard')
-
-    if user.role == 'chief_officer_sports':
-        return redirect('chief_officer_sports_dashboard')
-
-    if user.role == 'governor':
-        return redirect('governor_dashboard')
-
-    if user.role == 'waziri_sports':
-        return redirect('waziri_sports_dashboard')
 
     recent_fixtures = Fixture.objects.select_related(
         'competition', 'home_team', 'away_team'
@@ -1407,12 +1388,15 @@ def referees_list_view(request):
 @login_required(login_url='web_login')
 def matches_list_view(request):
     """List fixtures and match reports - with role-appropriate actions."""
+    from django.core.paginator import Paginator
+
     user = request.user
 
     if user.role == 'team_manager':
         my_teams = Team.objects.filter(manager=user)
+        my_team_ids = set(my_teams.values_list('pk', flat=True))
         fixtures = Fixture.objects.filter(
-            Q(home_team__in=my_teams) | Q(away_team__in=my_teams)
+            Q(home_team__in=my_team_ids) | Q(away_team__in=my_team_ids)
         ).select_related('competition', 'pool', 'home_team', 'away_team', 'venue').order_by('-match_date')
     elif user.role == 'referee':
         try:
@@ -1426,27 +1410,38 @@ def matches_list_view(request):
             'competition', 'pool', 'home_team', 'away_team', 'venue'
         ).order_by('match_date', 'kickoff_time')
 
-    # Annotate fixtures with squad / report info for template buttons
+    # Paginate fixtures
+    paginator = Paginator(fixtures, 50)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    paged_fixtures = list(page_obj)
+    paged_fixture_ids = [f.pk for f in paged_fixtures]
+
+    # Batch-fetch match reports for this page only (avoid N+1)
+    reports_map = {}
+    for mr in MatchReport.objects.filter(fixture_id__in=paged_fixture_ids).select_related('referee__user'):
+        reports_map[mr.fixture_id] = mr
+
+    # Batch-fetch squad submissions for team managers
+    squad_map = {}
+    if user.role == 'team_manager':
+        for sq in SquadSubmission.objects.filter(fixture_id__in=paged_fixture_ids, team_id__in=my_team_ids):
+            squad_map[sq.fixture_id] = sq
+
+    # Build fixture_data from the page only
     now = timezone.now()
     fixture_data = []
-    for f in fixtures:
+    for f in paged_fixtures:
         fd = {'fixture': f}
-        # Squad submission status for this user's team
         if user.role == 'team_manager':
-            my_team = f.home_team if f.home_team in my_teams else (f.away_team if f.away_team in my_teams else None)
+            my_team = f.home_team if f.home_team_id in my_team_ids else (f.away_team if f.away_team_id in my_team_ids else None)
             if my_team:
-                squad = SquadSubmission.objects.filter(fixture=f, team=my_team).first()
-                fd['squad'] = squad
+                fd['squad'] = squad_map.get(f.pk)
                 fd['my_team'] = my_team
                 try:
                     fd['deadline_passed'] = now > f.squad_deadline
                 except Exception:
                     fd['deadline_passed'] = True
-        # Match report
-        try:
-            fd['report'] = f.match_report
-        except MatchReport.DoesNotExist:
-            fd['report'] = None
+        fd['report'] = reports_map.get(f.pk)
         fixture_data.append(fd)
 
     match_reports = MatchReport.objects.select_related(
@@ -1460,7 +1455,8 @@ def matches_list_view(request):
 
     return render(request, 'matches/list.html', {
         'fixture_data': fixture_data,
-        'fixtures': fixtures,  # Keep backward compat
+        'fixtures': paged_fixtures,  # Keep backward compat
+        'page_obj': page_obj,
         'match_reports': match_reports,
         'pending_reports': pending_reports,
     })
@@ -1572,8 +1568,10 @@ def pending_referees_view(request):
         'pending_referees': pending,
         'stats': {
             'pending': pending.count(),
-            'approved': RefereeProfile.objects.filter(is_approved=True).count(),
-            'total': RefereeProfile.objects.count(),
+            **RefereeProfile.objects.aggregate(
+                approved=Count('id', filter=Q(is_approved=True)),
+                total=Count('id'),
+            ),
         },
     })
 
@@ -2376,6 +2374,7 @@ def match_report_form_view(request, fixture_pk):
         # ── Parse events ──
         report.events.all().delete()  # Replace all events
         event_count = int(request.POST.get('event_count', 0))
+        events_to_create = []
         for i in range(event_count):
             evt_type = request.POST.get(f'event_{i}_type', '')
             evt_team = request.POST.get(f'event_{i}_team', '')
@@ -2383,14 +2382,16 @@ def match_report_form_view(request, fixture_pk):
             evt_minute = request.POST.get(f'event_{i}_minute', '')
             evt_notes = request.POST.get(f'event_{i}_notes', '')
             if evt_type and evt_minute:
-                MatchEvent.objects.create(
+                events_to_create.append(MatchEvent(
                     report=report,
                     team_id=int(evt_team) if evt_team else fixture.home_team_id,
                     player_id=int(evt_player) if evt_player else None,
                     event_type=evt_type,
                     minute=int(evt_minute),
                     notes=evt_notes,
-                )
+                ))
+        if events_to_create:
+            MatchEvent.objects.bulk_create(events_to_create)
 
         if action == 'submit':
             messages.success(request, '✅ Match report submitted for review.')
@@ -2402,12 +2403,18 @@ def match_report_form_view(request, fixture_pk):
     events = report.events.all().order_by('minute') if report else []
 
     # ── Auto-populate from approved squads (FKF pattern) ──
-    home_squad = SquadSubmission.objects.filter(
-        fixture=fixture, team=fixture.home_team, status=SquadStatus.APPROVED
-    ).first()
-    away_squad = SquadSubmission.objects.filter(
-        fixture=fixture, team=fixture.away_team, status=SquadStatus.APPROVED
-    ).first()
+    squad_qs = SquadSubmission.objects.filter(
+        fixture=fixture,
+        team__in=[fixture.home_team, fixture.away_team],
+        status=SquadStatus.APPROVED,
+    ).select_related('team').prefetch_related('squad_players__player')
+    home_squad = None
+    away_squad = None
+    for sq in squad_qs:
+        if sq.team_id == fixture.home_team_id:
+            home_squad = sq
+        elif sq.team_id == fixture.away_team_id:
+            away_squad = sq
     home_starters = home_squad.squad_players.filter(is_starter=True).select_related('player').order_by('shirt_number') if home_squad else []
     home_subs = home_squad.squad_players.filter(is_starter=False).select_related('player').order_by('shirt_number') if home_squad else []
     away_starters = away_squad.squad_players.filter(is_starter=True).select_related('player').order_by('shirt_number') if away_squad else []
@@ -2824,20 +2831,24 @@ def coordinator_dashboard_view(request):
     active = competitions.filter(status__in=['active', 'group_stage', 'knockout'])
     upcoming = competitions.filter(status='upcoming')
 
-    comp_ids = competitions.values_list('pk', flat=True)
+    comp_ids = list(competitions.values_list('pk', flat=True))
 
-    # Key counts
+    # Key counts - consolidated into fewer queries
+    fixture_counts = Fixture.objects.filter(competition__in=comp_ids).aggregate(
+        total=Count('id'),
+        completed=Count('id', filter=Q(status='completed')),
+        upcoming=Count('id', filter=Q(match_date__gte=date.today()) & ~Q(status__in=['completed', 'cancelled'])),
+    ) if comp_ids else {'total': 0, 'completed': 0, 'upcoming': 0}
+
     stats = {
         'total_competitions': competitions.count(),
         'active_competitions': active.count(),
-        'total_fixtures': Fixture.objects.filter(competition__in=comp_ids).count(),
-        'completed_fixtures': Fixture.objects.filter(competition__in=comp_ids, status='completed').count(),
-        'upcoming_fixtures': Fixture.objects.filter(
-            competition__in=comp_ids, match_date__gte=date.today()
-        ).exclude(status__in=['completed', 'cancelled']).count(),
+        'total_fixtures': fixture_counts['total'],
+        'completed_fixtures': fixture_counts['completed'],
+        'upcoming_fixtures': fixture_counts['upcoming'],
         'pending_reports': MatchReport.objects.filter(
             fixture__competition__in=comp_ids, status='submitted'
-        ).count(),
+        ).count() if comp_ids else 0,
         'pending_referees': RefereeProfile.objects.filter(is_approved=False).count(),
         'total_venues': Venue.objects.filter(is_active=True).count(),
         'total_teams': Team.objects.filter(
@@ -2965,9 +2976,8 @@ def coordinator_competition_manage_view(request, pk):
 
     pool_data = []
     for pool in pools:
-        teams = pool.pool_teams.select_related('team').all()
         sorted_teams = sorted(
-            teams,
+            pool.pool_teams.all(),
             key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
             reverse=True,
         )
@@ -2993,12 +3003,12 @@ def coordinator_competition_manage_view(request, pk):
 
     venues = Venue.objects.filter(is_active=True).order_by('name')
 
-    pending_reports = MatchReport.objects.filter(
-        fixture__competition=competition, status='submitted'
-    ).count()
-    approved_reports = MatchReport.objects.filter(
-        fixture__competition=competition, status='approved'
-    ).count()
+    report_counts = MatchReport.objects.filter(
+        fixture__competition=competition
+    ).aggregate(
+        pending=Count('id', filter=Q(status='submitted')),
+        approved=Count('id', filter=Q(status='approved')),
+    )
 
     return render(request, 'portal/coordinator/manage_competition.html', {
         'competition': competition,
@@ -3008,8 +3018,8 @@ def coordinator_competition_manage_view(request, pk):
         'group_fixtures': group_fixtures,
         'knockout_fixtures': knockout_fixtures,
         'venues': venues,
-        'pending_reports': pending_reports,
-        'approved_reports': approved_reports,
+        'pending_reports': report_counts['pending'],
+        'approved_reports': report_counts['approved'],
     })
 
 
@@ -4525,12 +4535,16 @@ def cm_dashboard_view(request):
     active = competitions.filter(status__in=['active', 'group_stage', 'knockout'])
     upcoming = competitions.filter(status='upcoming')
 
-    # Key counts
+    # Key counts - consolidated
+    fixture_counts = Fixture.objects.aggregate(
+        total=Count('id'),
+        completed=Count('id', filter=Q(status='completed')),
+    )
     stats = {
         'total_competitions': competitions.count(),
         'active_competitions': active.count(),
-        'total_fixtures': Fixture.objects.count(),
-        'completed_fixtures': Fixture.objects.filter(status='completed').count(),
+        'total_fixtures': fixture_counts['total'],
+        'completed_fixtures': fixture_counts['completed'],
         'pending_reports': MatchReport.objects.filter(status='submitted').count(),
         'total_teams': Team.objects.filter(status='registered').count(),
         'total_venues': Venue.objects.filter(is_active=True).count(),
@@ -4552,12 +4566,17 @@ def cm_dashboard_view(request):
         'referee__user'
     ).order_by('-submitted_at')[:5]
 
-    # Sport breakdown
-    sport_breakdown = []
-    for sport_val, sport_label in SportType.choices:
-        count = competitions.filter(sport_type=sport_val).count()
-        if count > 0:
-            sport_breakdown.append({'label': sport_label, 'count': count})
+    # Sport breakdown - use annotation instead of N separate queries
+    from django.db.models import CharField, Value
+    sport_breakdown = list(
+        competitions.values('sport_type')
+        .annotate(count=Count('id'))
+        .filter(count__gt=0)
+        .order_by('-count')
+    )
+    sport_labels = dict(SportType.choices)
+    for item in sport_breakdown:
+        item['label'] = sport_labels.get(item['sport_type'], item['sport_type'])
 
     return render(request, 'portal/cm/dashboard.html', {
         'stats': stats,
@@ -5110,6 +5129,20 @@ def cm_edit_fixture_view(request, pk, fixture_pk):
         'teams': teams,
         'status_choices': FixtureStatus.choices,
     })
+
+
+@role_required('competition_manager', 'chief_sports_officer', 'admin')
+@require_POST
+def cm_delete_fixture_view(request, pk, fixture_pk):
+    """Competition Manager: Delete a specific fixture."""
+    from competitions.models import Competition
+
+    competition = get_object_or_404(Competition, pk=pk)
+    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
+    label = str(fixture)
+    fixture.delete()
+    messages.success(request, f'Match deleted: {label}')
+    return redirect('cm_competition_manage', pk=pk)
 
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
@@ -7481,9 +7514,11 @@ def director_sports_dashboard_view(request):
 
 @role_required('chief_sports_officer', 'admin')
 def chief_sports_officer_dashboard_view(request):
-    """Dashboard for Chief Sports Officer - county-level sports operations oversight."""
+    """Dashboard for Chief Sports Officer - operational support to Director of Sports."""
     all_disciplines = CountyDiscipline.objects.select_related('registration').all()
+    all_verified = CountyPlayer.objects.filter(verification_status='verified')
     stats = {
+        'competitions': Competition.objects.count(),
         'teams': Team.objects.count(),
         'players': CountyPlayer.objects.count(),
         'referees': RefereeProfile.objects.filter(is_approved=True).count(),
@@ -7491,7 +7526,15 @@ def chief_sports_officer_dashboard_view(request):
         'subcounties_active': all_disciplines.exclude(sub_county='').values('sub_county').distinct().count(),
         'disciplines': all_disciplines.count(),
         'pending_verifications': CountyPlayer.objects.filter(verification_status='pending').count(),
+        'counties_registered': CountyRegistration.objects.filter(status='approved').count(),
+        'pending_shortlist_requests': ScoutShortlistSubmission.objects.filter(status=ScoutShortlistSubmissionStatus.EDIT_REQUESTED).count(),
+        'verified_approved': all_verified.filter(director_approved=True).count(),
+        'verified_pending': all_verified.filter(director_approved=False, director_disapproved=False).count(),
     }
+
+    active_comps = Competition.objects.filter(
+        status__in=['active', 'group_stage', 'knockout']
+    ).order_by('-start_date')[:5]
 
     upcoming_fixtures = Fixture.objects.filter(
         status__in=['scheduled', 'upcoming']
@@ -7507,6 +7550,7 @@ def chief_sports_officer_dashboard_view(request):
 
     return render(request, 'portal/chief_sports_officer/dashboard.html', {
         'stats': stats,
+        'active_competitions': active_comps,
         'upcoming_fixtures': upcoming_fixtures,
         'recent_results': recent_results,
         'recent_players': recent_players,
@@ -7863,9 +7907,9 @@ def team_manager_verified_players_view(request):
     })
 
 
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_shortlist_requests_view(request):
-    """Director of Sports: review scout shortlist edit-access requests."""
+    """Director of Sports / Chief Sports Officer: review scout shortlist edit-access requests."""
     submissions = ScoutShortlistSubmission.objects.select_related('scout', 'reviewed_by').annotate(
         shortlist_count=Count('scout__scout_shortlists')
     ).filter(
@@ -7883,7 +7927,7 @@ def director_sports_shortlist_requests_view(request):
     })
 
 
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 @require_POST
 def director_sports_review_shortlist_request_view(request, pk):
     """Approve or reject a scout shortlist edit-access request."""
@@ -7913,9 +7957,9 @@ def director_sports_review_shortlist_request_view(request, pk):
     return redirect('director_sports_shortlist_requests')
 
 
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_verified_players_view(request):
-    """Director of Sports: view all verified players with filtering, approve/disapprove/lock."""
+    """Director of Sports / Chief Sports Officer: view all verified players with filtering."""
     county_filter = request.GET.get('county', '')
     discipline_filter = request.GET.get('discipline', '')
     approval_filter = request.GET.get('approval', '')
@@ -7962,10 +8006,10 @@ def director_sports_verified_players_view(request):
     })
 
 
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 @require_POST
 def director_sports_approve_player_view(request, pk):
-    """Director of Sports: approve a verified player."""
+    """Director of Sports / Chief Sports Officer: approve a verified player."""
     player = get_object_or_404(CountyPlayer, pk=pk, verification_status='verified')
     player.director_approved = True
     player.director_disapproved = False
@@ -7980,10 +8024,10 @@ def director_sports_approve_player_view(request, pk):
     return redirect(request.META.get('HTTP_REFERER', 'director_sports_verified_players'))
 
 
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 @require_POST
 def director_sports_disapprove_player_view(request, pk):
-    """Director of Sports: disapprove a verified player."""
+    """Director of Sports / Chief Sports Officer: disapprove a verified player."""
     player = get_object_or_404(CountyPlayer, pk=pk, verification_status='verified')
     reason = request.POST.get('reason', '').strip()
     if not reason:
@@ -8002,10 +8046,10 @@ def director_sports_disapprove_player_view(request, pk):
     return redirect(request.META.get('HTTP_REFERER', 'director_sports_verified_players'))
 
 
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 @require_POST
 def director_sports_bulk_approve_view(request):
-    """Director of Sports: bulk approve all verified players matching filter."""
+    """Director of Sports / Chief Sports Officer: bulk approve all verified players matching filter."""
     county_filter = request.POST.get('county', '')
     discipline_filter = request.POST.get('discipline', '')
 
@@ -8079,9 +8123,9 @@ def director_sports_unlock_list_view(request):
 
 
 # ── Director of Sports: Audit & Reports ──────────────────────────────────────
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_audit_view(request):
-    """Director of Sports: view all user activity logs - filterable by user, action, and date."""
+    """Director of Sports / Chief Sports Officer: view all user activity logs."""
     from admin_dashboard.models import ActivityLog
 
     user_filter = request.GET.get('user', '')
@@ -8172,9 +8216,9 @@ def director_sports_system_users_view(request):
 
 
 # ── Director of Sports: Delegations ──────────────────────────────────────────
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_delegations_view(request):
-    """Director of Sports: view all county delegation members across counties."""
+    """Director of Sports / Chief Sports Officer: view all county delegation members."""
     county_filter = request.GET.get('county', '')
     role_filter = request.GET.get('role', '')
 
@@ -8209,9 +8253,9 @@ def director_sports_delegations_view(request):
 
 
 # ── Director of Sports: Technical Bench Members ──────────────────────────────
-@role_required('director_sports', 'admin')
+@role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_technical_bench_view(request):
-    """Director of Sports: view all technical bench members across all teams."""
+    """Director of Sports / Chief Sports Officer: view all technical bench members."""
     county_filter = request.GET.get('county', '')
     discipline_filter = request.GET.get('discipline', '')
     role_filter = request.GET.get('role', '')
@@ -8281,7 +8325,7 @@ def verified_players_pdf_view(request):
         except TechnicalBenchMember.DoesNotExist:
             players = CountyPlayer.objects.none()
             scope_label = "No discipline assigned"
-    elif user.role == 'director_sports' or user.is_superuser:
+    elif user.role == 'director_sports' or user.role == 'chief_sports_officer' or user.is_superuser:
         players = CountyPlayer.objects.filter(verification_status='verified')
         county_filter = request.GET.get('county', '')
         if county_filter:

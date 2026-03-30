@@ -270,9 +270,9 @@
                             <p>Executive oversight</p>
                         </a>
                         <a href="{% url 'chief_sports_officer_dashboard' %}" class="action-card">
-                            <div class="action-icon"><i class="bi bi-star"></i></div>
+                            <div class="action-icon"><i class="bi bi-shield-check"></i></div>
                             <h4>Chief Sports Officer</h4>
-                            <p>County-level oversight</p>
+                            <p>Deputy Director operations</p>
                         </a>
                         <a href="{% url 'chief_officer_sports_dashboard' %}" class="action-card">
                             <div class="action-icon"><i class="bi bi-building-check"></i></div>
@@ -424,10 +424,10 @@
             {% endif %}
 
             {% if user.role == 'chief_sports_officer' %}
-            <a href="{% url 'chief_officer_sports_dashboard' %}" class="action-card">
-                <div class="action-icon"><i class="bi bi-star"></i></div>
+            <a href="{% url 'chief_sports_officer_dashboard' %}" class="action-card">
+                <div class="action-icon"><i class="bi bi-shield-check"></i></div>
                 <h4>Chief Sports Officer</h4>
-                <p>Cross-subcounty oversight and verification</p>
+                <p>Deputy Director operations & approvals</p>
             </a>
             {% endif %}
 

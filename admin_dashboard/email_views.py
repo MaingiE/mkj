@@ -57,8 +57,10 @@ def email_dashboard(request):
 
     total = qs.count()
     today = qs.filter(sent_at__date=timezone.now().date()).count()
-    inbox_count = EmailLog.objects.filter(direction='IN').count()
-    outbox_count = EmailLog.objects.filter(direction='OUT').count()
+    dir_counts = EmailLog.objects.aggregate(
+        inbox=Count('id', filter=Q(direction='IN')),
+        outbox=Count('id', filter=Q(direction='OUT')),
+    )
 
     paginator = Paginator(qs, 30)
     page_obj = paginator.get_page(request.GET.get('page', 1))
@@ -67,8 +69,8 @@ def email_dashboard(request):
         'page_obj': page_obj,
         'total': total,
         'today': today,
-        'inbox_count': inbox_count,
-        'outbox_count': outbox_count,
+        'inbox_count': dir_counts['inbox'],
+        'outbox_count': dir_counts['outbox'],
         'direction': direction,
         'search': search,
         'date_from': date_from,
