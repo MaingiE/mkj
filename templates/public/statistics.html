@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Statistics{% endblock %}
-{% block meta_description %}<meta name="description" content="MKJ SUPA CUP statistics — top scorers, clean sheets, fair play and disciplinary records for Football, Volleyball, Basketball and Handball in Makueni County.">{% endblock %}
+{% block meta_description %}<meta name="description" content="MKJ SUPA CUP statistics - top scorers, clean sheets, fair play and disciplinary records for Football, Volleyball, Basketball and Handball in Makueni County.">{% endblock %}
 {% block canonical_url %}https://mkjsupacup.com/statistics/{% endblock %}
 {% block og_meta %}
 <meta property="og:title" content="Statistics - MKJ SUPA CUP">
@@ -228,7 +228,7 @@
     <div class="container page-hero__inner">
         <span class="page-hero__badge reveal"><i class="bi bi-bar-chart-line"></i> Statistics</span>
         <h1 class="page-hero__title reveal">Player <span class="text-gold">Statistics</span></h1>
-        <p class="page-hero__sub reveal">Top scorers, clean sheets, fair play & disciplinary records — updated automatically</p>
+        <p class="page-hero__sub reveal">Top scorers, clean sheets, fair play and disciplinary records</p>
         <div class="page-hero__breadcrumb reveal">
             <a href="{% url 'home' %}">Home</a>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
@@ -242,15 +242,40 @@
 <section class="sec" style="padding-bottom:0;">
     <div class="container">
         <div class="discipline-tabs">
-            <a href="{% url 'public_statistics' %}" class="discipline-tab {% if not sport_filter %}discipline-tab--active{% endif %}">
+            <a href="{% url 'public_statistics' %}{% if gender_filter %}?gender={{ gender_filter }}{% endif %}{% if age_filter %}{% if gender_filter %}&{% else %}?{% endif %}age={{ age_filter }}{% endif %}" class="discipline-tab {% if not sport_filter %}discipline-tab--active{% endif %}">
                 <i class="bi bi-grid-3x3-gap"></i> All Disciplines
             </a>
             {% for sport_val, sport_label in disciplines %}
-            <a href="{% url 'public_statistics' %}?sport={{ sport_val }}" class="discipline-tab {% if sport_filter == sport_val %}discipline-tab--active{% endif %}">
+            <a href="{% url 'public_statistics' %}?sport={{ sport_val }}{% if gender_filter %}&gender={{ gender_filter }}{% endif %}{% if age_filter %}&age={{ age_filter }}{% endif %}" class="discipline-tab {% if sport_filter == sport_val %}discipline-tab--active{% endif %}">
                 {{ sport_label }}
             </a>
             {% endfor %}
         </div>
+        {% if genders or age_groups %}
+        <div class="discipline-tabs" style="margin-top:.5rem;margin-bottom:0;">
+            {% if genders %}
+            <a href="{% url 'public_statistics' %}{% if sport_filter %}?sport={{ sport_filter }}{% endif %}{% if age_filter %}{% if sport_filter %}&{% else %}?{% endif %}age={{ age_filter }}{% endif %}" class="discipline-tab {% if not gender_filter %}discipline-tab--active{% endif %}" style="font-size:.72rem;">
+                All Genders
+            </a>
+            {% for g_val, g_label in genders %}
+            <a href="{% url 'public_statistics' %}?gender={{ g_val }}{% if sport_filter %}&sport={{ sport_filter }}{% endif %}{% if age_filter %}&age={{ age_filter }}{% endif %}" class="discipline-tab {% if gender_filter == g_val %}discipline-tab--active{% endif %}" style="font-size:.72rem;">
+                {{ g_label }}
+            </a>
+            {% endfor %}
+            {% endif %}
+            {% if age_groups %}
+            <span style="width:1px;height:20px;background:#ddd;margin:0 .25rem;"></span>
+            <a href="{% url 'public_statistics' %}{% if sport_filter %}?sport={{ sport_filter }}{% endif %}{% if gender_filter %}{% if sport_filter %}&{% else %}?{% endif %}gender={{ gender_filter }}{% endif %}" class="discipline-tab {% if not age_filter %}discipline-tab--active{% endif %}" style="font-size:.72rem;">
+                All Ages
+            </a>
+            {% for a_val, a_label in age_groups %}
+            <a href="{% url 'public_statistics' %}?age={{ a_val }}{% if sport_filter %}&sport={{ sport_filter }}{% endif %}{% if gender_filter %}&gender={{ gender_filter }}{% endif %}" class="discipline-tab {% if age_filter == a_val %}discipline-tab--active{% endif %}" style="font-size:.72rem;">
+                {{ a_label }}
+            </a>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </section>
 
@@ -259,6 +284,8 @@
     <div class="container">
         <form class="filter-bar" method="get">
             {% if sport_filter %}<input type="hidden" name="sport" value="{{ sport_filter }}">{% endif %}
+            {% if gender_filter %}<input type="hidden" name="gender" value="{{ gender_filter }}">{% endif %}
+            {% if age_filter %}<input type="hidden" name="age" value="{{ age_filter }}">{% endif %}
             <label for="competition"><i class="bi bi-funnel"></i> Filter by Competition:</label>
             <select name="competition" id="competition" onchange="this.form.submit()">
                 <option value="">All Competitions{% if sport_filter %} ({{ sport_display }}){% endif %}</option>
@@ -449,16 +476,18 @@
         <!-- ── FAIR PLAY TABLE (full width) ───────────────────────────────── -->
         <div class="stats-grid--full">
             <div class="leaderboard">
-                <div class="lb-head fairplay"><i class="bi bi-peace"></i> Fair Play Rankings <span style="font-size:.7rem;font-weight:400;opacity:.7;margin-left:.5rem;">(Lower score = More fair play)</span></div>
+                <div class="lb-head fairplay"><i class="bi bi-peace"></i> Fair Play Rankings <span style="font-size:.7rem;font-weight:400;opacity:.7;margin-left:.5rem;">(FIFA criteria: Y=1, 2nd Y/R=3, Direct R=4, Y+R=5)</span></div>
                 {% if fair_play %}
                 <table class="lb-table">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Team</th>
-                            <th><i class="bi bi-square-fill" style="color:#F57F17;font-size:.6rem;"></i> Yellow</th>
-                            <th><i class="bi bi-square-fill" style="color:#C62828;font-size:.6rem;"></i> Red</th>
-                            <th>Fair Play Points</th>
+                            <th>P</th>
+                            <th><i class="bi bi-square-fill" style="color:#F57F17;font-size:.6rem;"></i> Y</th>
+                            <th><i class="bi bi-square-fill" style="color:#C62828;font-size:.6rem;"></i> R</th>
+                            <th>Deductions</th>
+                            <th>Per Game</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -468,9 +497,11 @@
                                 <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">{{ forloop.counter }}</span>
                             </td>
                             <td class="player-name">{{ fp.team__name }}</td>
+                            <td>{{ fp.matches_played }}</td>
                             <td style="color:#F57F17;font-weight:700;">{{ fp.yellow_total }}</td>
                             <td style="color:#C62828;font-weight:700;">{{ fp.red_total }}</td>
                             <td class="stat-highlight" style="color:#1565C0;">{{ fp.fair_play_points }}</td>
+                            <td style="font-weight:600;color:#555;">{{ fp.fair_play_index }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -481,10 +512,12 @@
             </div>
         </div>
 
+        {% if sport_filter or gender_filter or age_filter %}
         <div style="text-align:center;margin-top:2rem;font-size:.78rem;color:#999;">
-            <i class="bi bi-info-circle"></i> Statistics are automatically updated when match reports are approved by the Organising Secretary.
-            {% if sport_filter %}<br><i class="bi bi-funnel"></i> Showing: <strong>{{ sport_display }}</strong> — <a href="{% url 'public_statistics' %}" style="color:#124491;">View all disciplines</a>{% endif %}
+            <i class="bi bi-funnel"></i> Showing: <strong>{{ sport_display }}{% if gender_filter %} {{ gender_filter|title }}{% endif %}{% if age_filter %} {{ age_filter }}{% endif %}</strong>
+            <a href="{% url 'public_statistics' %}" style="color:#124491;margin-left:.5rem;">View all</a>
         </div>
+        {% endif %}
     </div>
 </section>
 

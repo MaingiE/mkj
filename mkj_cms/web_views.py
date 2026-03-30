@@ -801,13 +801,13 @@ def public_statistics_view(request):
     """
     Public statistics hub - top scorers, assist leaders, disciplinary,
     clean sheet leaders, and fair play across all active/completed competitions.
-    Users can filter by competition and/or sport discipline.
+    Filters: discipline, gender, age group, competition.
     """
-    from competitions.models import Pool, PoolTeam, SportType as ST
-    from matches.models import PlayerStatistics
+    from competitions.models import Pool, PoolTeam, SportType as ST, GenderChoice, AgeGroup
+    from matches.models import PlayerStatistics, MatchEvent, MatchReport
     from matches.stats_engine import (
         get_top_scorers, get_top_assisters,
-        get_disciplinary_table, get_clean_sheet_leaders, get_fair_play_table,
+        get_disciplinary_table, get_clean_sheet_leaders,
     )
     from django.db.models import F, Sum
 
@@ -822,15 +822,30 @@ def public_statistics_view(request):
         .distinct()
         .order_by('sport_type')
     )
-    # Build a list of (value, label) tuples
     sport_labels = dict(ST.choices)
     disciplines = [(s, sport_labels.get(s, s)) for s in discipline_choices]
 
-    # Optional sport discipline filter
+    # Gender and age group choices from what actually exists
+    gender_choices_qs = competitions.values_list('gender', flat=True).distinct().order_by('gender')
+    gender_labels = dict(GenderChoice.choices)
+    genders = [(g, gender_labels.get(g, g)) for g in gender_choices_qs if g]
+
+    age_choices_qs = competitions.values_list('age_group', flat=True).distinct().order_by('age_group')
+    age_labels = dict(AgeGroup.choices)
+    age_groups = [(a, age_labels.get(a, a)) for a in age_choices_qs if a]
+
+    # Filters from query params
     sport_filter = request.GET.get('sport', '')
+    gender_filter = request.GET.get('gender', '')
+    age_filter = request.GET.get('age', '')
+
     filtered_competitions = competitions
     if sport_filter and sport_filter in sport_labels:
-        filtered_competitions = competitions.filter(sport_type=sport_filter)
+        filtered_competitions = filtered_competitions.filter(sport_type=sport_filter)
+    if gender_filter and gender_filter in gender_labels:
+        filtered_competitions = filtered_competitions.filter(gender=gender_filter)
+    if age_filter and age_filter in age_labels:
+        filtered_competitions = filtered_competitions.filter(age_group=age_filter)
 
     # Optional competition filter
     comp_id = request.GET.get('competition', '')
@@ -847,12 +862,16 @@ def public_statistics_view(request):
         top_assisters = get_top_assisters(selected_competition, limit=20)
         disciplinary = get_disciplinary_table(selected_competition, limit=20)
         clean_sheets = get_clean_sheet_leaders(selected_competition, limit=10)
-        fair_play = get_fair_play_table(selected_competition, limit=20)
+        fair_play = _compute_fair_play(competition=selected_competition)
     else:
         # Base filter: active/completed competitions
         base_filter = {'competition__status__in': ['active', 'group_stage', 'knockout', 'completed']}
         if sport_filter and sport_filter in sport_labels:
             base_filter['competition__sport_type'] = sport_filter
+        if gender_filter and gender_filter in gender_labels:
+            base_filter['competition__gender'] = gender_filter
+        if age_filter and age_filter in age_labels:
+            base_filter['competition__age_group'] = age_filter
 
         top_scorers = PlayerStatistics.objects.filter(
             goals__gt=0, **base_filter,
@@ -874,25 +893,24 @@ def public_statistics_view(request):
             clean_sheets__gt=0, player__position='GK', **base_filter,
         ).select_related('player', 'team', 'competition').order_by('-clean_sheets')[:10]
 
-        # Fair play aggregated across competitions
-        fp_qs = PlayerStatistics.objects.filter(**base_filter)
-        fair_play = (
-            fp_qs.values('team__id', 'team__name')
-            .annotate(
-                yellow_total=Sum('yellow_cards'),
-                red_total=Sum('red_cards'),
-            )
-            .annotate(
-                fair_play_points=F('yellow_total') + (F('red_total') * 3),
-            )
-            .filter(fair_play_points__gt=0)
-            .order_by('fair_play_points', 'red_total', 'team__name')[:20]
-        )
+        # Fair play aggregated with FIFA criteria
+        comp_filter = {'status__in': ['active', 'group_stage', 'knockout', 'completed']}
+        if sport_filter and sport_filter in sport_labels:
+            comp_filter['sport_type'] = sport_filter
+        if gender_filter and gender_filter in gender_labels:
+            comp_filter['gender'] = gender_filter
+        if age_filter and age_filter in age_labels:
+            comp_filter['age_group'] = age_filter
+        fair_play = _compute_fair_play(comp_filter=comp_filter)
 
     # Summary stats
     summary_base = {'competition__status__in': ['active', 'group_stage', 'knockout', 'completed']}
     if sport_filter and sport_filter in sport_labels and not selected_competition:
         summary_base['competition__sport_type'] = sport_filter
+    if gender_filter and gender_filter in gender_labels and not selected_competition:
+        summary_base['competition__gender'] = gender_filter
+    if age_filter and age_filter in age_labels and not selected_competition:
+        summary_base['competition__age_group'] = age_filter
     if selected_competition:
         summary_base = {'competition': selected_competition}
 
@@ -901,6 +919,10 @@ def public_statistics_view(request):
     fixture_filter = {'status': 'completed'}
     if sport_filter and sport_filter in sport_labels and not selected_competition:
         fixture_filter['competition__sport_type'] = sport_filter
+    if gender_filter and gender_filter in gender_labels and not selected_competition:
+        fixture_filter['competition__gender'] = gender_filter
+    if age_filter and age_filter in age_labels and not selected_competition:
+        fixture_filter['competition__age_group'] = age_filter
     if selected_competition:
         fixture_filter['competition'] = selected_competition
     total_matches = Fixture.objects.filter(**fixture_filter).count()
@@ -915,7 +937,11 @@ def public_statistics_view(request):
         'competitions': filtered_competitions,
         'all_competitions': competitions,
         'disciplines': disciplines,
+        'genders': genders,
+        'age_groups': age_groups,
         'sport_filter': sport_filter,
+        'gender_filter': gender_filter,
+        'age_filter': age_filter,
         'sport_display': sport_labels.get(sport_filter, ''),
         'selected_competition': selected_competition,
         'top_scorers': top_scorers,
@@ -928,6 +954,112 @@ def public_statistics_view(request):
         'total_yellows': total_cards['yellows'] or 0,
         'total_reds': total_cards['reds'] or 0,
     })
+
+
+def _compute_fair_play(competition=None, comp_filter=None, limit=20):
+    """
+    FIFA-standard Fair Play ranking using MatchEvent data.
+    Per player per match, only the highest applicable sanction:
+      - Yellow card only: 1 pt
+      - 2nd yellow leading to red: 3 pts
+      - Direct red card: 4 pts
+      - Yellow + direct red (same match): 5 pts
+    Teams ranked by fewest total deductions, with per-match index.
+    """
+    from matches.models import MatchEvent
+    from teams.models import Team
+
+    # Determine which competitions to include
+    if competition:
+        comp_ids = [competition.pk]
+    else:
+        qs = Competition.objects.filter(**(comp_filter or {}))
+        comp_ids = list(qs.values_list('pk', flat=True))
+
+    if not comp_ids:
+        return []
+
+    # All card events for these competitions
+    card_types = ['yellow', 'red', 'second_yellow']
+    events = MatchEvent.objects.filter(
+        report__fixture__competition_id__in=comp_ids,
+        report__fixture__status='completed',
+        event_type__in=card_types,
+    ).values('team_id', 'team__name', 'report_id', 'player_id', 'event_type')
+
+    # Group by (team, match/report, player) to find highest sanction per player per match
+    player_match_events = {}
+    team_names = {}
+    for ev in events:
+        key = (ev['team_id'], ev['report_id'], ev['player_id'])
+        if key not in player_match_events:
+            player_match_events[key] = set()
+        player_match_events[key].add(ev['event_type'])
+        team_names[ev['team_id']] = ev['team__name']
+
+    # Calculate FIFA sanctions
+    team_deductions = {}
+    team_yellows = {}
+    team_reds = {}
+    for (team_id, report_id, player_id), etypes in player_match_events.items():
+        has_yellow = 'yellow' in etypes
+        has_red = 'red' in etypes
+        has_second_yellow = 'second_yellow' in etypes
+
+        if has_yellow and has_red:
+            deduction = 5  # Yellow + direct red
+        elif has_red:
+            deduction = 4  # Direct red only
+        elif has_second_yellow:
+            deduction = 3  # 2nd yellow to red
+        elif has_yellow:
+            deduction = 1  # Yellow only
+        else:
+            deduction = 0
+
+        team_deductions[team_id] = team_deductions.get(team_id, 0) + deduction
+        if has_yellow:
+            team_yellows[team_id] = team_yellows.get(team_id, 0) + 1
+        if has_red or has_second_yellow:
+            team_reds[team_id] = team_reds.get(team_id, 0) + 1
+
+    # Count matches played per team
+    completed_fixtures = Fixture.objects.filter(
+        competition_id__in=comp_ids, status='completed'
+    ).values_list('home_team_id', 'away_team_id')
+    team_matches = {}
+    for home_id, away_id in completed_fixtures:
+        team_matches[home_id] = team_matches.get(home_id, 0) + 1
+        team_matches[away_id] = team_matches.get(away_id, 0) + 1
+
+    # Build result for all teams that played
+    all_team_ids = set(team_matches.keys())
+    # Fetch missing names
+    missing_ids = all_team_ids - set(team_names.keys())
+    if missing_ids:
+        for t in Team.objects.filter(pk__in=missing_ids).values('pk', 'name'):
+            team_names[t['pk']] = t['name']
+
+    result = []
+    for tid in all_team_ids:
+        matches = team_matches.get(tid, 0)
+        deductions = team_deductions.get(tid, 0)
+        if matches > 0:
+            index = round(deductions / matches, 2)
+        else:
+            index = 0.0
+        result.append({
+            'team__id': tid,
+            'team__name': team_names.get(tid, ''),
+            'matches_played': matches,
+            'yellow_total': team_yellows.get(tid, 0),
+            'red_total': team_reds.get(tid, 0),
+            'fair_play_points': deductions,
+            'fair_play_index': index,
+        })
+
+    result.sort(key=lambda x: (x['fair_play_points'], x['fair_play_index'], x['team__name']))
+    return result[:limit]
 
 
 def public_competition_standings_view(request, pk):
