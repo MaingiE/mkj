@@ -1234,7 +1234,7 @@
 {% block extra_js %}
 <script>
 (function(){
-    /* ── Countdown card — emerge twice then settle top-right ──────── */
+    /* ── Countdown card — emerge twice, settle, retoss at 1min & 2min ── */
     var cdCard = document.getElementById('cdCard');
     if (cdCard) {
         var cdCorners = ['tl','tr','bl','br'];
@@ -1243,7 +1243,7 @@
             'cd-toss-out-tl','cd-toss-out-tr','cd-toss-out-bl','cd-toss-out-br',
             'cd-toss-in-tl','cd-toss-in-tr','cd-toss-in-bl','cd-toss-in-br'
         ];
-        function clearCd() { cdAllClasses.forEach(function(c){ cdCard.classList.remove(c); }); }
+        function clearCd() { cdAllClasses.forEach(function(c){ cdCard.classList.remove(c); }); cdCard.classList.remove('cd-settled'); }
         function pickCorner() { return cdCorners[Math.floor(Math.random() * cdCorners.length)]; }
 
         function setRandomLand() {
@@ -1253,13 +1253,8 @@
             cdCard.style.setProperty('--cd-land-y', off.y);
         }
 
-        /* 1st emergence — fly in from random corner */
-        setRandomLand();
-        var firstCorner = pickCorner();
-        cdCard.classList.add('cd-enter-' + firstCorner);
-
-        /* After 3s: toss out, then 2nd emergence from a different corner */
-        setTimeout(function(){
+        /* Toss-out then toss-in from different corner, then settle */
+        function tossAndSettle(settleDelay) {
             var outDir = pickCorner();
             clearCd();
             cdCard.classList.add('cd-toss-out-' + outDir);
@@ -1273,16 +1268,36 @@
                 cdCard.classList.add('cd-toss-in-' + inDir);
                 setTimeout(function(){ cdCard.style.opacity = '1'; }, 700);
 
-                /* After 2nd emergence lands (3s visible), settle to top-right */
+                /* Settle after the card is visible */
                 setTimeout(function(){
                     clearCd();
                     cdCard.style.opacity = '1';
                     cdCard.style.removeProperty('--cd-land-x');
                     cdCard.style.removeProperty('--cd-land-y');
                     cdCard.classList.add('cd-settled');
-                }, 3000);
+                }, settleDelay || 3000);
             }, 650);
-        }, 3000);
+        }
+
+        /* === SEQUENCE ===
+           0s      : 1st emergence (fly in)
+           3s      : toss out → 2nd emergence → settle after 3s (~6.6s total)
+           +60s    : retoss → re-emerge → settle again
+           +120s   : retoss → re-emerge → settle permanently
+        */
+
+        /* 1st emergence */
+        setRandomLand();
+        cdCard.classList.add('cd-enter-' + pickCorner());
+
+        /* 3s: 2nd emergence then settle */
+        setTimeout(function(){ tossAndSettle(3000); }, 3000);
+
+        /* ~60s after page load: retoss and resettle */
+        setTimeout(function(){ tossAndSettle(2500); }, 60000);
+
+        /* ~120s after page load: retoss and settle permanently */
+        setTimeout(function(){ tossAndSettle(2500); }, 120000);
     }
 
     /* ── Countdown timer ───────────────────────────────────────────── */
