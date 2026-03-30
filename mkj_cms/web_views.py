@@ -800,10 +800,10 @@ def public_results_view(request):
 def public_statistics_view(request):
     """
     Public statistics hub - top scorers, assist leaders, disciplinary,
-    and clean sheet leaders across all active/completed competitions.
-    Users can filter by competition.
+    clean sheet leaders, and fair play across all active/completed competitions.
+    Users can filter by competition and/or sport discipline.
     """
-    from competitions.models import Pool, PoolTeam
+    from competitions.models import Pool, PoolTeam, SportType as ST
     from matches.models import PlayerStatistics
     from matches.stats_engine import (
         get_top_scorers, get_top_assisters,
@@ -815,6 +815,22 @@ def public_statistics_view(request):
     competitions = Competition.objects.filter(
         status__in=['active', 'group_stage', 'knockout', 'completed']
     ).order_by('-start_date')
+
+    # Build discipline choices from what actually exists
+    discipline_choices = (
+        competitions.values_list('sport_type', flat=True)
+        .distinct()
+        .order_by('sport_type')
+    )
+    # Build a list of (value, label) tuples
+    sport_labels = dict(ST.choices)
+    disciplines = [(s, sport_labels.get(s, s)) for s in discipline_choices]
+
+    # Optional sport discipline filter
+    sport_filter = request.GET.get('sport', '')
+    filtered_competitions = competitions
+    if sport_filter and sport_filter in sport_labels:
+        filtered_competitions = competitions.filter(sport_type=sport_filter)
 
     # Optional competition filter
     comp_id = request.GET.get('competition', '')
@@ -831,20 +847,23 @@ def public_statistics_view(request):
         top_assisters = get_top_assisters(selected_competition, limit=20)
         disciplinary = get_disciplinary_table(selected_competition, limit=20)
         clean_sheets = get_clean_sheet_leaders(selected_competition, limit=10)
+        fair_play = get_fair_play_table(selected_competition, limit=20)
     else:
-        # Aggregate across all active/completed competitions
+        # Base filter: active/completed competitions
+        base_filter = {'competition__status__in': ['active', 'group_stage', 'knockout', 'completed']}
+        if sport_filter and sport_filter in sport_labels:
+            base_filter['competition__sport_type'] = sport_filter
+
         top_scorers = PlayerStatistics.objects.filter(
-            goals__gt=0,
-            competition__status__in=['active', 'group_stage', 'knockout', 'completed'],
+            goals__gt=0, **base_filter,
         ).select_related('player', 'team', 'competition').order_by('-goals', '-assists')[:20]
 
         top_assisters = PlayerStatistics.objects.filter(
-            assists__gt=0,
-            competition__status__in=['active', 'group_stage', 'knockout', 'completed'],
+            assists__gt=0, **base_filter,
         ).select_related('player', 'team', 'competition').order_by('-assists', '-goals')[:20]
 
         disciplinary = PlayerStatistics.objects.filter(
-            competition__status__in=['active', 'group_stage', 'knockout', 'completed'],
+            **base_filter,
         ).annotate(
             total_cards=F('yellow_cards') + F('red_cards')
         ).filter(total_cards__gt=0).select_related(
@@ -852,31 +871,58 @@ def public_statistics_view(request):
         ).order_by('-red_cards', '-yellow_cards')[:20]
 
         clean_sheets = PlayerStatistics.objects.filter(
-            clean_sheets__gt=0,
-            player__position='GK',
-            competition__status__in=['active', 'group_stage', 'knockout', 'completed'],
+            clean_sheets__gt=0, player__position='GK', **base_filter,
         ).select_related('player', 'team', 'competition').order_by('-clean_sheets')[:10]
 
+        # Fair play aggregated across competitions
+        fp_qs = PlayerStatistics.objects.filter(**base_filter)
+        fair_play = (
+            fp_qs.values('team__id', 'team__name')
+            .annotate(
+                yellow_total=Sum('yellow_cards'),
+                red_total=Sum('red_cards'),
+            )
+            .annotate(
+                fair_play_points=F('yellow_total') + (F('red_total') * 3),
+            )
+            .filter(fair_play_points__gt=0)
+            .order_by('fair_play_points', 'red_total', 'team__name')[:20]
+        )
+
     # Summary stats
-    total_goals = PlayerStatistics.objects.filter(
-        competition__status__in=['active', 'group_stage', 'knockout', 'completed'],
-    ).aggregate(total=Sum('goals'))['total'] or 0
-    total_matches = Fixture.objects.filter(status='completed').count()
-    total_cards = PlayerStatistics.objects.filter(
-        competition__status__in=['active', 'group_stage', 'knockout', 'completed'],
-    ).aggregate(
+    summary_base = {'competition__status__in': ['active', 'group_stage', 'knockout', 'completed']}
+    if sport_filter and sport_filter in sport_labels and not selected_competition:
+        summary_base['competition__sport_type'] = sport_filter
+    if selected_competition:
+        summary_base = {'competition': selected_competition}
+
+    total_goals = PlayerStatistics.objects.filter(**summary_base).aggregate(total=Sum('goals'))['total'] or 0
+
+    fixture_filter = {'status': 'completed'}
+    if sport_filter and sport_filter in sport_labels and not selected_competition:
+        fixture_filter['competition__sport_type'] = sport_filter
+    if selected_competition:
+        fixture_filter['competition'] = selected_competition
+    total_matches = Fixture.objects.filter(**fixture_filter).count()
+
+    total_cards = PlayerStatistics.objects.filter(**summary_base).aggregate(
         yellows=Sum('yellow_cards'),
         reds=Sum('red_cards'),
     )
 
     return render(request, 'public/statistics.html', {
-        'active_page': 'results',
-        'competitions': competitions,
+        'active_page': 'statistics',
+        'competitions': filtered_competitions,
+        'all_competitions': competitions,
+        'disciplines': disciplines,
+        'sport_filter': sport_filter,
+        'sport_display': sport_labels.get(sport_filter, ''),
         'selected_competition': selected_competition,
         'top_scorers': top_scorers,
         'top_assisters': top_assisters,
         'disciplinary': disciplinary,
         'clean_sheets': clean_sheets,
+        'fair_play': fair_play,
         'total_goals': total_goals,
         'total_matches': total_matches,
         'total_yellows': total_cards['yellows'] or 0,

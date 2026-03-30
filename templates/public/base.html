@@ -125,6 +125,7 @@
             <li><a href="{% url 'home' %}" class="{% if active_page == 'home' %}active{% endif %}">Home</a></li>
             <li><a href="{% url 'about' %}" class="{% if active_page == 'about' %}active{% endif %}">About</a></li>
             <li><a href="{% url 'public_fixtures_results' %}" class="{% if active_page == 'fixtures' %}active{% endif %}">Fixtures & Results</a></li>
+            <li><a href="{% url 'public_statistics' %}" class="{% if active_page == 'statistics' %}active{% endif %}">Statistics</a></li>
             <li><a href="{% url 'news_media:gallery_list' %}" class="{% if active_page == 'gallery' %}active{% endif %}">Gallery</a></li>
             <li class="nav-dropdown">
                 <a href="#" class="{% if active_page == 'news_media' %}active{% endif %}" onclick="this.parentElement.classList.toggle('open');return false;">News & Media ▾</a>

@@ -2,12 +2,12 @@
 {% load static %}
 
 {% block title %}Statistics{% endblock %}
-{% block meta_description %}<meta name="description" content="MKJ SUPA CUP statistics — top scorers, player leaderboards and competition standings for Football, Volleyball, Basketball and Handball in Makueni County.">{% endblock %}
-{% block canonical_url %}https://mkjsupacup.com/results/statistics/{% endblock %}
+{% block meta_description %}<meta name="description" content="MKJ SUPA CUP statistics — top scorers, clean sheets, fair play and disciplinary records for Football, Volleyball, Basketball and Handball in Makueni County.">{% endblock %}
+{% block canonical_url %}https://mkjsupacup.com/statistics/{% endblock %}
 {% block og_meta %}
 <meta property="og:title" content="Statistics - MKJ SUPA CUP">
-<meta property="og:description" content="Top scorers, player leaderboards and competition standings for all MKJ SUPA CUP sports in Makueni County.">
-<meta property="og:url" content="https://mkjsupacup.com/results/statistics/">
+<meta property="og:description" content="Top scorers, clean sheets, fair play and disciplinary records for all MKJ SUPA CUP sports in Makueni County.">
+<meta property="og:url" content="https://mkjsupacup.com/statistics/">
 {% endblock %}
 
 {% block extra_css %}
@@ -16,7 +16,7 @@
         display: flex;
         gap: .5rem;
         flex-wrap: wrap;
-        margin-bottom: 2rem;
+        margin-bottom: 0;
         justify-content: center;
     }
     .results-nav a {
@@ -25,17 +25,49 @@
         gap: .4rem;
         padding: .5rem 1.2rem;
         border-radius: 30px;
-        font-size: .85rem;
+        font-size: .82rem;
         font-weight: 600;
-        color: #333;
+        color: #555;
         background: #F5F5F5;
         transition: all .25s ease;
         border: 1px solid transparent;
+        text-decoration: none;
     }
     .results-nav a:hover, .results-nav a.active {
         background: #124491;
         color: #fff;
         border-color: #124491;
+    }
+
+    /* Discipline tabs */
+    .discipline-tabs {
+        display: flex;
+        gap: .4rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+    .discipline-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .45rem 1rem;
+        border-radius: 50px;
+        font-size: .78rem;
+        font-weight: 600;
+        color: #555;
+        background: #f4f4f4;
+        border: 1px solid #e0e0e0;
+        transition: all .2s;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .discipline-tab:hover { background: #e8e8e8; color: #333; }
+    .discipline-tab--active {
+        background: linear-gradient(135deg, #E8B91E, #FFD54F);
+        color: #0b2545;
+        border-color: #E8B91E;
+        font-weight: 700;
     }
 
     .filter-bar {
@@ -178,6 +210,10 @@
         color: #bbb;
     }
     .lb-empty i { font-size: 1.5rem; display: block; margin-bottom: .3rem; }
+
+    /* Fair play leaderboard - full width */
+    .lb-head.fairplay { background: linear-gradient(135deg, #1565C0, #1976D2); }
+    .stats-grid--full { margin-top: 1.5rem; }
 </style>
 {% endblock %}
 
@@ -189,22 +225,27 @@
     <div class="container" style="position:relative;z-index:2;">
         <span class="badge"><i class="bi bi-bar-chart-line"></i> STATISTICS</span>
         <h1>Player <span style="color:var(--accent)">Statistics</span></h1>
-        <p class="page-hero-sub">Top scorers, assist leaders, and disciplinary records — automatically updated</p>
+        <p class="page-hero-sub">Top scorers, clean sheets, fair play & disciplinary records — updated automatically</p>
         <nav aria-label="breadcrumb" class="hero-bc">
             <a href="{% url 'home' %}">Home</a> <span class="sep">/</span>
-            <a href="{% url 'public_results' %}">Results</a> <span class="sep">/</span>
             <span>Statistics</span>
         </nav>
     </div>
     <div class="kenya-stripe"></div>
 </section>
 
-<!-- ── NAVIGATION TABS ────────────────────────────────────────────────────── -->
+<!-- ── DISCIPLINE TABS ────────────────────────────────────────────────────── -->
 <section class="sec" style="padding-bottom:0;">
     <div class="container">
-        <div class="results-nav">
-            <a href="{% url 'public_results' %}"><i class="bi bi-trophy"></i> Results</a>
-            <a href="{% url 'public_statistics' %}" class="active"><i class="bi bi-bar-chart-line"></i> Statistics</a>
+        <div class="discipline-tabs">
+            <a href="{% url 'public_statistics' %}" class="discipline-tab {% if not sport_filter %}discipline-tab--active{% endif %}">
+                <i class="bi bi-grid-3x3-gap"></i> All Disciplines
+            </a>
+            {% for sport_val, sport_label in disciplines %}
+            <a href="{% url 'public_statistics' %}?sport={{ sport_val }}" class="discipline-tab {% if sport_filter == sport_val %}discipline-tab--active{% endif %}">
+                {{ sport_label }}
+            </a>
+            {% endfor %}
         </div>
     </div>
 </section>
@@ -213,9 +254,10 @@
 <section class="sec" style="padding-top:1rem;padding-bottom:0;">
     <div class="container">
         <form class="filter-bar" method="get">
+            {% if sport_filter %}<input type="hidden" name="sport" value="{{ sport_filter }}">{% endif %}
             <label for="competition"><i class="bi bi-funnel"></i> Filter by Competition:</label>
             <select name="competition" id="competition" onchange="this.form.submit()">
-                <option value="">All Competitions</option>
+                <option value="">All Competitions{% if sport_filter %} ({{ sport_display }}){% endif %}</option>
                 {% for comp in competitions %}
                 <option value="{{ comp.pk }}" {% if selected_competition and selected_competition.pk == comp.pk %}selected{% endif %}>
                     {{ comp.name }} ({{ comp.get_status_display }})
@@ -400,8 +442,44 @@
             </div>
         </div>
 
+        <!-- ── FAIR PLAY TABLE (full width) ───────────────────────────────── -->
+        <div class="stats-grid--full">
+            <div class="leaderboard">
+                <div class="lb-head fairplay"><i class="bi bi-peace"></i> Fair Play Rankings <span style="font-size:.7rem;font-weight:400;opacity:.7;margin-left:.5rem;">(Lower score = More fair play)</span></div>
+                {% if fair_play %}
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Team</th>
+                            <th><i class="bi bi-square-fill" style="color:#F57F17;font-size:.6rem;"></i> Yellow</th>
+                            <th><i class="bi bi-square-fill" style="color:#C62828;font-size:.6rem;"></i> Red</th>
+                            <th>Fair Play Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fp in fair_play %}
+                        <tr>
+                            <td>
+                                <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">{{ forloop.counter }}</span>
+                            </td>
+                            <td class="player-name">{{ fp.team__name }}</td>
+                            <td style="color:#F57F17;font-weight:700;">{{ fp.yellow_total }}</td>
+                            <td style="color:#C62828;font-weight:700;">{{ fp.red_total }}</td>
+                            <td class="stat-highlight" style="color:#1565C0;">{{ fp.fair_play_points }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="lb-empty"><i class="bi bi-peace"></i><br>No fair play data yet</div>
+                {% endif %}
+            </div>
+        </div>
+
         <div style="text-align:center;margin-top:2rem;font-size:.78rem;color:#999;">
             <i class="bi bi-info-circle"></i> Statistics are automatically updated when match reports are approved by the Organising Secretary.
+            {% if sport_filter %}<br><i class="bi bi-funnel"></i> Showing: <strong>{{ sport_display }}</strong> — <a href="{% url 'public_statistics' %}" style="color:#124491;">View all disciplines</a>{% endif %}
         </div>
     </div>
 </section>
