@@ -7,7 +7,8 @@
     <meta name="google-site-verification" content="yIBGmAY6RcUc_YZcaMEax1v4PbmDfVdFSJR6SK2Nvoo">
     <title>{% block title %}MKJ SUPA CUP{% endblock %} - Governor Mutula Kilonzo Junior Super Cup - Makueni County</title>
     {% block meta_description %}<meta name="description" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup. Makueni County's premier multi-sport competition featuring Football, Volleyball, Basketball, and Handball. Live fixtures, results, standings & team registration.">{% endblock %}
-    <meta name="keywords" content="MKJ SUPA CUP, Mutula Kilonzo Junior, Super Cup, Makueni County, Sports, Football, Volleyball, Basketball, Handball, Kenya, Competition, Fixtures, Results">
+    <meta name="keywords" content="MKJ SUPA CUP, Mutula Kilonzo Junior, Super Cup, Makueni County, Sports, Football, Volleyball, Basketball, Handball, Kenya, Competition, Fixtures, Results, youth championship, Makueni sports, sub-county sports, MKJ TINA">
+    <meta name="author" content="County Government of Makueni - MKJ TINA">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{% block canonical_url %}https://mkjsupacup.com/{% endblock %}">
     <!-- Open Graph / Facebook -->
@@ -55,6 +56,38 @@
     .fkf-nav-toggle span{pointer-events:none}
     </style>
     {% block extra_css %}{% endblock %}
+    <!-- JSON-LD: Organization Structured Data -->
+    {% block structured_data %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsOrganization",
+      "name": "MKJ SUPA CUP",
+      "alternateName": "Governor Mutula Kilonzo Junior Super Cup",
+      "url": "https://mkjsupacup.com/",
+      "logo": "{% static 'img/mkj_supa_cup_logo.png' %}",
+      "description": "MKJ SUPA CUP is Makueni County's premier youth multi-sport championship, organised by the County Government of Makueni. Featuring Football, Volleyball, Basketball and Handball competitions across all six sub-counties.",
+      "sport": ["Football", "Volleyball", "Basketball", "Handball"],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "P.O BOX 78-90300",
+        "addressLocality": "Wote",
+        "addressRegion": "Makueni County",
+        "addressCountry": "KE"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "info@mkjsupacup.com",
+        "contactType": "customer support"
+      },
+      "parentOrganization": {
+        "@type": "GovernmentOrganization",
+        "name": "County Government of Makueni",
+        "url": "https://www.makueni.go.ke/"
+      }
+    }
+    </script>
+    {% endblock structured_data %}
 </head>
 <body>
 

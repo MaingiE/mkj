@@ -1,0 +1,24 @@
+# MKJ SUPA CUP - robots.txt
+# Governor Mutula Kilonzo Junior Super Cup - mkjsupacup.com
+
+User-agent: *
+Allow: /
+
+# Private portal and admin areas - do not index
+Disallow: /portal/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /accounts/
+
+# Allow public pages explicitly
+Allow: /about/
+Allow: /fixtures/
+Allow: /results/
+Allow: /competitions/public/
+Allow: /contact/
+Allow: /media-hub/
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 5
+
+Sitemap: https://mkjsupacup.com/sitemap.xml
