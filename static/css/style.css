@@ -1538,11 +1538,11 @@ img { max-width: 100%; }
    PAGE HERO - DARK CINEMATIC (inner pages)
    ────────────────────────────────────────────────────────────────────────── */
 .page-hero {
-    position: relative; min-height: 260px;
+    position: relative; min-height: 180px;
     display: flex; align-items: center; justify-content: center;
     text-align: center; overflow: hidden;
-    padding-top: 72px; padding-bottom: 1.5rem;
-    background: #0C1B3A;
+    padding-top: 68px; padding-bottom: 1.2rem;
+    background: #0a1628;
 }
 .page-hero__bg {
     position: absolute; inset: 0;
@@ -1550,10 +1550,10 @@ img { max-width: 100%; }
 .page-hero__gradient {
     position: absolute; inset: 0;
     background:
-        radial-gradient(ellipse at 30% 40%, rgba(26,111,181,.25) 0%, transparent 55%),
-        radial-gradient(ellipse at 75% 30%, rgba(232,185,30,.08) 0%, transparent 45%),
-        radial-gradient(ellipse at 50% 90%, rgba(46,125,50,.06) 0%, transparent 40%),
-        linear-gradient(135deg, #0C1B3A 0%, #163A5C 40%, #124491 100%);
+        radial-gradient(ellipse at 20% 50%, rgba(26,111,181,.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 30%, rgba(232,185,30,.06) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 100%, rgba(18,68,145,.15) 0%, transparent 50%),
+        linear-gradient(160deg, #0a1628 0%, #112d4e 50%, #1a5bb5 100%);
 }
 .page-hero__canvas {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -1563,21 +1563,21 @@ img { max-width: 100%; }
     position: relative; z-index: 3;
 }
 .page-hero__badge {
-    display: inline-block; padding: .3rem .85rem;
-    border: 1px solid rgba(26,111,181,.35); border-radius: 50px;
-    font-size: .75rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 2.5px; color: #E8B91E;
-    background: rgba(26,111,181,.12); margin-bottom: .75rem;
+    display: inline-block; padding: .25rem .75rem;
+    border: 1px solid rgba(26,111,181,.3); border-radius: 50px;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: #E8B91E;
+    background: rgba(26,111,181,.1); margin-bottom: .6rem;
 }
 .page-hero__title {
     font-family: 'Outfit', sans-serif;
-    font-size: 2.2rem; font-weight: 900; line-height: 1.1;
-    color: #fff; margin-bottom: .35rem; letter-spacing: -.5px;
+    font-size: 1.85rem; font-weight: 800; line-height: 1.15;
+    color: #fff; margin-bottom: .3rem; letter-spacing: -.3px;
 }
 .text-gold { color: #E8B91E; }
 .page-hero__sub {
-    font-size: .95rem; color: rgba(255,255,255,.5);
-    max-width: 540px; margin: 0 auto .75rem; line-height: 1.6;
+    font-size: .85rem; color: rgba(255,255,255,.45);
+    max-width: 500px; margin: 0 auto .6rem; line-height: 1.5;
 }
 .page-hero__breadcrumb {
     display: flex; align-items: center; justify-content: center;
@@ -2100,9 +2100,9 @@ img { max-width: 100%; }
     .cta-box h2 { font-size: 1.5rem; }
 
     /* Page hero 768 */
-    .page-hero { min-height: 280px; padding-top: 80px; padding-bottom: 2rem; }
-    .page-hero__title { font-size: 1.6rem; }
-    .page-hero__sub { font-size: .85rem; }
+    .page-hero { min-height: 180px; padding-top: 72px; padding-bottom: 1.5rem; }
+    .page-hero__title { font-size: 1.45rem; }
+    .page-hero__sub { font-size: .8rem; }
 
     /* About page 768 */
     .mv-grid { grid-template-columns: 1fr; }
@@ -2164,9 +2164,9 @@ img { max-width: 100%; }
     .cd-label { font-size: .75rem; letter-spacing: 1px; }
 
     /* Page hero 480 */
-    .page-hero { min-height: 240px; padding-top: 75px; }
-    .page-hero__title { font-size: 1.35rem; }
-    .page-hero__badge { font-size: .75rem; }
+    .page-hero { min-height: 160px; padding-top: 68px; }
+    .page-hero__title { font-size: 1.2rem; }
+    .page-hero__badge { font-size: .65rem; }
 
     /* About 480 */
     .values-grid { grid-template-columns: 1fr; }
