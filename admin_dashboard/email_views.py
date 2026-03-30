@@ -105,13 +105,24 @@ def email_compose(request):
         to_list = [e.strip() for e in to_raw.split(',') if e.strip()]
         cc_list = [e.strip() for e in cc_raw.split(',') if e.strip()]
 
+        # Append standard sign-off
+        sign_off = (
+            "\n\n---\n"
+            "MKJ SUPA CUP Administration\n"
+            "Phone: 0700 000 000\n"
+            "Reply to: info@mkjsupacup.com\n"
+            "https://mkjsupacup.com"
+        )
+        body_with_sign_off = body + sign_off
+
         try:
             msg = EmailMultiAlternatives(
                 subject=subject,
-                body=body,
+                body=body_with_sign_off,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=to_list,
                 cc=cc_list,
+                reply_to=['info@mkjsupacup.com'],
             )
             msg.send()
 

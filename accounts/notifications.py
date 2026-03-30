@@ -47,7 +47,8 @@ def _send(subject, html_body, recipients, fail_silently=True):
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             try:
-                msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients)
+                msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients,
+                                              reply_to=['info@mkjsupacup.com'])
                 msg.attach_alternative(html_body, "text/html")
                 msg.send(fail_silently=False)
                 logger.info("✉ Sent '%s' → %s", subject, recipients)
@@ -154,6 +155,7 @@ body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin:
  </div>
  <div class="footer">
   <p class="sign-off">MKJ SUPA CUP Administration</p>
+  <p style="font-size:12px;color:#555;margin:6px 0;">&#128222; 0700 000 000 &nbsp;|&nbsp; Reply to: <a href="mailto:info@mkjsupacup.com" style="color:#124491;text-decoration:none;">info@mkjsupacup.com</a></p>
   <p>&copy; 2026 MKJ SUPA CUP - Makueni County Sports Department</p>
   <p><a href="{SITE_URL}" style="color:#124491;text-decoration:none;">{SITE_URL}</a></p>
  </div>

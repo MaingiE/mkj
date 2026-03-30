@@ -244,7 +244,7 @@ SESSION_COOKIE_AGE = 60 * 60 * 2               # max 2 hours even if active
 SESSION_SAVE_EVERY_REQUEST = False              # only write session when modified (huge perf win)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True          # kill session when browser closes
 SESSION_COOKIE_HTTPONLY = True                   # JS cannot read the session cookie
-AUTO_LOGOUT_IDLE_MINUTES = 15                   # log out after 15 min inactivity
+AUTO_LOGOUT_IDLE_MINUTES = 1                    # log out after 1 min inactivity
 
 # ── CELERY ─────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL        = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
