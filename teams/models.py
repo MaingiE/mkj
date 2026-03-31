@@ -4,6 +4,7 @@ MKJ SUPA CUP Teams - Models
 import re
 
 from django.db import models
+from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 from django.utils.text import slugify
@@ -163,10 +164,10 @@ class CountyDiscipline(models.Model):
 
     def _default_mkj_competition(self):
         mkj_qs = Competition.objects.filter(
+            Q(name__icontains="mkj")
+            & Q(name__icontains="supa")
+            & Q(name__icontains="cup"),
             sport_type=self.sport_type,
-            name__icontains="mkj",
-            name__icontains="supa",
-            name__icontains="cup",
         )
 
         for status in ("active", "group_stage", "knockout", "upcoming"):
