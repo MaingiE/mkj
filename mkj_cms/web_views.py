@@ -343,7 +343,7 @@ def _get_primary_registration_for_user(user, auto_create=False):
 
     county = (getattr(user, "county", "") or "").strip()
     if not county:
-        return None
+        county = "Makueni"  # Default — platform is Makueni-only
 
     registration = CountyRegistration.objects.filter(county__iexact=county).order_by("created_at").first()
     if registration or not auto_create:
