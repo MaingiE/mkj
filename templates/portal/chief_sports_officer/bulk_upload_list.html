@@ -39,7 +39,7 @@
                     <tr>
                         <td class="text-muted fw-bold">{{ u.pk }}</td>
                         <td>{{ u.created_at|date:"d M Y H:i" }}</td>
-                        <td>{{ u.uploaded_by.get_full_name|default:u.uploaded_by.username }}</td>
+                        <td>{{ u.uploaded_by.get_full_name|default:u.uploaded_by.email }}</td>
                         <td><strong>{{ u.get_sport_type_display }}</strong></td>
                         <td>{{ u.get_sub_county_display }}</td>
                         <td style="text-align:center">{{ u.total_rows }}</td>

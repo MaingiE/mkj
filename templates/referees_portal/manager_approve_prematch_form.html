@@ -12,7 +12,7 @@
             <p>Date: {{ match.match_date|date:"M j, Y" }}{% if match.kickoff_time %} {{ match.kickoff_time|time:"H:i" }}{% endif %}</p>
             <p>Referee: {{ prematch_form.referee.full_name }}</p>
             <p>Status: {{ prematch_form.get_status_display }}</p>
-            <p class="text-success">✓ Approved by Admin: {{ prematch_form.admin_approved_by.username }} on {{ prematch_form.admin_approved_at|date:"M j, Y H:i" }}</p>
+            <p class="text-success">✓ Approved by Admin: {{ prematch_form.admin_approved_by.get_full_name|default:prematch_form.admin_approved_by.email }} on {{ prematch_form.admin_approved_at|date:"M j, Y H:i" }}</p>
         </div>
     </div>
     

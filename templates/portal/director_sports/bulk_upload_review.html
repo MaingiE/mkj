@@ -17,7 +17,7 @@
         <div class="row g-3">
             <div class="col-md-2">
                 <small class="text-muted d-block">Uploaded By</small>
-                <strong>{{ bulk.uploaded_by.get_full_name|default:bulk.uploaded_by.username }}</strong>
+                <strong>{{ bulk.uploaded_by.get_full_name|default:bulk.uploaded_by.email }}</strong>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Discipline</small>
