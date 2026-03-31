@@ -242,11 +242,14 @@ else:
         }
     }
 
-# ── SESSIONS (Redis-backed in production for speed + no more corruption) ───────
+# ── SESSIONS ───────────────────────────────────────────────────────────────────
+# Use cached_db in production: reads come from Redis (fast), writes go to both
+# Redis + DB.  If cache.clear() or Redis eviction happens, the DB fallback
+# keeps the session alive — no more mass logouts.
 if DEBUG:
     SESSION_ENGINE = "django.contrib.sessions.backends.db"
 else:
-    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
     SESSION_CACHE_ALIAS = "default"
 
 SESSION_COOKIE_AGE = 60 * 60 * 2               # max 2 hours even if active
@@ -426,12 +429,12 @@ LOGGING = {
         },
         "django.request": {
             "handlers": ["console", "mail_admins"],
-            "level": "ERROR",
+            "level": "WARNING",
             "propagate": False,
         },
         "django.security": {
-            "handlers": ["console", "mail_admins"],
-            "level": "WARNING",
+            "handlers": ["console"],
+            "level": "DEBUG",
             "propagate": False,
         },
     },
