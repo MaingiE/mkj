@@ -32,15 +32,15 @@
             </select>
         </div>
         <div>
-            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">County</label>
-            <select name="county" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">All Counties</option>
-                {% for c in counties %}
-                <option value="{{ c }}" {% if c == county_filter %}selected{% endif %}>{{ c }}</option>
+            <label class="form-label mb-1" style="font-size:.82rem;font-weight:600;">Sub-County</label>
+            <select name="subcounty" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Sub-Counties</option>
+                {% for val, label in subcounties %}
+                <option value="{{ val }}" {% if val == subcounty_filter %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
         </div>
-        {% if discipline_filter or county_filter %}
+        {% if discipline_filter or subcounty_filter %}
         <a href="{% url 'sg_verified_players' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear</a>
         {% endif %}
     </form>
@@ -53,7 +53,7 @@
                 <tr>
                     <th>#</th>
                     <th>Player Name</th>
-                    <th>County</th>
+                    <th>Sub-County</th>
                     <th>Discipline</th>
                     <th>National ID</th>
                     <th>Registered</th>
@@ -64,7 +64,7 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ p.first_name }} {{ p.last_name }}</td>
-                    <td>{{ p.discipline.registration.county|default:" - " }}</td>
+                    <td>{{ p.sub_county|default:" - " }}</td>
                     <td>{{ p.discipline.get_sport_type_display }}</td>
                     <td style="font-size:.85rem;">{{ p.national_id_number }}</td>
                     <td style="font-size:.82rem;white-space:nowrap;">

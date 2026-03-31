@@ -20,4 +20,4 @@ exec gunicorn mkj_cms.wsgi \
   --max-requests-jitter 50 \
   --preload \
   --access-logfile - \
-  --access-logformat '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" %(D)sms'
+  --access-logformat '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" %(L)ss'

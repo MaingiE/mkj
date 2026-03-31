@@ -4,11 +4,13 @@ User = get_user_model()
 
 
 class EmailBackend:
-    def authenticate(self, request, email=None, password=None, **kwargs):
-        if email is None:
+    def authenticate(self, request, email=None, password=None, username=None, **kwargs):
+        # Accept 'username' kwarg for compatibility with Django admin
+        lookup = email or username
+        if lookup is None:
             return None
         try:
-            user = User.objects.get(email__iexact=email)
+            user = User.objects.get(email__iexact=lookup)
         except User.DoesNotExist:
             return None
 

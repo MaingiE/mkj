@@ -6875,30 +6875,31 @@ def sg_exceptional_overrides_view(request):
 @role_required('secretary_general')
 def sg_verified_players_view(request):
     """SG: View verified players for all disciplines - who verified, when, where."""
+    from accounts.models import MakueniSubCounty
     discipline_filter = request.GET.get('discipline', '')
-    county_filter = request.GET.get('county', '')
+    subcounty_filter = request.GET.get('subcounty', '')
 
     players = CountyPlayer.objects.filter(
         verification_status='verified',
     ).select_related(
         'discipline', 'discipline__registration',
-    ).order_by('discipline__sport_type', 'discipline__registration__county', 'last_name')
+    ).order_by('discipline__sport_type', 'sub_county', 'last_name')
 
     if discipline_filter:
         players = players.filter(discipline__sport_type=discipline_filter)
-    if county_filter:
-        players = players.filter(discipline__registration__county=county_filter)
+    if subcounty_filter:
+        players = players.filter(sub_county=subcounty_filter)
 
     disc_values = CountyDiscipline.objects.values_list('sport_type', flat=True).distinct().order_by('sport_type')
     disciplines = [(st, dict(SportType.choices).get(st, st)) for st in disc_values]
-    counties = CountyRegistration.objects.values_list('county', flat=True).distinct().order_by('county')
+    subcounties = MakueniSubCounty.choices
 
     return render(request, 'portal/secretary_general/verified_players.html', {
         'players': players,
         'disciplines': disciplines,
-        'counties': counties,
+        'subcounties': subcounties,
         'discipline_filter': discipline_filter,
-        'county_filter': county_filter,
+        'subcounty_filter': subcounty_filter,
         'total': players.count(),
     })
 
@@ -8625,18 +8626,19 @@ def director_sports_review_shortlist_request_view(request, pk):
 @role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_verified_players_view(request):
     """Director of Sports / Chief Sports Officer: view all verified players with filtering."""
-    county_filter = request.GET.get('county', '')
+    from accounts.models import MakueniSubCounty
+    subcounty_filter = request.GET.get('subcounty', '')
     discipline_filter = request.GET.get('discipline', '')
     approval_filter = request.GET.get('approval', '')
 
     players = CountyPlayer.objects.filter(
         verification_status='verified',
     ).select_related('discipline', 'discipline__registration').order_by(
-        'discipline__sport_type', 'discipline__registration__county', 'last_name',
+        'discipline__sport_type', 'sub_county', 'last_name',
     )
 
-    if county_filter:
-        players = players.filter(discipline__registration__county=county_filter)
+    if subcounty_filter:
+        players = players.filter(sub_county=subcounty_filter)
     if discipline_filter:
         players = players.filter(discipline__sport_type=discipline_filter)
     if approval_filter == 'approved':
@@ -8648,7 +8650,7 @@ def director_sports_verified_players_view(request):
     elif approval_filter == 'locked':
         players = players.filter(director_locked=True)
 
-    counties = CountyRegistration.objects.values_list('county', flat=True).distinct().order_by('county')
+    subcounties = MakueniSubCounty.choices
     disciplines = SportType.choices
 
     all_verified = CountyPlayer.objects.filter(verification_status='verified')
@@ -8662,9 +8664,9 @@ def director_sports_verified_players_view(request):
 
     return render(request, 'portal/director_sports/verified_players.html', {
         'players': players,
-        'counties': counties,
+        'subcounties': subcounties,
         'disciplines': disciplines,
-        'county_filter': county_filter,
+        'subcounty_filter': subcounty_filter,
         'discipline_filter': discipline_filter,
         'approval_filter': approval_filter,
         'stats': stats,
@@ -8715,7 +8717,7 @@ def director_sports_disapprove_player_view(request, pk):
 @require_POST
 def director_sports_bulk_approve_view(request):
     """Director of Sports / Chief Sports Officer: bulk approve all verified players matching filter."""
-    county_filter = request.POST.get('county', '')
+    subcounty_filter = request.POST.get('subcounty', '')
     discipline_filter = request.POST.get('discipline', '')
 
     players = CountyPlayer.objects.filter(
@@ -8723,8 +8725,8 @@ def director_sports_bulk_approve_view(request):
         director_approved=False,
         director_disapproved=False,
     )
-    if county_filter:
-        players = players.filter(discipline__registration__county=county_filter)
+    if subcounty_filter:
+        players = players.filter(sub_county=subcounty_filter)
     if discipline_filter:
         players = players.filter(discipline__sport_type=discipline_filter)
 
@@ -8743,15 +8745,15 @@ def director_sports_bulk_approve_view(request):
 @require_POST
 def director_sports_lock_list_view(request):
     """Director of Sports: lock all approved players - no further edits except by Director."""
-    county_filter = request.POST.get('county', '')
+    subcounty_filter = request.POST.get('subcounty', '')
     discipline_filter = request.POST.get('discipline', '')
 
     players = CountyPlayer.objects.filter(
         verification_status='verified',
         director_approved=True,
     )
-    if county_filter:
-        players = players.filter(discipline__registration__county=county_filter)
+    if subcounty_filter:
+        players = players.filter(sub_county=subcounty_filter)
     if discipline_filter:
         players = players.filter(discipline__sport_type=discipline_filter)
 
@@ -8767,15 +8769,15 @@ def director_sports_lock_list_view(request):
 @require_POST
 def director_sports_unlock_list_view(request):
     """Director of Sports: unlock locked players for further edits."""
-    county_filter = request.POST.get('county', '')
+    subcounty_filter = request.POST.get('subcounty', '')
     discipline_filter = request.POST.get('discipline', '')
 
     players = CountyPlayer.objects.filter(
         verification_status='verified',
         director_locked=True,
     )
-    if county_filter:
-        players = players.filter(discipline__registration__county=county_filter)
+    if subcounty_filter:
+        players = players.filter(sub_county=subcounty_filter)
     if discipline_filter:
         players = players.filter(discipline__sport_type=discipline_filter)
 
@@ -8992,10 +8994,10 @@ def verified_players_pdf_view(request):
             scope_label = "No discipline assigned"
     elif user.role == 'director_sports' or user.role == 'chief_sports_officer' or user.is_superuser:
         players = CountyPlayer.objects.filter(verification_status='verified')
-        county_filter = request.GET.get('county', '')
-        if county_filter:
-            players = players.filter(discipline__registration__county=county_filter)
-        scope_label = "All Counties - All Disciplines"
+        subcounty_filter = request.GET.get('subcounty', '')
+        if subcounty_filter:
+            players = players.filter(sub_county=subcounty_filter)
+        scope_label = "All Sub-Counties - All Disciplines"
     else:
         messages.error(request, 'Permission denied.')
         return redirect('dashboard')

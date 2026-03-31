@@ -55,6 +55,7 @@ MIDDLEWARE = [
     "accounts.middleware.BotBlockerMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -62,7 +63,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.gzip.GZipMiddleware",
     "accounts.middleware.AutoLogoutMiddleware",
     "accounts.middleware.ForcePasswordChangeMiddleware",
     "admin_dashboard.activity_middleware.ActivityLoggingMiddleware",
@@ -96,6 +96,16 @@ DATABASES = {
 # ── AUTH ───────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = "accounts.User"
 
+# Use Argon2 (OWASP-recommended, memory-hard) as the primary hasher.
+# Existing PBKDF2 hashes are auto-verified and upgraded to Argon2 on next login.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
@@ -106,7 +116,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = [
     "accounts.backends.EmailBackend",
-    "django.contrib.auth.backends.ModelBackend",
 ]
 
 LOGIN_URL = "web_login"
