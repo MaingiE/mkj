@@ -216,7 +216,7 @@ class CountyPlayer(models.Model):
     )
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(null=True, blank=True)
     national_id_number = models.CharField(
         max_length=20, unique=True, validators=[national_id_validator],
         help_text="National ID - unique across all counties and disciplines",
@@ -238,6 +238,10 @@ class CountyPlayer(models.Model):
                                 help_text="Player position (where applicable)")
     jersey_number = models.PositiveIntegerField(null=True, blank=True,
                                                 help_text="Jersey number")
+    ligi_mashinani_team = models.CharField(
+        max_length=200, blank=True, default="",
+        help_text="Team in Ligi Mashinani",
+    )
     photo = models.ImageField(upload_to="county_players/photos/", null=True, blank=True,
                               help_text="Passport-size photo (required)")
     iprs_photo = models.ImageField(
@@ -1316,7 +1320,7 @@ class BulkPlayerUpload(models.Model):
     )
     file = models.FileField(
         upload_to="bulk_uploads/%Y/%m/",
-        help_text="Excel (.xlsx) file with player data",
+        help_text="Excel (.xlsx) or Word (.docx) file with player data",
     )
     original_filename = models.CharField(max_length=255, blank=True, default="")
     sport_type = models.CharField(max_length=30, choices=SportType.choices)
@@ -1351,6 +1355,8 @@ class BulkPlayerUploadRow(models.Model):
         related_name="rows",
     )
     row_number = models.PositiveIntegerField()
+    full_name = models.CharField(max_length=200, blank=True, default="",
+                                  help_text="Full name as per ID document")
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -1359,6 +1365,8 @@ class BulkPlayerUploadRow(models.Model):
     position = models.CharField(max_length=30, blank=True, default="")
     jersey_number = models.PositiveIntegerField(null=True, blank=True)
     ward = models.CharField(max_length=100, blank=True, default="")
+    ligi_mashinani_team = models.CharField(max_length=200, blank=True, default="",
+                                            help_text="Team in Ligi Mashinani")
     is_valid = models.BooleanField(default=True)
     error_message = models.TextField(blank=True, default="")
     county_player = models.ForeignKey(
@@ -1366,10 +1374,18 @@ class BulkPlayerUploadRow(models.Model):
         null=True, blank=True, related_name="bulk_source",
         help_text="CountyPlayer created from this row on approval",
     )
+    # Edit tracking
+    edit_reason = models.TextField(blank=True, default="",
+                                    help_text="Reason for editing this row (required on edit)")
+    edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="bulk_row_edits",
+    )
+    edited_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["row_number"]
         unique_together = ["upload", "row_number"]
 
     def __str__(self):
-        return f"Row {self.row_number}: {self.first_name} {self.last_name}"
+        return f"Row {self.row_number}: {self.full_name or (self.first_name + ' ' + self.last_name)}"

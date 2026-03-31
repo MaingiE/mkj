@@ -8,14 +8,14 @@
         <span>Bulk Player Upload</span>
     </div>
     <h1><i class="bi bi-cloud-upload"></i> Bulk Player Upload</h1>
-    <p>Upload an Excel (.xlsx) team list to fast-track player registration. Players will be created as verified pending Director of Sports approval.</p>
+    <p>Upload an Excel (.xlsx) or Word (.docx) team list to fast-track player registration. Players will be created as verified pending Director of Sports approval.</p>
 </div>
 
 <!-- Instructions -->
 <div class="card mb-1">
-    <div class="card-header"><h3><i class="bi bi-info-circle"></i> Excel Format Instructions</h3></div>
+    <div class="card-header"><h3><i class="bi bi-info-circle"></i> File Format Instructions</h3></div>
     <div class="card-body">
-        <p style="font-size:.9rem;margin-bottom:.75rem;">Your Excel file must have a <strong>header row</strong> followed by player data. Columns (in order):</p>
+        <p style="font-size:.9rem;margin-bottom:.75rem;">Your file must have a <strong>header row</strong> followed by player data. Supports <strong>.xlsx</strong> (Excel) and <strong>.docx</strong> (Word with a table). Columns (in order):</p>
         <div class="table-responsive">
             <table class="table table-sm" style="font-size:.85rem;">
                 <thead style="background:#f5f5f5;">
@@ -24,14 +24,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>A</td><td>First Name</td><td><span class="badge bg-danger">Yes</span></td><td></td></tr>
-                    <tr><td>B</td><td>Last Name</td><td><span class="badge bg-danger">Yes</span></td><td></td></tr>
-                    <tr><td>C</td><td>Date of Birth</td><td><span class="badge bg-danger">Yes</span></td><td>Format: YYYY-MM-DD or DD/MM/YYYY</td></tr>
-                    <tr><td>D</td><td>National ID</td><td><span class="badge bg-danger">Yes</span></td><td>5-10 digits, unique</td></tr>
-                    <tr><td>E</td><td>Phone</td><td>Optional</td><td>e.g. 0712345678 or +254712345678</td></tr>
-                    <tr><td>F</td><td>Position</td><td>Optional</td><td>e.g. GK, CB, CM, CF</td></tr>
-                    <tr><td>G</td><td>Jersey Number</td><td>Optional</td><td>Integer</td></tr>
-                    <tr><td>H</td><td>Ward</td><td>Optional</td><td>Ward within the sub-county</td></tr>
+                    <tr><td>A</td><td>NAME (Full - As per ID)</td><td><span class="badge bg-danger">Yes</span></td><td>Full name as it appears on the National ID</td></tr>
+                    <tr><td>B</td><td>WARD</td><td>Optional</td><td>Ward within the sub-county</td></tr>
+                    <tr><td>C</td><td>ID</td><td><span class="badge bg-danger">Yes</span></td><td>National ID number (5-10 digits, unique)</td></tr>
+                    <tr><td>D</td><td>POSITION</td><td>Optional</td><td>e.g. GK, CB, CM, CF</td></tr>
+                    <tr><td>E</td><td>PHONE NO</td><td>Optional</td><td>e.g. 0712345678 or +254712345678</td></tr>
+                    <tr><td>F</td><td>TEAM IN LIGI MASHINANI</td><td>Optional</td><td>Player's team in Ligi Mashinani</td></tr>
                 </tbody>
             </table>
         </div>
@@ -64,8 +62,8 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Excel File (.xlsx) *</label>
-                    <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                    <label class="form-label fw-bold">File (.xlsx or .docx) *</label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.docx" required>
                 </div>
             </div>
             <div class="mb-3">

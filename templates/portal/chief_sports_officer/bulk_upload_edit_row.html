@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Edit Row #{{ row.row_number }} - MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'chief_sports_officer_dashboard' %}">Chief Sports Officer</a>
+        <a href="{% url 'cso_bulk_upload_list' %}">Bulk Uploads</a>
+        <a href="{% url 'cso_bulk_upload_detail' pk=bulk.pk %}">Upload #{{ bulk.pk }}</a>
+        <span>Edit Row #{{ row.row_number }}</span>
+    </div>
+    <h1><i class="bi bi-pencil-square"></i> Edit Row #{{ row.row_number }}</h1>
+</div>
+
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-person-lines-fill"></i> Player Details</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">NAME (Full - As per ID) *</label>
+                    <input type="text" name="full_name" class="form-control" value="{{ row.full_name|default:'' }}" required placeholder="e.g. John Mwangi Kamau">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">WARD</label>
+                    <input type="text" name="ward" class="form-control" value="{{ row.ward|default:'' }}" placeholder="Ward within the sub-county">
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">ID (National ID) *</label>
+                    <input type="text" name="national_id" class="form-control" value="{{ row.national_id_number|default:'' }}" required placeholder="National ID number">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">POSITION</label>
+                    <input type="text" name="position" class="form-control" value="{{ row.position|default:'' }}" placeholder="e.g. GK, CB, CM, CF">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">PHONE NO</label>
+                    <input type="text" name="phone" class="form-control" value="{{ row.phone|default:'' }}" placeholder="e.g. 0712345678">
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">TEAM IN LIGI MASHINANI</label>
+                    <input type="text" name="ligi_mashinani_team" class="form-control" value="{{ row.ligi_mashinani_team|default:'' }}" placeholder="Player's Ligi Mashinani team">
+                </div>
+            </div>
+
+            {% if not row.is_valid %}
+            <div class="alert alert-danger mb-3">
+                <i class="bi bi-exclamation-triangle"></i> <strong>Current errors:</strong> {{ row.error_message }}
+            </div>
+            {% endif %}
+
+            {% if row.edit_reason %}
+            <div class="alert alert-info mb-3">
+                <i class="bi bi-info-circle"></i> <strong>Previous edit reason:</strong> {{ row.edit_reason }}
+                <br><small>Edited by {{ row.edited_by.get_full_name|default:row.edited_by.email }} on {{ row.edited_at|date:"d M Y H:i" }}</small>
+            </div>
+            {% endif %}
+
+            <hr>
+            <div class="mb-3">
+                <label class="form-label fw-bold text-danger">Reason for Edit *</label>
+                <textarea name="edit_reason" class="form-control" rows="2" required placeholder="Explain why this row is being edited (required)..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Changes</button>
+            <a href="{% url 'cso_bulk_upload_detail' pk=bulk.pk %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

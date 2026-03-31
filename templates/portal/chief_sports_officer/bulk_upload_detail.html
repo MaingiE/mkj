@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Upload #{{ upload.pk }} Detail - MKJ SUPA CUP{% endblock %}
+{% block title %}Upload #{{ bulk.pk }} Detail - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
         <a href="{% url 'chief_sports_officer_dashboard' %}">Chief Sports Officer</a>
         <a href="{% url 'cso_bulk_upload_list' %}">Bulk Uploads</a>
-        <span>Upload #{{ upload.pk }}</span>
+        <span>Upload #{{ bulk.pk }}</span>
     </div>
-    <h1><i class="bi bi-file-earmark-spreadsheet"></i> Upload #{{ upload.pk }} Detail</h1>
+    <h1><i class="bi bi-file-earmark-spreadsheet"></i> Upload #{{ bulk.pk }} Detail</h1>
 </div>
 
 <!-- Summary Card -->
@@ -17,17 +17,17 @@
         <div class="row g-3">
             <div class="col-md-3">
                 <small class="text-muted d-block">Discipline</small>
-                <strong>{{ upload.get_sport_type_display }}</strong>
+                <strong>{{ bulk.get_sport_type_display }}</strong>
             </div>
             <div class="col-md-3">
                 <small class="text-muted d-block">Sub-County</small>
-                <strong>{{ upload.get_sub_county_display }}</strong>
+                <strong>{{ bulk.get_sub_county_display }}</strong>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Status</small>
-                {% if upload.status == 'approved' %}
+                {% if bulk.status == 'approved' %}
                 <span class="badge bg-success">Approved</span>
-                {% elif upload.status == 'rejected' %}
+                {% elif bulk.status == 'rejected' %}
                 <span class="badge bg-danger">Rejected</span>
                 {% else %}
                 <span class="badge bg-warning text-dark">Pending</span>
@@ -35,25 +35,25 @@
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Total / Valid / Errors</small>
-                <strong>{{ upload.total_rows }}</strong> /
-                <span class="text-success fw-bold">{{ upload.valid_rows }}</span> /
-                <span class="text-danger fw-bold">{{ upload.error_rows }}</span>
+                <strong>{{ bulk.total_rows }}</strong> /
+                <span class="text-success fw-bold">{{ bulk.valid_rows }}</span> /
+                <span class="text-danger fw-bold">{{ bulk.error_rows }}</span>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Uploaded</small>
-                <strong>{{ upload.created_at|date:"d M Y H:i" }}</strong>
+                <strong>{{ bulk.created_at|date:"d M Y H:i" }}</strong>
             </div>
         </div>
-        {% if upload.notes %}
+        {% if bulk.notes %}
         <div class="mt-2">
             <small class="text-muted d-block">Notes</small>
-            <em>{{ upload.notes }}</em>
+            <em>{{ bulk.notes }}</em>
         </div>
         {% endif %}
-        {% if upload.rejection_reason %}
+        {% if bulk.rejection_reason %}
         <div class="mt-2">
             <small class="text-muted d-block">Rejection Reason</small>
-            <span class="text-danger">{{ upload.rejection_reason }}</span>
+            <span class="text-danger">{{ bulk.rejection_reason }}</span>
         </div>
         {% endif %}
     </div>
@@ -68,29 +68,26 @@
                 <thead style="background:#f5f5f5;">
                     <tr>
                         <th>Row</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>DOB</th>
-                        <th>National ID</th>
-                        <th>Phone</th>
-                        <th>Position</th>
-                        <th>Jersey</th>
+                        <th>Name (Full)</th>
                         <th>Ward</th>
+                        <th>National ID</th>
+                        <th>Position</th>
+                        <th>Phone</th>
+                        <th>Ligi Mashinani Team</th>
                         <th>Status</th>
+                        {% if bulk.status == 'pending' %}<th>Action</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in rows %}
                     <tr class="{% if not row.is_valid %}table-danger{% endif %}">
                         <td>{{ row.row_number }}</td>
-                        <td>{{ row.first_name }}</td>
-                        <td>{{ row.last_name }}</td>
-                        <td>{{ row.date_of_birth|date:"d/m/Y" }}</td>
-                        <td>{{ row.national_id_number }}</td>
-                        <td>{{ row.phone|default:"-" }}</td>
-                        <td>{{ row.position|default:"-" }}</td>
-                        <td>{{ row.jersey_number|default:"-" }}</td>
+                        <td>{{ row.full_name|default:row.first_name }}</td>
                         <td>{{ row.ward|default:"-" }}</td>
+                        <td>{{ row.national_id_number }}</td>
+                        <td>{{ row.position|default:"-" }}</td>
+                        <td>{{ row.phone|default:"-" }}</td>
+                        <td>{{ row.ligi_mashinani_team|default:"-" }}</td>
                         <td>
                             {% if row.is_valid %}
                             <span class="badge bg-success">Valid</span>
@@ -98,10 +95,20 @@
                             <span class="badge bg-danger" title="{{ row.error_message }}">Error</span>
                             <small class="d-block text-danger">{{ row.error_message }}</small>
                             {% endif %}
+                            {% if row.edit_reason %}
+                            <small class="d-block text-info mt-1"><i class="bi bi-pencil"></i> Edited: {{ row.edit_reason }}</small>
+                            {% endif %}
                         </td>
+                        {% if bulk.status == 'pending' %}
+                        <td>
+                            <a href="{% url 'cso_bulk_upload_edit_row' row_pk=row.pk %}" class="btn btn-sm btn-outline-primary" title="Edit row">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
-                    <tr><td colspan="10" class="text-center text-muted py-3">No rows parsed.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-3">No rows parsed.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

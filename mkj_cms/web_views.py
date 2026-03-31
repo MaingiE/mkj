@@ -7908,7 +7908,7 @@ def cso_bulk_upload_list_view(request):
 
 @role_required('chief_sports_officer', 'admin')
 def cso_bulk_upload_view(request):
-    """Upload an Excel file with player data → parsed into BulkPlayerUploadRow."""
+    """Upload an Excel or Word file with player data → parsed into BulkPlayerUploadRow."""
     import openpyxl
     from datetime import datetime
     from teams.models import (
@@ -7930,8 +7930,9 @@ def cso_bulk_upload_view(request):
             messages.error(request, 'Please select a file to upload.')
             return redirect('cso_bulk_upload')
 
-        if not uploaded_file.name.lower().endswith('.xlsx'):
-            messages.error(request, 'Only .xlsx Excel files are supported.')
+        fname_lower = uploaded_file.name.lower()
+        if not (fname_lower.endswith('.xlsx') or fname_lower.endswith('.docx')):
+            messages.error(request, 'Only .xlsx (Excel) and .docx (Word) files are supported.')
             return redirect('cso_bulk_upload')
 
         if not sport_type:
@@ -7951,15 +7952,27 @@ def cso_bulk_upload_view(request):
             notes=notes,
         )
 
-        # Parse the Excel file
+        # ── Parse the file ───────────────────────────────────────────────
+        rows_list = []
         try:
-            wb = openpyxl.load_workbook(bulk.file.path, read_only=True, data_only=True)
-            ws = wb.active
-            rows_list = list(ws.iter_rows(min_row=2, values_only=True))  # skip header
-            wb.close()
+            if fname_lower.endswith('.xlsx'):
+                wb = openpyxl.load_workbook(bulk.file.path, read_only=True, data_only=True)
+                ws = wb.active
+                rows_list = list(ws.iter_rows(min_row=2, values_only=True))  # skip header
+                wb.close()
+            elif fname_lower.endswith('.docx'):
+                import docx
+                doc = docx.Document(bulk.file.path)
+                for table in doc.tables:
+                    for i, tbl_row in enumerate(table.rows):
+                        if i == 0:
+                            continue  # skip header row
+                        cells = [cell.text.strip() for cell in tbl_row.cells]
+                        if any(c for c in cells):
+                            rows_list.append(tuple(cells))
         except Exception as exc:
             bulk.delete()
-            messages.error(request, f'Could not read Excel file: {exc}')
+            messages.error(request, f'Could not read file: {exc}')
             return redirect('cso_bulk_upload')
 
         total = 0
@@ -7972,45 +7985,29 @@ def cso_bulk_upload_view(request):
                 continue  # skip blank rows
 
             total += 1
-            # Columns: first_name, last_name, dob, national_id, phone, position, jersey, ward
-            first_name = str(row[0] or '').strip() if len(row) > 0 else ''
-            last_name = str(row[1] or '').strip() if len(row) > 1 else ''
-            dob_raw = row[2] if len(row) > 2 else None
-            id_raw = str(row[3] or '').strip() if len(row) > 3 else ''
+            # Columns: NAME (Full), WARD, ID, POSITION, PHONE NO, TEAM IN LIGI MASHINANI
+            full_name = str(row[0] or '').strip() if len(row) > 0 else ''
+            ward = str(row[1] or '').strip() if len(row) > 1 else ''
+            id_raw = str(row[2] or '').strip() if len(row) > 2 else ''
+            position = str(row[3] or '').strip() if len(row) > 3 else ''
             phone_raw = str(row[4] or '').strip() if len(row) > 4 else ''
-            position = str(row[5] or '').strip() if len(row) > 5 else ''
-            jersey_raw = row[6] if len(row) > 6 else None
-            ward = str(row[7] or '').strip() if len(row) > 7 else ''
+            ligi_team = str(row[5] or '').strip() if len(row) > 5 else ''
 
             row_errors = []
 
-            if not first_name:
-                row_errors.append('Missing first name')
-            if not last_name:
-                row_errors.append('Missing last name')
-
-            # Parse date of birth
-            dob = None
-            if isinstance(dob_raw, datetime):
-                dob = dob_raw.date()
-            elif isinstance(dob_raw, str) and dob_raw.strip():
-                for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y', '%m/%d/%Y'):
-                    try:
-                        dob = datetime.strptime(dob_raw.strip(), fmt).date()
-                        break
-                    except ValueError:
-                        continue
-                if dob is None:
-                    row_errors.append(f'Invalid date: {dob_raw}')
-            elif dob_raw is not None:
-                try:
-                    from datetime import date as _date_type
-                    if isinstance(dob_raw, _date_type):
-                        dob = dob_raw
-                except Exception:
-                    row_errors.append(f'Invalid date: {dob_raw}')
-            if not dob:
-                row_errors.append('Missing date of birth')
+            # Parse full name into first + last
+            name_parts = full_name.split()
+            if not full_name:
+                row_errors.append('Missing name')
+                first_name = ''
+                last_name = ''
+            elif len(name_parts) == 1:
+                first_name = name_parts[0]
+                last_name = ''
+                row_errors.append('Only one name provided - need full name as per ID')
+            else:
+                first_name = name_parts[0]
+                last_name = ' '.join(name_parts[1:])
 
             # Validate national ID
             national_id = normalize_national_id(id_raw) if id_raw else ''
@@ -8026,14 +8023,6 @@ def cso_bulk_upload_view(request):
             # Normalize phone
             phone = normalize_kenya_phone(phone_raw) if phone_raw else ''
 
-            # Jersey
-            jersey = None
-            if jersey_raw is not None:
-                try:
-                    jersey = int(jersey_raw)
-                except (ValueError, TypeError):
-                    pass
-
             is_valid = len(row_errors) == 0
             if is_valid:
                 valid += 1
@@ -8043,14 +8032,14 @@ def cso_bulk_upload_view(request):
             BulkPlayerUploadRow.objects.create(
                 upload=bulk,
                 row_number=idx,
+                full_name=full_name,
                 first_name=first_name,
                 last_name=last_name,
-                date_of_birth=dob,
                 national_id_number=national_id,
                 phone=phone,
                 position=position,
-                jersey_number=jersey,
                 ward=ward,
+                ligi_mashinani_team=ligi_team,
                 is_valid=is_valid,
                 error_message='; '.join(row_errors),
             )
@@ -8090,6 +8079,99 @@ def cso_bulk_upload_detail_view(request, pk):
     return render(request, 'portal/chief_sports_officer/bulk_upload_detail.html', {
         'bulk': bulk,
         'rows': rows,
+    })
+
+
+@role_required('chief_sports_officer', 'admin')
+def cso_bulk_upload_edit_row_view(request, row_pk):
+    """Edit a single row from a pending bulk upload. Requires an edit reason."""
+    from teams.models import BulkPlayerUploadRow, BulkUploadStatus
+    from accounts.models import normalize_kenya_phone, normalize_national_id
+
+    row = get_object_or_404(BulkPlayerUploadRow, pk=row_pk)
+    bulk = row.upload
+
+    # Only allow edits on pending uploads
+    if bulk.status != BulkUploadStatus.PENDING:
+        messages.error(request, 'Cannot edit rows on an already reviewed upload.')
+        return redirect('cso_bulk_upload_detail', pk=bulk.pk)
+
+    # Permission check
+    if not request.user.is_superuser and request.user.role != 'admin' and bulk.uploaded_by != request.user:
+        messages.error(request, 'You do not have permission to edit this upload.')
+        return redirect('cso_bulk_upload_list')
+
+    if request.method == 'POST':
+        edit_reason = request.POST.get('edit_reason', '').strip()
+        if not edit_reason:
+            messages.error(request, 'Please provide a reason for editing this row.')
+            return render(request, 'portal/chief_sports_officer/bulk_upload_edit_row.html', {
+                'row': row, 'bulk': bulk,
+            })
+
+        full_name = request.POST.get('full_name', '').strip()
+        ward = request.POST.get('ward', '').strip()
+        id_raw = request.POST.get('national_id', '').strip()
+        position = request.POST.get('position', '').strip()
+        phone_raw = request.POST.get('phone', '').strip()
+        ligi_team = request.POST.get('ligi_mashinani_team', '').strip()
+
+        # Parse name
+        name_parts = full_name.split()
+        row_errors = []
+        if not full_name:
+            row_errors.append('Missing name')
+            first_name = ''
+            last_name = ''
+        elif len(name_parts) == 1:
+            first_name = name_parts[0]
+            last_name = ''
+            row_errors.append('Only one name provided - need full name as per ID')
+        else:
+            first_name = name_parts[0]
+            last_name = ' '.join(name_parts[1:])
+
+        national_id = normalize_national_id(id_raw) if id_raw else ''
+        if not national_id:
+            row_errors.append('Missing or invalid national ID')
+        else:
+            dup = BulkPlayerUploadRow.objects.filter(
+                upload=bulk, national_id_number=national_id,
+            ).exclude(pk=row.pk).exists()
+            if dup:
+                row_errors.append(f'Duplicate ID {national_id} in this upload')
+            elif CountyPlayer.objects.filter(national_id_number=national_id).exists():
+                row_errors.append(f'ID {national_id} already registered in the system')
+
+        phone = normalize_kenya_phone(phone_raw) if phone_raw else ''
+
+        row.full_name = full_name
+        row.first_name = first_name
+        row.last_name = last_name
+        row.ward = ward
+        row.national_id_number = national_id
+        row.position = position
+        row.phone = phone
+        row.ligi_mashinani_team = ligi_team
+        row.is_valid = len(row_errors) == 0
+        row.error_message = '; '.join(row_errors)
+        row.edit_reason = edit_reason
+        row.edited_by = request.user
+        row.edited_at = timezone.now()
+        row.save()
+
+        # Recalculate upload counts
+        all_rows = bulk.rows.all()
+        bulk.valid_rows = all_rows.filter(is_valid=True).count()
+        bulk.error_rows = all_rows.filter(is_valid=False).count()
+        bulk.save(update_fields=['valid_rows', 'error_rows'])
+
+        messages.success(request, f'Row {row.row_number} updated successfully.')
+        return redirect('cso_bulk_upload_detail', pk=bulk.pk)
+
+    return render(request, 'portal/chief_sports_officer/bulk_upload_edit_row.html', {
+        'row': row,
+        'bulk': bulk,
     })
 
 
@@ -8159,6 +8241,7 @@ def director_bulk_upload_review_view(request, pk):
                     ward=row.ward,
                     position=row.position,
                     jersey_number=row.jersey_number,
+                    ligi_mashinani_team=row.ligi_mashinani_team,
                     # Pre-verified: all steps pass
                     verification_status='verified',
                     doc_status='verified',
