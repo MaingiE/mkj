@@ -24,10 +24,10 @@
                     <span class="badge bg-warning text-dark fs-6">PENDING APPROVAL</span>
                 {% elif report.status == 'approved' %}
                     <span class="badge bg-success fs-6">APPROVED</span>
-                    <small class="text-muted">by {{ report.approved_by.get_full_name|default:report.approved_by.username }} on {{ report.approved_at|date:"M d, Y" }}</small>
+                    <small class="text-muted">by {{ report.approved_by.get_full_name|default:report.approved_by.email }} on {{ report.approved_at|date:"M d, Y" }}</small>
                 {% elif report.status == 'rejected' %}
                     <span class="badge bg-danger fs-6">REJECTED</span>
-                    <small class="text-muted">by {{ report.approved_by.get_full_name|default:report.approved_by.username }} on {{ report.approved_at|date:"M d, Y" }}</small>
+                    <small class="text-muted">by {{ report.approved_by.get_full_name|default:report.approved_by.email }} on {{ report.approved_at|date:"M d, Y" }}</small>
                 {% endif %}
             </div>
 

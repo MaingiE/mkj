@@ -28,9 +28,9 @@
                     <tr>
                         <td>{{ u.pk }}</td>
                         <td>{{ u.created_at|date:"d M Y H:i" }}</td>
-                        <td>{{ u.uploaded_by.get_full_name|default:u.uploaded_by.username }}</td>
+                        <td>{{ u.uploaded_by.get_full_name|default:u.uploaded_by.email }}</td>
                         <td>{{ u.get_sport_type_display }}</td>
-                        <td>{{ u.get_sub_county_display }}</td>
+                        <td>{{ u.sub_county }}</td>
                         <td>{{ u.total_rows }}</td>
                         <td class="text-success fw-bold">{{ u.valid_rows }}</td>
                         <td>{% if u.error_rows > 0 %}<span class="text-danger fw-bold">{{ u.error_rows }}</span>{% else %}0{% endif %}</td>
@@ -63,9 +63,9 @@
                     <tr>
                         <td>{{ u.pk }}</td>
                         <td>{{ u.created_at|date:"d M Y H:i" }}</td>
-                        <td>{{ u.uploaded_by.get_full_name|default:u.uploaded_by.username }}</td>
+                        <td>{{ u.uploaded_by.get_full_name|default:u.uploaded_by.email }}</td>
                         <td>{{ u.get_sport_type_display }}</td>
-                        <td>{{ u.get_sub_county_display }}</td>
+                        <td>{{ u.sub_county }}</td>
                         <td>
                             {% if u.status == 'approved' %}<span class="badge bg-success">Approved</span>
                             {% else %}<span class="badge bg-danger">Rejected</span>{% endif %}

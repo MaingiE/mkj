@@ -123,7 +123,7 @@
                                 <small class="text-muted">{{ report.match.match_date|date:"M d, Y" }}</small>
                             </td>
                             <td>{{ report.referee.full_name }}</td>
-                            <td>{{ report.approved_by.get_full_name|default:report.approved_by.username }}</td>
+                            <td>{{ report.approved_by.get_full_name|default:report.approved_by.email }}</td>
                             <td>{{ report.approved_at|date:"M d, Y H:i" }}</td>
                             <td>
                                 <a href="{% url 'referees:report_detail_view' report.id %}" class="btn btn-sm btn-info" title="View Details">
@@ -165,7 +165,7 @@
                                 <small class="text-muted">{{ report.match.match_date|date:"M d, Y" }}</small>
                             </td>
                             <td>{{ report.referee.full_name }}</td>
-                            <td>{{ report.approved_by.get_full_name|default:report.approved_by.username }}</td>
+                            <td>{{ report.approved_by.get_full_name|default:report.approved_by.email }}</td>
                             <td>{{ report.approved_at|date:"M d, Y H:i" }}</td>
                             <td>
                                 <a href="{% url 'referees:report_detail_view' report.id %}" class="btn btn-sm btn-info" title="View Details">

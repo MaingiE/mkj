@@ -7963,7 +7963,7 @@ def cso_bulk_upload_view(request):
             messages.error(
                 request,
                 f'An upload already exists for {existing.get_sport_type_display()} '
-                f'in {existing.get_sub_county_display()} (Upload #{existing.pk}, '
+                f'in {existing.sub_county} (Upload #{existing.pk}, '
                 f'{existing.created_at.strftime("%d %b %Y")}). '
                 f'Delete the existing upload first before uploading a new one.'
             )
@@ -8220,7 +8220,7 @@ def cso_bulk_upload_delete_view(request, pk):
         messages.error(request, 'You do not have permission to delete this upload.')
         return redirect('cso_bulk_upload_list')
     if request.method == 'POST':
-        desc = f"{bulk.get_sport_type_display()} / {bulk.get_sub_county_display()} (#{bulk.pk})"
+        desc = f"{bulk.get_sport_type_display()} / {bulk.sub_county} (#{bulk.pk})"
         bulk.delete()
         messages.success(request, f'Upload {desc} deleted. Any players already registered from this upload remain active.')
         return redirect('cso_bulk_upload_list')
