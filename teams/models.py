@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.text import slugify
 
-from competitions.models import SportType
+from competitions.models import Competition, SportType
 from accounts.models import KenyaCounty, MakueniSubCounty, kenya_phone_validator, national_id_validator
 
 
@@ -161,6 +161,21 @@ class CountyDiscipline(models.Model):
             suffix += 1
         return candidate
 
+    def _default_mkj_competition(self):
+        mkj_qs = Competition.objects.filter(
+            sport_type=self.sport_type,
+            name__icontains="mkj",
+            name__icontains="supa",
+            name__icontains="cup",
+        )
+
+        for status in ("active", "group_stage", "knockout", "upcoming"):
+            comp = mkj_qs.filter(status=status).order_by("-start_date").first()
+            if comp:
+                return comp
+
+        return mkj_qs.order_by("-start_date").first()
+
     def ensure_linked_team(self):
         county_obj = get_or_create_county_record(
             self.registration.county,
@@ -168,11 +183,13 @@ class CountyDiscipline(models.Model):
             sports_officer_email=getattr(self.registration.user, "email", ""),
             sports_officer_phone=self.registration.director_phone,
         )
+        default_competition = self._default_mkj_competition()
         defaults = {
             "name": self.generated_team_name(),
             "county": county_obj,
             "sub_county": self.sub_county,
             "sport_type": self.sport_type,
+            "competition": default_competition,
             "status": TeamStatus.REGISTERED,
             "payment_confirmed": True,
             "payment_amount": 0,
@@ -186,6 +203,8 @@ class CountyDiscipline(models.Model):
             team.county = county_obj
             team.sub_county = self.sub_county
             team.sport_type = self.sport_type
+            if default_competition:
+                team.competition = default_competition
             team.status = TeamStatus.REGISTERED
             team.payment_confirmed = True
             if not team.payment_confirmed_at:
@@ -195,7 +214,7 @@ class CountyDiscipline(models.Model):
             if not team.contact_email:
                 team.contact_email = defaults["contact_email"]
             team.save(update_fields=[
-                "name", "county", "sub_county", "sport_type", "status",
+                "name", "county", "sub_county", "sport_type", "competition", "status",
                 "payment_confirmed", "payment_confirmed_at", "contact_phone", "contact_email",
             ])
         return team
@@ -710,6 +729,39 @@ class Team(models.Model):
         """True if both home and away kit details are filled (required for approval)."""
         return self.home_kit_complete and self.away_kit_complete
 
+    @staticmethod
+    def normalize_player_position(raw_position, fallback=None):
+        value = (raw_position or "").strip().upper()
+        aliases = {
+            "GOALKEEPER": "GK",
+            "KEEPER": "GK",
+            "CENTRE BACK": "CB",
+            "CENTER BACK": "CB",
+            "DEFENDER": "CB",
+            "LEFT BACK": "LB",
+            "RIGHT BACK": "RB",
+            "DEFENSIVE MID": "CDM",
+            "DEFENSIVE MIDFIELD": "CDM",
+            "MIDFIELDER": "CM",
+            "MIDFIELD": "CM",
+            "ATTACKING MID": "AM",
+            "ATTACKING MIDFIELD": "AM",
+            "LEFT WING": "LW",
+            "RIGHT WING": "RW",
+            "CENTRE FORWARD": "CF",
+            "CENTER FORWARD": "CF",
+            "STRIKER": "ST",
+            "FORWARD": "CF",
+        }
+        normalized = aliases.get(value, value)
+        valid_codes = {choice[0] for choice in Position.choices}
+
+        if normalized in valid_codes:
+            return normalized
+        if fallback in valid_codes:
+            return fallback
+        return Position.CM
+
     def sync_players_from_county_discipline(self):
         if not self.source_discipline_id:
             return 0
@@ -721,7 +773,6 @@ class Team(models.Model):
         }
         used_numbers = {p.shirt_number for p in existing_players if p.shirt_number}
         next_number = 1
-        today = timezone.now().date()
 
         def allocate_shirt(preferred):
             nonlocal next_number
@@ -744,13 +795,18 @@ class Team(models.Model):
             preferred_number = county_player.jersey_number or existing_number
 
             player_dob = county_player.date_of_birth
+            fallback_position = team_player.position if team_player else None
+            normalized_position = self.normalize_player_position(
+                county_player.position,
+                fallback=fallback_position,
+            )
 
             defaults = {
                 "team": self,
                 "first_name": county_player.first_name,
                 "last_name": county_player.last_name,
                 "date_of_birth": player_dob,
-                "position": county_player.position if county_player.position in dict(Position.choices) else Position.CM,
+                "position": normalized_position,
                 "shirt_number": allocate_shirt(preferred_number),
                 "birth_cert_number": county_player.huduma_number,
                 "photo": county_player.photo,

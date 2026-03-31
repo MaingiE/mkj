@@ -37,6 +37,9 @@
         <a href="{% url 'verified_players_pdf' %}{% if discipline_filter %}?discipline={{ discipline_filter }}{% endif %}" class="btn btn-sm btn-success" style="margin-bottom:2px;">
             <i class="bi bi-download"></i> Download PDF
         </a>
+        {% if not discipline_filter %}
+        <small class="text-muted" style="margin-bottom:2px;">Choose a discipline to download a discipline-specific list.</small>
+        {% endif %}
     </form>
 </div>
 
@@ -52,6 +55,7 @@
                     <th>Position</th>
                     <th>Jersey</th>
                     <th>Registered</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,9 +70,16 @@
                     <td style="font-size:.82rem;white-space:nowrap;">
                         {{ p.registered_at|date:"d M Y H:i"|default:" - " }}
                     </td>
+                    <td>
+                        {% if not p.director_locked %}
+                        <a href="{% url 'edit_county_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                        {% else %}
+                        <span style="font-size:.78rem;color:#6c757d;"><i class="bi bi-lock"></i></span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-muted text-center">No verified players found</td></tr>
+                <tr><td colspan="8" class="text-muted text-center">No verified players found</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -6375,19 +6375,43 @@ def team_list_pdf_view(request, discipline_pk):
         styles = getSampleStyleSheet()
         elements = []
 
-        # ── MKJ SUPA CUP Logo ──
-        logo_path = os.path.join(
-            django_settings.STATICFILES_DIRS[0] if django_settings.STATICFILES_DIRS else django_settings.STATIC_ROOT,
-            'img', 'mkj_supacup_logo_official.jpg',
-        )
-        if os.path.exists(logo_path):
-            try:
-                logo = RLImage(logo_path, width=30*mm, height=30*mm)
-                logo.hAlign = 'CENTER'
-                elements.append(logo)
-                elements.append(Spacer(1, 2*mm))
-            except Exception:
-                pass
+        # ── Official logos (GoK | MKJ | Makueni) ──────────────────────────
+        static_base = django_settings.STATICFILES_DIRS[0] if django_settings.STATICFILES_DIRS else django_settings.STATIC_ROOT
+
+        def _first_existing_image(*rel_paths):
+            for rel in rel_paths:
+                candidate = os.path.join(static_base, rel)
+                if os.path.exists(candidate):
+                    return candidate
+            return None
+
+        gok_logo_path = _first_existing_image('img/GOVT.jpeg', 'img/government_of_kenya_logo.png')
+        mkj_logo_path = _first_existing_image('img/mkj_supa_cup_logo.png', 'img/mkj_supacup_logo_official.jpg', 'img/mkj .jpeg')
+        makueni_logo_path = _first_existing_image('img/makueni_logo.png')
+
+        logo_cells = []
+        for path in (gok_logo_path, mkj_logo_path, makueni_logo_path):
+            if path:
+                try:
+                    logo_cells.append(RLImage(path, width=22 * mm, height=22 * mm))
+                except Exception:
+                    logo_cells.append('')
+            else:
+                logo_cells.append('')
+
+        if any(cell != '' for cell in logo_cells):
+            logo_row = Table([logo_cells], colWidths=[30 * mm, 30 * mm, 30 * mm])
+            logo_row.hAlign = 'CENTER'
+            logo_row.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 2),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+                ('TOPPADDING', (0, 0), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ]))
+            elements.append(logo_row)
+            elements.append(Spacer(1, 2 * mm))
 
         # ── Header ──
         header_style = ParagraphStyle(
@@ -6421,7 +6445,7 @@ def team_list_pdf_view(request, discipline_pk):
             f"{sub_county} Sub County {sport_display}",
             title_style,
         ))
-        elements.append(Paragraph("Official Team List", subtitle_style))
+        elements.append(Paragraph(f"Official Team List - {sport_display} - {sub_county}", subtitle_style))
         elements.append(Spacer(1, 0.5*cm))
 
         # ── Technical bench section ──
@@ -7917,7 +7941,11 @@ def cso_bulk_upload_view(request):
     """Upload an Excel or Word file with player data.
 
     File columns (in order):
-      S/NO | NAME | WARD | ID | POSITION | PHONE NUMBER | TEAM IN LIGI MASHINANI | REMARKS | REASON FOR CHANGE
+            S/NO | NAME | WARD | ID | POSITION | PHONE NUMBER | TEAM IN LIGI MASHINANI
+
+        Optional legacy layout also supported:
+            S/NO | NAME | WARD | ID | AGE | POSITION | PHONE NUMBER | TEAM IN LIGI MASHINANI
+        (AGE is ignored.)
 
     All data fields (name, ward, id, position, phone, ligi team) are MANDATORY.
     On successful upload the valid rows are AUTOMATICALLY converted into
@@ -8036,13 +8064,36 @@ def cso_bulk_upload_view(request):
             total += 1
             # Expected upload columns used by the parser:
             # NAME(1) | WARD(2) | ID(3) | POSITION(4) | PHONE NUMBER(5) | TEAM IN LIGI MASHINANI(6)
+            # Optional legacy AGE(4) is auto-detected and ignored.
             # S/NO(0) is ignored, and any trailing columns are ignored.
             full_name = str(row[1] or '').strip() if len(row) > 1 else ''
             ward = str(row[2] or '').strip() if len(row) > 2 else ''
             id_raw = str(row[3] or '').strip() if len(row) > 3 else ''
-            position = str(row[4] or '').strip() if len(row) > 4 else ''
-            phone_raw = str(row[5] or '').strip() if len(row) > 5 else ''
-            ligi_team = str(row[6] or '').strip() if len(row) > 6 else ''
+
+            col4 = str(row[4] or '').strip() if len(row) > 4 else ''
+            col5 = str(row[5] or '').strip() if len(row) > 5 else ''
+            col6 = str(row[6] or '').strip() if len(row) > 6 else ''
+            col7 = str(row[7] or '').strip() if len(row) > 7 else ''
+
+            position = col4
+            phone_raw = col5
+            ligi_team = col6
+
+            def _looks_like_age(value):
+                txt = (value or '').strip()
+                if not txt.isdigit():
+                    return False
+                age_num = int(txt)
+                return 10 <= age_num <= 35
+
+            # Support old files that still include AGE between ID and POSITION.
+            # In that layout, shift columns one step to the right and ignore age.
+            if _looks_like_age(col4):
+                shifted_phone = normalize_kenya_phone(col6) if col6 else ''
+                if shifted_phone:
+                    position = col5
+                    phone_raw = col6
+                    ligi_team = col7
 
             # Row number follows spreadsheet order; uploaded serial numbers are ignored.
             row_num = idx - 1
@@ -9300,6 +9351,12 @@ def verified_players_pdf_view(request):
     subcounty_filter = request.GET.get('subcounty', '')
     approval_filter = request.GET.get('approval', '')
 
+    # Enforce discipline-specific exports to avoid oversized all-player downloads.
+    if not discipline_filter:
+        if user.role in ('director_sports', 'chief_sports_officer', 'subcounty_sports_officer') or user.is_superuser:
+            messages.warning(request, 'Select a discipline first, then download the filtered list.')
+            return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+
     # Build queryset based on role
     if user.role == 'subcounty_sports_officer':
         disciplines = _discipline_queryset_for_user(user)
@@ -9325,6 +9382,10 @@ def verified_players_pdf_view(request):
                 managed_teams.exclude(sub_county='').values_list('sport_type', 'sub_county').distinct()
             )
             if managed_pairs:
+                managed_sports = {sport_type for sport_type, _ in managed_pairs}
+                if len(managed_sports) > 1 and not discipline_filter:
+                    messages.warning(request, 'Select a discipline first, then download the filtered list.')
+                    return redirect(request.META.get('HTTP_REFERER', 'team_manager_verified_players'))
                 pair_filter = Q()
                 for sport_type, sub_county in managed_pairs:
                     pair_filter |= Q(discipline__sport_type=sport_type, sub_county=sub_county)
@@ -9347,7 +9408,7 @@ def verified_players_pdf_view(request):
         return redirect('dashboard')
 
     players = players.select_related('discipline', 'discipline__registration').order_by(
-        'discipline__sport_type', 'last_name',
+        'discipline__sport_type', 'sub_county', 'last_name', 'first_name',
     )
     if discipline_filter:
         sport_label = dict(SportType.choices).get(discipline_filter, discipline_filter)
@@ -9386,19 +9447,43 @@ def verified_players_pdf_view(request):
         styles = getSampleStyleSheet()
         elements = []
 
-        # Logo
-        logo_path = os.path.join(
-            django_settings.STATICFILES_DIRS[0] if django_settings.STATICFILES_DIRS else django_settings.STATIC_ROOT,
-            'img', 'mkj_supacup_logo_official.jpg',
-        )
-        if os.path.exists(logo_path):
-            try:
-                logo = RLImage(logo_path, width=30 * mm, height=30 * mm)
-                logo.hAlign = 'CENTER'
-                elements.append(logo)
-                elements.append(Spacer(1, 2 * mm))
-            except Exception:
-                pass
+        # ── Official logos (GoK | MKJ | Makueni) ──────────────────────────
+        static_base = django_settings.STATICFILES_DIRS[0] if django_settings.STATICFILES_DIRS else django_settings.STATIC_ROOT
+
+        def _first_existing_image(*rel_paths):
+            for rel in rel_paths:
+                candidate = os.path.join(static_base, rel)
+                if os.path.exists(candidate):
+                    return candidate
+            return None
+
+        gok_logo_path = _first_existing_image('img/GOVT.jpeg', 'img/government_of_kenya_logo.png')
+        mkj_logo_path = _first_existing_image('img/mkj_supa_cup_logo.png', 'img/mkj_supacup_logo_official.jpg', 'img/mkj .jpeg')
+        makueni_logo_path = _first_existing_image('img/makueni_logo.png')
+
+        logo_cells = []
+        for path in (gok_logo_path, mkj_logo_path, makueni_logo_path):
+            if path:
+                try:
+                    logo_cells.append(RLImage(path, width=22 * mm, height=22 * mm))
+                except Exception:
+                    logo_cells.append('')
+            else:
+                logo_cells.append('')
+
+        if any(cell != '' for cell in logo_cells):
+            logo_row = Table([logo_cells], colWidths=[30 * mm, 30 * mm, 30 * mm])
+            logo_row.hAlign = 'CENTER'
+            logo_row.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 2),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+                ('TOPPADDING', (0, 0), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ]))
+            elements.append(logo_row)
+            elements.append(Spacer(1, 2 * mm))
 
         header_style = ParagraphStyle(
             'Header', parent=styles['Normal'],
@@ -9414,7 +9499,7 @@ def verified_players_pdf_view(request):
         )
 
         elements.append(Paragraph("MKJ SUPA CUP - 4th Edition", header_style))
-        elements.append(Paragraph("Verified Players List", title_style))
+        elements.append(Paragraph("Verified Players List By Discipline & Sub-County", title_style))
         elements.append(Paragraph(scope_label, subtitle_style))
         elements.append(Spacer(1, 0.5 * cm))
 
@@ -9422,7 +9507,7 @@ def verified_players_pdf_view(request):
         cell_style = ParagraphStyle('Cell', parent=styles['Normal'], fontSize=8, leading=10)
         name_style = ParagraphStyle('NameCell', parent=styles['Normal'], fontSize=9, leading=11, fontName='Helvetica-Bold')
 
-        player_data = [['#', 'Photo', 'Name', 'Discipline', 'National ID', 'Position', 'Jersey']]
+        player_data = [['#', 'Photo', 'Name', 'Discipline', 'Sub-County', 'National ID', 'Position', 'Jersey']]
         row_num = 0
         for p in players:
             row_num += 1
@@ -9441,13 +9526,14 @@ def verified_players_pdf_view(request):
                 photo_cell,
                 Paragraph(f"{p.last_name} {p.first_name}", name_style),
                 p.discipline.get_sport_type_display() if p.discipline else ' - ',
+                p.sub_county or ' - ',
                 p.national_id_number or ' - ',
                 p.position or ' - ',
                 str(p.jersey_number) if p.jersey_number else ' - ',
             ])
 
         if row_num > 0:
-            col_widths = [1 * cm, 2.2 * cm, 4 * cm, 3 * cm, 2.8 * cm, 2 * cm, 1.5 * cm]
+            col_widths = [1 * cm, 2.1 * cm, 3.4 * cm, 2.7 * cm, 2.4 * cm, 2.5 * cm, 1.6 * cm, 1.2 * cm]
             row_heights = [None] + [25 * mm] * row_num
             player_table = Table(player_data, colWidths=col_widths, rowHeights=row_heights, repeatRows=1)
             player_table.setStyle(TableStyle([
@@ -9460,7 +9546,7 @@ def verified_players_pdf_view(request):
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ('ALIGN', (0, 0), (0, -1), 'CENTER'),
                 ('ALIGN', (1, 0), (1, -1), 'CENTER'),
-                ('ALIGN', (6, 0), (6, -1), 'CENTER'),
+                ('ALIGN', (7, 0), (7, -1), 'CENTER'),
                 ('LEFTPADDING', (0, 0), (-1, -1), 4),
                 ('RIGHTPADDING', (0, 0), (-1, -1), 4),
                 ('TOPPADDING', (0, 1), (-1, -1), 2 * mm),
@@ -9763,4 +9849,67 @@ def waziri_sports_dashboard_view(request):
         'active_competitions': active_comps,
         'recent_results': recent_results,
         'recent_teams': recent_teams,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  EDIT SUB-COUNTY PLAYER (shared by director_sports / chief_sports_officer / subcounty_sports_officer)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'director_sports', 'chief_sports_officer', 'admin')
+def edit_county_player_view(request, pk):
+    """Edit a sub-county player's details (DOB, position, phone, ward, etc.)."""
+    player = get_object_or_404(
+        CountyPlayer.objects.select_related('discipline', 'discipline__registration'),
+        pk=pk,
+    )
+
+    # Sub-county officer may only edit players in their own sub-county
+    user = request.user
+    if user.role == 'subcounty_sports_officer' and not user.is_superuser:
+        allowed_disciplines = _discipline_queryset_for_user(user)
+        if player.discipline not in allowed_disciplines:
+            messages.error(request, 'You can only edit players in your own sub-county.')
+            return redirect('subcounty_verified_players')
+
+    # Locked players cannot be edited
+    if player.director_locked:
+        messages.warning(request, 'This player is locked and cannot be edited.')
+        return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+
+    disc_sc = player.discipline.sub_county or ''
+
+    if request.method == 'POST':
+        form = CountyPlayerForm(
+            request.POST, request.FILES, instance=player,
+            discipline_sub_county=disc_sc,
+        )
+        if form.is_valid():
+            form.save()
+
+            # Re-sync the linked team roster so changes propagate
+            try:
+                linked_team = Team.objects.get(source_discipline=player.discipline)
+                linked_team.sync_players_from_county_discipline()
+            except Team.DoesNotExist:
+                pass
+
+            messages.success(request, f'{player.get_full_name()} updated successfully.')
+
+            # Redirect back to the referrer or the appropriate verified-players page
+            next_url = request.POST.get('next') or request.META.get('HTTP_REFERER', '')
+            if next_url:
+                return redirect(next_url)
+            if user.role == 'subcounty_sports_officer':
+                return redirect('subcounty_verified_players')
+            return redirect('director_sports_verified_players')
+    else:
+        form = CountyPlayerForm(instance=player, discipline_sub_county=disc_sc)
+
+    return render(request, 'portal/edit_county_player.html', {
+        'form': form,
+        'player': player,
+        'discipline': player.discipline,
+        'wards_json': json.dumps(MAKUENI_SUBCOUNTY_WARDS),
+        'next': request.GET.get('next', ''),
     })

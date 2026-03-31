@@ -68,6 +68,9 @@
         <a href="{% url 'verified_players_pdf' %}?subcounty={{ subcounty_filter|urlencode }}&discipline={{ discipline_filter|urlencode }}&approval={{ approval_filter|urlencode }}" class="btn btn-sm btn-success" style="margin-bottom:2px;">
             <i class="bi bi-download"></i> Download PDF
         </a>
+        {% if not discipline_filter %}
+        <small class="text-muted" style="margin-bottom:2px;">Choose a discipline to download a discipline-specific list.</small>
+        {% endif %}
     </form>
 </div>
 
@@ -145,6 +148,7 @@
                     <td>
                         {% if not p.director_locked %}
                         <div class="d-flex gap-1 flex-wrap">
+                            <a href="{% url 'edit_county_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
                             {% if not p.director_approved %}
                             <form method="post" action="{% url 'director_sports_approve_player' p.pk %}">
                                 {% csrf_token %}

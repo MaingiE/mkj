@@ -23,8 +23,11 @@
                 <i class="bi bi-search"></i>
                 <input type="text" id="teamSearch" placeholder="Search teams..." oninput="filterTeams()">
             </div>
-            <select class="toolbar-select" id="countyFilter" onchange="filterTeams()">
-                <option value="">All Counties</option>
+            <select class="toolbar-select" id="subCountyFilter" onchange="filterTeams()">
+                <option value="">All Sub-Counties</option>
+            </select>
+            <select class="toolbar-select" id="disciplineFilter" onchange="filterTeams()">
+                <option value="">All Disciplines</option>
             </select>
             <select class="toolbar-select" id="statusFilter" onchange="filterTeams()">
                 <option value="">All Status</option>
@@ -39,7 +42,8 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>County</th>
+                        <th>Sub-County</th>
+                        <th>Discipline</th>
                         <th>Competition</th>
                         <th>Manager</th>
                         <th>Players</th>
@@ -49,9 +53,10 @@
                 </thead>
                 <tbody>
                     {% for team in teams %}
-                    <tr data-county="{{ team.county }}" data-status="{{ team.status }}">
+                    <tr data-subcounty="{{ team.sub_county }}" data-discipline="{{ team.get_sport_type_display }}" data-status="{{ team.status }}">
                         <td><strong>{{ team.name }}</strong></td>
-                        <td>{{ team.county }}</td>
+                        <td>{{ team.sub_county|default:" - " }}</td>
+                        <td style="font-size:.78rem;">{{ team.get_sport_type_display }}</td>
                         <td>{{ team.competition|default:" - " }}</td>
                         <td>{{ team.manager|default:" - " }}</td>
                         <td>{{ team.players.count }}</td>
@@ -86,32 +91,42 @@
 <script>
 function filterTeams() {
     const q = document.getElementById('teamSearch').value.toLowerCase();
-    const county = document.getElementById('countyFilter').value;
+    const subCounty = document.getElementById('subCountyFilter').value;
+    const discipline = document.getElementById('disciplineFilter').value;
     const status = document.getElementById('statusFilter').value;
     const rows = document.querySelectorAll('#teamsTable tbody tr');
     let visible = 0;
     rows.forEach(r => {
         const text = r.textContent.toLowerCase();
         const matchSearch = !q || text.includes(q);
-        const matchCounty = !county || r.dataset.county === county;
+        const matchSubCounty = !subCounty || r.dataset.subcounty === subCounty;
+        const matchDiscipline = !discipline || r.dataset.discipline === discipline;
         const matchStatus = !status || r.dataset.status === status;
-        const show = matchSearch && matchCounty && matchStatus;
+        const show = matchSearch && matchSubCounty && matchDiscipline && matchStatus;
         r.style.display = show ? '' : 'none';
         if (show) visible++;
     });
     document.getElementById('teamCount').textContent = visible + ' of ' + rows.length;
 }
-// Populate county filter
+// Populate sub-county and discipline filters
 document.addEventListener('DOMContentLoaded', function() {
-    const counties = new Set();
+    const subCounties = new Set();
+    const disciplines = new Set();
     document.querySelectorAll('#teamsTable tbody tr').forEach(r => {
-        if (r.dataset.county) counties.add(r.dataset.county);
+        if (r.dataset.subcounty) subCounties.add(r.dataset.subcounty);
+        if (r.dataset.discipline) disciplines.add(r.dataset.discipline);
     });
-    const sel = document.getElementById('countyFilter');
-    [...counties].sort().forEach(c => {
+    const scSel = document.getElementById('subCountyFilter');
+    [...subCounties].sort().forEach(c => {
         const o = document.createElement('option');
         o.value = c; o.textContent = c;
-        sel.appendChild(o);
+        scSel.appendChild(o);
+    });
+    const dSel = document.getElementById('disciplineFilter');
+    [...disciplines].sort().forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        dSel.appendChild(o);
     });
     filterTeams();
 });

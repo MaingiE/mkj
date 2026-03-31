@@ -198,6 +198,7 @@ from .web_views import (
     cso_bulk_upload_delete_view,
     director_bulk_upload_list_view,
     director_bulk_upload_review_view,
+    edit_county_player_view,
     # Match day squad PDF
     match_squad_pdf_view,
 )
@@ -435,6 +436,9 @@ urlpatterns = [
     path("portal/director-sports/technical-bench/", director_sports_technical_bench_view, name="director_sports_technical_bench"),
     path("portal/director-sports/bulk-uploads/", director_bulk_upload_list_view, name="director_bulk_upload_list"),
     path("portal/director-sports/bulk-uploads/<int:pk>/review/", director_bulk_upload_review_view, name="director_bulk_upload_review"),
+
+    # ── EDIT SUB-COUNTY PLAYER (shared) ────────────────────────────────────
+    path("portal/county-player/<int:pk>/edit/", edit_county_player_view, name="edit_county_player"),
 
     # ── CHIEF OFFICER SPORTS PORTAL ───────────────────────────────────────
     path("portal/chief-officer-sports/", chief_officer_sports_dashboard_view, name="chief_officer_sports_dashboard"),
