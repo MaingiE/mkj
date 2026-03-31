@@ -217,6 +217,10 @@ class CountyPlayer(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True, blank=True)
+    age_value = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Player age (used when DOB is not available)",
+    )
     national_id_number = models.CharField(
         max_length=20, unique=True, validators=[national_id_validator],
         help_text="National ID - unique across all counties and disciplines",
@@ -367,10 +371,12 @@ class CountyPlayer(models.Model):
 
     @property
     def age(self):
-        from django.utils import timezone
-        today = timezone.now().date()
-        dob = self.date_of_birth
-        return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if self.date_of_birth:
+            from django.utils import timezone
+            today = timezone.now().date()
+            dob = self.date_of_birth
+            return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        return self.age_value
 
     @property
     def is_verified(self):
@@ -1367,6 +1373,12 @@ class BulkPlayerUploadRow(models.Model):
     ward = models.CharField(max_length=100, blank=True, default="")
     ligi_mashinani_team = models.CharField(max_length=200, blank=True, default="",
                                             help_text="Team in Ligi Mashinani")
+    age_value = models.PositiveIntegerField(null=True, blank=True,
+                                             help_text="Player age (when DOB not available)")
+    remarks = models.TextField(blank=True, default="",
+                                help_text="Remarks from the uploaded file")
+    reason_for_change = models.TextField(blank=True, default="",
+                                          help_text="Reason for change from the uploaded file")
     is_valid = models.BooleanField(default=True)
     error_message = models.TextField(blank=True, default="")
     county_player = models.ForeignKey(

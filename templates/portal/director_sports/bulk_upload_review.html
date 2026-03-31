@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Review Upload #{{ upload.pk }} - MKJ SUPA CUP{% endblock %}
+{% block title %}Review Upload #{{ bulk.pk }} - MKJ SUPA CUP{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
         <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
-        <a href="{% url 'director_bulk_upload_list' %}">Bulk Upload Approvals</a>
-        <span>Upload #{{ upload.pk }}</span>
+        <a href="{% url 'director_bulk_upload_list' %}">Bulk Uploads</a>
+        <span>Upload #{{ bulk.pk }}</span>
     </div>
-    <h1><i class="bi bi-clipboard-check"></i> Review Upload #{{ upload.pk }}</h1>
+    <h1><i class="bi bi-clipboard-check"></i> Upload #{{ bulk.pk }}</h1>
 </div>
 
 <!-- Summary -->
@@ -17,21 +17,21 @@
         <div class="row g-3">
             <div class="col-md-2">
                 <small class="text-muted d-block">Uploaded By</small>
-                <strong>{{ upload.uploaded_by.get_full_name|default:upload.uploaded_by.username }}</strong>
+                <strong>{{ bulk.uploaded_by.get_full_name|default:bulk.uploaded_by.username }}</strong>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Discipline</small>
-                <strong>{{ upload.get_sport_type_display }}</strong>
+                <strong>{{ bulk.get_sport_type_display }}</strong>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Sub-County</small>
-                <strong>{{ upload.get_sub_county_display }}</strong>
+                <strong>{{ bulk.get_sub_county_display }}</strong>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Status</small>
-                {% if upload.status == 'approved' %}
+                {% if bulk.status == 'approved' %}
                 <span class="badge bg-success">Approved</span>
-                {% elif upload.status == 'rejected' %}
+                {% elif bulk.status == 'rejected' %}
                 <span class="badge bg-danger">Rejected</span>
                 {% else %}
                 <span class="badge bg-warning text-dark">Pending</span>
@@ -39,65 +39,20 @@
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Total / Valid / Errors</small>
-                <strong>{{ upload.total_rows }}</strong> /
-                <span class="text-success fw-bold">{{ upload.valid_rows }}</span> /
-                <span class="text-danger fw-bold">{{ upload.error_rows }}</span>
+                <strong>{{ bulk.total_rows }}</strong> /
+                <span class="text-success fw-bold">{{ bulk.valid_rows }}</span> /
+                <span class="text-danger fw-bold">{{ bulk.error_rows }}</span>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Uploaded</small>
-                <strong>{{ upload.created_at|date:"d M Y H:i" }}</strong>
+                <strong>{{ bulk.created_at|date:"d M Y H:i" }}</strong>
             </div>
         </div>
-        {% if upload.notes %}
-        <div class="mt-2"><small class="text-muted d-block">Notes</small><em>{{ upload.notes }}</em></div>
-        {% endif %}
-        {% if upload.rejection_reason %}
-        <div class="mt-2"><small class="text-muted d-block">Rejection Reason</small><span class="text-danger">{{ upload.rejection_reason }}</span></div>
+        {% if bulk.notes %}
+        <div class="mt-2"><small class="text-muted d-block">Notes</small><em>{{ bulk.notes }}</em></div>
         {% endif %}
     </div>
 </div>
-
-<!-- Action Buttons (only if pending) -->
-{% if upload.status == 'pending' %}
-<div class="card mb-1">
-    <div class="card-body d-flex gap-2 align-items-center">
-        <form method="post" class="d-inline">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="approve">
-            <button type="submit" class="btn btn-success" onclick="return confirm('Approve this upload? {{ upload.valid_rows }} verified players will be created.')">
-                <i class="bi bi-check-circle"></i> Approve ({{ upload.valid_rows }} players)
-            </button>
-        </form>
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
-            <i class="bi bi-x-circle"></i> Reject
-        </button>
-    </div>
-</div>
-
-<!-- Reject Modal -->
-<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="reject">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reject Upload</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <label class="form-label fw-bold">Reason for Rejection *</label>
-                    <textarea name="rejection_reason" class="form-control" rows="3" required placeholder="Explain why this upload is being rejected..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Upload</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-{% endif %}
 
 <!-- Rows Table -->
 <div class="card">
@@ -107,7 +62,7 @@
             <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
                 <thead style="background:#f5f5f5;">
                     <tr>
-                        <th>Row</th><th>Name (Full)</th><th>Ward</th><th>National ID</th><th>Position</th><th>Phone</th><th>Ligi Mashinani Team</th><th>Status</th>
+                        <th>Row</th><th>Name (Full)</th><th>Ward</th><th>National ID</th><th>Position</th><th>Phone</th><th>Ligi Mashinani Team</th><th>Remarks</th><th>Status</th><th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,6 +75,7 @@
                         <td>{{ row.position|default:"-" }}</td>
                         <td>{{ row.phone|default:"-" }}</td>
                         <td>{{ row.ligi_mashinani_team|default:"-" }}</td>
+                        <td>{{ row.remarks|default:"-" }}</td>
                         <td>
                             {% if row.is_valid %}
                             <span class="badge bg-success">Valid</span>
@@ -131,9 +87,14 @@
                             <small class="d-block text-info mt-1"><i class="bi bi-pencil"></i> Edited: {{ row.edit_reason }}</small>
                             {% endif %}
                         </td>
+                        <td>
+                            <a href="{% url 'cso_bulk_upload_edit_row' row_pk=row.pk %}" class="btn btn-sm btn-outline-primary" title="Edit row">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="8" class="text-center text-muted py-3">No rows.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-3">No rows.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

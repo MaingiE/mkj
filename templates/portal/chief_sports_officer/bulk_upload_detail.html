@@ -74,8 +74,9 @@
                         <th>Position</th>
                         <th>Phone</th>
                         <th>Ligi Mashinani Team</th>
+                        <th>Remarks</th>
                         <th>Status</th>
-                        {% if bulk.status == 'pending' %}<th>Action</th>{% endif %}
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,6 +89,7 @@
                         <td>{{ row.position|default:"-" }}</td>
                         <td>{{ row.phone|default:"-" }}</td>
                         <td>{{ row.ligi_mashinani_team|default:"-" }}</td>
+                        <td>{{ row.remarks|default:"-" }}</td>
                         <td>
                             {% if row.is_valid %}
                             <span class="badge bg-success">Valid</span>
@@ -99,16 +101,14 @@
                             <small class="d-block text-info mt-1"><i class="bi bi-pencil"></i> Edited: {{ row.edit_reason }}</small>
                             {% endif %}
                         </td>
-                        {% if bulk.status == 'pending' %}
                         <td>
                             <a href="{% url 'cso_bulk_upload_edit_row' row_pk=row.pk %}" class="btn btn-sm btn-outline-primary" title="Edit row">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
                         </td>
-                        {% endif %}
                     </tr>
                     {% empty %}
-                    <tr><td colspan="9" class="text-center text-muted py-3">No rows parsed.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-3">No rows parsed.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

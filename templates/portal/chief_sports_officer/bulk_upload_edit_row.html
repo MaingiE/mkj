@@ -23,8 +23,8 @@
                     <input type="text" name="full_name" class="form-control" value="{{ row.full_name|default:'' }}" required placeholder="e.g. John Mwangi Kamau">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">WARD</label>
-                    <input type="text" name="ward" class="form-control" value="{{ row.ward|default:'' }}" placeholder="Ward within the sub-county">
+                    <label class="form-label fw-bold">WARD *</label>
+                    <input type="text" name="ward" class="form-control" value="{{ row.ward|default:'' }}" required placeholder="Ward within the sub-county">
                 </div>
             </div>
             <div class="row g-3 mb-3">
@@ -33,18 +33,18 @@
                     <input type="text" name="national_id" class="form-control" value="{{ row.national_id_number|default:'' }}" required placeholder="National ID number">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">POSITION</label>
-                    <input type="text" name="position" class="form-control" value="{{ row.position|default:'' }}" placeholder="e.g. GK, CB, CM, CF">
+                    <label class="form-label fw-bold">POSITION *</label>
+                    <input type="text" name="position" class="form-control" value="{{ row.position|default:'' }}" required placeholder="e.g. GK, CB, CM, CF">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">PHONE NO</label>
-                    <input type="text" name="phone" class="form-control" value="{{ row.phone|default:'' }}" placeholder="e.g. 0712345678">
+                    <label class="form-label fw-bold">PHONE NUMBER *</label>
+                    <input type="text" name="phone" class="form-control" value="{{ row.phone|default:'' }}" required placeholder="e.g. 0712345678">
                 </div>
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">TEAM IN LIGI MASHINANI</label>
-                    <input type="text" name="ligi_mashinani_team" class="form-control" value="{{ row.ligi_mashinani_team|default:'' }}" placeholder="Player's Ligi Mashinani team">
+                    <label class="form-label fw-bold">TEAM IN LIGI MASHINANI *</label>
+                    <input type="text" name="ligi_mashinani_team" class="form-control" value="{{ row.ligi_mashinani_team|default:'' }}" required placeholder="Player's Ligi Mashinani team">
                 </div>
             </div>
 

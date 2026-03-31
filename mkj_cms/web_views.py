@@ -7908,9 +7908,17 @@ def cso_bulk_upload_list_view(request):
 
 @role_required('chief_sports_officer', 'admin')
 def cso_bulk_upload_view(request):
-    """Upload an Excel or Word file with player data → parsed into BulkPlayerUploadRow."""
+    """Upload an Excel or Word file with player data.
+
+    File columns (in order):
+      S/NO | NAME | WARD | ID | POSITION | PHONE NUMBER | TEAM IN LIGI MASHINANI | REMARKS | REASON FOR CHANGE
+
+    All data fields (name, ward, id, position, phone, ligi team) are MANDATORY.
+    On successful upload the valid rows are AUTOMATICALLY converted into
+    fully-verified CountyPlayer records (no Director approval step needed for
+    the initial bulk upload).
+    """
     import openpyxl
-    from datetime import datetime
     from teams.models import (
         BulkPlayerUpload, BulkPlayerUploadRow, BulkUploadStatus,
         CountyRegistration, CountyDiscipline,
@@ -7979,19 +7987,32 @@ def cso_bulk_upload_view(request):
         valid = 0
         errors = 0
         seen_ids = set()
+        parsed_rows = []  # collect row objects for auto-creation
 
         for idx, row in enumerate(rows_list, start=2):
             if not row or all(cell is None or str(cell).strip() == '' for cell in row):
                 continue  # skip blank rows
 
             total += 1
-            # Columns: NAME (Full), WARD, ID, POSITION, PHONE NO, TEAM IN LIGI MASHINANI
-            full_name = str(row[0] or '').strip() if len(row) > 0 else ''
-            ward = str(row[1] or '').strip() if len(row) > 1 else ''
-            id_raw = str(row[2] or '').strip() if len(row) > 2 else ''
-            position = str(row[3] or '').strip() if len(row) > 3 else ''
-            phone_raw = str(row[4] or '').strip() if len(row) > 4 else ''
-            ligi_team = str(row[5] or '').strip() if len(row) > 5 else ''
+            # Columns: S/NO(0) | NAME(1) | WARD(2) | ID(3) | POSITION(4) |
+            #          PHONE NUMBER(5) | TEAM IN LIGI MASHINANI(6) | REMARKS(7) | REASON FOR CHANGE(8)
+            serial_no = str(row[0] or '').strip() if len(row) > 0 else ''
+            full_name = str(row[1] or '').strip() if len(row) > 1 else ''
+            ward = str(row[2] or '').strip() if len(row) > 2 else ''
+            id_raw = str(row[3] or '').strip() if len(row) > 3 else ''
+            position = str(row[4] or '').strip() if len(row) > 4 else ''
+            phone_raw = str(row[5] or '').strip() if len(row) > 5 else ''
+            ligi_team = str(row[6] or '').strip() if len(row) > 6 else ''
+            remarks = str(row[7] or '').strip() if len(row) > 7 else ''
+            reason_for_change = str(row[8] or '').strip() if len(row) > 8 else ''
+
+            # Use S/NO from file as row number, fall back to spreadsheet index
+            row_num = idx
+            if serial_no:
+                try:
+                    row_num = int(str(serial_no).replace('.0', '').strip())
+                except (ValueError, TypeError):
+                    pass
 
             row_errors = []
 
@@ -8009,7 +8030,11 @@ def cso_bulk_upload_view(request):
                 first_name = name_parts[0]
                 last_name = ' '.join(name_parts[1:])
 
-            # Validate national ID
+            # Ward is mandatory
+            if not ward:
+                row_errors.append('Missing ward')
+
+            # Validate national ID (mandatory)
             national_id = normalize_national_id(id_raw) if id_raw else ''
             if not national_id:
                 row_errors.append('Missing or invalid national ID')
@@ -8020,8 +8045,18 @@ def cso_bulk_upload_view(request):
                 if CountyPlayer.objects.filter(national_id_number=national_id).exists():
                     row_errors.append(f'ID {national_id} already registered in the system')
 
-            # Normalize phone
+            # Position is mandatory
+            if not position:
+                row_errors.append('Missing position')
+
+            # Phone is mandatory
             phone = normalize_kenya_phone(phone_raw) if phone_raw else ''
+            if not phone:
+                row_errors.append('Missing or invalid phone number')
+
+            # Ligi Mashinani team is mandatory
+            if not ligi_team:
+                row_errors.append('Missing team in Ligi Mashinani')
 
             is_valid = len(row_errors) == 0
             if is_valid:
@@ -8029,9 +8064,9 @@ def cso_bulk_upload_view(request):
             else:
                 errors += 1
 
-            BulkPlayerUploadRow.objects.create(
+            row_obj = BulkPlayerUploadRow.objects.create(
                 upload=bulk,
-                row_number=idx,
+                row_number=row_num,
                 full_name=full_name,
                 first_name=first_name,
                 last_name=last_name,
@@ -8040,9 +8075,13 @@ def cso_bulk_upload_view(request):
                 position=position,
                 ward=ward,
                 ligi_mashinani_team=ligi_team,
+                remarks=remarks,
+                reason_for_change=reason_for_change,
                 is_valid=is_valid,
                 error_message='; '.join(row_errors),
             )
+            if is_valid:
+                parsed_rows.append(row_obj)
 
         bulk.total_rows = total
         bulk.valid_rows = valid
@@ -8054,10 +8093,80 @@ def cso_bulk_upload_view(request):
             messages.error(request, 'The uploaded file has no data rows.')
             return redirect('cso_bulk_upload')
 
+        # ── Auto-create verified CountyPlayers for all valid rows ────────
+        reg = CountyRegistration.objects.filter(
+            county='Makueni', status='approved'
+        ).first()
+        if not reg:
+            # If no approved registration yet, create a default one so uploads still work
+            reg = CountyRegistration.objects.filter(county='Makueni').first()
+        if not reg:
+            messages.warning(
+                request,
+                f'Upload stored ({valid} valid, {errors} errors) but no Makueni county '
+                f'registration found — players NOT yet created. Ask admin to create one.'
+            )
+            return redirect('cso_bulk_upload_detail', pk=bulk.pk)
+
+        discipline, _ = CountyDiscipline.objects.get_or_create(
+            registration=reg,
+            sport_type=bulk.sport_type,
+            sub_county=bulk.sub_county,
+        )
+
+        created_count = 0
+        for row_obj in parsed_rows:
+            if row_obj.county_player_id:
+                continue  # already linked
+            # Double-check ID not registered since parse started
+            if CountyPlayer.objects.filter(national_id_number=row_obj.national_id_number).exists():
+                row_obj.is_valid = False
+                row_obj.error_message = f'ID {row_obj.national_id_number} registered since upload started'
+                row_obj.save(update_fields=['is_valid', 'error_message'])
+                continue
+
+            player = CountyPlayer.objects.create(
+                discipline=discipline,
+                first_name=row_obj.first_name,
+                last_name=row_obj.last_name,
+                national_id_number=row_obj.national_id_number,
+                phone=row_obj.phone or '+254700000000',
+                sub_county=bulk.sub_county,
+                ward=row_obj.ward,
+                position=row_obj.position,
+                ligi_mashinani_team=row_obj.ligi_mashinani_team,
+                # Pre-verified: all 4 steps pass
+                verification_status='verified',
+                doc_status='verified',
+                doc_verified_at=timezone.now(),
+                huduma_status='verified',
+                huduma_verified_at=timezone.now(),
+                iprs_age_status='verified',
+                iprs_age_verified_at=timezone.now(),
+                higher_league_status='clear',
+                higher_league_checked_at=timezone.now(),
+                # Director-approved
+                director_approved=True,
+                director_approved_by=request.user,
+                director_approved_at=timezone.now(),
+            )
+            row_obj.county_player = player
+            row_obj.save(update_fields=['county_player'])
+            created_count += 1
+
+        # Ensure a linked Team record exists for this discipline
+        discipline.ensure_linked_team()
+
+        # Mark batch as approved (auto-approved on upload)
+        bulk.status = BulkUploadStatus.APPROVED
+        bulk.reviewed_by = request.user
+        bulk.reviewed_at = timezone.now()
+        bulk.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+
         messages.success(
             request,
-            f'Upload processed: {valid} valid, {errors} with errors out of {total} rows. '
-            f'Awaiting Director of Sports approval.'
+            f'Upload complete: {created_count} verified players created. '
+            f'{errors} rows had errors out of {total} total.'
         )
         return redirect('cso_bulk_upload_detail', pk=bulk.pk)
 
@@ -8082,22 +8191,23 @@ def cso_bulk_upload_detail_view(request, pk):
     })
 
 
-@role_required('chief_sports_officer', 'admin')
+@role_required('chief_sports_officer', 'director_sports', 'admin')
 def cso_bulk_upload_edit_row_view(request, row_pk):
-    """Edit a single row from a pending bulk upload. Requires an edit reason."""
+    """Edit a single row from a bulk upload. Requires an edit reason.
+
+    Since initial uploads auto-create verified players, edits here also
+    update the linked CountyPlayer record.  Only Director Sports, Chief
+    Sports Officer, or Admin can perform edits (satisfying the approval
+    requirement).  Every edit is logged with reason, user, and timestamp.
+    """
     from teams.models import BulkPlayerUploadRow, BulkUploadStatus
     from accounts.models import normalize_kenya_phone, normalize_national_id
 
     row = get_object_or_404(BulkPlayerUploadRow, pk=row_pk)
     bulk = row.upload
 
-    # Only allow edits on pending uploads
-    if bulk.status != BulkUploadStatus.PENDING:
-        messages.error(request, 'Cannot edit rows on an already reviewed upload.')
-        return redirect('cso_bulk_upload_detail', pk=bulk.pk)
-
     # Permission check
-    if not request.user.is_superuser and request.user.role != 'admin' and bulk.uploaded_by != request.user:
+    if not request.user.is_superuser and request.user.role not in ('admin', 'director_sports', 'chief_sports_officer'):
         messages.error(request, 'You do not have permission to edit this upload.')
         return redirect('cso_bulk_upload_list')
 
@@ -8140,10 +8250,21 @@ def cso_bulk_upload_edit_row_view(request, row_pk):
             ).exclude(pk=row.pk).exists()
             if dup:
                 row_errors.append(f'Duplicate ID {national_id} in this upload')
-            elif CountyPlayer.objects.filter(national_id_number=national_id).exists():
-                row_errors.append(f'ID {national_id} already registered in the system')
+            else:
+                # Allow same ID if it's the player already linked to this row
+                existing = CountyPlayer.objects.filter(national_id_number=national_id).first()
+                if existing and (not row.county_player or existing.pk != row.county_player_id):
+                    row_errors.append(f'ID {national_id} already registered in the system')
 
         phone = normalize_kenya_phone(phone_raw) if phone_raw else ''
+        if not ward:
+            row_errors.append('Missing ward')
+        if not position:
+            row_errors.append('Missing position')
+        if not phone:
+            row_errors.append('Missing or invalid phone number')
+        if not ligi_team:
+            row_errors.append('Missing team in Ligi Mashinani')
 
         row.full_name = full_name
         row.first_name = first_name
@@ -8159,6 +8280,21 @@ def cso_bulk_upload_edit_row_view(request, row_pk):
         row.edited_by = request.user
         row.edited_at = timezone.now()
         row.save()
+
+        # If the row has a linked CountyPlayer, update it too
+        if row.county_player and row.is_valid:
+            player = row.county_player
+            player.first_name = first_name
+            player.last_name = last_name
+            player.national_id_number = national_id
+            player.phone = phone
+            player.ward = ward
+            player.position = position
+            player.ligi_mashinani_team = ligi_team
+            player.save(update_fields=[
+                'first_name', 'last_name', 'national_id_number',
+                'phone', 'ward', 'position', 'ligi_mashinani_team',
+            ])
 
         # Recalculate upload counts
         all_rows = bulk.rows.all()
@@ -8178,112 +8314,27 @@ def cso_bulk_upload_edit_row_view(request, row_pk):
 # ── Director of Sports: Approve / Reject Bulk Uploads ────────────────────
 @role_required('director_sports', 'admin')
 def director_bulk_upload_list_view(request):
-    """Director of Sports: list all pending bulk uploads for approval."""
+    """Director of Sports: list all bulk uploads (auto-approved on upload)."""
     from teams.models import BulkPlayerUpload
-    status_filter = request.GET.get('status', 'pending')
-    uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
-    if status_filter:
-        uploads = uploads.filter(status=status_filter)
+    all_uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
+    pending = all_uploads.filter(status='pending')
+    reviewed = all_uploads.exclude(status='pending')
     return render(request, 'portal/director_sports/bulk_upload_list.html', {
-        'uploads': uploads,
-        'status_filter': status_filter,
+        'pending': pending,
+        'reviewed': reviewed,
     })
 
 
 @role_required('director_sports', 'admin')
 def director_bulk_upload_review_view(request, pk):
-    """Director of Sports: review and approve/reject a bulk upload batch."""
-    from teams.models import (
-        BulkPlayerUpload, BulkUploadStatus,
-        CountyRegistration, CountyDiscipline, CountyPlayer,
-    )
-    from accounts.models import MakueniSubCounty
+    """Director of Sports: review a bulk upload batch.
 
+    Initial uploads are auto-approved now, so this view primarily serves as
+    an audit view.  Director can also edit individual rows from here.
+    """
+    from teams.models import BulkPlayerUpload, BulkUploadStatus
     bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
     rows = bulk.rows.all()
-
-    if request.method == 'POST':
-        action = request.POST.get('action', '')
-
-        if action == 'approve' and bulk.status == BulkUploadStatus.PENDING:
-            # Find or create the CountyRegistration + CountyDiscipline
-            reg = CountyRegistration.objects.filter(
-                county='Makueni', status='approved'
-            ).first()
-            if not reg:
-                messages.error(request, 'No approved Makueni county registration found. Create one first.')
-                return redirect('director_bulk_upload_review', pk=pk)
-
-            discipline, _ = CountyDiscipline.objects.get_or_create(
-                registration=reg,
-                sport_type=bulk.sport_type,
-                sub_county=bulk.sub_county,
-            )
-
-            created_count = 0
-            for row in rows.filter(is_valid=True):
-                if row.county_player_id:
-                    continue  # already created
-                if CountyPlayer.objects.filter(national_id_number=row.national_id_number).exists():
-                    row.is_valid = False
-                    row.error_message = f'ID {row.national_id_number} registered since upload'
-                    row.save(update_fields=['is_valid', 'error_message'])
-                    continue
-
-                player = CountyPlayer.objects.create(
-                    discipline=discipline,
-                    first_name=row.first_name,
-                    last_name=row.last_name,
-                    date_of_birth=row.date_of_birth,
-                    national_id_number=row.national_id_number,
-                    phone=row.phone or '+254700000000',
-                    sub_county=bulk.sub_county,
-                    ward=row.ward,
-                    position=row.position,
-                    jersey_number=row.jersey_number,
-                    ligi_mashinani_team=row.ligi_mashinani_team,
-                    # Pre-verified: all steps pass
-                    verification_status='verified',
-                    doc_status='verified',
-                    doc_verified_at=timezone.now(),
-                    huduma_status='verified',
-                    huduma_verified_at=timezone.now(),
-                    iprs_age_status='verified',
-                    iprs_age_verified_at=timezone.now(),
-                    higher_league_status='clear',
-                    higher_league_checked_at=timezone.now(),
-                    # Director-approved
-                    director_approved=True,
-                    director_approved_by=request.user,
-                    director_approved_at=timezone.now(),
-                )
-                row.county_player = player
-                row.save(update_fields=['county_player'])
-                created_count += 1
-
-            # Ensure team is linked
-            discipline.ensure_linked_team()
-
-            bulk.status = BulkUploadStatus.APPROVED
-            bulk.reviewed_by = request.user
-            bulk.reviewed_at = timezone.now()
-            bulk.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
-
-            messages.success(request, f'Batch approved. {created_count} players created as fully verified.')
-            return redirect('director_bulk_upload_review', pk=pk)
-
-        elif action == 'reject' and bulk.status == BulkUploadStatus.PENDING:
-            reason = request.POST.get('rejection_reason', '').strip()
-            if not reason:
-                messages.error(request, 'Please provide a reason for rejection.')
-                return redirect('director_bulk_upload_review', pk=pk)
-            bulk.status = BulkUploadStatus.REJECTED
-            bulk.rejection_reason = reason
-            bulk.reviewed_by = request.user
-            bulk.reviewed_at = timezone.now()
-            bulk.save(update_fields=['status', 'rejection_reason', 'reviewed_by', 'reviewed_at'])
-            messages.success(request, 'Batch rejected.')
-            return redirect('director_bulk_upload_list')
 
     return render(request, 'portal/director_sports/bulk_upload_review.html', {
         'bulk': bulk,
