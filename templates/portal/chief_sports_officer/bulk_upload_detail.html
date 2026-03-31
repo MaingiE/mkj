@@ -137,15 +137,23 @@
             <div class="modal-body">
                 <p>Delete upload <strong>{{ bulk.get_sport_type_display }} / {{ bulk.get_sub_county_display }} (#{{ bulk.pk }})</strong>?</p>
                 <p class="text-muted" style="font-size:.88rem;">
-                    The upload record and its row data will be permanently deleted.<br>
-                    <strong>Players already registered from this upload will remain active.</strong>
+                    Choose one delete mode below:
                 </p>
+                <ul class="text-muted" style="font-size:.88rem; margin-bottom:0;">
+                    <li>Delete upload only: removes upload record and row data; keeps already registered players.</li>
+                    <li>Delete upload + players: removes upload record, row data, and players created from this upload.</li>
+                </ul>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form method="post" action="{% url 'cso_bulk_upload_delete' bulk.pk %}" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Yes, Delete Upload</button>
+                    <button type="submit" name="delete_mode" value="upload_only" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete Upload Only
+                    </button>
+                    <button type="submit" name="delete_mode" value="upload_and_players" class="btn btn-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Delete Upload + Players
+                    </button>
                 </form>
             </div>
         </div>

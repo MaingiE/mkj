@@ -76,6 +76,12 @@
                 <label class="form-label fw-bold">Notes (optional)</label>
                 <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Kibwezi West U20 Football squad for 2026 season"></textarea>
             </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="replace_existing" value="1" id="replaceExistingUpload">
+                <label class="form-check-label" for="replaceExistingUpload">
+                    Replace existing upload for this discipline + sub-county (keeps players from old upload)
+                </label>
+            </div>
             <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Upload &amp; Parse</button>
             <a href="{% url 'cso_bulk_upload_list' %}" class="btn btn-outline-secondary ms-2">View All Uploads</a>
         </form>

@@ -7926,7 +7926,7 @@ def cso_bulk_upload_view(request):
     import openpyxl
     from teams.models import (
         BulkPlayerUpload, BulkPlayerUploadRow, BulkUploadStatus,
-        CountyRegistration, CountyDiscipline,
+        CountyRegistration, CountyDiscipline, CountyRegStatus, CountyPlayer,
     )
     from accounts.models import MakueniSubCounty, normalize_kenya_phone, normalize_national_id
 
@@ -7937,6 +7937,7 @@ def cso_bulk_upload_view(request):
         sport_type = request.POST.get('sport_type', '').strip()
         sub_county = request.POST.get('sub_county', '').strip()
         notes = request.POST.get('notes', '').strip()
+        replace_existing = request.POST.get('replace_existing') == '1'
         uploaded_file = request.FILES.get('file')
 
         if not uploaded_file:
@@ -7965,14 +7966,27 @@ def cso_bulk_upload_view(request):
                 if hasattr(existing, 'get_sub_county_display')
                 else existing.sub_county
             )
-            messages.error(
-                request,
-                f'An upload already exists for {existing.get_sport_type_display()} '
-                f'in {existing_subcounty_label} (Upload #{existing.pk}, '
-                f'{existing.created_at.strftime("%d %b %Y")}). '
-                f'Delete the existing upload first before uploading a new one.'
-            )
-            return redirect('cso_bulk_upload')
+            if replace_existing:
+                replaced_desc = (
+                    f'{existing.get_sport_type_display()} / '
+                    f'{existing_subcounty_label} (Upload #{existing.pk})'
+                )
+                existing.delete()
+                messages.info(
+                    request,
+                    f'Replaced previous upload: {replaced_desc}. '
+                    'Players created from the old upload were kept.'
+                )
+            else:
+                messages.error(
+                    request,
+                    f'An upload already exists for {existing.get_sport_type_display()} '
+                    f'in {existing_subcounty_label} (Upload #{existing.pk}, '
+                    f'{existing.created_at.strftime("%d %b %Y")}). '
+                    'To proceed, tick "Replace existing upload" and upload again, '
+                    'or delete the existing upload from the uploads list.'
+                )
+                return redirect('cso_bulk_upload')
 
         # Create the upload record
         bulk = BulkPlayerUpload.objects.create(
@@ -8118,25 +8132,37 @@ def cso_bulk_upload_view(request):
             return redirect('cso_bulk_upload')
 
         # ── Auto-create verified CountyPlayers for all valid rows ────────
-        reg = CountyRegistration.objects.filter(
-            county='Makueni', status='approved'
-        ).first()
+        reg = CountyRegistration.objects.filter(county='Makueni').first()
         if not reg:
-            # If no approved registration yet, create a default one so uploads still work
-            reg = CountyRegistration.objects.filter(county='Makueni').first()
-        if not reg:
-            messages.warning(
-                request,
-                f'Upload stored ({valid} valid, {errors} errors) but no Makueni county '
-                f'registration found — players NOT yet created. Ask admin to create one.'
+            reg = CountyRegistration.objects.create(
+                user=request.user,
+                county='Makueni',
+                director_name=request.user.get_full_name() or 'Makueni Director of Sports',
+                director_phone=(getattr(request.user, 'phone', '') or '+254700000000'),
+                status=CountyRegStatus.APPROVED,
+                approved_by=request.user,
+                approved_at=timezone.now(),
             )
-            return redirect('cso_bulk_upload_detail', pk=bulk.pk)
+        elif reg.status != CountyRegStatus.APPROVED:
+            reg.status = CountyRegStatus.APPROVED
+            if not reg.approved_by:
+                reg.approved_by = request.user
+            if not reg.approved_at:
+                reg.approved_at = timezone.now()
+            reg.save(update_fields=['status', 'approved_by', 'approved_at'])
 
-        discipline, _ = CountyDiscipline.objects.get_or_create(
-            registration=reg,
+        # Reuse the canonical discipline for this sport + sub-county when present,
+        # so verified-player views and team-manager flows stay in sync.
+        discipline = CountyDiscipline.objects.filter(
             sport_type=bulk.sport_type,
             sub_county=bulk.sub_county,
-        )
+        ).order_by('id').first()
+        if not discipline:
+            discipline = CountyDiscipline.objects.create(
+                registration=reg,
+                sport_type=bulk.sport_type,
+                sub_county=bulk.sub_county,
+            )
 
         created_count = 0
         for row_obj in parsed_rows:
@@ -8225,14 +8251,32 @@ def cso_bulk_upload_delete_view(request, pk):
         messages.error(request, 'You do not have permission to delete this upload.')
         return redirect('cso_bulk_upload_list')
     if request.method == 'POST':
+        delete_mode = request.POST.get('delete_mode', 'upload_only')
         subcounty_label = (
             bulk.get_sub_county_display()
             if hasattr(bulk, 'get_sub_county_display')
             else bulk.sub_county
         )
         desc = f"{bulk.get_sport_type_display()} / {subcounty_label} (#{bulk.pk})"
+        deleted_players = 0
+        if delete_mode == 'upload_and_players':
+            player_ids = list(
+                bulk.rows.exclude(county_player__isnull=True)
+                .values_list('county_player_id', flat=True)
+                .distinct()
+            )
+            deleted_players, _ = CountyPlayer.objects.filter(pk__in=player_ids).delete()
         bulk.delete()
-        messages.success(request, f'Upload {desc} deleted. Any players already registered from this upload remain active.')
+        if delete_mode == 'upload_and_players':
+            messages.success(
+                request,
+                f'Upload {desc} deleted together with {deleted_players} player record(s) created from it.'
+            )
+        else:
+            messages.success(
+                request,
+                f'Upload {desc} deleted. Any players already registered from this upload remain active.'
+            )
         return redirect('cso_bulk_upload_list')
     # GET → redirect back (deletion must be via POST)
     return redirect('cso_bulk_upload_detail', pk=pk)
@@ -8790,11 +8834,13 @@ def team_manager_verified_players_view(request):
         players = CountyPlayer.objects.filter(
             verification_status='verified',
             director_approved=True,
-            discipline=discipline,
+            discipline__sport_type=discipline.sport_type,
+            sub_county=discipline.sub_county,
         ).select_related('discipline', 'discipline__registration').order_by('last_name')
         disc_choices = [(discipline.sport_type, dict(SportType.choices).get(discipline.sport_type, discipline.sport_type))]
         is_locked = CountyPlayer.objects.filter(
-            discipline=discipline,
+            discipline__sport_type=discipline.sport_type,
+            sub_county=discipline.sub_county,
             director_locked=True,
         ).exists()
     else:
