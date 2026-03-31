@@ -65,7 +65,7 @@
         {% if subcounty_filter or discipline_filter or approval_filter %}
         <a href="{% url 'director_sports_verified_players' %}" class="btn btn-sm btn-outline-secondary" style="margin-bottom:2px;">Clear Filters</a>
         {% endif %}
-        <a href="{% url 'verified_players_pdf' %}{% if subcounty_filter %}?subcounty={{ subcounty_filter }}{% endif %}" class="btn btn-sm btn-success" style="margin-bottom:2px;">
+        <a href="{% url 'verified_players_pdf' %}?subcounty={{ subcounty_filter|urlencode }}&discipline={{ discipline_filter|urlencode }}&approval={{ approval_filter|urlencode }}" class="btn btn-sm btn-success" style="margin-bottom:2px;">
             <i class="bi bi-download"></i> Download PDF
         </a>
     </form>

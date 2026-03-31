@@ -2,7 +2,6 @@
 MKJ SUPA CUP Teams - Models
 """
 import re
-from datetime import date
 
 from django.db import models
 from django.conf import settings
@@ -745,13 +744,6 @@ class Team(models.Model):
             preferred_number = county_player.jersey_number or existing_number
 
             player_dob = county_player.date_of_birth
-            if not player_dob:
-                if county_player.age_value:
-                    inferred_year = max(today.year - int(county_player.age_value), today.year - PLAYER_MAX_AGE)
-                    player_dob = date(inferred_year, 1, 1)
-                else:
-                    # Bulk uploads may not include DOB; use a safe default age baseline.
-                    player_dob = date(today.year - 20, 1, 1)
 
             defaults = {
                 "team": self,
@@ -866,7 +858,7 @@ class Player(models.Model):
     team           = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
     first_name     = models.CharField(max_length=100)
     last_name      = models.CharField(max_length=100)
-    date_of_birth  = models.DateField()
+    date_of_birth  = models.DateField(null=True, blank=True)
     position       = models.CharField(max_length=10, choices=Position.choices)
     shirt_number       = models.PositiveIntegerField()
     national_id_number = models.CharField(max_length=20, blank=True, default="", validators=[national_id_validator],
@@ -951,13 +943,17 @@ class Player(models.Model):
     @property
     def age(self):
         from django.utils import timezone
+        dob = self.date_of_birth
+        if not dob:
+            return None
         today = timezone.now().date()
-        dob   = self.date_of_birth
         return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
     @property
     def is_age_eligible(self):
         """True if the player falls within the 18 - 23 age bracket."""
+        if self.age is None:
+            return True
         return PLAYER_MIN_AGE <= self.age <= PLAYER_MAX_AGE
 
     @property
@@ -1017,6 +1013,8 @@ class Player(models.Model):
         Automatically lock out players outside the 18-23 bracket.
         Called on save. Sets status to ineligible and rejection reason.
         """
+        if self.age is None:
+            return True
         if not self.is_age_eligible:
             self.verification_status = VerificationStatus.REJECTED
             self.rejection_reason = RejectionReason.AGE_OUTSIDE

@@ -175,7 +175,7 @@ class FIFAConnectService:
         payload = {
             "first_name": player.first_name,
             "last_name": player.last_name,
-            "date_of_birth": str(player.date_of_birth),
+            "date_of_birth": str(player.date_of_birth or ""),
             "national_id": player.national_id_number,
             "fifa_connect_id": player.fifa_connect_id,
         }

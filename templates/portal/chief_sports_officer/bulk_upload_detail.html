@@ -74,7 +74,6 @@
                         <th>Position</th>
                         <th>Phone</th>
                         <th>Ligi Mashinani Team</th>
-                        <th>Remarks</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -89,7 +88,6 @@
                         <td>{{ row.position|default:"-" }}</td>
                         <td>{{ row.phone|default:"-" }}</td>
                         <td>{{ row.ligi_mashinani_team|default:"-" }}</td>
-                        <td>{{ row.remarks|default:"-" }}</td>
                         <td>
                             {% if row.is_valid %}
                             <span class="badge bg-success">Valid</span>
@@ -108,7 +106,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="10" class="text-center text-muted py-3">No rows parsed.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-3">No rows parsed.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

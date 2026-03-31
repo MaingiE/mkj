@@ -168,7 +168,9 @@
                             <td>{{ p.first_name }} {{ p.last_name }}</td>
                             <td><span class="badge" style="background:#e8f5ed;color:#124491">{{ p.get_position_display }}</span></td>
                             <td>
-                                {% if p.is_age_eligible %}
+                                {% if p.age is None %}
+                                -
+                                {% elif p.is_age_eligible %}
                                 {{ p.age }}
                                 {% else %}
                                 <span style="color:#C62828;font-weight:600" title="Outside 18-23 bracket">{{ p.age }} ⛔</span>

@@ -5888,7 +5888,7 @@ def player_profile_view(request, player_pk):
 
 @login_required(login_url='web_login')
 def county_player_profile_view(request, player_pk):
-    """County player profile view - redirect to the unified player profile."""
+    """Sub-county player profile view - redirect to the unified player profile."""
     return player_profile_view(request, player_pk)
 
 
@@ -5917,7 +5917,7 @@ def team_manager_dashboard_view(request):
     # Fall back to old Team-based manager role
     my_teams = Team.objects.filter(manager=user)
 
-    # Verified county players (if bench member)
+    # Verified sub-county players (if bench member)
     verified_players = []
     discipline = None
     county_reg = None
@@ -8027,31 +8027,25 @@ def cso_bulk_upload_view(request):
         errors = 0
         seen_ids = set()
         parsed_rows = []  # collect row objects for auto-creation
+        squad_limit = SQUAD_LIMITS.get(sport_type, 30)
 
         for idx, row in enumerate(rows_list, start=2):
             if not row or all(cell is None or str(cell).strip() == '' for cell in row):
                 continue  # skip blank rows
 
             total += 1
-            # Columns: S/NO(0) | NAME(1) | WARD(2) | ID(3) | POSITION(4) |
-            #          PHONE NUMBER(5) | TEAM IN LIGI MASHINANI(6) | REMARKS(7) | REASON FOR CHANGE(8)
-            serial_no = str(row[0] or '').strip() if len(row) > 0 else ''
+            # Expected upload columns used by the parser:
+            # NAME(1) | WARD(2) | ID(3) | POSITION(4) | PHONE NUMBER(5) | TEAM IN LIGI MASHINANI(6)
+            # S/NO(0) is ignored, and any trailing columns are ignored.
             full_name = str(row[1] or '').strip() if len(row) > 1 else ''
             ward = str(row[2] or '').strip() if len(row) > 2 else ''
             id_raw = str(row[3] or '').strip() if len(row) > 3 else ''
             position = str(row[4] or '').strip() if len(row) > 4 else ''
             phone_raw = str(row[5] or '').strip() if len(row) > 5 else ''
             ligi_team = str(row[6] or '').strip() if len(row) > 6 else ''
-            remarks = str(row[7] or '').strip() if len(row) > 7 else ''
-            reason_for_change = str(row[8] or '').strip() if len(row) > 8 else ''
 
-            # Use S/NO from file as row number, fall back to spreadsheet index
-            row_num = idx
-            if serial_no:
-                try:
-                    row_num = int(str(serial_no).replace('.0', '').strip())
-                except (ValueError, TypeError):
-                    pass
+            # Row number follows spreadsheet order; uploaded serial numbers are ignored.
+            row_num = idx - 1
 
             row_errors = []
 
@@ -8098,6 +8092,13 @@ def cso_bulk_upload_view(request):
                 row_errors.append('Missing team in Ligi Mashinani')
 
             is_valid = len(row_errors) == 0
+            if is_valid and len(parsed_rows) >= squad_limit:
+                is_valid = False
+                row_errors.append(
+                    f'Squad limit exceeded for {dict(SportType.choices).get(sport_type, sport_type)} '
+                    f'(maximum {squad_limit} players)'
+                )
+
             if is_valid:
                 valid += 1
             else:
@@ -8114,8 +8115,8 @@ def cso_bulk_upload_view(request):
                 position=position,
                 ward=ward,
                 ligi_mashinani_team=ligi_team,
-                remarks=remarks,
-                reason_for_change=reason_for_change,
+                remarks='',
+                reason_for_change='',
                 is_valid=is_valid,
                 error_message='; '.join(row_errors),
             )
@@ -8231,7 +8232,8 @@ def cso_bulk_upload_view(request):
             request,
             f'Upload complete: {created_count} verified players created. '
             f'{errors} rows had errors out of {total} total. '
-            f'{synced_team_players} player record(s) synced to team roster.'
+            f'{synced_team_players} player record(s) synced to team roster. '
+            f'Squad limit applied: {squad_limit}.'
         )
         q = urlencode({'subcounty': bulk.sub_county, 'discipline': bulk.sport_type})
         return redirect(f"/portal/director-sports/verified-players/?{q}")
@@ -9295,6 +9297,8 @@ def verified_players_pdf_view(request):
 
     user = request.user
     discipline_filter = request.GET.get('discipline', '')
+    subcounty_filter = request.GET.get('subcounty', '')
+    approval_filter = request.GET.get('approval', '')
 
     # Build queryset based on role
     if user.role == 'subcounty_sports_officer':
@@ -9309,15 +9313,32 @@ def verified_players_pdf_view(request):
                 'discipline__registration',
             ).get(user=user, role=TechnicalBenchRole.TEAM_MANAGER)
             players = CountyPlayer.objects.filter(
-                verification_status='verified', discipline=bench.discipline,
+                verification_status='verified',
+                director_approved=True,
+                discipline__sport_type=bench.discipline.sport_type,
+                sub_county=bench.discipline.sub_county,
             )
-            scope_label = f"{bench.discipline.registration.county} - {bench.discipline.get_sport_type_display()}"
+            scope_label = f"{bench.discipline.sub_county} - {bench.discipline.get_sport_type_display()}"
         except TechnicalBenchMember.DoesNotExist:
-            players = CountyPlayer.objects.none()
-            scope_label = "No discipline assigned"
+            managed_teams = Team.objects.filter(manager=user).select_related('source_discipline')
+            managed_pairs = list(
+                managed_teams.exclude(sub_county='').values_list('sport_type', 'sub_county').distinct()
+            )
+            if managed_pairs:
+                pair_filter = Q()
+                for sport_type, sub_county in managed_pairs:
+                    pair_filter |= Q(discipline__sport_type=sport_type, sub_county=sub_county)
+                players = CountyPlayer.objects.filter(
+                    pair_filter,
+                    verification_status='verified',
+                    director_approved=True,
+                )
+                scope_label = "Assigned Team Verified Players"
+            else:
+                players = CountyPlayer.objects.none()
+                scope_label = "No discipline assigned"
     elif user.role == 'director_sports' or user.role == 'chief_sports_officer' or user.is_superuser:
         players = CountyPlayer.objects.filter(verification_status='verified')
-        subcounty_filter = request.GET.get('subcounty', '')
         if subcounty_filter:
             players = players.filter(sub_county=subcounty_filter)
         scope_label = "All Sub-Counties - All Disciplines"
@@ -9332,6 +9353,18 @@ def verified_players_pdf_view(request):
         sport_label = dict(SportType.choices).get(discipline_filter, discipline_filter)
         players = players.filter(discipline__sport_type=discipline_filter)
         scope_label += f" - {sport_label}"
+    if approval_filter == 'approved':
+        players = players.filter(director_approved=True)
+        scope_label += " - Approved"
+    elif approval_filter == 'disapproved':
+        players = players.filter(director_disapproved=True)
+        scope_label += " - Disapproved"
+    elif approval_filter == 'pending':
+        players = players.filter(director_approved=False, director_disapproved=False)
+        scope_label += " - Pending Review"
+    elif approval_filter == 'locked':
+        players = players.filter(director_locked=True)
+        scope_label += " - Locked"
 
     try:
         from reportlab.lib.pagesizes import A4

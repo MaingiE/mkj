@@ -63,12 +63,14 @@
                 <thead><tr><th>#</th><th>Name</th><th>Position</th><th>Age</th><th>Docs</th><th>Verification</th><th>Status</th>{% if can_manage %}<th>Actions</th>{% endif %}</tr></thead>
                 <tbody>
                     {% for p in players %}
-                    <tr{% if not p.is_age_eligible %} style="background:#fce4ec"{% endif %}>
+                    <tr{% if p.age is not None and not p.is_age_eligible %} style="background:#fce4ec"{% endif %}>
                         <td>{{ p.shirt_number }}</td>
                         <td><strong>{{ p.first_name }} {{ p.last_name }}</strong></td>
                         <td>{{ p.get_position_display }}</td>
                         <td>
-                            {% if p.is_age_eligible %}
+                            {% if p.age is None %}
+                            -
+                            {% elif p.is_age_eligible %}
                             {{ p.age }}
                             {% else %}
                             <span style="color:#C62828;font-weight:600" title="Outside 18-23 bracket">{{ p.age }} ⛔</span>
