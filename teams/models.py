@@ -1291,3 +1291,85 @@ class ScoutReport(models.Model):
             if score is not None:
                 result.append({"label": c["label"], "score": score, "key": c["key"]})
         return result
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  BULK PLAYER UPLOAD  (Chief Sports Officer / Admin → Director Sports approval)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class BulkUploadStatus(models.TextChoices):
+    PENDING  = "pending",  "Pending Approval"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
+
+
+class BulkPlayerUpload(models.Model):
+    """
+    A bulk player upload batch.  The Chief Sports Officer (or Admin) uploads
+    an Excel file; the system parses each row into BulkPlayerUploadRow.
+    Director of Sports approves or rejects the entire batch.
+    On approval, rows are converted into verified CountyPlayer records.
+    """
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="bulk_uploads",
+    )
+    file = models.FileField(
+        upload_to="bulk_uploads/%Y/%m/",
+        help_text="Excel (.xlsx) file with player data",
+    )
+    original_filename = models.CharField(max_length=255, blank=True, default="")
+    sport_type = models.CharField(max_length=30, choices=SportType.choices)
+    sub_county = models.CharField(max_length=100)
+    status = models.CharField(
+        max_length=20, choices=BulkUploadStatus.choices,
+        default=BulkUploadStatus.PENDING,
+    )
+    notes = models.TextField(blank=True, default="", help_text="Uploader notes")
+    rejection_reason = models.TextField(blank=True, default="")
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="bulk_uploads_reviewed",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    total_rows = models.PositiveIntegerField(default=0)
+    valid_rows = models.PositiveIntegerField(default=0)
+    error_rows = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Bulk Upload #{self.pk} - {self.get_sport_type_display()} ({self.sub_county}) - {self.get_status_display()}"
+
+
+class BulkPlayerUploadRow(models.Model):
+    """Individual player row from a bulk upload."""
+    upload = models.ForeignKey(
+        BulkPlayerUpload, on_delete=models.CASCADE,
+        related_name="rows",
+    )
+    row_number = models.PositiveIntegerField()
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    date_of_birth = models.DateField(null=True, blank=True)
+    national_id_number = models.CharField(max_length=20, blank=True, default="")
+    phone = models.CharField(max_length=20, blank=True, default="")
+    position = models.CharField(max_length=30, blank=True, default="")
+    jersey_number = models.PositiveIntegerField(null=True, blank=True)
+    ward = models.CharField(max_length=100, blank=True, default="")
+    is_valid = models.BooleanField(default=True)
+    error_message = models.TextField(blank=True, default="")
+    county_player = models.ForeignKey(
+        'CountyPlayer', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="bulk_source",
+        help_text="CountyPlayer created from this row on approval",
+    )
+
+    class Meta:
+        ordering = ["row_number"]
+        unique_together = ["upload", "row_number"]
+
+    def __str__(self):
+        return f"Row {self.row_number}: {self.first_name} {self.last_name}"

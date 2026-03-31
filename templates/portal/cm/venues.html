@@ -126,9 +126,9 @@
                 <input type="text" name="name" id="name" required placeholder="e.g. Nyayo Stadium">
             </div>
             <div class="form-group">
-                <label for="county">County *</label>
+                <label for="county">Sub-County *</label>
                 <select name="county" id="county" required>
-                    <option value="">Select county...</option>
+                    <option value="">Select sub-county...</option>
                     {% for val, label in county_choices %}
                     <option value="{{ val }}">{{ label }}</option>
                     {% endfor %}

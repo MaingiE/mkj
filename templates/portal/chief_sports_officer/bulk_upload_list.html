@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Uploads - MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'chief_sports_officer_dashboard' %}">Chief Sports Officer</a>
+        <span>Bulk Uploads</span>
+    </div>
+    <h1><i class="bi bi-cloud-upload"></i> Bulk Player Uploads</h1>
+    <p>All bulk team list uploads and their approval status.</p>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{% url 'cso_bulk_upload' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Upload</a>
+    <span class="text-muted">{{ uploads|length }} upload{{ uploads|length|pluralize }}</span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.88rem;">
+                <thead style="background:#f5f5f5;">
+                    <tr>
+                        <th>#</th>
+                        <th>Uploaded</th>
+                        <th>Discipline</th>
+                        <th>Sub-County</th>
+                        <th>Rows</th>
+                        <th>Valid</th>
+                        <th>Errors</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in uploads %}
+                    <tr>
+                        <td>{{ u.pk }}</td>
+                        <td>{{ u.created_at|date:"d M Y H:i" }}</td>
+                        <td>{{ u.get_sport_type_display }}</td>
+                        <td>{{ u.get_sub_county_display }}</td>
+                        <td>{{ u.total_rows }}</td>
+                        <td><span class="text-success fw-bold">{{ u.valid_rows }}</span></td>
+                        <td>
+                            {% if u.error_rows > 0 %}
+                            <span class="text-danger fw-bold">{{ u.error_rows }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% elif u.status == 'rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td><a href="{% url 'cso_bulk_upload_detail' u.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center text-muted py-4">No uploads yet. Click <strong>New Upload</strong> to start.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

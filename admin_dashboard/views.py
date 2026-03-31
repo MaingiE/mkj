@@ -22,7 +22,8 @@ from .models import ActivityLog
 COORDINATOR_DISCIPLINE_CHOICES = [
     ("football", "Soccer"),
     ("volleyball", "Volleyball"),
-    ("basketball", "Basketball"),
+    ("basketball_5x5", "Basketball 5×5"),
+    ("basketball_3x3", "Basketball 3×3"),
     ("handball", "Handball"),
 ]
 

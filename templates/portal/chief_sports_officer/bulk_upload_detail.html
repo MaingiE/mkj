@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Upload #{{ upload.pk }} Detail - MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'chief_sports_officer_dashboard' %}">Chief Sports Officer</a>
+        <a href="{% url 'cso_bulk_upload_list' %}">Bulk Uploads</a>
+        <span>Upload #{{ upload.pk }}</span>
+    </div>
+    <h1><i class="bi bi-file-earmark-spreadsheet"></i> Upload #{{ upload.pk }} Detail</h1>
+</div>
+
+<!-- Summary Card -->
+<div class="card mb-1">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <small class="text-muted d-block">Discipline</small>
+                <strong>{{ upload.get_sport_type_display }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Sub-County</small>
+                <strong>{{ upload.get_sub_county_display }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Status</small>
+                {% if upload.status == 'approved' %}
+                <span class="badge bg-success">Approved</span>
+                {% elif upload.status == 'rejected' %}
+                <span class="badge bg-danger">Rejected</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Total / Valid / Errors</small>
+                <strong>{{ upload.total_rows }}</strong> /
+                <span class="text-success fw-bold">{{ upload.valid_rows }}</span> /
+                <span class="text-danger fw-bold">{{ upload.error_rows }}</span>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Uploaded</small>
+                <strong>{{ upload.created_at|date:"d M Y H:i" }}</strong>
+            </div>
+        </div>
+        {% if upload.notes %}
+        <div class="mt-2">
+            <small class="text-muted d-block">Notes</small>
+            <em>{{ upload.notes }}</em>
+        </div>
+        {% endif %}
+        {% if upload.rejection_reason %}
+        <div class="mt-2">
+            <small class="text-muted d-block">Rejection Reason</small>
+            <span class="text-danger">{{ upload.rejection_reason }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rows Table -->
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-table"></i> Parsed Player Rows</h3></div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <thead style="background:#f5f5f5;">
+                    <tr>
+                        <th>Row</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>DOB</th>
+                        <th>National ID</th>
+                        <th>Phone</th>
+                        <th>Position</th>
+                        <th>Jersey</th>
+                        <th>Ward</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="{% if not row.is_valid %}table-danger{% endif %}">
+                        <td>{{ row.row_number }}</td>
+                        <td>{{ row.first_name }}</td>
+                        <td>{{ row.last_name }}</td>
+                        <td>{{ row.date_of_birth|date:"d/m/Y" }}</td>
+                        <td>{{ row.national_id_number }}</td>
+                        <td>{{ row.phone|default:"-" }}</td>
+                        <td>{{ row.position|default:"-" }}</td>
+                        <td>{{ row.jersey_number|default:"-" }}</td>
+                        <td>{{ row.ward|default:"-" }}</td>
+                        <td>
+                            {% if row.is_valid %}
+                            <span class="badge bg-success">Valid</span>
+                            {% else %}
+                            <span class="badge bg-danger" title="{{ row.error_message }}">Error</span>
+                            <small class="d-block text-danger">{{ row.error_message }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10" class="text-center text-muted py-3">No rows parsed.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'cso_bulk_upload_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Uploads</a>
+</div>
+{% endblock %}

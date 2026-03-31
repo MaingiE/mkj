@@ -21,6 +21,15 @@ from functools import wraps
 import csv
 import secrets, string, json, re
 from django.views.decorators.cache import cache_page
+from django.core.cache import cache as _django_cache
+
+
+def _clear_public_fixture_cache():
+    """Bust cached public pages so fixture/result changes appear immediately."""
+    try:
+        _django_cache.clear()
+    except Exception:
+        pass
 
 from accounts.models import User, UserRole, KenyaCounty, validate_kenya_phone_or_raise, validate_national_id_or_raise, normalize_kenya_phone, MAKUENI_SUBCOUNTY_WARDS
 from competitions.models import (
@@ -86,13 +95,17 @@ def send_credentials_email(user, temporary_password, role_label):
 COORDINATOR_DISCIPLINE_CHOICES = [
     ("football", "Soccer"),
     ("volleyball", "Volleyball"),
-    ("basketball", "Basketball"),
+    ("basketball_5x5", "Basketball 5×5"),
+    ("basketball_3x3", "Basketball 3×3"),
     ("handball", "Handball"),
 ]
 
 COORDINATOR_DISCIPLINE_VARIANTS = {
     "football": [SportType.FOOTBALL_MEN, SportType.FOOTBALL_WOMEN],
     "volleyball": [SportType.VOLLEYBALL_MEN, SportType.VOLLEYBALL_WOMEN],
+    "basketball_5x5": [SportType.BASKETBALL_MEN, SportType.BASKETBALL_WOMEN],
+    "basketball_3x3": [SportType.BASKETBALL_3X3_MEN, SportType.BASKETBALL_3X3_WOMEN],
+    # Legacy key kept for backward compatibility with existing users
     "basketball": [
         SportType.BASKETBALL_MEN,
         SportType.BASKETBALL_WOMEN,
@@ -110,8 +123,10 @@ def _normalize_coordinator_discipline(value):
     if raw_value in COORDINATOR_DISCIPLINE_VARIANTS:
         return raw_value
     sport_family = get_sport_family(raw_value)
-    if sport_family in ("basketball_5x5", "basketball_3x3"):
-        return "basketball"
+    if sport_family == "basketball_5x5":
+        return "basketball_5x5"
+    if sport_family == "basketball_3x3":
+        return "basketball_3x3"
     return sport_family if sport_family in COORDINATOR_DISCIPLINE_VARIANTS else raw_value
 
 
@@ -2736,6 +2751,7 @@ def match_report_review_view(request, report_pk):
             process_approved_report(report)
 
             report.save()
+            _clear_public_fixture_cache()
             messages.success(request, f'✅ Match report approved - {fixture.home_team} {report.home_score}-{report.away_score} {fixture.away_team}')
 
         elif action == 'return':
@@ -3431,6 +3447,7 @@ def coordinator_generate_fixtures_view(request, pk):
                     ip_address=request.META.get('REMOTE_ADDR', ''),
                 )
                 messages.success(request, f'{len(fixtures)} fixtures generated for {competition.name}.')
+                _clear_public_fixture_cache()
             except ValueError as e:
                 messages.error(request, str(e))
 
@@ -3515,7 +3532,7 @@ def coordinator_venues_view(request):
         'active_venues': venues.filter(is_active=True),
         'inactive_venues': venues.filter(is_active=False),
         'total_venues': venues.count(),
-        'county_choices': KenyaCounty.choices,
+        'county_choices': MakueniSubCounty.choices,
     })
 
 
@@ -3590,20 +3607,19 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
         if status:
             fixture.status = status
 
-        # For knockout: allow team reassignment
-        if fixture.is_knockout:
-            home_id = request.POST.get('home_team_id', '')
-            away_id = request.POST.get('away_team_id', '')
-            if home_id:
-                try:
-                    fixture.home_team = Team.objects.get(pk=home_id)
-                except Team.DoesNotExist:
-                    pass
-            if away_id:
-                try:
-                    fixture.away_team = Team.objects.get(pk=away_id)
-                except Team.DoesNotExist:
-                    pass
+        # Allow team reassignment (home/away swap or change)
+        home_id = request.POST.get('home_team_id', '')
+        away_id = request.POST.get('away_team_id', '')
+        if home_id:
+            try:
+                fixture.home_team = Team.objects.get(pk=home_id)
+            except Team.DoesNotExist:
+                pass
+        if away_id:
+            try:
+                fixture.away_team = Team.objects.get(pk=away_id)
+            except Team.DoesNotExist:
+                pass
 
         # Score update
         home_score = request.POST.get('home_score', '')
@@ -3671,6 +3687,7 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
                 },
             )
         messages.success(request, f'Fixture updated: {fixture}')
+        _clear_public_fixture_cache()
         return redirect('coordinator_competition_manage', pk=pk)
 
     venues = Venue.objects.filter(is_active=True).order_by('name')
@@ -3771,6 +3788,7 @@ def coordinator_create_fixture_view(request, pk):
             pass
 
         messages.success(request, f'Match created: {fixture}')
+        _clear_public_fixture_cache()
         return redirect('coordinator_competition_manage', pk=pk)
 
     # GET - show form
@@ -3890,6 +3908,7 @@ def coordinator_reschedule_fixture_view(request, pk, fixture_pk):
         )
 
         messages.success(request, f'Match rescheduled: {fixture}')
+        _clear_public_fixture_cache()
         # Admin users go back to admin dashboard; coordinators go to their competition page
         if request.user.role == 'admin':
             return redirect('reschedule_fixtures_admin')
@@ -4540,6 +4559,7 @@ def competition_report_approve_view(request, pk, report_pk):
                 f'{report.home_score}-{report.away_score} {fixture.away_team}. '
                 f'Standings and player statistics updated automatically.'
             )
+            _clear_public_fixture_cache()
 
         elif action == 'return':
             report.status = MatchReportStatus.RETURNED
@@ -5270,7 +5290,7 @@ def cm_manage_venues_view(request):
         'active_venues': active_venues,
         'inactive_venues': inactive_venues,
         'total_venues': venues.count(),
-        'county_choices': KenyaCounty.choices,
+        'county_choices': MakueniSubCounty.choices,
     })
 
 
@@ -7815,6 +7835,321 @@ def chief_sports_officer_dashboard_view(request):
     })
 
 
+# ── Bulk Player Upload (Chief Sports Officer / Admin) ─────────────────────
+@role_required('chief_sports_officer', 'admin')
+def cso_bulk_upload_list_view(request):
+    """List all bulk uploads for CSO / Admin."""
+    from teams.models import BulkPlayerUpload
+    uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
+    if not request.user.is_superuser and request.user.role != 'admin':
+        uploads = uploads.filter(uploaded_by=request.user)
+    return render(request, 'portal/chief_sports_officer/bulk_upload_list.html', {
+        'uploads': uploads,
+    })
+
+
+@role_required('chief_sports_officer', 'admin')
+def cso_bulk_upload_view(request):
+    """Upload an Excel file with player data → parsed into BulkPlayerUploadRow."""
+    import openpyxl
+    from datetime import datetime
+    from teams.models import (
+        BulkPlayerUpload, BulkPlayerUploadRow, BulkUploadStatus,
+        CountyRegistration, CountyDiscipline,
+    )
+    from accounts.models import MakueniSubCounty, normalize_kenya_phone, normalize_national_id
+
+    sport_choices = SportType.choices
+    subcounty_choices = MakueniSubCounty.choices
+
+    if request.method == 'POST':
+        sport_type = request.POST.get('sport_type', '').strip()
+        sub_county = request.POST.get('sub_county', '').strip()
+        notes = request.POST.get('notes', '').strip()
+        uploaded_file = request.FILES.get('file')
+
+        if not uploaded_file:
+            messages.error(request, 'Please select a file to upload.')
+            return redirect('cso_bulk_upload')
+
+        if not uploaded_file.name.lower().endswith('.xlsx'):
+            messages.error(request, 'Only .xlsx Excel files are supported.')
+            return redirect('cso_bulk_upload')
+
+        if not sport_type:
+            messages.error(request, 'Please select a discipline.')
+            return redirect('cso_bulk_upload')
+        if not sub_county:
+            messages.error(request, 'Please select a sub-county.')
+            return redirect('cso_bulk_upload')
+
+        # Create the upload record
+        bulk = BulkPlayerUpload.objects.create(
+            uploaded_by=request.user,
+            file=uploaded_file,
+            original_filename=uploaded_file.name,
+            sport_type=sport_type,
+            sub_county=sub_county,
+            notes=notes,
+        )
+
+        # Parse the Excel file
+        try:
+            wb = openpyxl.load_workbook(bulk.file.path, read_only=True, data_only=True)
+            ws = wb.active
+            rows_list = list(ws.iter_rows(min_row=2, values_only=True))  # skip header
+            wb.close()
+        except Exception as exc:
+            bulk.delete()
+            messages.error(request, f'Could not read Excel file: {exc}')
+            return redirect('cso_bulk_upload')
+
+        total = 0
+        valid = 0
+        errors = 0
+        seen_ids = set()
+
+        for idx, row in enumerate(rows_list, start=2):
+            if not row or all(cell is None or str(cell).strip() == '' for cell in row):
+                continue  # skip blank rows
+
+            total += 1
+            # Columns: first_name, last_name, dob, national_id, phone, position, jersey, ward
+            first_name = str(row[0] or '').strip() if len(row) > 0 else ''
+            last_name = str(row[1] or '').strip() if len(row) > 1 else ''
+            dob_raw = row[2] if len(row) > 2 else None
+            id_raw = str(row[3] or '').strip() if len(row) > 3 else ''
+            phone_raw = str(row[4] or '').strip() if len(row) > 4 else ''
+            position = str(row[5] or '').strip() if len(row) > 5 else ''
+            jersey_raw = row[6] if len(row) > 6 else None
+            ward = str(row[7] or '').strip() if len(row) > 7 else ''
+
+            row_errors = []
+
+            if not first_name:
+                row_errors.append('Missing first name')
+            if not last_name:
+                row_errors.append('Missing last name')
+
+            # Parse date of birth
+            dob = None
+            if isinstance(dob_raw, datetime):
+                dob = dob_raw.date()
+            elif isinstance(dob_raw, str) and dob_raw.strip():
+                for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y', '%m/%d/%Y'):
+                    try:
+                        dob = datetime.strptime(dob_raw.strip(), fmt).date()
+                        break
+                    except ValueError:
+                        continue
+                if dob is None:
+                    row_errors.append(f'Invalid date: {dob_raw}')
+            elif dob_raw is not None:
+                try:
+                    from datetime import date as _date_type
+                    if isinstance(dob_raw, _date_type):
+                        dob = dob_raw
+                except Exception:
+                    row_errors.append(f'Invalid date: {dob_raw}')
+            if not dob:
+                row_errors.append('Missing date of birth')
+
+            # Validate national ID
+            national_id = normalize_national_id(id_raw) if id_raw else ''
+            if not national_id:
+                row_errors.append('Missing or invalid national ID')
+            elif national_id in seen_ids:
+                row_errors.append(f'Duplicate ID {national_id} in this upload')
+            else:
+                seen_ids.add(national_id)
+                if CountyPlayer.objects.filter(national_id_number=national_id).exists():
+                    row_errors.append(f'ID {national_id} already registered in the system')
+
+            # Normalize phone
+            phone = normalize_kenya_phone(phone_raw) if phone_raw else ''
+
+            # Jersey
+            jersey = None
+            if jersey_raw is not None:
+                try:
+                    jersey = int(jersey_raw)
+                except (ValueError, TypeError):
+                    pass
+
+            is_valid = len(row_errors) == 0
+            if is_valid:
+                valid += 1
+            else:
+                errors += 1
+
+            BulkPlayerUploadRow.objects.create(
+                upload=bulk,
+                row_number=idx,
+                first_name=first_name,
+                last_name=last_name,
+                date_of_birth=dob,
+                national_id_number=national_id,
+                phone=phone,
+                position=position,
+                jersey_number=jersey,
+                ward=ward,
+                is_valid=is_valid,
+                error_message='; '.join(row_errors),
+            )
+
+        bulk.total_rows = total
+        bulk.valid_rows = valid
+        bulk.error_rows = errors
+        bulk.save(update_fields=['total_rows', 'valid_rows', 'error_rows'])
+
+        if total == 0:
+            bulk.delete()
+            messages.error(request, 'The uploaded file has no data rows.')
+            return redirect('cso_bulk_upload')
+
+        messages.success(
+            request,
+            f'Upload processed: {valid} valid, {errors} with errors out of {total} rows. '
+            f'Awaiting Director of Sports approval.'
+        )
+        return redirect('cso_bulk_upload_detail', pk=bulk.pk)
+
+    return render(request, 'portal/chief_sports_officer/bulk_upload.html', {
+        'sport_choices': sport_choices,
+        'subcounty_choices': subcounty_choices,
+    })
+
+
+@role_required('chief_sports_officer', 'admin')
+def cso_bulk_upload_detail_view(request, pk):
+    """View details of a bulk upload - rows & errors."""
+    from teams.models import BulkPlayerUpload
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+    if not request.user.is_superuser and request.user.role != 'admin' and bulk.uploaded_by != request.user:
+        messages.error(request, 'You do not have permission to view this upload.')
+        return redirect('cso_bulk_upload_list')
+    rows = bulk.rows.all()
+    return render(request, 'portal/chief_sports_officer/bulk_upload_detail.html', {
+        'bulk': bulk,
+        'rows': rows,
+    })
+
+
+# ── Director of Sports: Approve / Reject Bulk Uploads ────────────────────
+@role_required('director_sports', 'admin')
+def director_bulk_upload_list_view(request):
+    """Director of Sports: list all pending bulk uploads for approval."""
+    from teams.models import BulkPlayerUpload
+    status_filter = request.GET.get('status', 'pending')
+    uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
+    if status_filter:
+        uploads = uploads.filter(status=status_filter)
+    return render(request, 'portal/director_sports/bulk_upload_list.html', {
+        'uploads': uploads,
+        'status_filter': status_filter,
+    })
+
+
+@role_required('director_sports', 'admin')
+def director_bulk_upload_review_view(request, pk):
+    """Director of Sports: review and approve/reject a bulk upload batch."""
+    from teams.models import (
+        BulkPlayerUpload, BulkUploadStatus,
+        CountyRegistration, CountyDiscipline, CountyPlayer,
+    )
+    from accounts.models import MakueniSubCounty
+
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+    rows = bulk.rows.all()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'approve' and bulk.status == BulkUploadStatus.PENDING:
+            # Find or create the CountyRegistration + CountyDiscipline
+            reg = CountyRegistration.objects.filter(
+                county='Makueni', status='approved'
+            ).first()
+            if not reg:
+                messages.error(request, 'No approved Makueni county registration found. Create one first.')
+                return redirect('director_bulk_upload_review', pk=pk)
+
+            discipline, _ = CountyDiscipline.objects.get_or_create(
+                registration=reg,
+                sport_type=bulk.sport_type,
+                sub_county=bulk.sub_county,
+            )
+
+            created_count = 0
+            for row in rows.filter(is_valid=True):
+                if row.county_player_id:
+                    continue  # already created
+                if CountyPlayer.objects.filter(national_id_number=row.national_id_number).exists():
+                    row.is_valid = False
+                    row.error_message = f'ID {row.national_id_number} registered since upload'
+                    row.save(update_fields=['is_valid', 'error_message'])
+                    continue
+
+                player = CountyPlayer.objects.create(
+                    discipline=discipline,
+                    first_name=row.first_name,
+                    last_name=row.last_name,
+                    date_of_birth=row.date_of_birth,
+                    national_id_number=row.national_id_number,
+                    phone=row.phone or '+254700000000',
+                    sub_county=bulk.sub_county,
+                    ward=row.ward,
+                    position=row.position,
+                    jersey_number=row.jersey_number,
+                    # Pre-verified: all steps pass
+                    verification_status='verified',
+                    doc_status='verified',
+                    doc_verified_at=timezone.now(),
+                    huduma_status='verified',
+                    huduma_verified_at=timezone.now(),
+                    iprs_age_status='verified',
+                    iprs_age_verified_at=timezone.now(),
+                    higher_league_status='clear',
+                    higher_league_checked_at=timezone.now(),
+                    # Director-approved
+                    director_approved=True,
+                    director_approved_by=request.user,
+                    director_approved_at=timezone.now(),
+                )
+                row.county_player = player
+                row.save(update_fields=['county_player'])
+                created_count += 1
+
+            # Ensure team is linked
+            discipline.ensure_linked_team()
+
+            bulk.status = BulkUploadStatus.APPROVED
+            bulk.reviewed_by = request.user
+            bulk.reviewed_at = timezone.now()
+            bulk.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+
+            messages.success(request, f'Batch approved. {created_count} players created as fully verified.')
+            return redirect('director_bulk_upload_review', pk=pk)
+
+        elif action == 'reject' and bulk.status == BulkUploadStatus.PENDING:
+            reason = request.POST.get('rejection_reason', '').strip()
+            if not reason:
+                messages.error(request, 'Please provide a reason for rejection.')
+                return redirect('director_bulk_upload_review', pk=pk)
+            bulk.status = BulkUploadStatus.REJECTED
+            bulk.rejection_reason = reason
+            bulk.reviewed_by = request.user
+            bulk.reviewed_at = timezone.now()
+            bulk.save(update_fields=['status', 'rejection_reason', 'reviewed_by', 'reviewed_at'])
+            messages.success(request, 'Batch rejected.')
+            return redirect('director_bulk_upload_list')
+
+    return render(request, 'portal/director_sports/bulk_upload_review.html', {
+        'bulk': bulk,
+        'rows': rows,
+    })
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #   CHIEF OFFICER SPORTS PORTAL   (Executive / Government oversight)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -7902,12 +8237,9 @@ def vo_dashboard_view(request):
     )
     discipline_choices = [(st, dict(SportType.choices).get(st, st)) for st in disciplines]
 
-    # Sub-county choices for filter dropdown
-    subcounty_choices = list(
-        CountyDiscipline.objects.exclude(sub_county='')
-        .values_list('sub_county', flat=True)
-        .distinct().order_by('sub_county')
-    )
+    # Sub-county choices for filter dropdown – always show all Makueni sub-counties
+    from accounts.models import MakueniSubCounty as _MSC
+    subcounty_choices = [sc.value for sc in _MSC]
 
     # Sub-county registration summary
     registrations = CountyRegistration.objects.select_related('user').order_by('county')
@@ -7989,11 +8321,8 @@ def vo_players_by_subcounty_view(request):
         grouped.setdefault(sc, []).append(p)
 
     # Sub-county choices and discipline choices for dropdowns
-    subcounty_choices = list(
-        CountyDiscipline.objects.exclude(sub_county='')
-        .values_list('sub_county', flat=True)
-        .distinct().order_by('sub_county')
-    )
+    from accounts.models import MakueniSubCounty as _MSC
+    subcounty_choices = [sc.value for sc in _MSC]
     disciplines = (
         CountyDiscipline.objects.values_list('sport_type', flat=True)
         .distinct().order_by('sport_type')

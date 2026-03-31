@@ -190,6 +190,12 @@ from .web_views import (
     director_sports_delegations_view,
     director_sports_technical_bench_view,
     verified_players_pdf_view,
+    # Bulk upload
+    cso_bulk_upload_list_view,
+    cso_bulk_upload_view,
+    cso_bulk_upload_detail_view,
+    director_bulk_upload_list_view,
+    director_bulk_upload_review_view,
     # Match day squad PDF
     match_squad_pdf_view,
 )
@@ -425,12 +431,17 @@ urlpatterns = [
     path("portal/director-sports/system-users/", director_sports_system_users_view, name="director_sports_system_users"),
     path("portal/director-sports/delegations/", director_sports_delegations_view, name="director_sports_delegations"),
     path("portal/director-sports/technical-bench/", director_sports_technical_bench_view, name="director_sports_technical_bench"),
+    path("portal/director-sports/bulk-uploads/", director_bulk_upload_list_view, name="director_bulk_upload_list"),
+    path("portal/director-sports/bulk-uploads/<int:pk>/review/", director_bulk_upload_review_view, name="director_bulk_upload_review"),
 
     # ── CHIEF OFFICER SPORTS PORTAL ───────────────────────────────────────
     path("portal/chief-officer-sports/", chief_officer_sports_dashboard_view, name="chief_officer_sports_dashboard"),
 
     # ── CHIEF SPORTS OFFICER PORTAL ───────────────────────────────────────
     path("portal/chief-sports-officer/", chief_sports_officer_dashboard_view, name="chief_sports_officer_dashboard"),
+    path("portal/chief-sports-officer/bulk-uploads/", cso_bulk_upload_list_view, name="cso_bulk_upload_list"),
+    path("portal/chief-sports-officer/bulk-upload/", cso_bulk_upload_view, name="cso_bulk_upload"),
+    path("portal/chief-sports-officer/bulk-uploads/<int:pk>/", cso_bulk_upload_detail_view, name="cso_bulk_upload_detail"),
 
     # ── GOVERNOR PORTAL ───────────────────────────────────────────────────
     path("portal/governor/", governor_dashboard_view, name="governor_dashboard"),
