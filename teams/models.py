@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from competitions.models import SportType
-from accounts.models import KenyaCounty, kenya_phone_validator, national_id_validator
+from accounts.models import KenyaCounty, MakueniSubCounty, kenya_phone_validator, national_id_validator
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1330,7 +1330,7 @@ class BulkPlayerUpload(models.Model):
     )
     original_filename = models.CharField(max_length=255, blank=True, default="")
     sport_type = models.CharField(max_length=30, choices=SportType.choices)
-    sub_county = models.CharField(max_length=100)
+    sub_county = models.CharField(max_length=100, choices=MakueniSubCounty.choices)
     status = models.CharField(
         max_length=20, choices=BulkUploadStatus.choices,
         default=BulkUploadStatus.PENDING,

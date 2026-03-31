@@ -21,7 +21,7 @@
             </div>
             <div class="col-md-3">
                 <small class="text-muted d-block">Sub-County</small>
-                <strong>{{ bulk.sub_county }}</strong>
+                <strong>{{ bulk.get_sub_county_display }}</strong>
             </div>
             <div class="col-md-2">
                 <small class="text-muted d-block">Status</small>
@@ -135,7 +135,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Delete upload <strong>{{ bulk.get_sport_type_display }} / {{ bulk.sub_county }} (#{{ bulk.pk }})</strong>?</p>
+                <p>Delete upload <strong>{{ bulk.get_sport_type_display }} / {{ bulk.get_sub_county_display }} (#{{ bulk.pk }})</strong>?</p>
                 <p class="text-muted" style="font-size:.88rem;">
                     The upload record and its row data will be permanently deleted.<br>
                     <strong>Players already registered from this upload will remain active.</strong>
