@@ -198,6 +198,14 @@ from .web_views import (
     cso_bulk_upload_delete_view,
     director_bulk_upload_list_view,
     director_bulk_upload_review_view,
+    # Coordinator bulk upload & team manager
+    coordinator_bulk_upload_list_view,
+    coordinator_bulk_upload_view,
+    coordinator_bulk_upload_detail_view,
+    coordinator_bulk_upload_delete_view,
+    coordinator_assign_team_manager_view,
+    cso_approve_coordinator_upload_view,
+    ds_approve_coordinator_upload_view,
     edit_county_player_view,
     # Match day squad PDF
     match_squad_pdf_view,
@@ -361,6 +369,12 @@ urlpatterns = [
     path("portal/coordinator/referees/",                                 coordinator_referees_view,            name="coordinator_referees"),
     path("portal/coordinator/appointments/",                             coordinator_appointments_view,        name="coordinator_appointments"),
     path("portal/coordinator/appointments/<int:fixture_pk>/",            referee_appoint_view,                 name="coordinator_appoint"),
+    # Coordinator bulk upload & team manager
+    path("portal/coordinator/bulk-uploads/",                             coordinator_bulk_upload_list_view,    name="coordinator_bulk_upload_list"),
+    path("portal/coordinator/bulk-upload/",                              coordinator_bulk_upload_view,         name="coordinator_bulk_upload"),
+    path("portal/coordinator/bulk-uploads/<int:pk>/",                    coordinator_bulk_upload_detail_view,  name="coordinator_bulk_upload_detail"),
+    path("portal/coordinator/bulk-uploads/<int:pk>/delete/",             coordinator_bulk_upload_delete_view,  name="coordinator_bulk_upload_delete"),
+    path("portal/coordinator/assign-team-manager/",                      coordinator_assign_team_manager_view, name="coordinator_assign_team_manager"),
 
     # ── SECRETARY GENERAL PORTAL ─────────────────────────────────────────────
     path("portal/sg/",                          sg_dashboard_view,          name="sg_dashboard"),
@@ -450,6 +464,10 @@ urlpatterns = [
     path("portal/chief-sports-officer/bulk-uploads/<int:pk>/", cso_bulk_upload_detail_view, name="cso_bulk_upload_detail"),
     path("portal/chief-sports-officer/bulk-uploads/<int:pk>/delete/", cso_bulk_upload_delete_view, name="cso_bulk_upload_delete"),
     path("portal/chief-sports-officer/bulk-uploads/row/<int:row_pk>/edit/", cso_bulk_upload_edit_row_view, name="cso_bulk_upload_edit_row"),
+    path("portal/chief-sports-officer/coordinator-uploads/<int:pk>/review/", cso_approve_coordinator_upload_view, name="cso_approve_coordinator_upload"),
+
+    # ── DIRECTOR SPORTS: Coordinator upload approval ──────────────────────
+    path("portal/director-sports/coordinator-uploads/<int:pk>/review/", ds_approve_coordinator_upload_view, name="ds_approve_coordinator_upload"),
 
     # ── GOVERNOR PORTAL ───────────────────────────────────────────────────
     path("portal/governor/", governor_dashboard_view, name="governor_dashboard"),

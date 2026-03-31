@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Player Upload - Coordinator - MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'coordinator_dashboard' %}">Coordinator</a>
+        <span>Bulk Player Upload</span>
+    </div>
+    <h1><i class="bi bi-cloud-upload"></i> Bulk Player Upload</h1>
+    <p>Upload an Excel (.xlsx) or Word (.docx) team list. Players will be submitted for approval by Chief Sports Officer and Director Sports before being registered.</p>
+</div>
+
+<div class="alert alert-info" style="font-size:.88rem;">
+    <i class="bi bi-info-circle"></i> <strong>Approval Required:</strong> Coordinator uploads require approval from both the <strong>Chief Sports Officer</strong> and <strong>Director Sports</strong> before players are created in the system.
+</div>
+
+<!-- Instructions -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-info-circle"></i> File Format Instructions</h3></div>
+    <div class="card-body">
+        <p style="font-size:.9rem;margin-bottom:.75rem;">Your file must have a <strong>header row</strong> followed by player data. Supports <strong>.xlsx</strong> (Excel) and <strong>.docx</strong> (Word with a table).</p>
+        <div class="table-responsive">
+            <table class="table table-sm" style="font-size:.85rem;">
+                <thead style="background:#f5f5f5;">
+                    <tr><th>Column</th><th>Header</th><th>Required</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>A</td><td>S/NO</td><td>Ignored</td><td>Numbering in source file</td></tr>
+                    <tr><td>B</td><td>NAME (Full - As per ID)</td><td><span class="badge bg-danger">Yes</span></td><td>Full name as per National ID</td></tr>
+                    <tr><td>C</td><td>WARD</td><td><span class="badge bg-danger">Yes</span></td><td>Ward within sub-county</td></tr>
+                    <tr><td>D</td><td>ID</td><td><span class="badge bg-danger">Yes</span></td><td>National ID (5-10 digits, unique)</td></tr>
+                    <tr><td>E</td><td>POSITION</td><td><span class="badge bg-danger">Yes</span></td><td>e.g. GK, CB, CM, CF</td></tr>
+                    <tr><td>F</td><td>PHONE NUMBER</td><td><span class="badge bg-danger">Yes</span></td><td>e.g. 0712345678 or +254712345678</td></tr>
+                    <tr><td>G</td><td>TEAM IN LIGI MASHINANI</td><td><span class="badge bg-danger">Yes</span></td><td>Player's Ligi Mashinani team</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Form -->
+<div class="card mb-1">
+    <div class="card-header"><h3><i class="bi bi-upload"></i> Upload Team List</h3></div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Discipline *</label>
+                    <select name="sport_type" class="form-select" required>
+                        <option value="">-- Select Discipline --</option>
+                        {% for val, label in sport_choices %}
+                        <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Sub-County *</label>
+                    <select name="sub_county" class="form-select" required>
+                        <option value="">-- Select Sub-County --</option>
+                        {% for val, label in subcounty_choices %}
+                        <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">File (.xlsx or .docx) *</label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.docx" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Notes (optional)</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Kaiti Volleyball Men squad"></textarea>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="replace_existing" value="1" id="replaceExistingUpload">
+                <label class="form-check-label" for="replaceExistingUpload">
+                    Replace my existing upload for this discipline + sub-county
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Upload &amp; Submit for Approval</button>
+            <a href="{% url 'coordinator_bulk_upload_list' %}" class="btn btn-outline-secondary ms-2">View My Uploads</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

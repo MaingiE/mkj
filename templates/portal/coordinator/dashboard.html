@@ -276,6 +276,27 @@ function goQuick(type) {
                     <p>Select &amp; update match venues</p>
                 </div>
             </a>
+            <a href="{% url 'coordinator_bulk_upload' %}" class="action-tile">
+                <div class="tile-icon" style="background:#E3F2FD;color:#1565C0;"><i class="bi bi-cloud-upload"></i></div>
+                <div class="tile-text">
+                    <h4>Bulk Player Upload</h4>
+                    <p>Upload player lists for approval</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_bulk_upload_list' %}" class="action-tile">
+                <div class="tile-icon" style="background:#F3E5F5;color:#7B1FA2;"><i class="bi bi-file-earmark-spreadsheet"></i></div>
+                <div class="tile-text">
+                    <h4>My Uploads</h4>
+                    <p>View upload status &amp; approvals</p>
+                </div>
+            </a>
+            <a href="{% url 'coordinator_assign_team_manager' %}" class="action-tile">
+                <div class="tile-icon" style="background:#FFF8E1;color:#F57F17;"><i class="bi bi-person-badge"></i></div>
+                <div class="tile-text">
+                    <h4>Assign Team Manager</h4>
+                    <p>Assign managers to teams</p>
+                </div>
+            </a>
         </div>
     </div>
 </div>

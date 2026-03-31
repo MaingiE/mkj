@@ -1414,11 +1414,28 @@ class BulkPlayerUpload(models.Model):
     )
     notes = models.TextField(blank=True, default="", help_text="Uploader notes")
     rejection_reason = models.TextField(blank=True, default="")
+    uploaded_by_role = models.CharField(
+        max_length=30, blank=True, default="",
+        help_text="Role of the user who uploaded (coordinator, chief_sports_officer, etc.)",
+    )
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True, related_name="bulk_uploads_reviewed",
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
+    # Two-step approval for coordinator uploads
+    cso_approved = models.BooleanField(default=False, help_text="Chief Sports Officer approved")
+    cso_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="bulk_uploads_cso_approved",
+    )
+    cso_approved_at = models.DateTimeField(null=True, blank=True)
+    ds_approved = models.BooleanField(default=False, help_text="Director Sports approved")
+    ds_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="bulk_uploads_ds_approved",
+    )
+    ds_approved_at = models.DateTimeField(null=True, blank=True)
     total_rows = models.PositiveIntegerField(default=0)
     valid_rows = models.PositiveIntegerField(default=0)
     error_rows = models.PositiveIntegerField(default=0)

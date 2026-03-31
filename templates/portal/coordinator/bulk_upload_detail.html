@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Upload Details #{{ bulk.pk }} - Coordinator - MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'coordinator_dashboard' %}">Coordinator</a>
+        <a href="{% url 'coordinator_bulk_upload_list' %}">Bulk Uploads</a>
+        <span>Upload #{{ bulk.pk }}</span>
+    </div>
+    <h1><i class="bi bi-file-earmark-spreadsheet"></i> Upload #{{ bulk.pk }} Details</h1>
+</div>
+
+<!-- Summary -->
+<div class="card mb-3">
+    <div class="card-header"><h3><i class="bi bi-info-circle"></i> Upload Summary</h3></div>
+    <div class="card-body">
+        <div class="row" style="font-size:.88rem;">
+            <div class="col-md-3"><strong>Discipline:</strong> {{ bulk.get_sport_type_display }}</div>
+            <div class="col-md-3"><strong>Sub-County:</strong> {{ bulk.get_sub_county_display }}</div>
+            <div class="col-md-3"><strong>Uploaded:</strong> {{ bulk.created_at|date:"d M Y H:i" }}</div>
+            <div class="col-md-3">
+                <strong>Status:</strong>
+                {% if bulk.status == 'approved' %}
+                <span class="badge bg-success">Approved</span>
+                {% elif bulk.status == 'rejected' %}
+                <span class="badge bg-danger">Rejected</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Pending Approval</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row mt-2" style="font-size:.88rem;">
+            <div class="col-md-3"><strong>Total Rows:</strong> {{ bulk.total_rows }}</div>
+            <div class="col-md-3"><strong>Valid:</strong> <span class="text-success fw-bold">{{ bulk.valid_rows }}</span></div>
+            <div class="col-md-3"><strong>Errors:</strong> <span class="text-danger fw-bold">{{ bulk.error_rows }}</span></div>
+            <div class="col-md-3"><strong>File:</strong> {{ bulk.original_filename }}</div>
+        </div>
+        <div class="row mt-2" style="font-size:.88rem;">
+            <div class="col-md-3">
+                <strong>CSO Approval:</strong>
+                {% if bulk.cso_approved %}
+                <span class="badge bg-success">Approved</span>
+                <br><small class="text-muted">{{ bulk.cso_approved_by.get_full_name }} &middot; {{ bulk.cso_approved_at|date:"d M Y H:i" }}</small>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="col-md-3">
+                <strong>Director Sports:</strong>
+                {% if bulk.ds_approved %}
+                <span class="badge bg-success">Approved</span>
+                <br><small class="text-muted">{{ bulk.ds_approved_by.get_full_name }} &middot; {{ bulk.ds_approved_at|date:"d M Y H:i" }}</small>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if bulk.rejection_reason %}
+        <div class="alert alert-danger mt-3 mb-0" style="font-size:.88rem;">
+            <i class="bi bi-x-circle"></i> <strong>Rejection Reason:</strong> {{ bulk.rejection_reason }}
+        </div>
+        {% endif %}
+        {% if bulk.notes %}
+        <div class="mt-2" style="font-size:.88rem;"><strong>Notes:</strong> {{ bulk.notes }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Player Rows -->
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-people"></i> Parsed Player Rows ({{ rows|length }})</h3></div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.85rem;">
+                <thead style="background:#f5f5f5;">
+                    <tr>
+                        <th>#</th>
+                        <th>Full Name</th>
+                        <th>Ward</th>
+                        <th>National ID</th>
+                        <th>Position</th>
+                        <th>Phone</th>
+                        <th>Ligi Team</th>
+                        <th style="text-align:center">Status</th>
+                        <th>Errors</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="{% if not row.is_valid %}table-danger{% endif %}">
+                        <td>{{ row.row_number }}</td>
+                        <td><strong>{{ row.full_name }}</strong></td>
+                        <td>{{ row.ward }}</td>
+                        <td>{{ row.national_id_number }}</td>
+                        <td>{{ row.position }}</td>
+                        <td>{{ row.phone }}</td>
+                        <td>{{ row.ligi_mashinani_team }}</td>
+                        <td style="text-align:center">
+                            {% if row.is_valid %}
+                            <span class="badge bg-success">Valid</span>
+                            {% else %}
+                            <span class="badge bg-danger">Error</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:.8rem;color:#c62828;">{{ row.error_message }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center text-muted py-3">No rows parsed.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'coordinator_bulk_upload_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Uploads</a>
+</div>
+{% endblock %}

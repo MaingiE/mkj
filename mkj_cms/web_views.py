@@ -4437,6 +4437,498 @@ def coordinator_competition_rules_view(request, pk):
     })
 
 
+# ── Coordinator: Bulk Player Upload (requires CSO + Director Sports approval) ─
+@role_required('coordinator', 'admin')
+def coordinator_bulk_upload_list_view(request):
+    """List bulk uploads created by this coordinator."""
+    from teams.models import BulkPlayerUpload
+    uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
+    if not request.user.is_superuser and request.user.role != 'admin':
+        uploads = uploads.filter(uploaded_by=request.user)
+    return render(request, 'portal/coordinator/bulk_upload_list.html', {
+        'uploads': uploads,
+    })
+
+
+@role_required('coordinator', 'admin')
+def coordinator_bulk_upload_view(request):
+    """Coordinator: Upload a player list file.
+
+    Unlike CSO uploads, coordinator uploads do NOT auto-create players.
+    Players remain in 'pending' status until both Chief Sports Officer
+    and Director Sports approve the batch.
+    """
+    import openpyxl
+    from teams.models import (
+        BulkPlayerUpload, BulkPlayerUploadRow, BulkUploadStatus,
+        CountyRegistration, CountyDiscipline, CountyRegStatus, CountyPlayer,
+    )
+    from accounts.models import MakueniSubCounty, normalize_kenya_phone, normalize_national_id
+
+    sport_choices = SportType.choices
+    subcounty_choices = MakueniSubCounty.choices
+
+    if request.method == 'POST':
+        sport_type = request.POST.get('sport_type', '').strip()
+        sub_county = request.POST.get('sub_county', '').strip()
+        notes = request.POST.get('notes', '').strip()
+        replace_existing = request.POST.get('replace_existing') == '1'
+        uploaded_file = request.FILES.get('file')
+
+        if not uploaded_file:
+            messages.error(request, 'Please select a file to upload.')
+            return redirect('coordinator_bulk_upload')
+
+        fname_lower = uploaded_file.name.lower()
+        if not (fname_lower.endswith('.xlsx') or fname_lower.endswith('.docx')):
+            messages.error(request, 'Only .xlsx (Excel) and .docx (Word) files are supported.')
+            return redirect('coordinator_bulk_upload')
+
+        if not sport_type:
+            messages.error(request, 'Please select a discipline.')
+            return redirect('coordinator_bulk_upload')
+        if not sub_county:
+            messages.error(request, 'Please select a sub-county.')
+            return redirect('coordinator_bulk_upload')
+
+        # ── Enforce one upload per discipline + sub-county (coordinator scope) ─
+        existing = BulkPlayerUpload.objects.filter(
+            sport_type=sport_type, sub_county=sub_county,
+            uploaded_by=request.user,
+        ).first()
+        if existing:
+            existing_subcounty_label = (
+                existing.get_sub_county_display()
+                if hasattr(existing, 'get_sub_county_display')
+                else existing.sub_county
+            )
+            if replace_existing:
+                replaced_desc = (
+                    f'{existing.get_sport_type_display()} / '
+                    f'{existing_subcounty_label} (Upload #{existing.pk})'
+                )
+                existing.delete()
+                messages.info(
+                    request,
+                    f'Replaced previous upload: {replaced_desc}.'
+                )
+            else:
+                messages.error(
+                    request,
+                    f'An upload already exists for {existing.get_sport_type_display()} '
+                    f'in {existing_subcounty_label} (Upload #{existing.pk}, '
+                    f'{existing.created_at.strftime("%d %b %Y")}). '
+                    'To proceed, tick "Replace existing upload" and upload again, '
+                    'or delete the existing upload from the uploads list.'
+                )
+                return redirect('coordinator_bulk_upload')
+
+        bulk = BulkPlayerUpload.objects.create(
+            uploaded_by=request.user,
+            uploaded_by_role='coordinator',
+            file=uploaded_file,
+            original_filename=uploaded_file.name,
+            sport_type=sport_type,
+            sub_county=sub_county,
+            notes=notes,
+            status=BulkUploadStatus.PENDING,
+        )
+
+        # ── Parse the file ───────────────────────────────────────────────
+        rows_list = []
+        try:
+            if fname_lower.endswith('.xlsx'):
+                wb = openpyxl.load_workbook(bulk.file.path, read_only=True, data_only=True)
+                ws = wb.active
+                rows_list = list(ws.iter_rows(min_row=2, values_only=True))
+                wb.close()
+            elif fname_lower.endswith('.docx'):
+                import docx
+                doc = docx.Document(bulk.file.path)
+                for table in doc.tables:
+                    for i, tbl_row in enumerate(table.rows):
+                        if i == 0:
+                            continue
+                        cells = [cell.text.strip() for cell in tbl_row.cells]
+                        if any(c for c in cells):
+                            rows_list.append(tuple(cells))
+        except Exception as exc:
+            bulk.delete()
+            messages.error(request, f'Could not read file: {exc}')
+            return redirect('coordinator_bulk_upload')
+
+        total = 0
+        valid = 0
+        errors = 0
+        seen_ids = set()
+        squad_limit = SQUAD_LIMITS.get(sport_type, 30)
+
+        for idx, row in enumerate(rows_list, start=2):
+            if not row or all(cell is None or str(cell).strip() == '' for cell in row):
+                continue
+
+            total += 1
+            full_name = str(row[1] or '').strip() if len(row) > 1 else ''
+            ward = str(row[2] or '').strip() if len(row) > 2 else ''
+            id_raw = str(row[3] or '').strip() if len(row) > 3 else ''
+
+            col4 = str(row[4] or '').strip() if len(row) > 4 else ''
+            col5 = str(row[5] or '').strip() if len(row) > 5 else ''
+            col6 = str(row[6] or '').strip() if len(row) > 6 else ''
+            col7 = str(row[7] or '').strip() if len(row) > 7 else ''
+
+            position = col4
+            phone_raw = col5
+            ligi_team = col6
+
+            def _looks_like_age(value):
+                txt = (value or '').strip()
+                if not txt.isdigit():
+                    return False
+                age_num = int(txt)
+                return 10 <= age_num <= 35
+
+            if _looks_like_age(col4):
+                shifted_phone = normalize_kenya_phone(col6) if col6 else ''
+                if shifted_phone:
+                    position = col5
+                    phone_raw = col6
+                    ligi_team = col7
+
+            row_num = idx - 1
+            row_errors = []
+
+            name_parts = full_name.split()
+            if not full_name:
+                row_errors.append('Missing name')
+                first_name = ''
+                last_name = ''
+            elif len(name_parts) == 1:
+                first_name = name_parts[0]
+                last_name = ''
+                row_errors.append('Only one name provided - need full name as per ID')
+            else:
+                first_name = name_parts[0]
+                last_name = ' '.join(name_parts[1:])
+
+            if not ward:
+                row_errors.append('Missing ward')
+
+            national_id = normalize_national_id(id_raw) if id_raw else ''
+            if not national_id:
+                row_errors.append('Missing or invalid national ID')
+            elif national_id in seen_ids:
+                row_errors.append(f'Duplicate ID {national_id} in this upload')
+            else:
+                seen_ids.add(national_id)
+                if CountyPlayer.objects.filter(national_id_number=national_id).exists():
+                    row_errors.append(f'ID {national_id} already registered in the system')
+
+            if not position:
+                row_errors.append('Missing position')
+
+            phone = normalize_kenya_phone(phone_raw) if phone_raw else ''
+            if not phone:
+                row_errors.append('Missing or invalid phone number')
+
+            if not ligi_team:
+                row_errors.append('Missing team in Ligi Mashinani')
+
+            is_valid = len(row_errors) == 0
+            if is_valid and valid >= squad_limit:
+                is_valid = False
+                row_errors.append(
+                    f'Squad limit exceeded for {dict(SportType.choices).get(sport_type, sport_type)} '
+                    f'(maximum {squad_limit} players)'
+                )
+
+            if is_valid:
+                valid += 1
+            else:
+                errors += 1
+
+            BulkPlayerUploadRow.objects.create(
+                upload=bulk,
+                row_number=row_num,
+                full_name=full_name,
+                first_name=first_name,
+                last_name=last_name,
+                national_id_number=national_id,
+                phone=phone,
+                position=position,
+                ward=ward,
+                ligi_mashinani_team=ligi_team,
+                remarks='',
+                reason_for_change='',
+                is_valid=is_valid,
+                error_message='; '.join(row_errors),
+            )
+
+        bulk.total_rows = total
+        bulk.valid_rows = valid
+        bulk.error_rows = errors
+        bulk.save(update_fields=['total_rows', 'valid_rows', 'error_rows'])
+
+        if total == 0:
+            bulk.delete()
+            messages.error(request, 'The uploaded file has no data rows.')
+            return redirect('coordinator_bulk_upload')
+
+        messages.success(
+            request,
+            f'Upload complete: {valid} valid rows, {errors} errors out of {total} total. '
+            f'This upload is now pending approval by Chief Sports Officer and Director Sports.'
+        )
+        return redirect('coordinator_bulk_upload_list')
+
+    return render(request, 'portal/coordinator/bulk_upload.html', {
+        'sport_choices': sport_choices,
+        'subcounty_choices': subcounty_choices,
+    })
+
+
+@role_required('coordinator', 'admin')
+def coordinator_bulk_upload_detail_view(request, pk):
+    """Coordinator: view details of their bulk upload."""
+    from teams.models import BulkPlayerUpload
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+    if not request.user.is_superuser and request.user.role != 'admin' and bulk.uploaded_by != request.user:
+        messages.error(request, 'You do not have permission to view this upload.')
+        return redirect('coordinator_bulk_upload_list')
+    rows = bulk.rows.all()
+    return render(request, 'portal/coordinator/bulk_upload_detail.html', {
+        'bulk': bulk,
+        'rows': rows,
+    })
+
+
+@role_required('coordinator', 'admin')
+def coordinator_bulk_upload_delete_view(request, pk):
+    """Coordinator: delete their own pending upload."""
+    from teams.models import BulkPlayerUpload
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+    if not request.user.is_superuser and request.user.role != 'admin' and bulk.uploaded_by != request.user:
+        messages.error(request, 'You do not have permission to delete this upload.')
+        return redirect('coordinator_bulk_upload_list')
+    if bulk.status != 'pending':
+        messages.error(request, 'Only pending uploads can be deleted.')
+        return redirect('coordinator_bulk_upload_list')
+    if request.method == 'POST':
+        desc = f"{bulk.get_sport_type_display()} / {bulk.get_sub_county_display()} (#{bulk.pk})"
+        bulk.delete()
+        messages.success(request, f'Upload {desc} deleted.')
+        return redirect('coordinator_bulk_upload_list')
+    return redirect('coordinator_bulk_upload_detail', pk=pk)
+
+
+@role_required('coordinator', 'admin')
+def coordinator_assign_team_manager_view(request):
+    """Coordinator: assign a team manager to a discipline/sub-county team."""
+    from teams.models import CountyDiscipline
+
+    discipline = _coordinator_discipline(request.user)
+    discipline_variants = _coordinator_variants(discipline)
+
+    teams_qs = Team.objects.filter(source_discipline__isnull=False)
+    if discipline_variants:
+        teams_qs = teams_qs.filter(source_discipline__sport_type__in=discipline_variants)
+
+    team_managers = User.objects.filter(role=UserRole.TEAM_MANAGER, is_active=True).order_by('last_name', 'first_name')
+
+    if request.method == 'POST':
+        team_id = request.POST.get('team_id')
+        manager_id = request.POST.get('manager_id')
+        if team_id and manager_id:
+            team = get_object_or_404(Team, pk=team_id)
+            manager = get_object_or_404(User, pk=manager_id, role=UserRole.TEAM_MANAGER)
+            if discipline_variants and team.source_discipline and team.source_discipline.sport_type not in discipline_variants:
+                messages.error(request, 'This team is not in your discipline.')
+                return redirect('coordinator_assign_team_manager')
+            team.manager = manager
+            team.save(update_fields=['manager'])
+            messages.success(request, f'{manager.get_full_name()} assigned as manager of {team.name}.')
+            return redirect('coordinator_assign_team_manager')
+        else:
+            messages.error(request, 'Please select both a team and a team manager.')
+
+    return render(request, 'portal/coordinator/assign_team_manager.html', {
+        'teams': teams_qs.select_related('manager', 'source_discipline'),
+        'team_managers': team_managers,
+    })
+
+
+# ── CSO / Director Sports: Approve coordinator bulk uploads ──────────────
+@role_required('chief_sports_officer', 'admin')
+def cso_approve_coordinator_upload_view(request, pk):
+    """Chief Sports Officer: approve or reject a coordinator's bulk upload."""
+    from teams.models import BulkPlayerUpload, BulkUploadStatus
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+
+    if bulk.uploaded_by_role != 'coordinator':
+        messages.error(request, 'This upload was not submitted by a coordinator.')
+        return redirect('cso_bulk_upload_list')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'approve':
+            bulk.cso_approved = True
+            bulk.cso_approved_by = request.user
+            bulk.cso_approved_at = timezone.now()
+            bulk.save(update_fields=['cso_approved', 'cso_approved_by', 'cso_approved_at'])
+            # Check if DS also approved — if so, finalize
+            if bulk.ds_approved:
+                _finalize_coordinator_upload(bulk, request.user)
+                messages.success(request, f'Upload #{bulk.pk} fully approved. Players created.')
+            else:
+                messages.success(request, f'Upload #{bulk.pk} approved by CSO. Awaiting Director Sports approval.')
+        elif action == 'reject':
+            reason = request.POST.get('rejection_reason', '').strip()
+            bulk.status = BulkUploadStatus.REJECTED
+            bulk.rejection_reason = reason or 'Rejected by Chief Sports Officer'
+            bulk.reviewed_by = request.user
+            bulk.reviewed_at = timezone.now()
+            bulk.save(update_fields=['status', 'rejection_reason', 'reviewed_by', 'reviewed_at'])
+            messages.success(request, f'Upload #{bulk.pk} rejected.')
+        return redirect('cso_bulk_upload_list')
+
+    rows = bulk.rows.all()
+    return render(request, 'portal/chief_sports_officer/coordinator_upload_review.html', {
+        'bulk': bulk,
+        'rows': rows,
+    })
+
+
+@role_required('director_sports', 'admin')
+def ds_approve_coordinator_upload_view(request, pk):
+    """Director Sports: approve or reject a coordinator's bulk upload."""
+    from teams.models import BulkPlayerUpload, BulkUploadStatus
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+
+    if bulk.uploaded_by_role != 'coordinator':
+        messages.error(request, 'This upload was not submitted by a coordinator.')
+        return redirect('director_bulk_upload_list')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'approve':
+            bulk.ds_approved = True
+            bulk.ds_approved_by = request.user
+            bulk.ds_approved_at = timezone.now()
+            bulk.save(update_fields=['ds_approved', 'ds_approved_by', 'ds_approved_at'])
+            # Check if CSO also approved — if so, finalize
+            if bulk.cso_approved:
+                _finalize_coordinator_upload(bulk, request.user)
+                messages.success(request, f'Upload #{bulk.pk} fully approved. Players created.')
+            else:
+                messages.success(request, f'Upload #{bulk.pk} approved by Director Sports. Awaiting CSO approval.')
+        elif action == 'reject':
+            reason = request.POST.get('rejection_reason', '').strip()
+            bulk.status = BulkUploadStatus.REJECTED
+            bulk.rejection_reason = reason or 'Rejected by Director Sports'
+            bulk.reviewed_by = request.user
+            bulk.reviewed_at = timezone.now()
+            bulk.save(update_fields=['status', 'rejection_reason', 'reviewed_by', 'reviewed_at'])
+            messages.success(request, f'Upload #{bulk.pk} rejected.')
+        return redirect('director_bulk_upload_list')
+
+    rows = bulk.rows.all()
+    return render(request, 'portal/director_sports/coordinator_upload_review.html', {
+        'bulk': bulk,
+        'rows': rows,
+    })
+
+
+def _finalize_coordinator_upload(bulk, approving_user):
+    """Create verified CountyPlayers from a fully-approved coordinator upload."""
+    from teams.models import (
+        BulkPlayerUpload, BulkPlayerUploadRow, BulkUploadStatus,
+        CountyRegistration, CountyDiscipline, CountyRegStatus, CountyPlayer,
+    )
+
+    reg = CountyRegistration.objects.filter(county='Makueni').first()
+    if not reg:
+        reg = CountyRegistration.objects.create(
+            user=approving_user,
+            county='Makueni',
+            director_name=approving_user.get_full_name() or 'Makueni Director of Sports',
+            director_phone=(getattr(approving_user, 'phone', '') or '+254700000000'),
+            status=CountyRegStatus.APPROVED,
+            approved_by=approving_user,
+            approved_at=timezone.now(),
+        )
+    elif reg.status != CountyRegStatus.APPROVED:
+        reg.status = CountyRegStatus.APPROVED
+        if not reg.approved_by:
+            reg.approved_by = approving_user
+        if not reg.approved_at:
+            reg.approved_at = timezone.now()
+        reg.save(update_fields=['status', 'approved_by', 'approved_at'])
+
+    discipline = CountyDiscipline.objects.filter(
+        sport_type=bulk.sport_type,
+        sub_county=bulk.sub_county,
+    ).order_by('id').first()
+    if not discipline:
+        discipline = CountyDiscipline.objects.create(
+            registration=reg,
+            sport_type=bulk.sport_type,
+            sub_county=bulk.sub_county,
+        )
+
+    created_count = 0
+    for row_obj in bulk.rows.filter(is_valid=True, county_player__isnull=True):
+        if CountyPlayer.objects.filter(national_id_number=row_obj.national_id_number).exists():
+            row_obj.is_valid = False
+            row_obj.error_message = f'ID {row_obj.national_id_number} registered since upload'
+            row_obj.save(update_fields=['is_valid', 'error_message'])
+            continue
+
+        player = CountyPlayer.objects.create(
+            discipline=discipline,
+            first_name=row_obj.first_name,
+            last_name=row_obj.last_name,
+            national_id_number=row_obj.national_id_number,
+            phone=row_obj.phone or '+254700000000',
+            sub_county=bulk.sub_county,
+            ward=row_obj.ward,
+            position=row_obj.position,
+            ligi_mashinani_team=row_obj.ligi_mashinani_team,
+            verification_status='verified',
+            doc_status='verified',
+            doc_verified_at=timezone.now(),
+            huduma_status='verified',
+            huduma_verified_at=timezone.now(),
+            iprs_age_status='verified',
+            iprs_age_verified_at=timezone.now(),
+            higher_league_status='clear',
+            higher_league_checked_at=timezone.now(),
+            director_approved=True,
+            director_approved_by=approving_user,
+            director_approved_at=timezone.now(),
+        )
+        row_obj.county_player = player
+        row_obj.save(update_fields=['county_player'])
+        created_count += 1
+
+    linked_team = discipline.ensure_linked_team()
+    if linked_team:
+        if not linked_team.manager_id:
+            tm_qs = User.objects.filter(
+                role=UserRole.TEAM_MANAGER,
+                sub_county=bulk.sub_county,
+                is_active=True,
+            ).order_by('date_joined')
+            if tm_qs.count() == 1:
+                linked_team.manager = tm_qs.first()
+                linked_team.save(update_fields=['manager'])
+        linked_team.sync_players_from_county_discipline()
+
+    bulk.status = BulkUploadStatus.APPROVED
+    bulk.reviewed_by = approving_user
+    bulk.reviewed_at = timezone.now()
+    bulk.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #   TREASURER PORTAL (Payment/Registration removed - MKJ SUPA CUP has no fees)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -7931,8 +8423,13 @@ def cso_bulk_upload_list_view(request):
     uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
     if not request.user.is_superuser and request.user.role != 'admin':
         uploads = uploads.filter(uploaded_by=request.user)
+    # Coordinator uploads pending CSO approval
+    coordinator_pending = BulkPlayerUpload.objects.filter(
+        uploaded_by_role='coordinator', status='pending', cso_approved=False,
+    ).select_related('uploaded_by')
     return render(request, 'portal/chief_sports_officer/bulk_upload_list.html', {
         'uploads': uploads,
+        'coordinator_pending': coordinator_pending,
     })
 
 
@@ -8479,9 +8976,14 @@ def director_bulk_upload_list_view(request):
     all_uploads = BulkPlayerUpload.objects.select_related('uploaded_by', 'reviewed_by').all()
     pending = all_uploads.filter(status='pending')
     reviewed = all_uploads.exclude(status='pending')
+    # Coordinator uploads pending DS approval
+    coordinator_pending = BulkPlayerUpload.objects.filter(
+        uploaded_by_role='coordinator', status='pending', ds_approved=False,
+    ).select_related('uploaded_by')
     return render(request, 'portal/director_sports/bulk_upload_list.html', {
         'pending': pending,
         'reviewed': reviewed,
+        'coordinator_pending': coordinator_pending,
     })
 
 

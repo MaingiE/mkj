@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Assign Team Manager - Coordinator - MKJ SUPA CUP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'coordinator_dashboard' %}">Coordinator</a>
+        <span>Assign Team Manager</span>
+    </div>
+    <h1><i class="bi bi-person-badge"></i> Assign Team Manager</h1>
+    <p>Assign a team manager to a team in your discipline.</p>
+</div>
+
+<!-- Assignment Form -->
+<div class="card mb-3">
+    <div class="card-header"><h3><i class="bi bi-person-plus"></i> Assign Manager</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Team *</label>
+                    <select name="team_id" class="form-select" required>
+                        <option value="">-- Select Team --</option>
+                        {% for team in teams %}
+                        <option value="{{ team.pk }}">{{ team.name }}{% if team.source_discipline %} ({{ team.source_discipline.get_sport_type_display }} - {{ team.source_discipline.get_sub_county_display }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Team Manager *</label>
+                    <select name="manager_id" class="form-select" required>
+                        <option value="">-- Select Team Manager --</option>
+                        {% for tm in team_managers %}
+                        <option value="{{ tm.pk }}">{{ tm.get_full_name }} ({{ tm.email }}){% if tm.sub_county %} - {{ tm.sub_county }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Assign Manager</button>
+        </form>
+    </div>
+</div>
+
+<!-- Current Assignments -->
+<div class="card">
+    <div class="card-header"><h3><i class="bi bi-people"></i> Current Team Manager Assignments</h3></div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.88rem;">
+                <thead style="background:#f5f5f5;">
+                    <tr>
+                        <th>Team</th>
+                        <th>Discipline</th>
+                        <th>Sub-County</th>
+                        <th>Current Manager</th>
+                        <th>Manager Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr>
+                        <td><strong>{{ team.name }}</strong></td>
+                        <td>{% if team.source_discipline %}{{ team.source_discipline.get_sport_type_display }}{% else %}-{% endif %}</td>
+                        <td>{% if team.source_discipline %}{{ team.source_discipline.get_sub_county_display }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if team.manager %}
+                            {{ team.manager.get_full_name }}
+                            {% else %}
+                            <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if team.manager %}
+                            {{ team.manager.email }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-3">No teams in your discipline.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
