@@ -480,6 +480,14 @@ def create_user(request):
             user_obj.must_change_password = True
             user_obj.save(update_fields=['must_change_password'])
 
+            auto_assigned_teams = 0
+            if role == UserRole.TEAM_MANAGER and stored_sub_county:
+                auto_assigned_teams = Team.objects.filter(
+                    sub_county=stored_sub_county,
+                    source_discipline__isnull=False,
+                    manager__isnull=True,
+                ).update(manager=user_obj)
+
             # Send credentials email
             email_sent = False
             try:
@@ -524,6 +532,19 @@ def create_user(request):
                     f'Role: {role}<br>'
                     f'Please reset their password manually or contact them directly.'
                 ))
+
+            if role == UserRole.TEAM_MANAGER:
+                if auto_assigned_teams > 0:
+                    messages.info(
+                        request,
+                        f'Auto-assigned to {auto_assigned_teams} sub-county team(s) in {stored_sub_county}.',
+                    )
+                else:
+                    messages.info(
+                        request,
+                        f'No unassigned linked team found in {stored_sub_county}. '
+                        'Create/prepare the sub-county discipline team, or reassign from team management.',
+                    )
         except Exception as e:
             messages.error(request, f"Error: {e}")
 

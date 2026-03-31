@@ -2,6 +2,7 @@
 MKJ SUPA CUP Teams - Models
 """
 import re
+from datetime import date
 
 from django.db import models
 from django.conf import settings
@@ -715,8 +716,13 @@ class Team(models.Model):
             return 0
 
         synced_count = 0
-        used_numbers = set(self.players.values_list("shirt_number", flat=True))
+        existing_players = list(self.players.all())
+        existing_by_national_id = {
+            p.national_id_number: p for p in existing_players if p.national_id_number
+        }
+        used_numbers = {p.shirt_number for p in existing_players if p.shirt_number}
         next_number = 1
+        today = timezone.now().date()
 
         def allocate_shirt(preferred):
             nonlocal next_number
@@ -729,15 +735,31 @@ class Team(models.Model):
             return next_number
 
         for county_player in self.source_discipline.players.all():
-            team_player = self.players.filter(national_id_number=county_player.national_id_number).first()
+            team_player = existing_by_national_id.get(county_player.national_id_number)
             is_verified = county_player.verification_status == "verified"
+
+            # Keep an existing player's number stable across repeated syncs.
+            existing_number = team_player.shirt_number if team_player else None
+            if existing_number:
+                used_numbers.discard(existing_number)
+            preferred_number = county_player.jersey_number or existing_number
+
+            player_dob = county_player.date_of_birth
+            if not player_dob:
+                if county_player.age_value:
+                    inferred_year = max(today.year - int(county_player.age_value), today.year - PLAYER_MAX_AGE)
+                    player_dob = date(inferred_year, 1, 1)
+                else:
+                    # Bulk uploads may not include DOB; use a safe default age baseline.
+                    player_dob = date(today.year - 20, 1, 1)
+
             defaults = {
                 "team": self,
                 "first_name": county_player.first_name,
                 "last_name": county_player.last_name,
-                "date_of_birth": county_player.date_of_birth,
+                "date_of_birth": player_dob,
                 "position": county_player.position if county_player.position in dict(Position.choices) else Position.CM,
-                "shirt_number": allocate_shirt(county_player.jersey_number),
+                "shirt_number": allocate_shirt(preferred_number),
                 "birth_cert_number": county_player.huduma_number,
                 "photo": county_player.photo,
                 "id_document": county_player.id_document,

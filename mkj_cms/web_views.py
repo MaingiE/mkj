@@ -20,6 +20,7 @@ from django.conf import settings as django_settings
 from functools import wraps
 import csv
 import secrets, string, json, re
+from urllib.parse import urlencode
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache as _django_cache
 
@@ -8204,8 +8205,21 @@ def cso_bulk_upload_view(request):
             row_obj.save(update_fields=['county_player'])
             created_count += 1
 
-        # Ensure a linked Team record exists for this discipline
-        discipline.ensure_linked_team()
+        # Ensure a linked Team record exists for this discipline and sync players
+        linked_team = discipline.ensure_linked_team()
+        synced_team_players = 0
+        if linked_team:
+            # If exactly one team manager exists for this sub-county, auto-wire them to this team.
+            if not linked_team.manager_id:
+                tm_qs = User.objects.filter(
+                    role=UserRole.TEAM_MANAGER,
+                    sub_county=bulk.sub_county,
+                    is_active=True,
+                ).order_by('date_joined')
+                if tm_qs.count() == 1:
+                    linked_team.manager = tm_qs.first()
+                    linked_team.save(update_fields=['manager'])
+            synced_team_players = linked_team.sync_players_from_county_discipline()
 
         # Mark batch as approved (auto-approved on upload)
         bulk.status = BulkUploadStatus.APPROVED
@@ -8216,9 +8230,11 @@ def cso_bulk_upload_view(request):
         messages.success(
             request,
             f'Upload complete: {created_count} verified players created. '
-            f'{errors} rows had errors out of {total} total.'
+            f'{errors} rows had errors out of {total} total. '
+            f'{synced_team_players} player record(s) synced to team roster.'
         )
-        return redirect('cso_bulk_upload_detail', pk=bulk.pk)
+        q = urlencode({'subcounty': bulk.sub_county, 'discipline': bulk.sport_type})
+        return redirect(f"/portal/director-sports/verified-players/?{q}")
 
     return render(request, 'portal/chief_sports_officer/bulk_upload.html', {
         'sport_choices': sport_choices,
@@ -8844,9 +8860,32 @@ def team_manager_verified_players_view(request):
             director_locked=True,
         ).exists()
     else:
-        players = CountyPlayer.objects.none()
-        disc_choices = []
-        is_locked = False
+        managed_teams = Team.objects.filter(manager=user).select_related('source_discipline')
+        for team in managed_teams:
+            if team.source_discipline_id:
+                team.sync_players_from_county_discipline()
+
+        managed_pairs = list(
+            managed_teams.exclude(sub_county='').values_list('sport_type', 'sub_county').distinct()
+        )
+        if managed_pairs:
+            pair_filter = Q()
+            for sport_type, sub_county in managed_pairs:
+                pair_filter |= Q(discipline__sport_type=sport_type, sub_county=sub_county)
+            players = CountyPlayer.objects.filter(
+                pair_filter,
+                verification_status='verified',
+                director_approved=True,
+            ).select_related('discipline', 'discipline__registration').order_by('sub_county', 'last_name')
+            disc_choices = [
+                (sport, dict(SportType.choices).get(sport, sport))
+                for sport in sorted({pair[0] for pair in managed_pairs})
+            ]
+            is_locked = CountyPlayer.objects.filter(pair_filter, director_locked=True).exists()
+        else:
+            players = CountyPlayer.objects.none()
+            disc_choices = []
+            is_locked = False
 
     return render(request, 'portal/team_manager/verified_players.html', {
         'players': players,
