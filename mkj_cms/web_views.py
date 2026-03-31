@@ -1351,6 +1351,10 @@ def competitions_list_view(request):
     from django.db.models import Case, When, IntegerField, Prefetch
     from competitions.models import Pool, PoolTeam
 
+    # Auto-create competitions for every sport type in SQUAD_LIMITS
+    for sport_type in SQUAD_LIMITS:
+        _ensure_competition_for_sport_type(sport_type)
+
     competitions = Competition.objects.all().prefetch_related(
         Prefetch(
             'pools',
