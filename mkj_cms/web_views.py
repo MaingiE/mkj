@@ -651,6 +651,7 @@ def public_fixtures_results_view(request):
     group stages, knockouts, standings tables, and results.
     """
     from competitions.models import Pool, PoolTeam
+    from matches.models import get_sport_family
 
     gender_filter = request.GET.get('gender', '').strip().lower()
     sport_filter = request.GET.get('sport', '').strip()
@@ -722,13 +723,10 @@ def public_fixtures_results_view(request):
                     'pool_teams__team'
                 ).order_by('name')
 
+                from matches.stats_engine import sort_pool_standings
                 pool_standings = []
                 for pool in pools:
-                    sorted_teams = sorted(
-                        pool.pool_teams.all(),
-                        key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-                        reverse=True,
-                    )
+                    sorted_teams = sort_pool_standings(pool.pool_teams.all(), comp.sport_type)
                     pool_standings.append({'pool': pool, 'teams': sorted_teams})
 
                 # Group stage fixtures
@@ -773,6 +771,7 @@ def public_fixtures_results_view(request):
                     'knockout_rounds': knockout_rounds,
                     'results': results,
                     'upcoming': upcoming,
+                    'sport_family': get_sport_family(comp.sport_type),
                 })
 
             disciplines_data.append({
@@ -1138,14 +1137,11 @@ def public_competition_standings_view(request, pk):
         'pool_teams__team'
     ).order_by('name')
 
+    from matches.stats_engine import sort_pool_standings
     pool_standings = []
     for pool in pools:
         teams = pool.pool_teams.select_related('team').all()
-        sorted_teams = sorted(
-            teams,
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True,
-        )
+        sorted_teams = sort_pool_standings(teams, competition.sport_type)
         pool_standings.append({'pool': pool, 'teams': sorted_teams})
 
     # Knockout bracket
@@ -1182,9 +1178,13 @@ def public_competition_standings_view(request, pk):
     clean_sheets = get_clean_sheet_leaders(competition, limit=5)
     fair_play_table = get_fair_play_table(competition, limit=10)
 
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
+
     return render(request, 'public/competition_standings.html', {
         'active_page': 'results',
         'competition': competition,
+        'sport_family': sport_family,
         'pool_standings': pool_standings,
         'knockout_rounds': knockout_rounds,
         'recent_results': recent_results,
@@ -3254,13 +3254,10 @@ def coordinator_competition_manage_view(request, pk):
         'pool_teams__team'
     ).order_by('name')
 
+    from matches.stats_engine import sort_pool_standings
     pool_data = []
     for pool in pools:
-        sorted_teams = sorted(
-            pool.pool_teams.all(),
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True,
-        )
+        sorted_teams = sort_pool_standings(pool.pool_teams.all(), competition.sport_type)
         pool_data.append({'pool': pool, 'teams': sorted_teams})
 
     # Eligible teams
@@ -3422,12 +3419,16 @@ def coordinator_manage_pools_view(request, pk):
     )
     venues = Venue.objects.filter(is_active=True).order_by('name')
 
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
+
     return render(request, 'portal/coordinator/manage_pools.html', {
         'competition': competition,
         'pools': pools,
         'available_subcounties': available_subcounties,
         'venues': venues,
         'pool_preset_available': bool(_get_county_final_pool_preset(competition.sport_type)),
+        'sport_family': sport_family,
     })
 
 
@@ -4075,18 +4076,19 @@ def coordinator_edit_standings_view(request, pk):
         return redirect('coordinator_edit_standings', pk=pk)
 
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').order_by('name')
+    from matches.stats_engine import sort_pool_standings
     pool_data = []
     for pool in pools:
         teams = pool.pool_teams.select_related('team').all()
-        sorted_teams = sorted(
-            teams,
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True,
-        )
+        sorted_teams = sort_pool_standings(teams, competition.sport_type)
         pool_data.append({'pool': pool, 'teams': sorted_teams})
+
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
 
     return render(request, 'portal/coordinator/edit_standings.html', {
         'competition': competition,
+        'sport_family': sport_family,
         'pool_data': pool_data,
     })
 
@@ -4175,15 +4177,15 @@ def coordinator_statistics_view(request, pk):
 
     # Standings per pool
     pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams__team').order_by('name')
+    from matches.stats_engine import sort_pool_standings
     pool_data = []
     for pool in pools:
         teams = pool.pool_teams.select_related('team').all()
-        sorted_teams = sorted(
-            teams,
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True,
-        )
+        sorted_teams = sort_pool_standings(teams, competition.sport_type)
         pool_data.append({'pool': pool, 'teams': sorted_teams})
+
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
 
     return render(request, 'portal/coordinator/statistics.html', {
         'competition': competition,
@@ -4193,6 +4195,7 @@ def coordinator_statistics_view(request, pk):
         'clean_sheets': clean_sheets,
         'fair_play_table': fair_play_table,
         'pool_data': pool_data,
+        'sport_family': sport_family,
     })
 
 
@@ -4482,15 +4485,11 @@ def competition_standings_view(request, pk):
         'pool_teams__team'
     ).order_by('name')
 
+    from matches.stats_engine import sort_pool_standings
     pool_standings = []
     for pool in pools:
         teams = pool.pool_teams.all().order_by('-won', 'lost')
-        # Sort by points, then goal difference, then goals scored
-        sorted_teams = sorted(
-            teams,
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True
-        )
+        sorted_teams = sort_pool_standings(teams, competition.sport_type)
         pool_standings.append({
             'pool': pool,
             'teams': sorted_teams,
@@ -4522,8 +4521,12 @@ def competition_standings_view(request, pk):
     disciplinary = get_disciplinary_table(competition, limit=10)
     clean_sheets = get_clean_sheet_leaders(competition, limit=5)
 
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
+
     return render(request, 'portal/competition_standings.html', {
         'competition':      competition,
+        'sport_family':     sport_family,
         'pool_standings':   pool_standings,
         'knockout_rounds':  knockout_rounds,
         'top_scorers':      top_scorers,
@@ -5044,14 +5047,11 @@ def cm_competition_manage_view(request, pk):
         'pool_teams__team'
     ).order_by('name')
 
+    from matches.stats_engine import sort_pool_standings
     pool_data = []
     for pool in pools:
         teams = pool.pool_teams.select_related('team').all()
-        sorted_teams = sorted(
-            teams,
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True
-        )
+        sorted_teams = sort_pool_standings(teams, competition.sport_type)
         pool_data.append({'pool': pool, 'teams': sorted_teams})
 
     # Registered teams eligible for this competition (paid county, approved)
@@ -5188,10 +5188,14 @@ def cm_manage_pools_view(request, pk):
         sport_type=competition.sport_type,
     ).exclude(pk__in=assigned_ids).order_by('sub_county', 'name')
 
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
+
     return render(request, 'portal/cm/manage_pools.html', {
         'competition': competition,
         'pools': pools,
         'eligible_teams': eligible_teams,
+        'sport_family': sport_family,
     })
 
 
@@ -5449,18 +5453,19 @@ def cm_edit_standings_view(request, pk):
         'pool_teams__team'
     ).order_by('name')
 
+    from matches.stats_engine import sort_pool_standings
     pool_data = []
     for pool in pools:
         teams = pool.pool_teams.select_related('team').all()
-        sorted_teams = sorted(
-            teams,
-            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
-            reverse=True
-        )
+        sorted_teams = sort_pool_standings(teams, competition.sport_type)
         pool_data.append({'pool': pool, 'teams': sorted_teams})
+
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
 
     return render(request, 'portal/cm/edit_standings.html', {
         'competition': competition,
+        'sport_family': sport_family,
         'pool_data': pool_data,
     })
 
@@ -7950,6 +7955,20 @@ def cso_bulk_upload_view(request):
             messages.error(request, 'Please select a sub-county.')
             return redirect('cso_bulk_upload')
 
+        # ── Enforce one upload per discipline + sub-county ────────────────
+        existing = BulkPlayerUpload.objects.filter(
+            sport_type=sport_type, sub_county=sub_county,
+        ).first()
+        if existing:
+            messages.error(
+                request,
+                f'An upload already exists for {existing.get_sport_type_display()} '
+                f'in {existing.get_sub_county_display()} (Upload #{existing.pk}, '
+                f'{existing.created_at.strftime("%d %b %Y")}). '
+                f'Delete the existing upload first before uploading a new one.'
+            )
+            return redirect('cso_bulk_upload')
+
         # Create the upload record
         bulk = BulkPlayerUpload.objects.create(
             uploaded_by=request.user,
@@ -8189,6 +8208,24 @@ def cso_bulk_upload_detail_view(request, pk):
         'bulk': bulk,
         'rows': rows,
     })
+
+
+@role_required('chief_sports_officer', 'admin')
+def cso_bulk_upload_delete_view(request, pk):
+    """Delete a bulk upload record (and its rows). CountyPlayers created from
+    the upload are intentionally left intact.  POST only."""
+    from teams.models import BulkPlayerUpload
+    bulk = get_object_or_404(BulkPlayerUpload, pk=pk)
+    if not request.user.is_superuser and request.user.role != 'admin' and bulk.uploaded_by != request.user:
+        messages.error(request, 'You do not have permission to delete this upload.')
+        return redirect('cso_bulk_upload_list')
+    if request.method == 'POST':
+        desc = f"{bulk.get_sport_type_display()} / {bulk.get_sub_county_display()} (#{bulk.pk})"
+        bulk.delete()
+        messages.success(request, f'Upload {desc} deleted. Any players already registered from this upload remain active.')
+        return redirect('cso_bulk_upload_list')
+    # GET → redirect back (deletion must be via POST)
+    return redirect('cso_bulk_upload_detail', pk=pk)
 
 
 @role_required('chief_sports_officer', 'director_sports', 'admin')

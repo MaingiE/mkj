@@ -116,7 +116,40 @@
     </div>
 </div>
 
-<div class="mt-3">
+<div class="mt-3 d-flex gap-2">
     <a href="{% url 'cso_bulk_upload_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Uploads</a>
+    <button type="button"
+        class="btn btn-outline-danger ms-auto"
+        data-bs-toggle="modal"
+        data-bs-target="#deleteModal">
+        <i class="bi bi-trash"></i> Delete This Upload
+    </button>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel"><i class="bi bi-exclamation-triangle-fill"></i> Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Delete upload <strong>{{ bulk.get_sport_type_display }} / {{ bulk.get_sub_county_display }} (#{{ bulk.pk }})</strong>?</p>
+                <p class="text-muted" style="font-size:.88rem;">
+                    The upload record and its row data will be permanently deleted.<br>
+                    <strong>Players already registered from this upload will remain active.</strong>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'cso_bulk_upload_delete' bulk.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Yes, Delete Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
+

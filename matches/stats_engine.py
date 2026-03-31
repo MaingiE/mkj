@@ -12,6 +12,32 @@ from django.db.models.functions import Coalesce
 logger = logging.getLogger(__name__)
 
 
+def sort_pool_standings(pool_teams, sport_type=None):
+    """
+    Sort pool teams by the correct international criteria for each sport.
+    - Football (FIFA):      Points, Goal Difference, Goals For
+    - Volleyball (FIVB):    Points, Set Ratio (difference), Point Difference, Points For
+    - Basketball (FIBA):    Points, Point Difference, Points For
+    - Handball (IHF):       Points, Goal Difference, Goals For
+    """
+    from matches.models import get_sport_family
+    family = get_sport_family(sport_type) if sport_type else "football"
+
+    if family == "volleyball":
+        return sorted(
+            pool_teams,
+            key=lambda pt: (pt.points, pt.set_difference, pt.goal_difference, pt.goals_for),
+            reverse=True,
+        )
+    else:
+        # Football, Basketball, Handball all use: Points → GD/PD → GF/PF
+        return sorted(
+            pool_teams,
+            key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for),
+            reverse=True,
+        )
+
+
 def process_approved_report(report):
     """
     Master function: called when a MatchReport is approved.

@@ -195,6 +195,7 @@ from .web_views import (
     cso_bulk_upload_view,
     cso_bulk_upload_detail_view,
     cso_bulk_upload_edit_row_view,
+    cso_bulk_upload_delete_view,
     director_bulk_upload_list_view,
     director_bulk_upload_review_view,
     # Match day squad PDF
@@ -443,6 +444,7 @@ urlpatterns = [
     path("portal/chief-sports-officer/bulk-uploads/", cso_bulk_upload_list_view, name="cso_bulk_upload_list"),
     path("portal/chief-sports-officer/bulk-upload/", cso_bulk_upload_view, name="cso_bulk_upload"),
     path("portal/chief-sports-officer/bulk-uploads/<int:pk>/", cso_bulk_upload_detail_view, name="cso_bulk_upload_detail"),
+    path("portal/chief-sports-officer/bulk-uploads/<int:pk>/delete/", cso_bulk_upload_delete_view, name="cso_bulk_upload_delete"),
     path("portal/chief-sports-officer/bulk-uploads/row/<int:row_pk>/edit/", cso_bulk_upload_edit_row_view, name="cso_bulk_upload_edit_row"),
 
     # ── GOVERNOR PORTAL ───────────────────────────────────────────────────

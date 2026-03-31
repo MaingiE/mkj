@@ -222,6 +222,17 @@ class PoolTeam(models.Model):
     def goal_difference(self):
         return self.goals_for - self.goals_against
 
+    @property
+    def set_difference(self):
+        return self.sets_won - self.sets_lost
+
+    @property
+    def sport_family(self):
+        if self.pool and self.pool.competition:
+            from matches.models import get_sport_family
+            return get_sport_family(self.pool.competition.sport_type)
+        return "football"
+
     def __str__(self):
         return f"{self.team.name} in {self.pool}"
 
