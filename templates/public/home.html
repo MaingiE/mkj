@@ -1712,6 +1712,16 @@ a.hero-feat--link {
     font-size: .85rem;
     color: #1e293b;
 }
+.ffp-ft {
+    padding: .16rem .42rem;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: #334155;
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .6px;
+    margin-right: .35rem;
+}
 .ffp-empty {
     text-align: center;
     padding: 2rem 1rem;
@@ -2121,7 +2131,7 @@ a.hero-feat--link {
 <!-- ══════════════════════════════════════════════════════════════════════════
      FLOATING FIXTURES / RESULTS CARD
      ══════════════════════════════════════════════════════════════════════════ -->
-<div class="float-fixtures" id="floatFixtures">
+<div class="float-fixtures open" id="floatFixtures">
     <div class="float-fixtures-panel" id="ffPanel">
         <div class="ffp-header">
             <h4>Match Center</h4>
@@ -2198,10 +2208,10 @@ a.hero-feat--link {
                     <div class="ffp-match-comp">{{ match.competition.name }}</div>
                     <div class="ffp-match-teams">
                         <span>{{ match.home_team.name }}</span>
-                        <span class="ffp-score">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>
+                        <span><span class="ffp-ft">FT</span><span class="ffp-score">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span></span>
                         <span>{{ match.away_team.name }}</span>
                     </div>
-                    <div class="ffp-match-meta">{{ match.match_date|date:"d M Y" }}</div>
+                    <div class="ffp-match-meta"><span class="ffp-ft">FT</span> {{ match.match_date|date:"d M Y" }}</div>
                 </div>
                 {% endfor %}
                 {% else %}
@@ -2464,12 +2474,7 @@ a.hero-feat--link {
             .catch(function(){});
         }
         setInterval(refreshLiveMatches, 30000);
-        /* Close on outside click */
-        document.addEventListener('click', function(e){
-            if (!floatFixtures.contains(e.target)) {
-                floatFixtures.classList.remove('open');
-            }
-        });
+        /* Keep Match Center floating open by default; users can still toggle via button. */
     }
 
     /* ── Scroll reveal (staggered) ─────────────────────────────────── */
