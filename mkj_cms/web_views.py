@@ -522,7 +522,6 @@ def sitemap_xml_view(request):
 #   PUBLIC WEBSITE VIEWS (No login required)
 # ══════════════════════════════════════════════════════════════════════════════
 
-@cache_page(60 * 2)  # cache 2 minutes
 def home_view(request):
     """Public homepage with hero, upcoming fixtures, recent results, live matches, stats."""
     now = timezone.now()
