@@ -165,7 +165,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
 # ── SPECTACULAR (API DOCS) ─────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     "TITLE": "MKJ SUPA CUP Competition Management System API",
-    "DESCRIPTION": "Governor Mutula Kilonzo Junior Super Cup - Makueni County Sports Competition Management",
+    "DESCRIPTION": "Governor Mutula Kilonzo Junior Supa Cup - Makueni County Sports Competition Management",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -292,13 +292,13 @@ SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
 # ── SEO CONFIGURATION ──────────────────────────────────────────────────────────
 SITE_NAME = "MKJ SUPA CUP"
 SITE_DESCRIPTION = (
-    "Governor Mutula Kilonzo Junior Super Cup - Official youth sports championship "
+    "Governor Mutula Kilonzo Junior Supa Cup - Official youth sports championship "
     "for Makueni County, Kenya. Football, Volleyball, Basketball and Handball."
 )
 SEO_KEYWORDS = [
     "MKJ SUPA CUP",
     "Mutula Kilonzo Junior",
-    "Super Cup",
+    "Supa Cup",
     "Makueni County sports",
     "youth championship Kenya",
     "Makueni football",

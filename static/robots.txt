@@ -1,5 +1,5 @@
 # MKJ SUPA CUP - robots.txt
-# Governor Mutula Kilonzo Junior Super Cup - mkjsupacup.com
+# Governor Mutula Kilonzo Junior Supa Cup - mkjsupacup.com
 
 User-agent: *
 Allow: /

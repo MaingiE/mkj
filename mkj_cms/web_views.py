@@ -438,7 +438,7 @@ def robots_txt_view(request):
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
     lines = [
         "# MKJ SUPA CUP - robots.txt",
-        "# Governor Mutula Kilonzo Junior Super Cup - mkjsupacup.com",
+        "# Governor Mutula Kilonzo Junior Supa Cup - mkjsupacup.com",
         "",
         "User-agent: *",
         "Allow: /",

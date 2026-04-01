@@ -515,6 +515,6 @@ if settings.DEBUG:
 # Custom error handler: logs the actual exception behind 400 responses
 handler400 = "mkj_cms.web_views.custom_bad_request_view"
 
-admin.site.site_header = "MKJ SUPA CUP - Governor Mutula Kilonzo Junior Super Cup"
+admin.site.site_header = "MKJ SUPA CUP - Governor Mutula Kilonzo Junior Supa Cup"
 admin.site.site_title  = "MKJ SUPA CUP Admin"
 admin.site.index_title = "Makueni County Sports Administration"

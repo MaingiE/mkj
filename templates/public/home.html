@@ -2,10 +2,10 @@
 {% load static %}
 
 {% block title %}Home{% endblock %}
-{% block meta_description %}<meta name="description" content="MKJ SUPA CUP 2026 - Governor Mutula Kilonzo Junior Super Cup. Makueni County's biggest multi-sport competition. Football, Volleyball, Basketball & Handball. View fixtures, results, standings and register your team.">{% endblock %}
+{% block meta_description %}<meta name="description" content="MKJ SUPA CUP 2026 - Governor Mutula Kilonzo Junior Supa Cup. Makueni County's biggest multi-sport competition. Football, Volleyball, Basketball & Handball. View fixtures, results, standings and register your team.">{% endblock %}
 {% block canonical_url %}https://mkjsupacup.com/{% endblock %}
 {% block og_meta %}
-<meta property="og:title" content="MKJ SUPA CUP 2026 - Makueni County Super Cup">
+<meta property="og:title" content="MKJ SUPA CUP 2026 - Makueni County Supa Cup">
 <meta property="og:description" content="Makueni County's biggest multi-sport competition. Football, Volleyball, Basketball & Handball fixtures, results & standings.">
 <meta property="og:url" content="https://mkjsupacup.com/">
 {% endblock %}
@@ -277,6 +277,43 @@
     color: #FFD54F;
     font-style: normal;
     font-weight: 700;
+}
+
+/* ── WAUNI ANIMATED MOTTO ─────────────────────────────── */
+.wauni-stage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .45rem;
+    margin: .6rem auto 1.5rem;
+    max-width: 540px;
+}
+.wauni-word {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(30px) scale(.7);
+    animation:
+        wauniPop .7s cubic-bezier(.16,1,.3,1) calc(2.2s + var(--i) * .18s) forwards,
+        wauniColor 4s ease-in-out calc(3.4s + var(--i) * .18s) infinite alternate;
+    text-shadow: 0 2px 12px rgba(0,0,0,.35);
+}
+@keyframes wauniPop {
+    0%   { opacity: 0; transform: translateY(30px) scale(.7); }
+    60%  { opacity: 1; transform: translateY(-6px) scale(1.08); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes wauniColor {
+    0%   { color: #FFD54F; }
+    20%  { color: #FF6F61; }
+    40%  { color: #4FC3F7; }
+    60%  { color: #81C784; }
+    80%  { color: #CE93D8; }
+    100% { color: #FFD54F; }
 }
 .hero-btns {
     display: flex;
@@ -1011,10 +1048,14 @@
                 </div>
 
                 <p class="hero-tagline">Makueni County Sports Excellence Championship</p>
-                <p class="hero-quote">
-                    <strong>&ldquo;Wauni wa Kwika Nesa na Ulungalu&rdquo;</strong> Empowering our youth through sports,
-                    uniting six sub-counties in friendly competition.
-                </p>
+                <div class="wauni-stage">
+                    <span class="wauni-word" style="--i:0">&ldquo;Wauni</span>
+                    <span class="wauni-word" style="--i:1">wa</span>
+                    <span class="wauni-word" style="--i:2">Kwika</span>
+                    <span class="wauni-word" style="--i:3">Nesa</span>
+                    <span class="wauni-word" style="--i:4">na</span>
+                    <span class="wauni-word" style="--i:5">Ulungalu&rdquo;</span>
+                </div>
                 <div class="hero-btns">
                     <a href="{% url 'public_fixtures_results' %}" class="hero-btn hero-btn--gold">
                         Fixtures & Results

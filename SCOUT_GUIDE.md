@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Scout module enables talent identification and evaluation across all sports disciplines in the Governor Mutula Kilonzo Junior Super Cup. Scouts are assigned a specific discipline and can browse verified players, build shortlists, attend matches, and submit detailed evaluation reports using internationally-aligned scouting criteria.
+The Scout module enables talent identification and evaluation across all sports disciplines in the Governor Mutula Kilonzo Junior Supa Cup. Scouts are assigned a specific discipline and can browse verified players, build shortlists, attend matches, and submit detailed evaluation reports using internationally-aligned scouting criteria.
 
 ---
 
