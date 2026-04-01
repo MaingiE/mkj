@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "crispy_forms",
     "crispy_bootstrap5",
+    "cloudinary_storage",
+    "cloudinary",
 
     # MKJ SUPA CUP Apps
     "accounts",
@@ -210,7 +212,19 @@ AWS_DEFAULT_ACL         = None
 AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
 _use_s3 = not DEBUG and bool(AWS_ACCESS_KEY_ID and AWS_STORAGE_BUCKET_NAME)
-if _use_s3:
+_use_cloudinary = not DEBUG and bool(env("CLOUDINARY_URL", default=""))
+
+if _use_cloudinary:
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default=""),
+        "API_KEY":    env("CLOUDINARY_API_KEY", default=""),
+        "API_SECRET": env("CLOUDINARY_API_SECRET", default=""),
+    }
+    STORAGES["default"] = {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    }
+    MEDIA_URL = "/media/"   # django-cloudinary-storage handles this
+elif _use_s3:
     STORAGES["default"] = {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         "OPTIONS": {
