@@ -212,18 +212,30 @@ AWS_DEFAULT_ACL         = None
 AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
 _use_s3 = not DEBUG and bool(AWS_ACCESS_KEY_ID and AWS_STORAGE_BUCKET_NAME)
-_use_cloudinary = not DEBUG and bool(env("CLOUDINARY_URL", default=""))
+_cloudinary_url = env("CLOUDINARY_URL", default="")
+_use_cloudinary = not DEBUG and bool(_cloudinary_url)
 
 if _use_cloudinary:
+    import cloudinary
+    from urllib.parse import urlparse
+    _cld = urlparse(_cloudinary_url)
+    _cld_cloud  = _cld.hostname or env("CLOUDINARY_CLOUD_NAME", default="")
+    _cld_key    = _cld.username or env("CLOUDINARY_API_KEY", default="")
+    _cld_secret = _cld.password or env("CLOUDINARY_API_SECRET", default="")
+
+    cloudinary.config(
+        cloud_name=_cld_cloud, api_key=_cld_key,
+        api_secret=_cld_secret, secure=True,
+    )
     CLOUDINARY_STORAGE = {
-        "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default=""),
-        "API_KEY":    env("CLOUDINARY_API_KEY", default=""),
-        "API_SECRET": env("CLOUDINARY_API_SECRET", default=""),
+        "CLOUD_NAME": _cld_cloud,
+        "API_KEY":    _cld_key,
+        "API_SECRET": _cld_secret,
     }
     STORAGES["default"] = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     }
-    MEDIA_URL = "/media/"   # django-cloudinary-storage handles this
+    MEDIA_URL = "/media/"
 elif _use_s3:
     STORAGES["default"] = {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
