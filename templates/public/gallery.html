@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Gallery{% endblock %}
-{% block meta_description %}<meta name="description" content="MKJ SUPA CUP 2026 Photo Gallery - Sports We Celebrate. Action shots from Makueni County's biggest multi-sport championship.">{% endblock %}
+{% block meta_description %}<meta name="description" content="MKJ SUPA CUP 2026 Photo Gallery - Sports We Celebrate and Verification Exercise Snaps from Makueni County.">{% endblock %}
 {% block canonical_url %}https://mkjsupacup.com/gallery/{% endblock %}
 
 {% block extra_css %}
@@ -17,7 +17,7 @@
     background: #f8fafc;
 }
 
-/* ── HEADER ─────────────────────────────────────────────────────────────── */
+/* ── SECTION HEADER ─────────────────────────────────────────────────────── */
 .gp-header {
     text-align: center;
     margin-bottom: 2.5rem;
@@ -61,11 +61,63 @@
     margin: .6rem auto 0;
 }
 
+/* ── SECTION DIVIDER ────────────────────────────────────────────────────── */
+.gp-section {
+    max-width: 1100px;
+    margin: 0 auto 3rem;
+    padding: 0 1rem;
+}
+.gp-section-hdr {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: .8rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+.gp-section-hdr__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.gp-section-hdr__icon--sports {
+    background: linear-gradient(135deg, #124491, #3a7bd5);
+    color: #fff;
+}
+.gp-section-hdr__icon--verif {
+    background: linear-gradient(135deg, #2E7D32, #66BB6A);
+    color: #fff;
+}
+.gp-section-hdr__text h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+.gp-section-hdr__text p {
+    font-size: .78rem;
+    color: #94a3b8;
+    margin: .1rem 0 0;
+}
+.gp-section-hdr__date {
+    margin-left: auto;
+    font-size: .68rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: .3rem .7rem;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
 /* ── COMPACT GRID ───────────────────────────────────────────────────────── */
 .gp-grid {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 1rem;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: .6rem;
@@ -88,7 +140,6 @@
 .gp-item:hover img {
     transform: scale(1.08);
 }
-/* Span variations for visual interest */
 .gp-item--wide {
     grid-column: span 2;
     aspect-ratio: 2/1;
@@ -101,11 +152,12 @@
 .gp-item__overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(10,22,40,.6) 100%);
+    background: linear-gradient(180deg, transparent 30%, rgba(10,22,40,.65) 100%);
     opacity: 0;
     transition: opacity .3s;
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    justify-content: flex-end;
     padding: .75rem;
     z-index: 2;
 }
@@ -121,6 +173,13 @@
     opacity: .9;
     filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
 }
+.gp-item__caption {
+    font-size: .7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.9);
+    letter-spacing: .3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
 
 @media (max-width: 900px) {
     .gp-grid { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
@@ -128,10 +187,12 @@
 }
 @media (max-width: 600px) {
     .gallery-page { padding: 5.5rem 0 2rem; }
-    .gp-grid { grid-template-columns: repeat(2, 1fr); gap: .4rem; padding: 0 .5rem; }
+    .gp-grid { grid-template-columns: repeat(2, 1fr); gap: .4rem; }
     .gp-item { border-radius: 6px; }
     .gp-item--wide { grid-column: span 2; }
     .gp-item--tall { grid-row: span 1; aspect-ratio: 1; }
+    .gp-section-hdr { flex-wrap: wrap; }
+    .gp-section-hdr__date { margin-left: 0; margin-top: .3rem; }
 }
 
 /* ── LIGHTBOX ───────────────────────────────────────────────────────────── */
@@ -189,6 +250,12 @@
     font-size: .75rem; color: rgba(255,255,255,.5); font-weight: 600;
     letter-spacing: 1px; z-index: 3;
 }
+.lightbox__section {
+    position: absolute; top: 1.2rem; left: 50%; transform: translateX(-50%);
+    font-size: .65rem; color: rgba(255,255,255,.4); font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; z-index: 3;
+    background: rgba(0,0,0,.5); padding: .3rem .8rem; border-radius: 50px;
+}
 @media (max-width: 600px) {
     .lightbox__close { top: .75rem; right: .75rem; width: 38px; height: 38px; font-size: 1.2rem; }
     .lightbox__nav { width: 40px; height: 40px; font-size: 1.1rem; }
@@ -208,52 +275,225 @@
 
 {% block content %}
 <section class="gallery-page">
+    <!-- ── PAGE HEADER ──────────────────────────────────────────────────── -->
     <div class="gp-header">
         <span class="gp-header__tag"><i class="bi bi-camera-fill"></i> Gallery</span>
-        <h1>Sports We Celebrate</h1>
-        <p>Moments from MKJ SUPA CUP 2026. Makueni County's biggest multi-sport championship.</p>
+        <h1>MKJ SUPA CUP <span style="color:#E8B91E;">Gallery</span></h1>
+        <p>Moments from MKJ SUPA CUP 2026. Makueni County&#8217;s biggest multi-sport championship.</p>
         <div class="gp-accent"></div>
     </div>
 
-    <div class="gp-grid">
-        <!-- Row 1: wide + square + square -->
-        <div class="gp-item gp-item--wide" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.45 PM.jpeg' %}" alt="MKJ SUPA CUP moment" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+    <!-- ══════════════════════════════════════════════════════════════════
+         SECTION 1 — SPORTS WE CELEBRATE
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="gp-section">
+        <div class="gp-section-hdr">
+            <div class="gp-section-hdr__icon gp-section-hdr__icon--sports"><i class="bi bi-trophy-fill"></i></div>
+            <div class="gp-section-hdr__text">
+                <h2>Sports We Celebrate</h2>
+                <p>Football, Volleyball, Basketball &amp; Handball action across Makueni County</p>
+            </div>
         </div>
-        <div class="gp-item" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.45 PM (1).jpeg' %}" alt="MKJ SUPA CUP action" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+
+        <div class="gp-grid">
+            <!-- Row 1 -->
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/soccer men.jpeg' %}" alt="Men's Football action at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Men&#8217;s Football</span>
+                </div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/ladies soccer.jpeg' %}" alt="Women's Football at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Women&#8217;s Football</span>
+                </div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/basketball.jpeg' %}" alt="Basketball action at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Basketball</span>
+                </div>
+            </div>
+            <!-- Row 2 -->
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/vl.jpeg' %}" alt="Volleyball match at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Volleyball</span>
+                </div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/baste.jpeg' %}" alt="Court action at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Court Action</span>
+                </div>
+            </div>
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/mkj .jpeg' %}" alt="MKJ SUPA CUP trophy presentation" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">MKJ SUPA CUP</span>
+                </div>
+            </div>
+            <!-- Row 3 -->
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/ttr.jpeg' %}" alt="Tournament moment" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Tournament</span>
+                </div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/cit.jpeg' %}" alt="Community engagement at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Community</span>
+                </div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/fans.jpeg' %}" alt="Fan zone at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Fan Zone</span>
+                </div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/fans1.jpeg' %}" alt="Passionate fans at MKJ SUPA CUP" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Passion</span>
+                </div>
+            </div>
         </div>
-        <div class="gp-item" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.48 PM.jpeg' %}" alt="MKJ SUPA CUP highlights" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SECTION 2 — VERIFICATION EXERCISE SNAPS
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="gp-section">
+        <div class="gp-section-hdr">
+            <div class="gp-section-hdr__icon gp-section-hdr__icon--verif"><i class="bi bi-shield-check"></i></div>
+            <div class="gp-section-hdr__text">
+                <h2>Snaps from our Verification Exercise</h2>
+                <p>Player verification at Huduma Centre, Makueni &amp; Higher Leagues participation clearance</p>
+            </div>
+            <span class="gp-section-hdr__date"><i class="bi bi-calendar3"></i> 31st March 2026</span>
         </div>
-        <!-- Row 2: square + square + wide -->
-        <div class="gp-item" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.49 PM.jpeg' %}" alt="MKJ SUPA CUP event" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+
+        <div class="gp-grid">
+            <!-- verif 7: panoramic wide shot of packed Huduma Centre interior -->
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/verif 7.jpeg' %}" alt="Packed Huduma Centre during MKJ SUPA CUP player verification" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Full house at Huduma Centre</span>
+                </div>
+            </div>
+            <!-- verif 2: queue outside Huduma Centre entrance -->
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/verif 2.jpeg' %}" alt="Players queuing at Huduma Centre entrance for verification" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Queue at Huduma Centre</span>
+                </div>
+            </div>
+            <!-- verif 4: wide crowd at entrance -->
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/verif 4.jpeg' %}" alt="Large turnout at Huduma Centre for player clearance" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Massive turnout</span>
+                </div>
+            </div>
+            <!-- verif 5: inside with service counters visible -->
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/verif 5.jpeg' %}" alt="Players inside Huduma Centre awaiting verification" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Verification in progress</span>
+                </div>
+            </div>
+            <!-- verif 3: close-up at green wall -->
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/verif 3.jpeg' %}" alt="Players gathered outside Huduma Centre" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Outside Huduma Centre</span>
+                </div>
+            </div>
+            <!-- verif 1: players seated inside waiting area -->
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/verif 1.jpeg' %}" alt="Players waiting inside Huduma Centre for verification" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Waiting for clearance</span>
+                </div>
+            </div>
+            <!-- verif 6: close-up of players seated, Arsenal jersey -->
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/verif 6.jpeg' %}" alt="Players at Huduma Centre during MKJ SUPA CUP verification" loading="lazy">
+                <div class="gp-item__overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    <span class="gp-item__caption">Athletes ready for clearance</span>
+                </div>
+            </div>
         </div>
-        <div class="gp-item" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.50 PM.jpeg' %}" alt="MKJ SUPA CUP celebrations" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SECTION 3 — ARCHIVE: Previous Events
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="gp-section">
+        <div class="gp-section-hdr">
+            <div class="gp-section-hdr__icon" style="background:linear-gradient(135deg,#455A64,#78909C);color:#fff;"><i class="bi bi-archive-fill"></i></div>
+            <div class="gp-section-hdr__text">
+                <h2>Archive</h2>
+                <p>Previous MKJ SUPA CUP highlights and sports moments</p>
+            </div>
         </div>
-        <div class="gp-item gp-item--wide" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.51 PM.jpeg' %}" alt="MKJ SUPA CUP sports" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
-        </div>
-        <!-- Row 3: square + wide + square -->
-        <div class="gp-item" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.53 PM.jpeg' %}" alt="MKJ SUPA CUP competition" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
-        </div>
-        <div class="gp-item gp-item--wide" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.54 PM.jpeg' %}" alt="MKJ SUPA CUP tournament" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
-        </div>
-        <div class="gp-item" data-gallery>
-            <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.55 PM.jpeg' %}" alt="MKJ SUPA CUP atmosphere" loading="lazy">
-            <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+
+        <div class="gp-grid">
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.45 PM.jpeg' %}" alt="MKJ SUPA CUP moment" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.45 PM (1).jpeg' %}" alt="MKJ SUPA CUP action" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.48 PM.jpeg' %}" alt="MKJ SUPA CUP highlights" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.49 PM.jpeg' %}" alt="MKJ SUPA CUP event" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.50 PM.jpeg' %}" alt="MKJ SUPA CUP celebrations" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.51 PM.jpeg' %}" alt="MKJ SUPA CUP sports" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.53 PM.jpeg' %}" alt="MKJ SUPA CUP competition" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item gp-item--wide" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.54 PM.jpeg' %}" alt="MKJ SUPA CUP tournament" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
+            <div class="gp-item" data-gallery>
+                <img src="{% static 'img/WhatsApp Image 2026-03-28 at 12.35.55 PM.jpeg' %}" alt="MKJ SUPA CUP atmosphere" loading="lazy">
+                <div class="gp-item__overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+            </div>
         </div>
     </div>
 </section>
