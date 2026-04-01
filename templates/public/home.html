@@ -1126,6 +1126,157 @@ a.hero-feat--link {
     .disc-img-card { min-height: 240px; border-radius: 16px; }
 }
 
+/* ── LIVE PICTORIAL UPDATES ────────────────────────────────────────────── */
+.pictorial-section {
+    padding: 80px 0;
+    background: #fff;
+}
+.pictorial-hdr {
+    text-align: center;
+    max-width: 1100px;
+    margin: 0 auto 2.5rem;
+    padding: 0 1.5rem;
+}
+.pictorial-hdr__live {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .35rem .85rem;
+    background: rgba(220,38,38,.08);
+    border: 1px solid rgba(220,38,38,.15);
+    border-radius: 50px;
+    font-size: .62rem;
+    font-weight: 700;
+    color: #dc2626;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+}
+.pictorial-hdr__live .pulse-dot {
+    width: 8px; height: 8px;
+    background: #dc2626;
+    border-radius: 50%;
+    animation: pDot 1.5s ease-in-out infinite;
+}
+@keyframes pDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(.7);} }
+.pictorial-hdr h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -.5px;
+    margin: 0 0 .4rem;
+}
+.pictorial-hdr p {
+    font-size: .88rem;
+    color: #64748b;
+    max-width: 480px;
+    margin: 0 auto;
+}
+.pictorial-albums {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+.pictorial-album {
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(15,23,42,.06);
+    border: 1px solid #e2e8f0;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), box-shadow .35s;
+    cursor: pointer;
+}
+.pictorial-album:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(15,23,42,.12);
+}
+.pictorial-album__cover {
+    position: relative;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    background: #e2e8f0;
+}
+.pictorial-album__cover img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.pictorial-album:hover .pictorial-album__cover img {
+    transform: scale(1.06);
+}
+.pictorial-album__badge {
+    position: absolute;
+    top: .75rem; right: .75rem;
+    background: rgba(10,22,40,.7);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    padding: .25rem .6rem;
+    border-radius: 50px;
+    display: flex; align-items: center; gap: .3rem;
+    letter-spacing: .5px;
+}
+.pictorial-album__info {
+    padding: 1rem 1.2rem 1.2rem;
+}
+.pictorial-album__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 .3rem;
+    line-height: 1.3;
+}
+.pictorial-album__meta {
+    font-size: .72rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+}
+.pictorial-album__meta i {
+    font-size: .7rem;
+    margin-right: .2rem;
+}
+.pictorial-cta {
+    text-align: center;
+    margin-top: 2rem;
+}
+.pictorial-cta a {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .7rem 2rem;
+    background: linear-gradient(135deg, #124491, #3a7bd5);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    border-radius: 50px;
+    text-decoration: none;
+    letter-spacing: .5px;
+    transition: all .3s;
+    box-shadow: 0 4px 16px rgba(18,68,145,.25);
+}
+.pictorial-cta a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(18,68,145,.35);
+}
+@media (max-width: 900px) {
+    .pictorial-section { padding: 48px 0; }
+    .pictorial-albums { grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+}
+@media (max-width: 600px) {
+    .pictorial-albums { grid-template-columns: 1fr; gap: 1rem; padding: 0 1rem; }
+    .pictorial-album { border-radius: 14px; }
+}
+
 /* ── HERO STATS STRIP (inside hero, above Kenya stripe) ────────────────── */
 .hero-stats-strip {
     position: absolute;
@@ -1707,6 +1858,42 @@ a.hero-feat--link {
     </div>
 </section>
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     LIVE PICTORIAL UPDATES
+     ══════════════════════════════════════════════════════════════════════════ -->
+{% if pictorial_albums %}
+<section class="pictorial-section" id="pictorial">
+    <div class="pictorial-hdr reveal-up">
+        <span class="pictorial-hdr__live"><span class="pulse-dot"></span> Live Updates</span>
+        <h2>Live Pictorial Updates</h2>
+        <p>Latest photos from MKJ SUPA CUP 2026 events across Makueni County</p>
+    </div>
+    <div class="pictorial-albums">
+        {% for album in pictorial_albums %}
+        <a href="{% url 'public_gallery' %}" class="pictorial-album reveal-up" style="text-decoration:none; transition-delay:{{ forloop.counter0 }}00ms;">
+            <div class="pictorial-album__cover">
+                {% if album.display_cover %}
+                <img src="{{ album.display_cover }}" alt="{{ album.title }}" loading="lazy">
+                {% else %}
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:#94a3b8;font-size:2rem;"><i class="bi bi-camera"></i></div>
+                {% endif %}
+                <span class="pictorial-album__badge"><i class="bi bi-images"></i> {{ album.photo_count }} photos</span>
+            </div>
+            <div class="pictorial-album__info">
+                <h3 class="pictorial-album__title">{{ album.title }}</h3>
+                <div class="pictorial-album__meta">
+                    {% if album.event_date %}<span><i class="bi bi-calendar3"></i> {{ album.event_date|date:"j M Y" }}</span>{% endif %}
+                    <span><i class="bi bi-clock"></i> {{ album.created_at|timesince }} ago</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    <div class="pictorial-cta reveal-up">
+        <a href="{% url 'public_gallery' %}">View Full Gallery <i class="bi bi-arrow-right"></i></a>
+    </div>
+</section>
+{% endif %}
 
 
 <!-- ══════════════════════════════════════════════════════════════════════════

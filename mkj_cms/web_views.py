@@ -72,6 +72,7 @@ from matches.models import (
     SubstitutionRequest, SubstitutionType, SubstitutionStatus,
     get_sport_family, get_squad_rules,
 )
+from news_media.models import GalleryAlbum
 from datetime import date, timedelta
 
 logger = logging.getLogger(__name__)
@@ -549,19 +550,29 @@ def home_view(request):
         'competition', 'home_team', 'away_team', 'venue'
     ).order_by('-live_started_at')
 
+    # Latest published albums for "Live Pictorial Updates"
+    pictorial_albums = GalleryAlbum.objects.filter(
+        is_published=True
+    ).prefetch_related('images')[:6]
+
     return render(request, 'public/home.html', {
         'active_page': 'home',
         'stats': stats,
         'upcoming_fixtures': upcoming_fixtures,
         'recent_results': recent_results,
         'live_matches': live_matches,
+        'pictorial_albums': pictorial_albums,
     })
 
 
 def public_gallery_view(request):
-    """Public gallery page - Sports We Celebrate."""
+    """Public gallery page - Sports We Celebrate + uploaded albums."""
+    albums = GalleryAlbum.objects.filter(
+        is_published=True
+    ).prefetch_related('images')
     return render(request, 'public/gallery.html', {
         'active_page': 'gallery',
+        'albums': albums,
     })
 
 

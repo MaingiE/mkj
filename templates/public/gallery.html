@@ -195,6 +195,73 @@
     .gp-section-hdr__date { margin-left: 0; margin-top: .3rem; }
 }
 
+/* ── DYNAMIC ALBUM CARDS ─────────────────────────────────────────────────── */
+.gp-album-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+}
+.gp-album-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(15,23,42,.05);
+    border: 1px solid #e2e8f0;
+    transition: transform .35s, box-shadow .35s;
+    cursor: pointer;
+}
+.gp-album-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 36px rgba(15,23,42,.1);
+}
+.gp-album-card__cover {
+    position: relative;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    background: #e2e8f0;
+}
+.gp-album-card__cover img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .4s;
+}
+.gp-album-card:hover .gp-album-card__cover img { transform: scale(1.06); }
+.gp-album-card__count {
+    position: absolute; top: .5rem; right: .5rem;
+    background: rgba(0,0,0,.6);
+    color: #fff; font-size: .6rem; font-weight: 700;
+    padding: .2rem .5rem; border-radius: 50px;
+    display: flex; align-items: center; gap: .25rem;
+}
+.gp-album-card__body {
+    padding: .8rem 1rem;
+}
+.gp-album-card__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: .88rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 .25rem;
+}
+.gp-album-card__date {
+    font-size: .68rem;
+    color: #94a3b8;
+}
+.gp-album-photos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .5rem;
+    margin-top: 1rem;
+}
+@media (max-width: 900px) {
+    .gp-album-grid { grid-template-columns: repeat(2, 1fr); }
+    .gp-album-photos { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+    .gp-album-grid { grid-template-columns: 1fr; }
+    .gp-album-photos { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ── LIGHTBOX ───────────────────────────────────────────────────────────── */
 .lightbox {
     position: fixed;
@@ -446,6 +513,64 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════════
+         DYNAMIC ALBUMS — Live Pictorial Updates
+         ══════════════════════════════════════════════════════════════════ -->
+    {% if albums %}
+    <div class="gp-section">
+        <div class="gp-section-hdr">
+            <div class="gp-section-hdr__icon" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;"><i class="bi bi-camera-reels-fill"></i></div>
+            <div class="gp-section-hdr__text">
+                <h2>Live Pictorial Updates</h2>
+                <p>Latest photo albums from MKJ SUPA CUP 2026 events</p>
+            </div>
+        </div>
+
+        <div class="gp-album-grid">
+            {% for album in albums %}
+            <div class="gp-album-card" data-album-toggle="{{ forloop.counter0 }}">
+                <div class="gp-album-card__cover">
+                    {% if album.display_cover %}
+                    <img src="{{ album.display_cover }}" alt="{{ album.title }}" loading="lazy">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:2rem;"><i class="bi bi-camera"></i></div>
+                    {% endif %}
+                    <span class="gp-album-card__count"><i class="bi bi-images"></i> {{ album.photo_count }}</span>
+                </div>
+                <div class="gp-album-card__body">
+                    <h3 class="gp-album-card__title">{{ album.title }}</h3>
+                    <span class="gp-album-card__date">
+                        {% if album.event_date %}{{ album.event_date|date:"j M Y" }}{% else %}{{ album.created_at|date:"j M Y" }}{% endif %}
+                        &middot; {{ album.photo_count }} photo{{ album.photo_count|pluralize }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Expanded album photos (toggled by clicking album card) -->
+        {% for album in albums %}
+        <div class="gp-album-expanded" id="albumPhotos{{ forloop.counter0 }}" style="display:none; margin-top:1.2rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+                <h3 style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#0f172a;margin:0;">{{ album.title }}</h3>
+                <button onclick="document.getElementById('albumPhotos{{ forloop.counter0 }}').style.display='none'" style="background:none;border:1px solid #e2e8f0;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#64748b;">&times;</button>
+            </div>
+            <div class="gp-album-photos">
+                {% for img in album.images.all %}
+                <div class="gp-item" data-gallery>
+                    <img src="{{ img.image.url }}" alt="{{ img.caption|default:album.title }}" loading="lazy">
+                    <div class="gp-item__overlay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                        {% if img.caption %}<span class="gp-item__caption">{{ img.caption }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════════════════
          SECTION 3 — ARCHIVE: Previous Events
          ══════════════════════════════════════════════════════════════════ -->
     <div class="gp-section">
@@ -517,18 +642,42 @@
     var lbPrev = document.getElementById('lbPrev');
     var lbNext = document.getElementById('lbNext');
     var lbCounter = document.getElementById('lbCounter');
-    var items = document.querySelectorAll('[data-gallery]');
     var srcs = [];
     var idx = 0;
 
-    items.forEach(function(item, i) {
-        var img = item.querySelector('img');
-        if (img) srcs.push(img.src);
-        item.addEventListener('click', function() {
-            idx = i;
-            openLB(srcs[idx]);
+    /* ── Album card toggle ── */
+    document.querySelectorAll('[data-album-toggle]').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var id = 'albumPhotos' + card.getAttribute('data-album-toggle');
+            var panel = document.getElementById(id);
+            if (!panel) return;
+            // Close all others
+            document.querySelectorAll('.gp-album-expanded').forEach(function(p) {
+                if (p.id !== id) p.style.display = 'none';
+            });
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel.style.display === 'block') {
+                panel.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }
+            rebindGallery();
         });
     });
+
+    function rebindGallery() {
+        srcs = [];
+        var items = document.querySelectorAll('[data-gallery]');
+        items.forEach(function(item, i) {
+            var img = item.querySelector('img');
+            if (img) srcs.push(img.src);
+            // Remove old listeners by cloning
+            var clone = item.cloneNode(true);
+            item.parentNode.replaceChild(clone, item);
+            clone.addEventListener('click', function() {
+                idx = i;
+                openLB(srcs[idx]);
+            });
+        });
+    }
 
     function openLB(src) {
         if (!lightbox || !lbImg) return;
@@ -562,6 +711,9 @@
         if (e.key === 'ArrowLeft' && lbPrev) lbPrev.click();
         if (e.key === 'ArrowRight' && lbNext) lbNext.click();
     });
+
+    // Initial bind
+    rebindGallery();
 })();
 </script>
 {% endblock %}
