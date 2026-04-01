@@ -298,6 +298,12 @@ class Fixture(models.Model):
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
 
+    # ── Live match tracking ────────────────────────────────────────────────
+    live_started_at   = models.DateTimeField(null=True, blank=True, help_text="When the match was kicked off (live)")
+    live_half         = models.PositiveSmallIntegerField(default=1, help_text="Current half/period (1=1st, 2=2nd, etc.)")
+    live_paused       = models.BooleanField(default=False, help_text="Is the match clock paused (e.g. half-time)")
+    live_extra_minutes = models.PositiveSmallIntegerField(default=0, help_text="Added/injury time minutes")
+
     class Meta:
         ordering = ["match_date", "kickoff_time"]
 
@@ -337,6 +343,17 @@ class Fixture(models.Model):
         if self.is_knockout and self.knockout_round:
             label = f"[{self.get_knockout_round_display()}] {label}"
         return label
+
+    @property
+    def match_minute(self):
+        """Current match minute based on live_started_at clock. Returns None if not live."""
+        if not self.live_started_at or self.status != 'live':
+            return None
+        if self.live_paused:
+            return None  # clock paused
+        from django.utils import timezone as tz
+        elapsed = (tz.now() - self.live_started_at).total_seconds()
+        return max(0, int(elapsed // 60))
 
     @property
     def kickoff_datetime(self):

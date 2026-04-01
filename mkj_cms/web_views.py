@@ -523,7 +523,7 @@ def sitemap_xml_view(request):
 
 @cache_page(60 * 2)  # cache 2 minutes
 def home_view(request):
-    """Public homepage with hero, upcoming fixtures, recent results, stats."""
+    """Public homepage with hero, upcoming fixtures, recent results, live matches, stats."""
     now = timezone.now()
     stats = {
         'competitions': Competition.objects.count(),
@@ -543,11 +543,18 @@ def home_view(request):
         'competition', 'home_team', 'away_team', 'venue'
     ).order_by('-match_date')[:6]
 
+    live_matches = Fixture.objects.filter(
+        status='live'
+    ).select_related(
+        'competition', 'home_team', 'away_team', 'venue'
+    ).order_by('-live_started_at')
+
     return render(request, 'public/home.html', {
         'active_page': 'home',
         'stats': stats,
         'upcoming_fixtures': upcoming_fixtures,
         'recent_results': recent_results,
+        'live_matches': live_matches,
     })
 
 
@@ -765,6 +772,13 @@ def public_fixtures_results_view(request):
                     'home_team', 'away_team', 'venue'
                 ).order_by('match_date')[:10]
 
+                # Live matches
+                live = Fixture.objects.filter(
+                    competition=comp, status='live'
+                ).select_related(
+                    'home_team', 'away_team', 'venue'
+                )
+
                 comp_list.append({
                     'competition': comp,
                     'pool_standings': pool_standings,
@@ -772,6 +786,7 @@ def public_fixtures_results_view(request):
                     'knockout_rounds': knockout_rounds,
                     'results': results,
                     'upcoming': upcoming,
+                    'live_matches': live,
                     'sport_family': get_sport_family(comp.sport_type),
                 })
 
@@ -3882,6 +3897,128 @@ def coordinator_delete_fixture_view(request, pk, fixture_pk):
     fixture.delete()
     messages.success(request, f'Match deleted: {label}')
     return redirect('coordinator_competition_manage', pk=pk)
+
+
+@role_required('coordinator', 'admin')
+def coordinator_live_match_view(request, pk, fixture_pk):
+    """Coordinator: Live match control — start match, update scores in real-time, end match."""
+    from competitions.models import Competition, Fixture, FixtureStatus
+    from matches.models import get_sport_family, SPORT_CONFIG
+    from matches.stats_engine import recalculate_pool_standings
+
+    competition = get_object_or_404(Competition, pk=pk)
+    discipline = _coordinator_discipline(request.user)
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
+        messages.error(request, 'This competition is not in your discipline.')
+        return redirect('coordinator_dashboard')
+
+    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
+    sport_family = get_sport_family(competition.sport_type)
+    sport_cfg = SPORT_CONFIG.get(sport_family, SPORT_CONFIG['football'])
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'start_match':
+            fixture.status = FixtureStatus.LIVE
+            fixture.live_started_at = timezone.now()
+            fixture.live_half = 1
+            fixture.live_paused = False
+            fixture.home_score = 0
+            fixture.away_score = 0
+            fixture.save()
+            _clear_public_fixture_cache()
+            messages.success(request, f'Match started: {fixture}')
+
+        elif action == 'update_score':
+            try:
+                home_score = int(request.POST.get('home_score', 0))
+                away_score = int(request.POST.get('away_score', 0))
+                fixture.home_score = max(0, home_score)
+                fixture.away_score = max(0, away_score)
+                fixture.save(update_fields=['home_score', 'away_score', 'updated_at'])
+                _clear_public_fixture_cache()
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid score values.')
+
+        elif action == 'goal_home':
+            if fixture.home_score is not None:
+                fixture.home_score += 1
+                fixture.save(update_fields=['home_score', 'updated_at'])
+                _clear_public_fixture_cache()
+
+        elif action == 'goal_away':
+            if fixture.away_score is not None:
+                fixture.away_score += 1
+                fixture.save(update_fields=['away_score', 'updated_at'])
+                _clear_public_fixture_cache()
+
+        elif action == 'pause':
+            fixture.live_paused = True
+            fixture.save(update_fields=['live_paused', 'updated_at'])
+
+        elif action == 'resume':
+            fixture.live_paused = False
+            fixture.save(update_fields=['live_paused', 'updated_at'])
+
+        elif action == 'half_time':
+            fixture.live_paused = True
+            fixture.live_half = 2
+            fixture.save(update_fields=['live_paused', 'live_half', 'updated_at'])
+            _clear_public_fixture_cache()
+
+        elif action == 'second_half':
+            fixture.live_paused = False
+            fixture.live_started_at = timezone.now()  # reset clock for 2nd half
+            fixture.save(update_fields=['live_paused', 'live_started_at', 'updated_at'])
+            _clear_public_fixture_cache()
+
+        elif action == 'end_match':
+            fixture.status = FixtureStatus.COMPLETED
+            fixture.live_paused = True
+            fixture.determine_winner()
+            fixture.save()
+            if fixture.pool_id:
+                recalculate_pool_standings(fixture.pool)
+            _clear_public_fixture_cache()
+            messages.success(request, f'Match ended: {fixture}')
+            return redirect('coordinator_competition_manage', pk=pk)
+
+        return redirect('coordinator_live_match', pk=pk, fixture_pk=fixture_pk)
+
+    return render(request, 'portal/coordinator/live_match.html', {
+        'competition': competition,
+        'fixture': fixture,
+        'sport_family': sport_family,
+        'sport_cfg': sport_cfg,
+    })
+
+
+def public_live_matches_view(request):
+    """Public JSON endpoint for live matches - no login required."""
+    from competitions.models import Fixture, FixtureStatus
+    from django.http import JsonResponse
+    live = Fixture.objects.filter(
+        status=FixtureStatus.LIVE
+    ).select_related('competition', 'home_team', 'away_team', 'venue')
+
+    data = []
+    for f in live:
+        data.append({
+            'id': f.pk,
+            'competition': f.competition.name,
+            'sport_type': f.competition.sport_type,
+            'home_team': f.home_team.name,
+            'away_team': f.away_team.name,
+            'home_score': f.home_score or 0,
+            'away_score': f.away_score or 0,
+            'venue': f.venue.name if f.venue else 'TBD',
+            'match_minute': f.match_minute,
+            'live_half': f.live_half,
+            'live_paused': f.live_paused,
+            'started_at': f.live_started_at.isoformat() if f.live_started_at else None,
+        })
+    return JsonResponse({'live_matches': data})
 
 
 @role_required('coordinator', 'admin')

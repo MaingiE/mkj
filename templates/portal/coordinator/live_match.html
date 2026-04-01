@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block title %}Live Match Control - MKJ SUPA CUP Portal{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="font-size:1.3rem;font-weight:700;"><i class="bi bi-broadcast"></i> Live Match Control</h2>
+        <div style="font-size:.85rem;color:#757575;">{{ competition.name }}</div>
+    </div>
+    <a href="{% url 'coordinator_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<div class="card mb-4" style="border:2px solid {% if fixture.status == 'live' %}#dc3545{% else %}#6c757d{% endif %};border-radius:16px;overflow:hidden;">
+    <!-- Match Header -->
+    <div style="background:linear-gradient(135deg,#0C1B3A,#1a446b);color:#fff;padding:1.5rem;text-align:center;">
+        {% if fixture.status == 'live' %}
+        <div style="display:inline-flex;align-items:center;gap:.4rem;background:rgba(220,53,69,.2);border:1px solid rgba(220,53,69,.5);border-radius:50px;padding:.25rem .8rem;margin-bottom:.75rem;">
+            <span style="width:8px;height:8px;background:#dc3545;border-radius:50%;animation:livePulse 1.5s infinite;"></span>
+            <span style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#ff6b6b;">LIVE</span>
+        </div>
+        {% endif %}
+        <div style="font-size:.65rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">
+            {{ competition.get_sport_type_display }}{% if fixture.venue %} &middot; {{ fixture.venue.name }}{% endif %}
+        </div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:2rem;margin:1rem 0;">
+            <div style="flex:1;text-align:right;">
+                <div style="font-size:1.1rem;font-weight:800;">{{ fixture.home_team.name }}</div>
+                <div style="font-size:.65rem;color:rgba(255,255,255,.4);">HOME</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+                <span id="lmHomeScore" style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#FFD54F;min-width:38px;text-align:center;">{{ fixture.home_score|default:"–" }}</span>
+                <span style="font-size:1.2rem;color:rgba(255,255,255,.3);font-weight:300;">:</span>
+                <span id="lmAwayScore" style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#FFD54F;min-width:38px;text-align:center;">{{ fixture.away_score|default:"–" }}</span>
+            </div>
+            <div style="flex:1;text-align:left;">
+                <div style="font-size:1.1rem;font-weight:800;">{{ fixture.away_team.name }}</div>
+                <div style="font-size:.65rem;color:rgba(255,255,255,.4);">AWAY</div>
+            </div>
+        </div>
+
+        {% if fixture.status == 'live' %}
+        <div style="display:flex;justify-content:center;gap:1.5rem;font-size:.8rem;color:rgba(255,255,255,.6);">
+            <span>Half: {{ fixture.live_half }}</span>
+            <span>&middot;</span>
+            <span id="lmClock">
+                {% if fixture.live_paused %}
+                    PAUSED
+                {% else %}
+                    <span class="match-timer" data-started="{{ fixture.live_started_at|date:'c' }}">--'</span>
+                {% endif %}
+            </span>
+        </div>
+        {% else %}
+        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">
+            {{ fixture.match_date|date:"d M Y" }} &middot; {{ fixture.kickoff_time|time:"H:i" }}
+            &middot; Status: {{ fixture.get_status_display }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Control Panel -->
+    <div class="card-body" style="padding:1.5rem;">
+        {% if fixture.status == 'pending' or fixture.status == 'confirmed' %}
+        <!-- PRE-MATCH: Start Button -->
+        <div style="text-align:center;padding:2rem 0;">
+            <p style="font-size:.9rem;color:#666;margin-bottom:1rem;">Match has not started yet. Hit Start to begin live tracking.</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="start_match">
+                <button type="submit" class="btn btn-danger btn-lg" style="padding:.8rem 3rem;font-weight:700;font-size:1rem;border-radius:50px;">
+                    <i class="bi bi-play-fill"></i> Start Match
+                </button>
+            </form>
+        </div>
+
+        {% elif fixture.status == 'live' %}
+        <!-- LIVE: Score Controls -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 text-center">
+                <h6 style="font-size:.8rem;color:#888;margin-bottom:.5rem;">{{ fixture.home_team.name }}</h6>
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="goal_home">
+                    <button type="submit" class="btn btn-success btn-lg" style="width:100%;padding:.8rem;font-weight:700;font-size:.95rem;border-radius:12px;">
+                        <i class="bi bi-plus-circle"></i> GOAL +1
+                    </button>
+                </form>
+            </div>
+            <div class="col-6 text-center">
+                <h6 style="font-size:.8rem;color:#888;margin-bottom:.5rem;">{{ fixture.away_team.name }}</h6>
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="goal_away">
+                    <button type="submit" class="btn btn-success btn-lg" style="width:100%;padding:.8rem;font-weight:700;font-size:.95rem;border-radius:12px;">
+                        <i class="bi bi-plus-circle"></i> GOAL +1
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manual Score Override -->
+        <div class="card mb-3" style="border-radius:12px;">
+            <div class="card-body" style="padding:1rem;">
+                <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;">Manual Score Correction</h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_score">
+                    <div class="row g-2 align-items-end">
+                        <div class="col">
+                            <label class="form-label" style="font-size:.72rem;">{{ fixture.home_team.name }}</label>
+                            <input type="number" name="home_score" class="form-control" value="{{ fixture.home_score|default:0 }}" min="0">
+                        </div>
+                        <div class="col">
+                            <label class="form-label" style="font-size:.72rem;">{{ fixture.away_team.name }}</label>
+                            <input type="number" name="away_score" class="form-control" value="{{ fixture.away_score|default:0 }}" min="0">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary" style="border-radius:10px;">Update</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Match Flow Controls -->
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;">
+            {% if fixture.live_half == 1 and not fixture.live_paused %}
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="half_time">
+                <button type="submit" class="btn btn-warning" style="border-radius:50px;font-weight:600;">
+                    <i class="bi bi-pause-circle"></i> Half Time
+                </button>
+            </form>
+            {% endif %}
+
+            {% if fixture.live_paused and fixture.live_half == 2 or fixture.live_half == 1 and fixture.live_paused %}
+            {% if fixture.live_half == 1 %}
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="second_half">
+                <button type="submit" class="btn btn-info text-white" style="border-radius:50px;font-weight:600;">
+                    <i class="bi bi-play-circle"></i> Start 2nd Half
+                </button>
+            </form>
+            {% endif %}
+            {% endif %}
+
+            {% if not fixture.live_paused %}
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="pause">
+                <button type="submit" class="btn btn-secondary" style="border-radius:50px;font-weight:600;">
+                    <i class="bi bi-pause-fill"></i> Pause
+                </button>
+            </form>
+            {% else %}
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resume">
+                <button type="submit" class="btn btn-outline-primary" style="border-radius:50px;font-weight:600;">
+                    <i class="bi bi-play-fill"></i> Resume
+                </button>
+            </form>
+            {% endif %}
+
+            <form method="post" style="display:inline;" onsubmit="return confirm('End this match? The final score will be saved and standings updated.');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="end_match">
+                <button type="submit" class="btn btn-outline-danger" style="border-radius:50px;font-weight:600;">
+                    <i class="bi bi-stop-circle"></i> End Match (Full Time)
+                </button>
+            </form>
+        </div>
+
+        {% elif fixture.status == 'completed' %}
+        <div style="text-align:center;padding:2rem 0;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">🏁</div>
+            <p style="font-size:.95rem;color:#333;font-weight:600;">Match Completed</p>
+            <p style="font-size:.85rem;color:#666;">Final Score: {{ fixture.home_score|default:0 }} - {{ fixture.away_score|default:0 }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+}
+</style>
+
+{% if fixture.status == 'live' and not fixture.live_paused %}
+<script>
+(function(){
+    var timerEl = document.querySelector('.match-timer');
+    if (!timerEl) return;
+    var started = new Date(timerEl.getAttribute('data-started'));
+    function tick(){
+        var now = new Date();
+        var elapsed = Math.floor((now - started) / 1000);
+        var mins = Math.floor(elapsed / 60);
+        var secs = elapsed % 60;
+        timerEl.textContent = mins + "'" + (secs < 10 ? '0' : '') + secs;
+        requestAnimationFrame(tick);
+    }
+    tick();
+})();
+</script>
+{% endif %}
+
+{% endblock %}

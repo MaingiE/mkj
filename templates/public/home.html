@@ -1134,6 +1134,7 @@ a.hero-feat--link {
     right: 0;
     z-index: 5;
     padding: .6rem 0;
+    pointer-events: none;
 }
 .hero-stats-strip .stats-bar__inner {
     display: flex;
@@ -1143,6 +1144,7 @@ a.hero-feat--link {
     margin: 0 auto;
     padding: 0 1.5rem;
     flex-wrap: wrap;
+    pointer-events: auto;
 }
 .hero-stats-strip .stats-bar__item { text-align: center; }
 .hero-stats-strip .stats-bar__num {
@@ -1164,6 +1166,11 @@ a.hero-feat--link {
 @media (max-width: 480px) {
     .hero-stats-strip .stats-bar__inner { gap: 1.2rem; }
     .hero-stats-strip .stats-bar__num { font-size: 1.1rem; }
+}
+@media (max-width: 900px) {
+    .hero-stats-strip {
+        bottom: 60px;
+    }
 }
 
 /* ── KENYA STRIPE ───────────────────────────────────────────────────────── */
@@ -1368,6 +1375,57 @@ a.hero-feat--link {
     gap: .3rem;
 }
 .ffp-footer a:hover { gap: .5rem; }
+
+/* ── LIVE MATCH CARD IN FLOATING FIXTURES ──────────────────────────────── */
+.ffp-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #dc3545;
+    margin-bottom: .3rem;
+}
+.ffp-live-dot {
+    width: 6px;
+    height: 6px;
+    background: #dc3545;
+    border-radius: 50%;
+    animation: ffpLivePulse 1.5s infinite;
+}
+@keyframes ffpLivePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+}
+.ffp-match--live {
+    border-color: rgba(220,53,69,.2) !important;
+    background: rgba(220,53,69,.02);
+}
+.ffp-match--live:hover {
+    border-color: rgba(220,53,69,.35) !important;
+}
+.ffp-tab--live {
+    position: relative;
+}
+.ffp-tab--live::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    background: #dc3545;
+    border-radius: 50%;
+    animation: ffpLivePulse 1.5s infinite;
+}
+.ffp-match-minute {
+    font-size: .6rem;
+    font-weight: 700;
+    color: #dc3545;
+    margin-left: .3rem;
+}
 @media (max-width: 480px) {
     .float-fixtures { bottom: 1rem; right: 1rem; }
     .float-fixtures-panel { width: 300px; }
@@ -1659,13 +1717,38 @@ a.hero-feat--link {
         <div class="ffp-header">
             <h4>Match Center</h4>
             <div class="ffp-tabs">
-                <span class="ffp-tab active" data-tab="fixtures">Fixtures</span>
+                {% if live_matches %}<span class="ffp-tab ffp-tab--live active" data-tab="live">Live</span>{% endif %}
+                <span class="ffp-tab {% if not live_matches %}active{% endif %}" data-tab="fixtures">Fixtures</span>
                 <span class="ffp-tab" data-tab="results">Results</span>
             </div>
         </div>
         <div class="ffp-body" id="ffBody">
+            <!-- Live matches tab -->
+            <div id="ffLive" {% if not live_matches %}style="display:none;"{% endif %}>
+                {% if live_matches %}
+                {% for match in live_matches %}
+                <div class="ffp-match ffp-match--live">
+                    <div class="ffp-live-badge">
+                        <span class="ffp-live-dot"></span> LIVE
+                        {% if match.match_minute is not None %}
+                        <span class="ffp-match-minute">{{ match.match_minute }}'</span>
+                        {% endif %}
+                    </div>
+                    <div class="ffp-match-comp">{{ match.competition.name }}</div>
+                    <div class="ffp-match-teams">
+                        <span>{{ match.home_team.name }}</span>
+                        <span class="ffp-score" style="background:#fff0f0;color:#dc3545;">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>
+                        <span>{{ match.away_team.name }}</span>
+                    </div>
+                    <div class="ffp-match-meta">{{ match.venue.name|default:"TBD" }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="ffp-empty">No live matches right now</div>
+                {% endif %}
+            </div>
             <!-- Fixtures tab -->
-            <div id="ffFixtures">
+            <div id="ffFixtures" {% if live_matches %}style="display:none;"{% endif %}>
                 {% if upcoming_fixtures %}
                 {% for match in upcoming_fixtures %}
                 <div class="ffp-match">
@@ -1868,6 +1951,7 @@ a.hero-feat--link {
         });
         /* Tab switching */
         var tabs = floatFixtures.querySelectorAll('.ffp-tab');
+        var ffLive = document.getElementById('ffLive');
         var ffFixtures = document.getElementById('ffFixtures');
         var ffResults = document.getElementById('ffResults');
         tabs.forEach(function(tab){
@@ -1875,10 +1959,40 @@ a.hero-feat--link {
                 tabs.forEach(function(t){ t.classList.remove('active'); });
                 tab.classList.add('active');
                 var which = tab.getAttribute('data-tab');
+                if (ffLive) ffLive.style.display = which === 'live' ? '' : 'none';
                 if (ffFixtures) ffFixtures.style.display = which === 'fixtures' ? '' : 'none';
                 if (ffResults) ffResults.style.display = which === 'results' ? '' : 'none';
             });
         });
+
+        /* Auto-refresh live matches every 30 seconds */
+        function refreshLiveMatches(){
+            fetch('/api/live-matches/')
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if (!ffLive) return;
+                var matches = data.live_matches || [];
+                if (matches.length === 0) {
+                    ffLive.innerHTML = '<div class="ffp-empty">No live matches right now</div>';
+                    return;
+                }
+                var html = '';
+                matches.forEach(function(m){
+                    html += '<div class="ffp-match ffp-match--live">';
+                    html += '<div class="ffp-live-badge"><span class="ffp-live-dot"></span> LIVE';
+                    if (m.match_minute !== null) html += ' <span class="ffp-match-minute">' + m.match_minute + "'" + '</span>';
+                    html += '</div>';
+                    html += '<div class="ffp-match-comp">' + m.competition + '</div>';
+                    html += '<div class="ffp-match-teams"><span>' + m.home_team + '</span>';
+                    html += '<span class="ffp-score" style="background:#fff0f0;color:#dc3545;">' + m.home_score + ' - ' + m.away_score + '</span>';
+                    html += '<span>' + m.away_team + '</span></div>';
+                    html += '<div class="ffp-match-meta">' + m.venue + '</div></div>';
+                });
+                ffLive.innerHTML = html;
+            })
+            .catch(function(){});
+        }
+        setInterval(refreshLiveMatches, 30000);
         /* Close on outside click */
         document.addEventListener('click', function(e){
             if (!floatFixtures.contains(e.target)) {

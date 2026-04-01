@@ -45,6 +45,7 @@ from .web_views import (
     public_fixtures_results_view,
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
+    public_live_matches_view,
     contact_view, public_gallery_view,
     # SEO
     robots_txt_view, sitemap_xml_view,
@@ -114,6 +115,7 @@ from .web_views import (
     coordinator_create_fixture_view,
     coordinator_delete_fixture_view,
     coordinator_reschedule_fixture_view,
+    coordinator_live_match_view,
     coordinator_edit_standings_view,
     coordinator_match_reports_view,
     coordinator_squads_view,
@@ -226,6 +228,7 @@ urlpatterns = [
     path("results/competitions/<int:pk>/standings/", public_competition_standings_view, name="public_competition_standings"),
     path("contact/",                      contact_view,                   name="contact"),
     path("gallery/",                      public_gallery_view,            name="public_gallery"),
+    path("api/live-matches/",             public_live_matches_view,       name="public_live_matches_api"),
 
     # ── NEWS & MEDIA ──────────────────────────────────────────────────────────
     path("media-hub/", include("news_media.urls")),
@@ -361,6 +364,8 @@ urlpatterns = [
          coordinator_delete_fixture_view, name="coordinator_delete_fixture"),
     path("portal/coordinator/competitions/<int:pk>/fixtures/<int:fixture_pk>/reschedule/",
          coordinator_reschedule_fixture_view, name="coordinator_reschedule_fixture"),
+    path("portal/coordinator/competitions/<int:pk>/fixtures/<int:fixture_pk>/live/",
+         coordinator_live_match_view, name="coordinator_live_match"),
     path("portal/coordinator/competitions/<int:pk>/stats/",              coordinator_statistics_view,          name="coordinator_statistics"),
     path("portal/coordinator/competitions/<int:pk>/rules/",              coordinator_competition_rules_view,   name="coordinator_competition_rules"),
     path("portal/coordinator/venues/",                                   coordinator_venues_view,              name="coordinator_venues"),

@@ -329,6 +329,11 @@
     .fx-card__team, .fx-card__team--away { text-align: center; }
     .fx-card { flex-direction: column; text-align: center; }
 }
+
+@keyframes frLivePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+}
 </style>
 {% endblock %}
 
@@ -407,11 +412,17 @@
                         <!-- Competition Body with Tabs -->
                         <div class="fr-comp-card__body">
                             <div class="fr-tabs" data-tabs>
+                                {% if item.live_matches %}
+                                <button class="fr-tab fr-tab--active" data-tab="live-{{ item.competition.pk }}" style="color:#dc3545;position:relative;">
+                                    <span style="display:inline-block;width:6px;height:6px;background:#dc3545;border-radius:50%;margin-right:.3rem;animation:frLivePulse 1.5s infinite;vertical-align:middle;"></span>
+                                    Live
+                                </button>
+                                {% endif %}
                                 {% if item.pool_standings %}
-                                <button class="fr-tab fr-tab--active" data-tab="standings-{{ item.competition.pk }}">Standings</button>
+                                <button class="fr-tab {% if not item.live_matches %}fr-tab--active{% endif %}" data-tab="standings-{{ item.competition.pk }}">Standings</button>
                                 {% endif %}
                                 {% if item.group_fixtures %}
-                                <button class="fr-tab {% if not item.pool_standings %}fr-tab--active{% endif %}" data-tab="group-{{ item.competition.pk }}">Group Fixtures</button>
+                                <button class="fr-tab {% if not item.pool_standings and not item.live_matches %}fr-tab--active{% endif %}" data-tab="group-{{ item.competition.pk }}">Group Fixtures</button>
                                 {% endif %}
                                 {% if item.knockout_rounds %}
                                 <button class="fr-tab" data-tab="knockout-{{ item.competition.pk }}">Knockouts</button>
@@ -424,9 +435,35 @@
                                 {% endif %}
                             </div>
 
+                            <!-- ── LIVE MATCHES TAB ── -->
+                            {% if item.live_matches %}
+                            <div class="fr-tab-content fr-tab-content--active" id="live-{{ item.competition.pk }}">
+                                {% for fx in item.live_matches %}
+                                <div class="fx-card" style="border-left:3px solid #dc3545;background:#fff9f9;">
+                                    <div style="display:flex;align-items:center;gap:.3rem;width:100%;margin-bottom:.2rem;">
+                                        <span style="width:6px;height:6px;background:#dc3545;border-radius:50%;animation:frLivePulse 1.5s infinite;"></span>
+                                        <span style="font-size:.6rem;font-weight:700;color:#dc3545;text-transform:uppercase;letter-spacing:.5px;">LIVE{% if fx.match_minute is not None %} &middot; {{ fx.match_minute }}'{% endif %}</span>
+                                    </div>
+                                    <div class="fx-card__teams">
+                                        <span class="fx-card__team">{{ fx.home_team.name }}</span>
+                                        <div class="fx-card__score" style="color:#dc3545;">
+                                            {{ fx.home_score|default:"0" }}
+                                            <span class="fx-card__score-sep">&ndash;</span>
+                                            {{ fx.away_score|default:"0" }}
+                                        </div>
+                                        <span class="fx-card__team fx-card__team--away">{{ fx.away_team.name }}</span>
+                                    </div>
+                                    <div class="fx-card__meta">
+                                        {% if fx.venue %}{{ fx.venue.name }}{% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
                             <!-- ── STANDINGS TAB ── -->
                             {% if item.pool_standings %}
-                            <div class="fr-tab-content fr-tab-content--active" id="standings-{{ item.competition.pk }}">
+                            <div class="fr-tab-content {% if not item.live_matches %}fr-tab-content--active{% endif %}" id="standings-{{ item.competition.pk }}">
                                 {% for ps in item.pool_standings %}
                                 <div class="pool-card">
                                     <div class="pool-header">{{ ps.pool.name }}</div>
