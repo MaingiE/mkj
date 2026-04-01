@@ -3710,7 +3710,7 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
 
         if (
             fixture.home_score is not None and fixture.away_score is not None
-            and fixture.status in [FixtureStatus.PENDING, FixtureStatus.CONFIRMED, FixtureStatus.LIVE]
+            and fixture.status in [FixtureStatus.PENDING, FixtureStatus.CONFIRMED]
         ):
             fixture.status = FixtureStatus.COMPLETED
 
