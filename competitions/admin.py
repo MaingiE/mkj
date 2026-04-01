@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Competition, Venue, Pool, PoolTeam, Fixture
+from .models import Competition, Venue, Pool, PoolTeam, Fixture, LiveGoal
 
 
 @admin.register(Competition)
@@ -47,5 +47,18 @@ class FixtureAdmin(admin.ModelAdmin):
             from teams.models import Team
             kwargs["queryset"] = Team.objects.filter(status="registered", payment_confirmed=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+class LiveGoalInline(admin.TabularInline):
+    model = LiveGoal
+    extra = 0
+    fields = ["team", "scorer_name", "minute", "added_time", "half", "goal_type", "assist_name", "notes"]
+
+
+@admin.register(LiveGoal)
+class LiveGoalAdmin(admin.ModelAdmin):
+    list_display = ["fixture", "team", "scorer_name", "minute", "added_time", "half", "goal_type"]
+    list_filter = ["goal_type", "half"]
+    search_fields = ["scorer_name", "assist_name"]
 
 

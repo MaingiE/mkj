@@ -3648,7 +3648,7 @@ def coordinator_allocate_venue_view(request, pk):
 @role_required('coordinator', 'admin')
 def coordinator_edit_fixture_view(request, pk, fixture_pk):
     """Coordinator: Edit a specific fixture."""
-    from competitions.models import Competition, Fixture, Venue, FixtureStatus
+    from competitions.models import Competition, Fixture, Venue, FixtureStatus, LiveGoal
     from matches.stats_engine import recalculate_pool_standings
 
     competition = get_object_or_404(Competition, pk=pk)
@@ -3660,6 +3660,93 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
     fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
 
     if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+
+        if action in {'add_goal', 'edit_goal', 'delete_goal', 'update_match_info'}:
+            if action == 'add_goal':
+                team_side = request.POST.get('team_side', '').strip()
+                scorer_name = request.POST.get('scorer_name', '').strip()
+                if team_side in ('home', 'away') and scorer_name:
+                    team_obj = fixture.home_team if team_side == 'home' else fixture.away_team
+                    try:
+                        minute = int(request.POST.get('goal_minute', 0))
+                        added_time_val = int(request.POST.get('goal_added_time', 0) or 0)
+                        half = int(request.POST.get('goal_half', fixture.live_half or 1))
+                    except (ValueError, TypeError):
+                        minute, added_time_val, half = 0, 0, fixture.live_half or 1
+                    goal_type = request.POST.get('goal_type', 'normal')
+                    if goal_type not in dict(LiveGoal.GOAL_TYPE_CHOICES):
+                        goal_type = 'normal'
+                    assist_name = request.POST.get('assist_name', '').strip()
+                    goal_notes = request.POST.get('goal_notes', '').strip()
+                    LiveGoal.objects.create(
+                        fixture=fixture,
+                        team=team_obj,
+                        scorer_name=scorer_name,
+                        minute=max(0, minute),
+                        added_time=max(0, added_time_val),
+                        half=half,
+                        goal_type=goal_type,
+                        assist_name=assist_name,
+                        notes=goal_notes,
+                    )
+                    messages.success(request, f'Goal recorded: {scorer_name}.')
+                else:
+                    messages.error(request, 'Scorer name and team are required.')
+
+            elif action == 'edit_goal':
+                goal_id = request.POST.get('goal_id')
+                try:
+                    goal = LiveGoal.objects.get(pk=goal_id, fixture=fixture)
+                    scorer_name = request.POST.get('scorer_name', '').strip()
+                    if scorer_name:
+                        goal.scorer_name = scorer_name
+                    try:
+                        goal.minute = max(0, int(request.POST.get('goal_minute', goal.minute)))
+                        goal.added_time = max(0, int(request.POST.get('goal_added_time', goal.added_time) or 0))
+                        goal.half = int(request.POST.get('goal_half', goal.half))
+                    except (ValueError, TypeError):
+                        pass
+                    goal_type = request.POST.get('goal_type', goal.goal_type)
+                    if goal_type in dict(LiveGoal.GOAL_TYPE_CHOICES):
+                        goal.goal_type = goal_type
+                    goal.assist_name = request.POST.get('assist_name', goal.assist_name).strip()
+                    goal.notes = request.POST.get('goal_notes', goal.notes).strip()
+                    team_side = request.POST.get('team_side', '')
+                    if team_side == 'home':
+                        goal.team = fixture.home_team
+                    elif team_side == 'away':
+                        goal.team = fixture.away_team
+                    goal.save()
+                    messages.success(request, f'Goal updated: {goal.scorer_name}.')
+                except LiveGoal.DoesNotExist:
+                    messages.error(request, 'Goal record not found.')
+
+            elif action == 'delete_goal':
+                goal_id = request.POST.get('goal_id')
+                try:
+                    goal = LiveGoal.objects.get(pk=goal_id, fixture=fixture)
+                    goal.delete()
+                    messages.success(request, 'Goal removed.')
+                except LiveGoal.DoesNotExist:
+                    messages.error(request, 'Goal record not found.')
+
+            elif action == 'update_match_info':
+                try:
+                    fixture.live_extra_minutes = max(0, int(request.POST.get('added_time', 0) or 0))
+                except (ValueError, TypeError):
+                    pass
+                try:
+                    fixture.live_half = max(1, int(request.POST.get('live_half', fixture.live_half)))
+                except (ValueError, TypeError):
+                    pass
+                fixture.live_paused = request.POST.get('live_paused') == '1'
+                fixture.save(update_fields=['live_extra_minutes', 'live_half', 'live_paused', 'updated_at'])
+                messages.success(request, 'Live match details updated.')
+
+            _clear_public_fixture_cache()
+            return redirect('coordinator_edit_fixture', pk=pk, fixture_pk=fixture_pk)
+
         original_status = fixture.status
         original_home_score = fixture.home_score
         original_away_score = fixture.away_score
@@ -3776,6 +3863,11 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
 
     venues = Venue.objects.filter(is_active=True).order_by('name')
     teams = Team.objects.filter(status='registered').order_by('name')
+    live_goals = fixture.live_goals.select_related('team').all()
+    home_goals = [g for g in live_goals if g.team_id == fixture.home_team_id and g.goal_type != 'own_goal']
+    home_goals += [g for g in live_goals if g.team_id == fixture.away_team_id and g.goal_type == 'own_goal']
+    away_goals = [g for g in live_goals if g.team_id == fixture.away_team_id and g.goal_type != 'own_goal']
+    away_goals += [g for g in live_goals if g.team_id == fixture.home_team_id and g.goal_type == 'own_goal']
 
     return render(request, 'portal/coordinator/edit_fixture.html', {
         'competition': competition,
@@ -3783,6 +3875,11 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
         'venues': venues,
         'teams': teams,
         'status_choices': FixtureStatus.choices,
+        'live_goals': live_goals,
+        'home_goals': sorted(home_goals, key=lambda g: (g.half, g.minute, g.added_time)),
+        'away_goals': sorted(away_goals, key=lambda g: (g.half, g.minute, g.added_time)),
+        'goal_type_choices': LiveGoal.GOAL_TYPE_CHOICES,
+        'half_choices': LiveGoal.HALF_CHOICES,
     })
 
 
@@ -3912,7 +4009,7 @@ def coordinator_delete_fixture_view(request, pk, fixture_pk):
 @role_required('coordinator', 'admin')
 def coordinator_live_match_view(request, pk, fixture_pk):
     """Coordinator: Live match control — start match, update scores in real-time, end match."""
-    from competitions.models import Competition, Fixture, FixtureStatus
+    from competitions.models import Competition, Fixture, FixtureStatus, LiveGoal
     from matches.models import get_sport_family, SPORT_CONFIG
     from matches.stats_engine import recalculate_pool_standings
 
@@ -3963,6 +4060,87 @@ def coordinator_live_match_view(request, pk, fixture_pk):
                 fixture.save(update_fields=['away_score', 'updated_at'])
                 _clear_public_fixture_cache()
 
+        elif action == 'add_goal':
+            team_side = request.POST.get('team_side', '')
+            scorer_name = request.POST.get('scorer_name', '').strip()
+            if team_side in ('home', 'away') and scorer_name:
+                team_obj = fixture.home_team if team_side == 'home' else fixture.away_team
+                try:
+                    minute = int(request.POST.get('goal_minute', 0))
+                    added_time_val = int(request.POST.get('goal_added_time', 0) or 0)
+                    half = int(request.POST.get('goal_half', fixture.live_half or 1))
+                except (ValueError, TypeError):
+                    minute, added_time_val, half = 0, 0, fixture.live_half or 1
+                goal_type = request.POST.get('goal_type', 'normal')
+                if goal_type not in dict(LiveGoal.GOAL_TYPE_CHOICES):
+                    goal_type = 'normal'
+                assist_name = request.POST.get('assist_name', '').strip()
+                goal_notes = request.POST.get('goal_notes', '').strip()
+                LiveGoal.objects.create(
+                    fixture=fixture,
+                    team=team_obj,
+                    scorer_name=scorer_name,
+                    minute=max(0, minute),
+                    added_time=max(0, added_time_val),
+                    half=half,
+                    goal_type=goal_type,
+                    assist_name=assist_name,
+                    notes=goal_notes,
+                )
+                _clear_public_fixture_cache()
+                messages.success(request, f'Goal recorded: {scorer_name} ({minute}\')')
+            else:
+                messages.error(request, 'Scorer name and team are required.')
+
+        elif action == 'edit_goal':
+            goal_id = request.POST.get('goal_id')
+            try:
+                goal = LiveGoal.objects.get(pk=goal_id, fixture=fixture)
+                scorer_name = request.POST.get('scorer_name', '').strip()
+                if scorer_name:
+                    goal.scorer_name = scorer_name
+                try:
+                    goal.minute = max(0, int(request.POST.get('goal_minute', goal.minute)))
+                    goal.added_time = max(0, int(request.POST.get('goal_added_time', goal.added_time) or 0))
+                    goal.half = int(request.POST.get('goal_half', goal.half))
+                except (ValueError, TypeError):
+                    pass
+                goal_type = request.POST.get('goal_type', goal.goal_type)
+                if goal_type in dict(LiveGoal.GOAL_TYPE_CHOICES):
+                    goal.goal_type = goal_type
+                goal.assist_name = request.POST.get('assist_name', goal.assist_name).strip()
+                goal.notes = request.POST.get('goal_notes', goal.notes).strip()
+                # Handle team change
+                team_side = request.POST.get('team_side', '')
+                if team_side == 'home':
+                    goal.team = fixture.home_team
+                elif team_side == 'away':
+                    goal.team = fixture.away_team
+                goal.save()
+                _clear_public_fixture_cache()
+                messages.success(request, f'Goal updated: {goal.scorer_name}')
+            except LiveGoal.DoesNotExist:
+                messages.error(request, 'Goal not found.')
+
+        elif action == 'delete_goal':
+            goal_id = request.POST.get('goal_id')
+            try:
+                goal = LiveGoal.objects.get(pk=goal_id, fixture=fixture)
+                goal.delete()
+                _clear_public_fixture_cache()
+                messages.success(request, 'Goal removed and score updated.')
+            except LiveGoal.DoesNotExist:
+                messages.error(request, 'Goal not found.')
+
+        elif action == 'update_match_info':
+            try:
+                fixture.live_extra_minutes = max(0, int(request.POST.get('added_time', 0) or 0))
+            except (ValueError, TypeError):
+                pass
+            fixture.save(update_fields=['live_extra_minutes', 'updated_at'])
+            _clear_public_fixture_cache()
+            messages.success(request, 'Match info updated.')
+
         elif action == 'pause':
             fixture.live_paused = True
             fixture.save(update_fields=['live_paused', 'updated_at'])
@@ -3996,24 +4174,55 @@ def coordinator_live_match_view(request, pk, fixture_pk):
 
         return redirect('coordinator_live_match', pk=pk, fixture_pk=fixture_pk)
 
+    # Gather live goals for display
+    live_goals = fixture.live_goals.select_related('team').all()
+    home_goals = [g for g in live_goals if g.team_id == fixture.home_team_id and g.goal_type != 'own_goal']
+    home_goals += [g for g in live_goals if g.team_id == fixture.away_team_id and g.goal_type == 'own_goal']
+    away_goals = [g for g in live_goals if g.team_id == fixture.away_team_id and g.goal_type != 'own_goal']
+    away_goals += [g for g in live_goals if g.team_id == fixture.home_team_id and g.goal_type == 'own_goal']
+    first_half_goals = [g for g in live_goals if g.half == 1]
+    second_half_goals = [g for g in live_goals if g.half == 2]
+
     return render(request, 'portal/coordinator/live_match.html', {
         'competition': competition,
         'fixture': fixture,
         'sport_family': sport_family,
         'sport_cfg': sport_cfg,
+        'live_goals': live_goals,
+        'home_goals': sorted(home_goals, key=lambda g: (g.half, g.minute, g.added_time)),
+        'away_goals': sorted(away_goals, key=lambda g: (g.half, g.minute, g.added_time)),
+        'first_half_goals': first_half_goals,
+        'second_half_goals': second_half_goals,
+        'goal_type_choices': LiveGoal.GOAL_TYPE_CHOICES,
+        'half_choices': LiveGoal.HALF_CHOICES,
     })
 
 
 def public_live_matches_view(request):
     """Public JSON endpoint for live matches - no login required."""
-    from competitions.models import Fixture, FixtureStatus
+    from competitions.models import Fixture, FixtureStatus, LiveGoal
     from django.http import JsonResponse
     live = Fixture.objects.filter(
         status=FixtureStatus.LIVE
-    ).select_related('competition', 'home_team', 'away_team', 'venue')
+    ).select_related('competition', 'home_team', 'away_team', 'venue').prefetch_related('live_goals__team')
 
     data = []
     for f in live:
+        goals = []
+        for g in f.live_goals.all():
+            goals.append({
+                'scorer_name': g.scorer_name,
+                'minute': g.minute,
+                'added_time': g.added_time,
+                'minute_display': g.minute_display,
+                'half': g.half,
+                'half_display': g.get_half_display(),
+                'goal_type': g.goal_type,
+                'goal_type_display': g.get_goal_type_display(),
+                'assist_name': g.assist_name,
+                'team': g.team.name,
+                'is_home': g.team_id == f.home_team_id,
+            })
         data.append({
             'id': f.pk,
             'competition': f.competition.name,
@@ -4026,7 +4235,9 @@ def public_live_matches_view(request):
             'match_minute': f.match_minute,
             'live_half': f.live_half,
             'live_paused': f.live_paused,
+            'live_extra_minutes': f.live_extra_minutes,
             'started_at': f.live_started_at.isoformat() if f.live_started_at else None,
+            'goals': goals,
         })
     return JsonResponse({'live_matches': data})
 

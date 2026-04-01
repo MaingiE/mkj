@@ -372,3 +372,86 @@ class Fixture(models.Model):
         return ko - timedelta(hours=hours)
 
 
+class LiveGoal(models.Model):
+    """
+    Individual goal logged during live match tracking by the coordinator.
+    Stores scorer details, minute, half, and goal attributes for live updates.
+    Auto-syncs fixture scores on save/delete.
+    """
+    HALF_CHOICES = [
+        (1, "1st Half"),
+        (2, "2nd Half"),
+        (3, "Extra Time 1st"),
+        (4, "Extra Time 2nd"),
+    ]
+    GOAL_TYPE_CHOICES = [
+        ("normal", "Normal"),
+        ("penalty", "Penalty"),
+        ("free_kick", "Free Kick"),
+        ("own_goal", "Own Goal"),
+        ("header", "Header"),
+    ]
+
+    fixture = models.ForeignKey(Fixture, on_delete=models.CASCADE, related_name="live_goals")
+    team = models.ForeignKey("teams.Team", on_delete=models.CASCADE, related_name="live_goals")
+    scorer_name = models.CharField(max_length=150, help_text="Name of the goal scorer")
+    minute = models.PositiveIntegerField(help_text="Minute the goal was scored (e.g. 45)")
+    added_time = models.PositiveIntegerField(
+        default=0, help_text="Added/stoppage time minute (e.g. 3 for 45+3)"
+    )
+    half = models.PositiveSmallIntegerField(choices=HALF_CHOICES, default=1)
+    goal_type = models.CharField(max_length=12, choices=GOAL_TYPE_CHOICES, default="normal")
+    assist_name = models.CharField(max_length=150, blank=True, default="", help_text="Name of the assisting player")
+    notes = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["half", "minute", "added_time"]
+
+    def __str__(self):
+        minute_display = f"{self.minute}'" if not self.added_time else f"{self.minute}+{self.added_time}'"
+        return f"{self.scorer_name} ({minute_display}) - {self.team}"
+
+    @property
+    def minute_display(self):
+        if self.added_time:
+            return f"{self.minute}+{self.added_time}'"
+        return f"{self.minute}'"
+
+    @property
+    def is_home(self):
+        return self.team_id == self.fixture.home_team_id
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._sync_fixture_score()
+
+    def delete(self, *args, **kwargs):
+        fixture = self.fixture
+        super().delete(*args, **kwargs)
+        self._sync_fixture_score(fixture=fixture)
+
+    def _sync_fixture_score(self, fixture=None):
+        """Recalculate fixture scores from live goals."""
+        fixture = fixture or self.fixture
+        home_goals = fixture.live_goals.filter(
+            team=fixture.home_team
+        ).exclude(goal_type="own_goal").count()
+        # Own goals by away team count for home
+        home_goals += fixture.live_goals.filter(
+            team=fixture.away_team, goal_type="own_goal"
+        ).count()
+
+        away_goals = fixture.live_goals.filter(
+            team=fixture.away_team
+        ).exclude(goal_type="own_goal").count()
+        # Own goals by home team count for away
+        away_goals += fixture.live_goals.filter(
+            team=fixture.home_team, goal_type="own_goal"
+        ).count()
+
+        fixture.home_score = home_goals
+        fixture.away_score = away_goals
+        fixture.save(update_fields=["home_score", "away_score", "updated_at"])
+
+

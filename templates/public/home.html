@@ -2149,6 +2149,18 @@ a.hero-feat--link {
                         <span class="ffp-score" style="background:#fff0f0;color:#dc3545;">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>
                         <span>{{ match.away_team.name }}</span>
                     </div>
+                    {% with match.live_goals.all as goals %}
+                    {% if goals %}
+                    <div style="display:flex;justify-content:center;gap:2rem;font-size:.65rem;color:#888;margin-top:.25rem;">
+                        <div style="text-align:right;flex:1;">
+                            {% for g in goals %}{% if g.is_home %}<div>{{ g.scorer_name }} {{ g.minute_display }}{% if g.goal_type == 'penalty' %} <span style="color:#d4a017;">(P)</span>{% endif %}{% if g.goal_type == 'own_goal' %} <span style="color:#dc3545;">(OG)</span>{% endif %}</div>{% endif %}{% endfor %}
+                        </div>
+                        <div style="text-align:left;flex:1;">
+                            {% for g in goals %}{% if not g.is_home %}<div>{{ g.scorer_name }} {{ g.minute_display }}{% if g.goal_type == 'penalty' %} <span style="color:#d4a017;">(P)</span>{% endif %}{% if g.goal_type == 'own_goal' %} <span style="color:#dc3545;">(OG)</span>{% endif %}</div>{% endif %}{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
                     <div class="ffp-match-meta">{{ match.venue.name|default:"TBD" }}</div>
                 </div>
                 {% endfor %}
@@ -2395,6 +2407,26 @@ a.hero-feat--link {
                             html += '<div class="ffp-match-teams"><span>' + m.home_team + '</span>';
                             html += '<span class="ffp-score" style="background:#fff0f0;color:#dc3545;">' + m.home_score + ' - ' + m.away_score + '</span>';
                             html += '<span>' + m.away_team + '</span></div>';
+                            if (m.goals && m.goals.length > 0) {
+                                var homeG = m.goals.filter(function(g){ return g.is_home; });
+                                var awayG = m.goals.filter(function(g){ return !g.is_home; });
+                                html += '<div style="display:flex;justify-content:center;gap:2rem;font-size:.65rem;color:#888;margin-top:.25rem;">';
+                                html += '<div style="text-align:right;flex:1;">';
+                                homeG.forEach(function(g){
+                                    html += '<div>' + g.scorer_name + ' ' + g.minute_display;
+                                    if (g.goal_type === 'penalty') html += ' <span style="color:#d4a017;">(P)</span>';
+                                    if (g.goal_type === 'own_goal') html += ' <span style="color:#dc3545;">(OG)</span>';
+                                    html += '</div>';
+                                });
+                                html += '</div><div style="text-align:left;flex:1;">';
+                                awayG.forEach(function(g){
+                                    html += '<div>' + g.scorer_name + ' ' + g.minute_display;
+                                    if (g.goal_type === 'penalty') html += ' <span style="color:#d4a017;">(P)</span>';
+                                    if (g.goal_type === 'own_goal') html += ' <span style="color:#dc3545;">(OG)</span>';
+                                    html += '</div>';
+                                });
+                                html += '</div></div>';
+                            }
                             html += '<div class="ffp-match-meta">' + m.venue + '</div></div>';
                         });
                         ffLive.innerHTML = html;

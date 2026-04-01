@@ -351,6 +351,64 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════════
+         DYNAMIC ALBUMS — Live Pictorial Updates
+         ══════════════════════════════════════════════════════════════════ -->
+    {% if albums %}
+    <div class="gp-section">
+        <div class="gp-section-hdr">
+            <div class="gp-section-hdr__icon" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;"><i class="bi bi-camera-reels-fill"></i></div>
+            <div class="gp-section-hdr__text">
+                <h2>Live Pictorial Updates</h2>
+                <p>Latest photo albums from MKJ SUPA CUP 2026 events</p>
+            </div>
+        </div>
+
+        <div class="gp-album-grid">
+            {% for album in albums %}
+            <div class="gp-album-card" data-album-toggle="{{ forloop.counter0 }}">
+                <div class="gp-album-card__cover">
+                    {% if album.display_cover %}
+                    <img src="{{ album.display_cover }}" alt="{{ album.title }}" loading="lazy">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:2rem;"><i class="bi bi-camera"></i></div>
+                    {% endif %}
+                    <span class="gp-album-card__count"><i class="bi bi-images"></i> {{ album.photo_count }}</span>
+                </div>
+                <div class="gp-album-card__body">
+                    <h3 class="gp-album-card__title">{{ album.title }}</h3>
+                    <span class="gp-album-card__date">
+                        {% if album.event_date %}{{ album.event_date|date:"j M Y" }}{% else %}{{ album.created_at|date:"j M Y" }}{% endif %}
+                        &middot; {{ album.photo_count }} photo{{ album.photo_count|pluralize }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Expanded album photos (toggled by clicking album card) -->
+        {% for album in albums %}
+        <div class="gp-album-expanded" id="albumPhotos{{ forloop.counter0 }}" style="display:none; margin-top:1.2rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+                <h3 style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#0f172a;margin:0;">{{ album.title }}</h3>
+                <button onclick="document.getElementById('albumPhotos{{ forloop.counter0 }}').style.display='none'" style="background:none;border:1px solid #e2e8f0;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#64748b;">&times;</button>
+            </div>
+            <div class="gp-album-photos">
+                {% for img in album.images.all %}
+                <div class="gp-item" data-gallery>
+                    <img src="{{ img.image.url }}" alt="{{ img.caption|default:album.title }}" loading="lazy">
+                    <div class="gp-item__overlay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                        {% if img.caption %}<span class="gp-item__caption">{{ img.caption }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════════════════
          SECTION 1 — SPORTS WE CELEBRATE
          ══════════════════════════════════════════════════════════════════ -->
     <div class="gp-section">
@@ -511,64 +569,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════
-         DYNAMIC ALBUMS — Live Pictorial Updates
-         ══════════════════════════════════════════════════════════════════ -->
-    {% if albums %}
-    <div class="gp-section">
-        <div class="gp-section-hdr">
-            <div class="gp-section-hdr__icon" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;"><i class="bi bi-camera-reels-fill"></i></div>
-            <div class="gp-section-hdr__text">
-                <h2>Live Pictorial Updates</h2>
-                <p>Latest photo albums from MKJ SUPA CUP 2026 events</p>
-            </div>
-        </div>
-
-        <div class="gp-album-grid">
-            {% for album in albums %}
-            <div class="gp-album-card" data-album-toggle="{{ forloop.counter0 }}">
-                <div class="gp-album-card__cover">
-                    {% if album.display_cover %}
-                    <img src="{{ album.display_cover }}" alt="{{ album.title }}" loading="lazy">
-                    {% else %}
-                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:2rem;"><i class="bi bi-camera"></i></div>
-                    {% endif %}
-                    <span class="gp-album-card__count"><i class="bi bi-images"></i> {{ album.photo_count }}</span>
-                </div>
-                <div class="gp-album-card__body">
-                    <h3 class="gp-album-card__title">{{ album.title }}</h3>
-                    <span class="gp-album-card__date">
-                        {% if album.event_date %}{{ album.event_date|date:"j M Y" }}{% else %}{{ album.created_at|date:"j M Y" }}{% endif %}
-                        &middot; {{ album.photo_count }} photo{{ album.photo_count|pluralize }}
-                    </span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        <!-- Expanded album photos (toggled by clicking album card) -->
-        {% for album in albums %}
-        <div class="gp-album-expanded" id="albumPhotos{{ forloop.counter0 }}" style="display:none; margin-top:1.2rem;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
-                <h3 style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#0f172a;margin:0;">{{ album.title }}</h3>
-                <button onclick="document.getElementById('albumPhotos{{ forloop.counter0 }}').style.display='none'" style="background:none;border:1px solid #e2e8f0;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#64748b;">&times;</button>
-            </div>
-            <div class="gp-album-photos">
-                {% for img in album.images.all %}
-                <div class="gp-item" data-gallery>
-                    <img src="{{ img.image.url }}" alt="{{ img.caption|default:album.title }}" loading="lazy">
-                    <div class="gp-item__overlay">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                        {% if img.caption %}<span class="gp-item__caption">{{ img.caption }}</span>{% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <!-- ══════════════════════════════════════════════════════════════════
          SECTION 3 — ARCHIVE: Previous Events

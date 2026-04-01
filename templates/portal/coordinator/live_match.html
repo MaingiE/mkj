@@ -49,7 +49,36 @@
                     <span class="match-timer" data-started="{{ fixture.live_started_at|date:'c' }}">--'</span>
                 {% endif %}
             </span>
+            {% if fixture.live_extra_minutes %}
+            <span>&middot;</span>
+            <span>+{{ fixture.live_extra_minutes }} added</span>
+            {% endif %}
         </div>
+        <!-- Scorer summary under score -->
+        {% if home_goals or away_goals %}
+        <div style="display:flex;justify-content:center;gap:3rem;margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.55);">
+            <div style="text-align:right;flex:1;">
+                {% for g in home_goals %}
+                <div>
+                    {{ g.scorer_name }} {{ g.minute_display }}
+                    {% if g.goal_type == 'penalty' %}<span style="color:#FFD54F;">(P)</span>{% endif %}
+                    {% if g.goal_type == 'own_goal' %}<span style="color:#ff6b6b;">(OG)</span>{% endif %}
+                    {% if g.goal_type == 'free_kick' %}<span style="color:#81D4FA;">(FK)</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div style="text-align:left;flex:1;">
+                {% for g in away_goals %}
+                <div>
+                    {{ g.scorer_name }} {{ g.minute_display }}
+                    {% if g.goal_type == 'penalty' %}<span style="color:#FFD54F;">(P)</span>{% endif %}
+                    {% if g.goal_type == 'own_goal' %}<span style="color:#ff6b6b;">(OG)</span>{% endif %}
+                    {% if g.goal_type == 'free_kick' %}<span style="color:#81D4FA;">(FK)</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
         {% else %}
         <div style="font-size:.8rem;color:rgba(255,255,255,.4);">
             {{ fixture.match_date|date:"d M Y" }} &middot; {{ fixture.kickoff_time|time:"H:i" }}
@@ -74,7 +103,7 @@
         </div>
 
         {% elif fixture.status == 'live' %}
-        <!-- LIVE: Score Controls -->
+        <!-- LIVE: Quick Goal Buttons -->
         <div class="row g-3 mb-4">
             <div class="col-6 text-center">
                 <h6 style="font-size:.8rem;color:#888;margin-bottom:.5rem;">{{ fixture.home_team.name }}</h6>
@@ -98,27 +127,299 @@
             </div>
         </div>
 
-        <!-- Manual Score Override -->
-        <div class="card mb-3" style="border-radius:12px;">
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  ADD GOAL WITH DETAILS                                     -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="card mb-3" style="border-radius:12px;border:1px solid #28a745;">
+            <div class="card-header" style="background:#28a745;color:#fff;padding:.6rem 1rem;border-radius:11px 11px 0 0;">
+                <h6 style="font-size:.85rem;font-weight:700;margin:0;"><i class="bi bi-bullseye"></i> Add Goal with Details</h6>
+            </div>
             <div class="card-body" style="padding:1rem;">
-                <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;">Manual Score Correction</h6>
                 <form method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="update_score">
-                    <div class="row g-2 align-items-end">
-                        <div class="col">
-                            <label class="form-label" style="font-size:.72rem;">{{ fixture.home_team.name }}</label>
-                            <input type="number" name="home_score" class="form-control" value="{{ fixture.home_score|default:0 }}" min="0">
+                    <input type="hidden" name="action" value="add_goal">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Team</label>
+                            <select name="team_side" class="form-select form-select-sm" required>
+                                <option value="home">{{ fixture.home_team.name }} (Home)</option>
+                                <option value="away">{{ fixture.away_team.name }} (Away)</option>
+                            </select>
                         </div>
-                        <div class="col">
-                            <label class="form-label" style="font-size:.72rem;">{{ fixture.away_team.name }}</label>
-                            <input type="number" name="away_score" class="form-control" value="{{ fixture.away_score|default:0 }}" min="0">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Scorer Name *</label>
+                            <input type="text" name="scorer_name" class="form-control form-control-sm" required placeholder="e.g. J. Odhiambo">
                         </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary" style="border-radius:10px;">Update</button>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Minute *</label>
+                            <input type="number" name="goal_minute" class="form-control form-control-sm" min="0" max="200" required placeholder="45">
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Added Time</label>
+                            <input type="number" name="goal_added_time" class="form-control form-control-sm" min="0" max="30" value="0" placeholder="+3">
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Half</label>
+                            <select name="goal_half" class="form-select form-select-sm">
+                                {% for val, label in half_choices %}
+                                <option value="{{ val }}" {% if val == fixture.live_half %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Goal Type</label>
+                            <select name="goal_type" class="form-select form-select-sm">
+                                {% for val, label in goal_type_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Assist By</label>
+                            <input type="text" name="assist_name" class="form-control form-control-sm" placeholder="e.g. K. Wanjiku">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size:.72rem;font-weight:600;">Notes</label>
+                            <input type="text" name="goal_notes" class="form-control form-control-sm" placeholder="e.g. Long range, header from corner">
                         </div>
                     </div>
+                    <button type="submit" class="btn btn-success btn-sm mt-2" style="border-radius:8px;font-weight:600;">
+                        <i class="bi bi-plus-lg"></i> Add Goal
+                    </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  GOALS TIMELINE                                            -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        {% if live_goals %}
+        <div class="card mb-3" style="border-radius:12px;">
+            <div class="card-header" style="background:#f8f9fa;padding:.6rem 1rem;border-radius:11px 11px 0 0;">
+                <h6 style="font-size:.85rem;font-weight:700;margin:0;"><i class="bi bi-clock-history"></i> Goals Timeline</h6>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <!-- First Half Goals -->
+                {% if first_half_goals %}
+                <div style="padding:.5rem 1rem .3rem;background:#eef6ff;font-size:.7rem;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;">
+                    1st Half
+                </div>
+                {% for goal in first_half_goals %}
+                <div style="display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;border-bottom:1px solid #f0f0f0;font-size:.82rem;{% if goal.team_id == fixture.home_team_id %}background:#fafff8;{% else %}background:#fff8fa;{% endif %}">
+                    <span style="min-width:42px;font-weight:700;color:#666;font-size:.78rem;">{{ goal.minute_display }}</span>
+                    <span style="flex:1;">
+                        <strong>{{ goal.scorer_name }}</strong>
+                        {% if goal.goal_type == 'penalty' %}<span class="badge bg-warning text-dark" style="font-size:.6rem;padding:.15rem .35rem;">PEN</span>{% endif %}
+                        {% if goal.goal_type == 'own_goal' %}<span class="badge bg-danger" style="font-size:.6rem;padding:.15rem .35rem;">OG</span>{% endif %}
+                        {% if goal.goal_type == 'free_kick' %}<span class="badge bg-info text-white" style="font-size:.6rem;padding:.15rem .35rem;">FK</span>{% endif %}
+                        {% if goal.goal_type == 'header' %}<span class="badge bg-secondary" style="font-size:.6rem;padding:.15rem .35rem;">HDR</span>{% endif %}
+                        {% if goal.assist_name %}<span style="color:#888;font-size:.75rem;"> (assist: {{ goal.assist_name }})</span>{% endif %}
+                    </span>
+                    <span style="font-size:.72rem;color:#888;">{{ goal.team.name }}</span>
+                    <!-- Edit/Delete -->
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size:.65rem;" onclick="toggleEditGoal({{ goal.pk }})"><i class="bi bi-pencil"></i></button>
+                    <form method="post" style="display:inline;" onsubmit="return confirm('Remove this goal?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_goal">
+                        <input type="hidden" name="goal_id" value="{{ goal.pk }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size:.65rem;"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+                <!-- Inline edit form (hidden by default) -->
+                <div id="editGoal{{ goal.pk }}" style="display:none;padding:.5rem 1rem;background:#fffde7;border-bottom:1px solid #f0f0f0;">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="edit_goal">
+                        <input type="hidden" name="goal_id" value="{{ goal.pk }}">
+                        <div class="row g-1">
+                            <div class="col-4 col-md-2">
+                                <select name="team_side" class="form-select form-select-sm" style="font-size:.72rem;">
+                                    <option value="home" {% if goal.team_id == fixture.home_team_id %}selected{% endif %}>{{ fixture.home_team.name }}</option>
+                                    <option value="away" {% if goal.team_id == fixture.away_team_id %}selected{% endif %}>{{ fixture.away_team.name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-8 col-md-3">
+                                <input type="text" name="scorer_name" class="form-control form-control-sm" value="{{ goal.scorer_name }}" style="font-size:.72rem;">
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <input type="number" name="goal_minute" class="form-control form-control-sm" value="{{ goal.minute }}" min="0" max="200" style="font-size:.72rem;" title="Minute">
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <input type="number" name="goal_added_time" class="form-control form-control-sm" value="{{ goal.added_time }}" min="0" max="30" style="font-size:.72rem;" title="Added time">
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <select name="goal_half" class="form-select form-select-sm" style="font-size:.72rem;">
+                                    {% for val, label in half_choices %}
+                                    <option value="{{ val }}" {% if val == goal.half %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <select name="goal_type" class="form-select form-select-sm" style="font-size:.72rem;">
+                                    {% for val, label in goal_type_choices %}
+                                    <option value="{{ val }}" {% if val == goal.goal_type %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <input type="text" name="assist_name" class="form-control form-control-sm" value="{{ goal.assist_name }}" placeholder="Assist" style="font-size:.72rem;">
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <button type="submit" class="btn btn-sm btn-warning w-100" style="font-size:.7rem;padding:.2rem;">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <!-- Second Half Goals -->
+                {% if second_half_goals %}
+                <div style="padding:.5rem 1rem .3rem;background:#f0f5ee;font-size:.7rem;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;">
+                    2nd Half
+                </div>
+                {% for goal in second_half_goals %}
+                <div style="display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;border-bottom:1px solid #f0f0f0;font-size:.82rem;{% if goal.team_id == fixture.home_team_id %}background:#fafff8;{% else %}background:#fff8fa;{% endif %}">
+                    <span style="min-width:42px;font-weight:700;color:#666;font-size:.78rem;">{{ goal.minute_display }}</span>
+                    <span style="flex:1;">
+                        <strong>{{ goal.scorer_name }}</strong>
+                        {% if goal.goal_type == 'penalty' %}<span class="badge bg-warning text-dark" style="font-size:.6rem;padding:.15rem .35rem;">PEN</span>{% endif %}
+                        {% if goal.goal_type == 'own_goal' %}<span class="badge bg-danger" style="font-size:.6rem;padding:.15rem .35rem;">OG</span>{% endif %}
+                        {% if goal.goal_type == 'free_kick' %}<span class="badge bg-info text-white" style="font-size:.6rem;padding:.15rem .35rem;">FK</span>{% endif %}
+                        {% if goal.goal_type == 'header' %}<span class="badge bg-secondary" style="font-size:.6rem;padding:.15rem .35rem;">HDR</span>{% endif %}
+                        {% if goal.assist_name %}<span style="color:#888;font-size:.75rem;"> (assist: {{ goal.assist_name }})</span>{% endif %}
+                    </span>
+                    <span style="font-size:.72rem;color:#888;">{{ goal.team.name }}</span>
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size:.65rem;" onclick="toggleEditGoal({{ goal.pk }})"><i class="bi bi-pencil"></i></button>
+                    <form method="post" style="display:inline;" onsubmit="return confirm('Remove this goal?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_goal">
+                        <input type="hidden" name="goal_id" value="{{ goal.pk }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size:.65rem;"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+                <!-- Inline edit form (hidden by default) -->
+                <div id="editGoal{{ goal.pk }}" style="display:none;padding:.5rem 1rem;background:#fffde7;border-bottom:1px solid #f0f0f0;">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="edit_goal">
+                        <input type="hidden" name="goal_id" value="{{ goal.pk }}">
+                        <div class="row g-1">
+                            <div class="col-4 col-md-2">
+                                <select name="team_side" class="form-select form-select-sm" style="font-size:.72rem;">
+                                    <option value="home" {% if goal.team_id == fixture.home_team_id %}selected{% endif %}>{{ fixture.home_team.name }}</option>
+                                    <option value="away" {% if goal.team_id == fixture.away_team_id %}selected{% endif %}>{{ fixture.away_team.name }}</option>
+                                </select>
+                            </div>
+                            <div class="col-8 col-md-3">
+                                <input type="text" name="scorer_name" class="form-control form-control-sm" value="{{ goal.scorer_name }}" style="font-size:.72rem;">
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <input type="number" name="goal_minute" class="form-control form-control-sm" value="{{ goal.minute }}" min="0" max="200" style="font-size:.72rem;" title="Minute">
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <input type="number" name="goal_added_time" class="form-control form-control-sm" value="{{ goal.added_time }}" min="0" max="30" style="font-size:.72rem;" title="Added time">
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <select name="goal_half" class="form-select form-select-sm" style="font-size:.72rem;">
+                                    {% for val, label in half_choices %}
+                                    <option value="{{ val }}" {% if val == goal.half %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-3 col-md-1">
+                                <select name="goal_type" class="form-select form-select-sm" style="font-size:.72rem;">
+                                    {% for val, label in goal_type_choices %}
+                                    <option value="{{ val }}" {% if val == goal.goal_type %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <input type="text" name="assist_name" class="form-control form-control-sm" value="{{ goal.assist_name }}" placeholder="Assist" style="font-size:.72rem;">
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <button type="submit" class="btn btn-sm btn-warning w-100" style="font-size:.7rem;padding:.2rem;">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if not first_half_goals and not second_half_goals %}
+                <!-- Extra time / other halves -->
+                {% for goal in live_goals %}
+                <div style="display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;border-bottom:1px solid #f0f0f0;font-size:.82rem;">
+                    <span style="min-width:42px;font-weight:700;color:#666;font-size:.78rem;">{{ goal.minute_display }}</span>
+                    <span style="flex:1;">
+                        <strong>{{ goal.scorer_name }}</strong>
+                        {% if goal.goal_type != 'normal' %}<span class="badge bg-secondary" style="font-size:.6rem;">{{ goal.get_goal_type_display }}</span>{% endif %}
+                        {% if goal.assist_name %}<span style="color:#888;font-size:.75rem;"> (assist: {{ goal.assist_name }})</span>{% endif %}
+                    </span>
+                    <span style="font-size:.72rem;color:#888;">{{ goal.team.name }} &middot; {{ goal.get_half_display }}</span>
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size:.65rem;" onclick="toggleEditGoal({{ goal.pk }})"><i class="bi bi-pencil"></i></button>
+                    <form method="post" style="display:inline;" onsubmit="return confirm('Remove this goal?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_goal">
+                        <input type="hidden" name="goal_id" value="{{ goal.pk }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size:.65rem;"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  MATCH INFO: ADDED TIME & MANUAL SCORE CORRECTION          -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-3">
+            <!-- Added Time -->
+            <div class="col-md-6">
+                <div class="card" style="border-radius:12px;">
+                    <div class="card-body" style="padding:1rem;">
+                        <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;"><i class="bi bi-stopwatch"></i> Added / Injury Time</h6>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_match_info">
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <label class="form-label" style="font-size:.72rem;">Added Time (mins)</label>
+                                    <input type="number" name="added_time" class="form-control form-control-sm" value="{{ fixture.live_extra_minutes|default:0 }}" min="0" max="30">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">Update</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Manual Score Override -->
+            <div class="col-md-6">
+                <div class="card" style="border-radius:12px;">
+                    <div class="card-body" style="padding:1rem;">
+                        <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;"><i class="bi bi-pencil-square"></i> Manual Score Correction</h6>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_score">
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <label class="form-label" style="font-size:.72rem;">{{ fixture.home_team.name }}</label>
+                                    <input type="number" name="home_score" class="form-control form-control-sm" value="{{ fixture.home_score|default:0 }}" min="0">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" style="font-size:.72rem;">{{ fixture.away_team.name }}</label>
+                                    <input type="number" name="away_score" class="form-control form-control-sm" value="{{ fixture.away_score|default:0 }}" min="0">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">Update</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -174,11 +475,30 @@
         </div>
 
         {% elif fixture.status == 'completed' %}
-        <div style="text-align:center;padding:2rem 0;">
-            <div style="font-size:2rem;margin-bottom:.5rem;">🏁</div>
+        <div style="text-align:center;padding:1.5rem 0;">
             <p style="font-size:.95rem;color:#333;font-weight:600;">Match Completed</p>
             <p style="font-size:.85rem;color:#666;">Final Score: {{ fixture.home_score|default:0 }} - {{ fixture.away_score|default:0 }}</p>
         </div>
+        {% if live_goals %}
+        <div class="card" style="border-radius:12px;">
+            <div class="card-header" style="background:#f8f9fa;padding:.5rem 1rem;">
+                <h6 style="font-size:.82rem;font-weight:700;margin:0;"><i class="bi bi-list-ol"></i> Goal Summary</h6>
+            </div>
+            <div class="card-body" style="padding:0;">
+                {% for goal in live_goals %}
+                <div style="display:flex;align-items:center;gap:.5rem;padding:.45rem 1rem;border-bottom:1px solid #f0f0f0;font-size:.8rem;">
+                    <span style="min-width:42px;font-weight:700;color:#666;">{{ goal.minute_display }}</span>
+                    <span style="flex:1;">
+                        <strong>{{ goal.scorer_name }}</strong>
+                        {% if goal.goal_type != 'normal' %}<span class="badge bg-secondary" style="font-size:.58rem;">{{ goal.get_goal_type_display }}</span>{% endif %}
+                        {% if goal.assist_name %}<span style="color:#888;font-size:.72rem;"> ({{ goal.assist_name }})</span>{% endif %}
+                    </span>
+                    <span style="font-size:.7rem;color:#888;">{{ goal.team.name }} &middot; {{ goal.get_half_display }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
     </div>
 </div>
@@ -189,6 +509,13 @@
     50% { opacity: .3; }
 }
 </style>
+
+<script>
+function toggleEditGoal(goalId) {
+    var el = document.getElementById('editGoal' + goalId);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 
 {% if fixture.status == 'live' and not fixture.live_paused %}
 <script>
