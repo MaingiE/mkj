@@ -1060,6 +1060,213 @@ a.hero-feat--link {
     line-height: 1.6;
 }
 
+/* ── LIVE MATCH BANNER ──────────────────────────────────────────────────── */
+.live-banner {
+    background: linear-gradient(135deg, #0a1628 0%, #1a1a2e 50%, #16213e 100%);
+    padding: 1.8rem 0;
+    position: relative;
+    overflow: hidden;
+}
+.live-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg,
+        transparent, transparent 60px,
+        rgba(220,38,38,.03) 60px, rgba(220,38,38,.03) 61px);
+    pointer-events: none;
+}
+.live-banner__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+.live-banner__top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .8rem;
+    margin-bottom: 1.2rem;
+}
+.live-banner__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: #dc2626;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: .35rem .9rem;
+    border-radius: 50px;
+    animation: liveBadgePulse 2s ease-in-out infinite;
+}
+@keyframes liveBadgePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,.5); }
+    50% { box-shadow: 0 0 0 10px rgba(220,38,38,0); }
+}
+.live-banner__badge .lb-dot {
+    width: 8px; height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    animation: lbDotBlink 1s ease-in-out infinite;
+}
+@keyframes lbDotBlink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.live-banner__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: .85rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.6);
+    letter-spacing: .5px;
+}
+.live-banner__matches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+.live-card {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    padding: 1.2rem 1.8rem;
+    min-width: 300px;
+    max-width: 420px;
+    flex: 1;
+    backdrop-filter: blur(8px);
+    position: relative;
+    animation: liveCardSlide .6s ease forwards;
+    opacity: 0;
+    transform: translateY(16px);
+}
+.live-card:nth-child(1) { animation-delay: .1s; }
+.live-card:nth-child(2) { animation-delay: .25s; }
+.live-card:nth-child(3) { animation-delay: .4s; }
+@keyframes liveCardSlide { to { opacity: 1; transform: translateY(0); } }
+.live-card:hover {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(220,38,38,.3);
+}
+.live-card__comp {
+    font-size: .62rem;
+    font-weight: 700;
+    color: #E8B91E;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: .6rem;
+}
+.live-card__teams {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: .5rem;
+}
+.live-card__team {
+    font-family: 'Outfit', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.live-card__score {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #fff;
+    background: rgba(220,38,38,.2);
+    padding: .3rem .8rem;
+    border-radius: 10px;
+    border: 1px solid rgba(220,38,38,.3);
+    letter-spacing: 2px;
+    flex-shrink: 0;
+    animation: scoreGlow 2.5s ease-in-out infinite;
+}
+@keyframes scoreGlow {
+    0%,100% { box-shadow: 0 0 8px rgba(220,38,38,.15); }
+    50% { box-shadow: 0 0 20px rgba(220,38,38,.3); }
+}
+.live-card__minute {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .68rem;
+    font-weight: 700;
+    color: #dc2626;
+    background: rgba(220,38,38,.1);
+    padding: .2rem .6rem;
+    border-radius: 50px;
+}
+.live-card__minute .min-dot {
+    width: 6px; height: 6px;
+    background: #dc2626;
+    border-radius: 50%;
+    animation: lbDotBlink 1s ease-in-out infinite;
+}
+.live-card__venue {
+    font-size: .68rem;
+    color: rgba(255,255,255,.35);
+    margin-top: .4rem;
+    text-align: center;
+}
+.live-card__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .8rem;
+    margin-top: .5rem;
+}
+.live-banner__follow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.2rem;
+}
+.live-banner__follow a {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .5px;
+    text-decoration: none;
+    padding: .55rem 1.5rem;
+    border: 1px solid rgba(220,38,38,.4);
+    border-radius: 50px;
+    background: rgba(220,38,38,.15);
+    transition: all .3s;
+}
+.live-banner__follow a:hover {
+    background: rgba(220,38,38,.3);
+    border-color: rgba(220,38,38,.6);
+    transform: translateY(-2px);
+}
+.live-banner__follow a .arrow-bounce {
+    animation: arrowBounce 1.5s ease-in-out infinite;
+}
+@keyframes arrowBounce {
+    0%,100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+}
+@media (max-width: 600px) {
+    .live-banner { padding: 1.2rem 0; }
+    .live-banner__matches { flex-direction: column; align-items: stretch; }
+    .live-card { min-width: 0; padding: 1rem 1.2rem; }
+    .live-card__team { font-size: .82rem; }
+    .live-card__score { font-size: 1.3rem; }
+}
+
 /* ── DISCIPLINES IMAGE CARDS ─────────────────────────────────────────────── */
 .disciplines-section {
     padding: 80px 0;
@@ -1802,6 +2009,43 @@ a.hero-feat--link {
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
+     LIVE MATCH BANNER (only shows when matches are live)
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="liveBanner" {% if not live_matches %}style="display:none;"{% endif %}>
+<section class="live-banner">
+    <div class="live-banner__inner">
+        <div class="live-banner__top">
+            <span class="live-banner__badge"><span class="lb-dot"></span> LIVE NOW</span>
+            <span class="live-banner__title">Follow Live Matches</span>
+        </div>
+        <div class="live-banner__matches" id="liveBannerCards">
+            {% for match in live_matches %}
+            <div class="live-card">
+                <div class="live-card__comp">{{ match.competition.name }}</div>
+                <div class="live-card__teams">
+                    <span class="live-card__team">{{ match.home_team.name }}</span>
+                    <span class="live-card__score">{{ match.home_score|default:"0" }}&nbsp;-&nbsp;{{ match.away_score|default:"0" }}</span>
+                    <span class="live-card__team">{{ match.away_team.name }}</span>
+                </div>
+                <div class="live-card__bottom">
+                    {% if match.match_minute is not None %}
+                    <span class="live-card__minute"><span class="min-dot"></span> {{ match.match_minute }}'</span>
+                    {% endif %}
+                </div>
+                <div class="live-card__venue"><i class="bi bi-geo-alt-fill"></i> {{ match.venue.name|default:"TBD" }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="live-banner__follow">
+            <a href="{% url 'public_fixtures_results' %}">
+                Follow Live Matches <i class="bi bi-arrow-right arrow-bounce"></i>
+            </a>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
      DISCIPLINES SHOWCASE
      ══════════════════════════════════════════════════════════════════════════ -->
 <section class="disciplines-section" id="disciplines">
@@ -2135,25 +2379,55 @@ a.hero-feat--link {
             fetch('/api/live-matches/')
             .then(function(r){ return r.json(); })
             .then(function(data){
-                if (!ffLive) return;
                 var matches = data.live_matches || [];
-                if (matches.length === 0) {
-                    ffLive.innerHTML = '<div class="ffp-empty">No live matches right now</div>';
-                    return;
+                /* ── Update floating card ── */
+                if (ffLive) {
+                    if (matches.length === 0) {
+                        ffLive.innerHTML = '<div class="ffp-empty">No live matches right now</div>';
+                    } else {
+                        var html = '';
+                        matches.forEach(function(m){
+                            html += '<div class="ffp-match ffp-match--live">';
+                            html += '<div class="ffp-live-badge"><span class="ffp-live-dot"></span> LIVE';
+                            if (m.match_minute !== null) html += ' <span class="ffp-match-minute">' + m.match_minute + "'" + '</span>';
+                            html += '</div>';
+                            html += '<div class="ffp-match-comp">' + m.competition + '</div>';
+                            html += '<div class="ffp-match-teams"><span>' + m.home_team + '</span>';
+                            html += '<span class="ffp-score" style="background:#fff0f0;color:#dc3545;">' + m.home_score + ' - ' + m.away_score + '</span>';
+                            html += '<span>' + m.away_team + '</span></div>';
+                            html += '<div class="ffp-match-meta">' + m.venue + '</div></div>';
+                        });
+                        ffLive.innerHTML = html;
+                    }
                 }
-                var html = '';
-                matches.forEach(function(m){
-                    html += '<div class="ffp-match ffp-match--live">';
-                    html += '<div class="ffp-live-badge"><span class="ffp-live-dot"></span> LIVE';
-                    if (m.match_minute !== null) html += ' <span class="ffp-match-minute">' + m.match_minute + "'" + '</span>';
-                    html += '</div>';
-                    html += '<div class="ffp-match-comp">' + m.competition + '</div>';
-                    html += '<div class="ffp-match-teams"><span>' + m.home_team + '</span>';
-                    html += '<span class="ffp-score" style="background:#fff0f0;color:#dc3545;">' + m.home_score + ' - ' + m.away_score + '</span>';
-                    html += '<span>' + m.away_team + '</span></div>';
-                    html += '<div class="ffp-match-meta">' + m.venue + '</div></div>';
-                });
-                ffLive.innerHTML = html;
+                /* ── Update live banner ── */
+                var banner = document.getElementById('liveBanner');
+                var bannerCards = document.getElementById('liveBannerCards');
+                if (banner && bannerCards) {
+                    if (matches.length === 0) {
+                        banner.style.display = 'none';
+                    } else {
+                        banner.style.display = '';
+                        var bhtml = '';
+                        matches.forEach(function(m){
+                            bhtml += '<div class="live-card">';
+                            bhtml += '<div class="live-card__comp">' + m.competition + '</div>';
+                            bhtml += '<div class="live-card__teams">';
+                            bhtml += '<span class="live-card__team">' + m.home_team + '</span>';
+                            bhtml += '<span class="live-card__score">' + m.home_score + '&nbsp;-&nbsp;' + m.away_score + '</span>';
+                            bhtml += '<span class="live-card__team">' + m.away_team + '</span>';
+                            bhtml += '</div>';
+                            bhtml += '<div class="live-card__bottom">';
+                            if (m.match_minute !== null) {
+                                bhtml += '<span class="live-card__minute"><span class="min-dot"></span> ' + m.match_minute + "'" + '</span>';
+                            }
+                            bhtml += '</div>';
+                            bhtml += '<div class="live-card__venue"><i class="bi bi-geo-alt-fill"></i> ' + m.venue + '</div>';
+                            bhtml += '</div>';
+                        });
+                        bannerCards.innerHTML = bhtml;
+                    }
+                }
             })
             .catch(function(){});
         }
