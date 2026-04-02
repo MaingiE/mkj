@@ -4114,6 +4114,7 @@ def coordinator_live_match_view(request, pk, fixture_pk):
             fixture.live_started_at = timezone.now()
             fixture.live_half = 1
             fixture.live_paused = False
+            fixture.live_paused_minute = None
             fixture.home_score = 0
             fixture.away_score = 0
             fixture.save()
@@ -4237,25 +4238,30 @@ def coordinator_live_match_view(request, pk, fixture_pk):
             messages.success(request, 'Match info updated.')
 
         elif action == 'pause':
+            fixture.live_paused_minute = fixture.match_minute
             fixture.live_paused = True
-            fixture.save(update_fields=['live_paused', 'updated_at'])
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'updated_at'])
 
         elif action == 'resume':
             fixture.live_paused = False
-            fixture.save(update_fields=['live_paused', 'updated_at'])
+            fixture.live_paused_minute = None
+            fixture.live_started_at = timezone.now()  # reset clock from current minute
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_started_at', 'updated_at'])
 
         elif action == 'half_time':
             # Generic: end current period, advance to next, pause
+            fixture.live_paused_minute = fixture.match_minute
             fixture.live_paused = True
             fixture.live_half += 1
-            fixture.save(update_fields=['live_paused', 'live_half', 'updated_at'])
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_half', 'updated_at'])
             _clear_public_fixture_cache()
 
         elif action == 'second_half':
             # Generic: start next period, reset clock
             fixture.live_paused = False
+            fixture.live_paused_minute = None
             fixture.live_started_at = timezone.now()  # reset clock for new period
-            fixture.save(update_fields=['live_paused', 'live_started_at', 'updated_at'])
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_started_at', 'updated_at'])
             _clear_public_fixture_cache()
 
         elif action == 'start_extra_time':
@@ -4263,29 +4269,33 @@ def coordinator_live_match_view(request, pk, fixture_pk):
             periods = sport_cfg.get('periods', 2)
             fixture.live_half = periods + 1
             fixture.live_paused = False
+            fixture.live_paused_minute = None
             fixture.live_started_at = timezone.now()
-            fixture.save(update_fields=['live_half', 'live_paused', 'live_started_at', 'updated_at'])
+            fixture.save(update_fields=['live_half', 'live_paused', 'live_paused_minute', 'live_started_at', 'updated_at'])
             _clear_public_fixture_cache()
             messages.success(request, 'Extra time started.')
 
         elif action == 'et_half_time':
             # Pause between ET halves
             periods = sport_cfg.get('periods', 2)
+            fixture.live_paused_minute = fixture.match_minute
             fixture.live_paused = True
             fixture.live_half = periods + 2
-            fixture.save(update_fields=['live_paused', 'live_half', 'updated_at'])
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_half', 'updated_at'])
             _clear_public_fixture_cache()
 
         elif action == 'start_et_second':
             # Start ET 2nd half
             fixture.live_paused = False
+            fixture.live_paused_minute = None
             fixture.live_started_at = timezone.now()
-            fixture.save(update_fields=['live_paused', 'live_started_at', 'updated_at'])
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_started_at', 'updated_at'])
             _clear_public_fixture_cache()
             messages.success(request, 'Extra time 2nd half started.')
 
         elif action == 'start_penalties':
             # Enter penalty shootout mode
+            fixture.live_paused_minute = fixture.match_minute
             fixture.live_half = 99
             fixture.live_paused = True
             fixture.home_penalties = 0
@@ -4293,7 +4303,7 @@ def coordinator_live_match_view(request, pk, fixture_pk):
             fixture.home_score_et = fixture.home_score
             fixture.away_score_et = fixture.away_score
             fixture.save(update_fields=[
-                'live_half', 'live_paused', 'home_penalties', 'away_penalties',
+                'live_half', 'live_paused', 'live_paused_minute', 'home_penalties', 'away_penalties',
                 'home_score_et', 'away_score_et', 'updated_at'
             ])
             _clear_public_fixture_cache()

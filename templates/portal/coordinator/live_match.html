@@ -43,12 +43,12 @@
             <span>{{ fixture.match_period_display }}</span>
             <span>&middot;</span>
             <span id="lmClock">
-                {% if fixture.live_paused %}
-                    {% if is_in_penalties %}PENALTIES{% else %}PAUSED{% endif %}
-                {% elif is_in_penalties %}
+                {% if is_in_penalties %}
                     PENALTIES
+                {% elif fixture.live_paused %}
+                    {% if fixture.live_paused_minute is not None %}{{ fixture.live_paused_minute }}'{% endif %} <span style="color:#FFD54F;font-size:.65rem;">(PAUSED)</span>
                 {% else %}
-                    <span class="match-timer" data-started="{{ fixture.live_started_at|date:'c' }}">--'</span>
+                    <span class="match-timer" data-started="{{ fixture.live_started_at|date:'c' }}">{% if fixture.match_minute is not None %}{{ fixture.match_minute }}'{% else %}--'{% endif %}</span>
                 {% endif %}
             </span>
             {% if fixture.live_extra_minutes %}
