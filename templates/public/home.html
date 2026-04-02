@@ -391,38 +391,6 @@
     border-color: rgba(255,255,255,.25);
 }
 
-/* ── COUNTDOWN CARD — TOSSABLE ────────────────────────────── */
-/* Entry from corner — slow graceful glide */
-.cd-enter-tl { animation: cdFromTL 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
-.cd-enter-tr { animation: cdFromTR 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
-.cd-enter-bl { animation: cdFromBL 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
-.cd-enter-br { animation: cdFromBR 1.8s cubic-bezier(.16,1,.3,1) .5s both; }
-
-@keyframes cdFromTL { from { opacity:0; transform: translate(-110%, -80%) rotate(-12deg) scale(.85); } to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
-@keyframes cdFromTR { from { opacity:0; transform: translate(110%, -80%) rotate(12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
-@keyframes cdFromBL { from { opacity:0; transform: translate(-110%, 80%) rotate(12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
-@keyframes cdFromBR { from { opacity:0; transform: translate(110%, 80%) rotate(-12deg) scale(.85); }  to { opacity:1; transform: translate(0,0) rotate(0) scale(1); } }
-
-/* Toss-out / toss-in cycle — toggled by JS on slide change */
-.cd-toss-out-tr { animation: cdTossOutTR 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
-.cd-toss-out-tl { animation: cdTossOutTL 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
-.cd-toss-out-br { animation: cdTossOutBR 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
-.cd-toss-out-bl { animation: cdTossOutBL 1.2s cubic-bezier(.4,0,.8,.4) forwards !important; }
-.cd-toss-in-tl  { animation: cdTossInTL 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
-.cd-toss-in-tr  { animation: cdTossInTR 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
-.cd-toss-in-bl  { animation: cdTossInBL 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
-.cd-toss-in-br  { animation: cdTossInBR 1.6s cubic-bezier(.16,1,.3,1) forwards !important; }
-
-@keyframes cdTossOutTR { to { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); } }
-@keyframes cdTossOutTL { to { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } }
-@keyframes cdTossOutBR { to { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); } }
-@keyframes cdTossOutBL { to { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); } }
-/* toss-in flies from corner → through center (50%) → to final landing */
-@keyframes cdTossInTL  { 0% { opacity:0; transform: translate(-120%, -70%) rotate(-15deg) scale(.8); } 50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-@keyframes cdTossInTR  { 0% { opacity:0; transform: translate(120%, -70%) rotate(15deg) scale(.8); }  50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-@keyframes cdTossInBL  { 0% { opacity:0; transform: translate(-120%, 70%) rotate(15deg) scale(.8); }  50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-@keyframes cdTossInBR  { 0% { opacity:0; transform: translate(120%, 70%) rotate(-15deg) scale(.8); }  50% { opacity:1; transform: translate(0,0) rotate(0) scale(1); } 100% { opacity:1; transform: translate(var(--cd-land-x,0), var(--cd-land-y,0)) rotate(0) scale(1); } }
-
 @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
 @keyframes cdPulse {
@@ -430,135 +398,246 @@
     50% { opacity: .4; transform: scale(.8); }
 }
 
-/* ── HERO COUNTDOWN CARD ───────────────────────────────────── */
-.hero-countdown-card {
+/* ── HERO SEMI-FINALS SHOWCASE CARD ──────────────────────────── */
+.hero-semis-card {
     flex-shrink: 0;
-    width: 340px;
+    width: 380px;
     background: rgba(255,255,255,.06);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(232,185,30,.18);
-    border-radius: 28px;
-    padding: 2rem 1.8rem;
+    border-radius: 24px;
+    padding: 1.4rem 1.4rem 1rem;
     box-shadow: 0 20px 60px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.05), inset 0 1px 0 rgba(255,255,255,.08);
     opacity: 0;
-    will-change: transform, opacity;
-    transition: all .7s cubic-bezier(.4,0,.2,1);
+    animation: semiCardIn 1s ease forwards 2s;
 }
-/* Settled state — fixed top-right of hero */
-.hero-countdown-card.cd-settled {
-    position: fixed;
-    top: 62px;
-    right: 1.5rem;
-    z-index: 9999;
-    width: 280px;
-    padding: 1.2rem 1rem;
-    opacity: 1 !important;
-    animation: none !important;
-    transform: none !important;
-    box-shadow: 0 12px 40px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.08);
+@keyframes semiCardIn {
+    from { opacity: 0; transform: translateY(30px) scale(.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.hero-countdown-card.cd-settled .hcc-num { font-size: 1.2rem; }
-.hero-countdown-card.cd-settled .hcc-num-box { max-width: 52px; }
-.hero-countdown-card.cd-settled .hcc-title { font-size: .95rem; }
-.hero-countdown-card.cd-settled .hcc-date { font-size: .7rem; margin-bottom: .8rem; }
-.hero-countdown-card.cd-settled .hcc-header { margin-bottom: .3rem; }
-.hcc-header {
+.hsc-header {
     display: flex;
     align-items: center;
     gap: .5rem;
-    margin-bottom: .6rem;
+    margin-bottom: .7rem;
 }
-.hcc-edition {
-    display: inline-block;
-    padding: .2rem .6rem;
-    background: rgba(232,185,30,.12);
-    border: 1px solid rgba(232,185,30,.25);
-    border-radius: 50px;
-    font-size: .58rem;
-    font-weight: 700;
-    color: #FFD54F;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-}
-.hcc-live-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #FFD54F;
-    animation: cdPulse 1.5s ease infinite;
-    box-shadow: 0 0 10px rgba(232,185,30,.5);
-}
-.hcc-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #fff;
-    margin-bottom: .25rem;
-    letter-spacing: .3px;
-}
-.hcc-date {
-    font-size: .78rem;
-    color: rgba(255,255,255,.55);
-    display: flex;
+.hsc-badge {
+    display: inline-flex;
     align-items: center;
     gap: .35rem;
-    font-weight: 500;
-    margin-bottom: 1.4rem;
+    padding: .2rem .6rem;
+    background: rgba(220,53,69,.15);
+    border: 1px solid rgba(220,53,69,.3);
+    border-radius: 50px;
+    font-size: .6rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
-.hcc-date svg { color: rgba(232,185,30,.6); }
-.hcc-timer {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: .6rem;
+.hsc-badge .pulse-dot {
+    width: 6px; height: 6px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    animation: cdPulse 1.2s ease infinite;
 }
-.hcc-unit { text-align: center; }
-.hcc-num-box {
-    width: 100%;
-    aspect-ratio: 1;
-    max-width: 68px;
-    margin: 0 auto .3rem;
+.hsc-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: .3px;
+}
+/* Sport toggle pills */
+.hsc-sports {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin-bottom: .8rem;
+    padding-bottom: .6rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.hsc-sport-pill {
+    padding: .25rem .55rem;
+    border-radius: 50px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    color: rgba(255,255,255,.5);
+    font-size: .6rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .25s;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+}
+.hsc-sport-pill:hover {
+    background: rgba(255,255,255,.1);
+    color: rgba(255,255,255,.8);
+}
+.hsc-sport-pill.active {
+    background: linear-gradient(135deg, rgba(232,185,30,.2), rgba(232,185,30,.1));
+    border-color: rgba(232,185,30,.4);
+    color: #FFD54F;
+}
+.hsc-sport-pill.has-live {
+    border-color: rgba(220,53,69,.4);
+    animation: pillGlow 2s ease infinite;
+}
+/* Football / Soccer — featured pill with extra presence */
+.hsc-sport-pill.hsc-pill--football {
+    position: relative;
+    border-color: rgba(232,185,30,.35);
+    background: linear-gradient(135deg, rgba(232,185,30,.14), rgba(255,215,0,.06));
+    color: #FFD54F;
+}
+.hsc-sport-pill.hsc-pill--football::before {
+    content: '\26BD';
+    margin-right: .2rem;
+    font-size: .65rem;
+}
+.hsc-sport-pill.hsc-pill--football.active {
+    background: linear-gradient(135deg, rgba(232,185,30,.3), rgba(255,215,0,.15));
+    border-color: rgba(232,185,30,.6);
+    box-shadow: 0 0 12px rgba(232,185,30,.2), 0 0 24px rgba(232,185,30,.08);
+    color: #fff;
+    font-weight: 700;
+}
+/* Football panel — subtle golden left border accent */
+.hsc-panel[data-sport^="football"] .hsc-sport-label {
+    padding-left: .5rem;
+    border-left: 3px solid #FFD54F;
+}
+.hsc-panel[data-sport^="football"] .hsc-match {
+    border-color: rgba(232,185,30,.12);
+}
+.hsc-panel[data-sport^="football"] .hsc-match:hover {
+    border-color: rgba(232,185,30,.35);
+    box-shadow: 0 0 12px rgba(232,185,30,.08);
+}
+@keyframes pillGlow {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 8px rgba(220,53,69,.3); }
+}
+/* Semi-final match display */
+.hsc-body { min-height: 100px; }
+.hsc-sport-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #FFD54F;
+    letter-spacing: .5px;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.hsc-match {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .6rem;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 12px;
+    margin-bottom: .4rem;
+    transition: all .25s;
+}
+.hsc-match:hover {
     background: rgba(255,255,255,.08);
-    border: 1.5px solid rgba(232,185,30,.3);
-    border-radius: 16px;
+    border-color: rgba(232,185,30,.2);
+}
+.hsc-match--live {
+    border-color: rgba(220,53,69,.3) !important;
+    background: rgba(220,53,69,.06) !important;
+}
+.hsc-match-label {
+    font-size: .55rem;
+    font-weight: 700;
+    color: rgba(255,255,255,.35);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: 30px;
+    flex-shrink: 0;
+}
+.hsc-teams { flex: 1; min-width: 0; }
+.hsc-team {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .3rem;
+    font-size: .72rem;
+    color: rgba(255,255,255,.85);
+    font-weight: 600;
+    line-height: 1.5;
+}
+.hsc-team-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+.hsc-team-score {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: .78rem;
+    color: #FFD54F;
+    min-width: 16px;
+    text-align: center;
+}
+.hsc-team--winner .hsc-team-name { color: #FFD54F; }
+.hsc-match-status {
+    font-size: .55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: .15rem .4rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.hsc-status--pending { color: rgba(255,255,255,.4); background: rgba(255,255,255,.06); }
+.hsc-status--live { color: #ff6b6b; background: rgba(220,53,69,.15); animation: cdPulse 1.5s ease infinite; }
+.hsc-status--ft { color: rgba(129,199,132,.9); background: rgba(76,175,80,.12); }
+/* Final preview */
+.hsc-final-row {
+    margin-top: .6rem;
+    padding-top: .5rem;
+    border-top: 1px solid rgba(232,185,30,.12);
+}
+.hsc-final-label {
+    font-size: .58rem;
+    font-weight: 700;
+    color: rgba(232,185,30,.7);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: .3rem;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+}
+.hsc-final-label i { font-size: .7rem; }
+/* Follow live link */
+.hsc-follow {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all .3s;
-    box-shadow: 0 4px 16px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06);
-}
-.hcc-num-box:hover {
-    border-color: rgba(232,185,30,.6);
-    background: rgba(255,255,255,.12);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,.3), 0 0 16px rgba(232,185,30,.15);
-}
-.hcc-num {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 900;
+    gap: .4rem;
+    margin-top: .6rem;
+    padding: .45rem;
+    background: linear-gradient(135deg, rgba(232,185,30,.12), rgba(232,185,30,.06));
+    border: 1px solid rgba(232,185,30,.2);
+    border-radius: 10px;
     color: #FFD54F;
-    text-shadow: 0 2px 8px rgba(232,185,30,.3);
-}
-.hcc-label {
-    font-size: .58rem;
-    color: rgba(255,255,255,.6);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    font-size: .7rem;
     font-weight: 700;
-}
-.hcc-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(232,185,30,.2), transparent);
-    margin: 1.2rem 0 .8rem;
-}
-.hcc-status {
-    text-align: center;
-    font-size: .72rem;
-    color: rgba(255,255,255,.4);
-    font-weight: 500;
+    text-decoration: none;
+    transition: all .25s;
     letter-spacing: .3px;
 }
-.hcc-status strong { color: #FFD54F; font-weight: 700; }
+.hsc-follow:hover {
+    background: linear-gradient(135deg, rgba(232,185,30,.2), rgba(232,185,30,.1));
+    transform: translateY(-1px);
+}
 .hero-badge-top {
     display: inline-flex;
     align-items: center;
@@ -1553,25 +1632,18 @@ a.hero-feat--link {
     .hero-left { text-align: center; max-width: 100%; }
     .hero-badge-top, .hero-btns { justify-content: center; }
     .hero-brand-tl { position: relative; top: auto; left: auto; align-items: center; margin: 0 auto 1rem; }
-    .hero-countdown-card { width: 100%; max-width: 400px; }
-    .hcc-date { justify-content: center; }
-    .hero-countdown-card.cd-settled { width: 240px; right: .75rem; padding: 1rem .8rem; }
-    .hero-countdown-card.cd-settled .hcc-num { font-size: 1rem; }
-    .hero-countdown-card.cd-settled .hcc-num-box { max-width: 44px; }
+    .hero-semis-card { width: 100%; max-width: 420px; }
 }
 @media (max-width: 768px) {
     .home-hero { min-height: auto; padding: 7rem 0 3rem; }
     .hero-brand-tl img { width: 52px; height: 52px; }
     .hero-brand-tl .brand-initials { font-size: .5rem; }
     .hero-text-stage { min-height: 180px; }
-    .hero-countdown-card { width: 100%; max-width: 360px; padding: 1.5rem 1.2rem; }
-    .hcc-num { font-size: 1.3rem; }
-    .hcc-num-box { max-width: 58px; }
-    .hero-countdown-card.cd-settled { width: 220px; padding: .9rem .7rem; }
+    .hero-semis-card { width: 100%; max-width: 380px; padding: 1.2rem 1rem .8rem; }
 }
 @media (max-width: 480px) {
-    .hero-countdown-card { max-width: 100%; }
-    .hero-countdown-card.cd-settled { width: 200px; right: .5rem; top: 56px; }
+    .hero-semis-card { max-width: 100%; }
+    .hsc-sport-pill { font-size: .55rem; padding: .2rem .45rem; }
 }
 
 /* ── FLOATING FIXTURES CARD ─────────────────────────────────────────────── */
@@ -1869,38 +1941,93 @@ a.hero-feat--link {
                 </div>
             </div>
 
-            <!-- Countdown Card — tossed around by JS -->
-            <div class="hero-countdown-card" id="cdCard">
-                <div class="hcc-header">
-                    <span class="hcc-edition">4th Edition</span>
-                    <span class="hcc-live-dot"></span>
+            <!-- Semi-Finals Showcase Card -->
+            {% if semis_by_sport %}
+            <div class="hero-semis-card" id="hscCard">
+                <div class="hsc-header">
+                    <span class="hsc-badge"><span class="pulse-dot"></span> Semi-Finals</span>
+                    <span class="hsc-title">County Finals 2026</span>
                 </div>
-                <h3 class="hcc-title">MKJ SUPA CUP 2026</h3>
-                <p class="hcc-date">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    31st Mar (Verification) &middot; 1st&ndash;2nd Apr &middot; Makueni
-                </p>
-                <div class="hcc-timer">
-                    <div class="hcc-unit">
-                        <div class="hcc-num-box"><span class="hcc-num" id="cdDays">00</span></div>
-                        <span class="hcc-label">Days</span>
-                    </div>
-                    <div class="hcc-unit">
-                        <div class="hcc-num-box"><span class="hcc-num" id="cdHours">00</span></div>
-                        <span class="hcc-label">Hours</span>
-                    </div>
-                    <div class="hcc-unit">
-                        <div class="hcc-num-box"><span class="hcc-num" id="cdMins">00</span></div>
-                        <span class="hcc-label">Min</span>
-                    </div>
-                    <div class="hcc-unit">
-                        <div class="hcc-num-box"><span class="hcc-num" id="cdSecs">00</span></div>
-                        <span class="hcc-label">Sec</span>
-                    </div>
+                <!-- Sport toggle pills -->
+                <div class="hsc-sports" id="hscSports">
+                    {% for sport, info in semis_by_sport.items %}
+                    <span class="hsc-sport-pill{% if forloop.first %} active{% endif %}{% if 'football' in sport %} hsc-pill--football{% endif %}{% for s in info.semis %}{% if s.status == 'live' %} has-live{% endif %}{% endfor %}"
+                          data-sport="{{ sport }}">{{ info.label }}</span>
+                    {% endfor %}
                 </div>
-                <div class="hcc-divider"></div>
-                <p class="hcc-status"><strong>Countdown</strong> to kickoff</p>
+                <!-- Match panels (one per sport, toggled by JS) -->
+                <div class="hsc-body" id="hscBody">
+                    {% for sport, info in semis_by_sport.items %}
+                    <div class="hsc-panel" data-sport="{{ sport }}" {% if not forloop.first %}style="display:none;"{% endif %}>
+                        <div class="hsc-sport-label"><i class="bi bi-trophy-fill"></i> {{ info.label }} Semi-Finals</div>
+                        {% for semi in info.semis %}
+                        <div class="hsc-match{% if semi.status == 'live' %} hsc-match--live{% endif %}">
+                            <span class="hsc-match-label">SF{{ semi.bracket_position|default:forloop.counter }}</span>
+                            <div class="hsc-teams">
+                                <div class="hsc-team{% if semi.winner and semi.winner == semi.home_team %} hsc-team--winner{% endif %}">
+                                    <span class="hsc-team-name">{{ semi.home_team.name }}</span>
+                                    {% if semi.status == 'completed' or semi.status == 'live' %}
+                                    <span class="hsc-team-score">{{ semi.home_score|default:"0" }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="hsc-team{% if semi.winner and semi.winner == semi.away_team %} hsc-team--winner{% endif %}">
+                                    <span class="hsc-team-name">{{ semi.away_team.name }}</span>
+                                    {% if semi.status == 'completed' or semi.status == 'live' %}
+                                    <span class="hsc-team-score">{{ semi.away_score|default:"0" }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if semi.status == 'live' %}
+                            <span class="hsc-match-status hsc-status--live">{{ semi.match_minute|default:"" }}'</span>
+                            {% elif semi.status == 'completed' %}
+                            <span class="hsc-match-status hsc-status--ft">FT</span>
+                            {% else %}
+                            <span class="hsc-match-status hsc-status--pending">{{ semi.kickoff_time|time:"H:i" }}</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {% if info.final %}
+                        <div class="hsc-final-row">
+                            <div class="hsc-final-label"><i class="bi bi-trophy-fill"></i> Final</div>
+                            <div class="hsc-match">
+                                <span class="hsc-match-label">F</span>
+                                <div class="hsc-teams">
+                                    <div class="hsc-team">
+                                        <span class="hsc-team-name">{{ info.final.home_team.name }}</span>
+                                        {% if info.final.status == 'completed' or info.final.status == 'live' %}
+                                        <span class="hsc-team-score">{{ info.final.home_score|default:"0" }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="hsc-team">
+                                        <span class="hsc-team-name">{{ info.final.away_team.name }}</span>
+                                        {% if info.final.status == 'completed' or info.final.status == 'live' %}
+                                        <span class="hsc-team-score">{{ info.final.away_score|default:"0" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if info.final.status == 'live' %}
+                                <span class="hsc-match-status hsc-status--live">{{ info.final.match_minute|default:"" }}'</span>
+                                {% elif info.final.status == 'completed' %}
+                                <span class="hsc-match-status hsc-status--ft">FT</span>
+                                {% else %}
+                                <span class="hsc-match-status hsc-status--pending">{{ info.final.kickoff_time|time:"H:i" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% elif info.both_done %}
+                        <div class="hsc-final-row">
+                            <div class="hsc-final-label"><i class="bi bi-trophy-fill"></i> Final - auto-creating...</div>
+                        </div>
+                        {% endif %}
+                        <a href="{% url 'public_fixtures_results' %}" class="hsc-follow">
+                            <i class="bi bi-broadcast"></i> Follow Live
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
+            {% endif %}
         </div>
 
     </div>
@@ -2235,142 +2362,49 @@ a.hero-feat--link {
 {% block extra_js %}
 <script>
 (function(){
-    /* ── Countdown card — emerge twice, settle, retoss at 1min & 2min ── */
-    var cdCard = document.getElementById('cdCard');
-    if (cdCard) {
-        var cdCorners = ['tl','tr','bl','br'];
-        var cdAllClasses = [
-            'cd-enter-tl','cd-enter-tr','cd-enter-bl','cd-enter-br',
-            'cd-toss-out-tl','cd-toss-out-tr','cd-toss-out-bl','cd-toss-out-br',
-            'cd-toss-in-tl','cd-toss-in-tr','cd-toss-in-bl','cd-toss-in-br'
-        ];
-        function clearCd() { cdAllClasses.forEach(function(c){ cdCard.classList.remove(c); }); cdCard.classList.remove('cd-settled'); }
-        function pickCorner() { return cdCorners[Math.floor(Math.random() * cdCorners.length)]; }
+    /* ── Semi-Finals Showcase — sport pill toggle & live auto-refresh ── */
+    var hscCard = document.getElementById('hscCard');
+    if (hscCard) {
+        var pills = hscCard.querySelectorAll('.hsc-sport-pill');
+        var panels = hscCard.querySelectorAll('.hsc-panel');
 
-        function setRandomLand() {
-            var offsets = [{x:'0px',y:'0px'},{x:'-60px',y:'-30px'},{x:'50px',y:'-20px'},{x:'-40px',y:'25px'},{x:'60px',y:'30px'}];
-            var off = offsets[Math.floor(Math.random() * offsets.length)];
-            cdCard.style.setProperty('--cd-land-x', off.x);
-            cdCard.style.setProperty('--cd-land-y', off.y);
-        }
+        pills.forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                var sport = this.getAttribute('data-sport');
+                pills.forEach(function(p){ p.classList.remove('active'); });
+                this.classList.add('active');
+                panels.forEach(function(panel) {
+                    panel.style.display = panel.getAttribute('data-sport') === sport ? '' : 'none';
+                });
+            });
+        });
 
-        /* Toss-out slowly, glide back in through center, then settle to top-right */
-        function tossAndSettle(settleDelay) {
-            var outDir = pickCorner();
-            clearCd();
-            cdCard.classList.add('cd-toss-out-' + outDir);
-
-            /* After slow toss-out (1.3s), glide back in through center */
-            setTimeout(function(){
-                var inDir = pickCorner();
-                while (inDir === outDir && cdCorners.length > 1) { inDir = pickCorner(); }
-                clearCd();
-                setRandomLand();
-                cdCard.style.opacity = '0';
-                cdCard.classList.add('cd-toss-in-' + inDir);
-                setTimeout(function(){ cdCard.style.opacity = '1'; }, 1600);
-
-                /* Always settle to top-right after toss-in completes */
-                setTimeout(function(){
-                    clearCd();
-                    cdCard.style.opacity = '1';
-                    cdCard.style.removeProperty('--cd-land-x');
-                    cdCard.style.removeProperty('--cd-land-y');
-                    cdCard.classList.add('cd-settled');
-                }, settleDelay || 3000);
-            }, 1300);
-        }
-
-        /* === SEQUENCE ===
-           0s      : 1st emergence (slow glide in, stays 5s) → settle top-right
-           20s     : retoss → through center → settle top-right
-           40s     : retoss → through center → settle top-right
-           60s     : retoss → through center → settle top-right (permanent)
-        */
-
-        /* 1st emergence — slow glide in */
-        setRandomLand();
-        cdCard.classList.add('cd-enter-' + pickCorner());
-
-        /* After initial entry (2.3s animation), settle to top-right */
-        setTimeout(function(){
-            clearCd();
-            cdCard.style.opacity = '1';
-            cdCard.classList.add('cd-settled');
-        }, 5000);
-
-        /* 20s: retoss, through center, settle */
-        setTimeout(function(){ tossAndSettle(3000); }, 20000);
-
-        /* 40s: retoss, through center, settle */
-        setTimeout(function(){ tossAndSettle(3000); }, 40000);
-
-        /* 60s: final retoss, through center, settle permanently */
-        setTimeout(function(){ tossAndSettle(3000); }, 60000);
-    }
-
-    /* ── Countdown timer ───────────────────────────────────────────── */
-    var eventStartDate = new Date('2026-04-01T08:00:00+03:00').getTime();
-    var eventEndDate = new Date('2026-04-02T23:59:59+03:00').getTime();
-    var cdDays = document.getElementById('cdDays');
-    var cdHours = document.getElementById('cdHours');
-    var cdMins = document.getElementById('cdMins');
-    var cdSecs = document.getElementById('cdSecs');
-    var hccDate = document.querySelector('.hcc-date');
-    var hccStatus = document.querySelector('.hcc-status');
-    var countdownInterval = null;
-
-    if (!cdDays || !cdHours || !cdMins || !cdSecs) {
-        /* countdown elements not on page - skip */
-    } else {
-        function animateNum(el, val) {
-            var prev = el.textContent;
-            var next = val < 10 ? '0' + val : '' + val;
-            if (prev !== next) {
-                el.textContent = next;
-                el.parentElement.style.transform = 'scale(1.05)';
-                setTimeout(function(){ el.parentElement.style.transform = ''; }, 200);
-            }
-        }
-
-        function updateCountdown() {
-            var now = Date.now();
-            var diff = eventStartDate - now;
-
-            if (now >= eventStartDate) {
-                animateNum(cdDays, 0);
-                animateNum(cdHours, 0);
-                animateNum(cdMins, 0);
-                animateNum(cdSecs, 0);
-
-                if (hccDate) {
-                    if (now <= eventEndDate) {
-                        hccDate.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Event in progress';
-                        if (hccStatus) hccStatus.innerHTML = '<strong>LIVE</strong> &middot; Event is underway!';
-                    } else {
-                        hccDate.textContent = 'Event ended';
-                        if (hccStatus) hccStatus.innerHTML = 'Event has ended.';
-                    }
+        /* Auto-create final when both semis are completed */
+        var semisData = {{ semis_json|safe }};
+        function checkAutoCreateFinal() {
+            Object.keys(semisData).forEach(function(sport) {
+                var info = semisData[sport];
+                if (info.both_done && !info.final_id) {
+                    fetch('/api/v1/competitions/' + info.comp_id + '/auto-create-final/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')
+                                ? document.querySelector('[name=csrfmiddlewaretoken]').value
+                                : '{{ csrf_token }}'
+                        }
+                    }).then(function(resp) {
+                        if (resp.ok) { location.reload(); }
+                    }).catch(function(){});
                 }
-
-                if (now > eventEndDate && countdownInterval) {
-                    clearInterval(countdownInterval);
-                }
-                return;
-            }
-
-            if (diff <= 0) {
-                animateNum(cdDays, 0); animateNum(cdHours, 0);
-                animateNum(cdMins, 0); animateNum(cdSecs, 0);
-                return;
-            }
-            animateNum(cdDays, Math.floor(diff / 86400000));
-            animateNum(cdHours, Math.floor((diff % 86400000) / 3600000));
-            animateNum(cdMins, Math.floor((diff % 3600000) / 60000));
-            animateNum(cdSecs, Math.floor((diff % 60000) / 1000));
+            });
         }
-        updateCountdown();
-        countdownInterval = setInterval(updateCountdown, 1000);
+        checkAutoCreateFinal();
+
+        /* Live auto-refresh every 30s for live matches */
+        var hasLive = hscCard.querySelector('.hsc-match--live');
+        if (hasLive) {
+            setInterval(function() { location.reload(); }, 30000);
+        }
     }
 
     /* ── Floating fixtures card toggle ─────────────────────────────── */

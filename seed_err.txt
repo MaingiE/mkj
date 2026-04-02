@@ -1,0 +1,36 @@
+INFO 2026-04-02 07:54:51,864 stats_engine 1296 19996 Pool standings updated for fixture 97 (sport: basketball_3x3)
+INFO 2026-04-02 07:54:54,100 stats_engine 1296 19996 Pool standings updated for fixture 98 (sport: basketball_3x3)
+INFO 2026-04-02 07:54:56,440 stats_engine 1296 19996 Pool standings updated for fixture 99 (sport: basketball_3x3)
+INFO 2026-04-02 07:54:56,790 stats_engine 1296 19996 Pool standings fully recalculated for MKJ SUPA CUP 2026 Basketball 3x3 (Men) - Pool A
+INFO 2026-04-02 07:54:59,915 stats_engine 1296 19996 Pool standings updated for fixture 101 (sport: basketball_3x3)
+INFO 2026-04-02 07:55:03,226 stats_engine 1296 19996 Pool standings updated for fixture 102 (sport: basketball_3x3)
+INFO 2026-04-02 07:55:05,777 stats_engine 1296 19996 Pool standings updated for fixture 103 (sport: basketball_3x3)
+INFO 2026-04-02 07:55:06,185 stats_engine 1296 19996 Pool standings fully recalculated for MKJ SUPA CUP 2026 Basketball 3x3 (Men) - Pool B
+Traceback (most recent call last):
+  File "C:\Users\HomePC\Desktop\MKJ-SUPA-CUP\manage.py", line 13, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\HomePC\Desktop\MKJ-SUPA-CUP\manage.py", line 10, in main
+    execute_from_command_line(sys.argv)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\HomePC\AppData\Roaming\Python\Python314\site-packages\django\core\management\__init__.py", line 443, in execute_from_command_line
+    utility.execute()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\HomePC\AppData\Roaming\Python\Python314\site-packages\django\core\management\__init__.py", line 437, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\HomePC\AppData\Roaming\Python\Python314\site-packages\django\core\management\base.py", line 420, in run_from_argv
+    self.execute(*args, **cmd_options)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HomePC\AppData\Roaming\Python\Python314\site-packages\django\core\management\base.py", line 464, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\HomePC\Desktop\MKJ-SUPA-CUP\competitions\management\commands\seed_county_finals_2026.py", line 212, in handle
+    self.stdout.write(self.style.SUCCESS('  \u2713 Pool results + semis created'))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HomePC\AppData\Roaming\Python\Python314\site-packages\django\core\management\base.py", line 185, in write
+    self._out.write(style_func(msg))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 2: character maps to <undefined>

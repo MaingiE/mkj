@@ -43,11 +43,31 @@ _WP_SCANNER_PREFIXES = (
     "/wp/",
 )
 
+# Environment/config probing paths used by automated scanners
+_ENV_SCANNER_PATHS = (
+    "/.env",
+    "/.git/",
+    "/actuator/",
+    "/debug/",
+    "/.vercel/",
+    "/_next/static/env",
+    "/index.php",
+    "/ads.txt",
+)
+
+# Subpath patterns for .env enumeration (e.g. /core/.env, /api/.env)
+_ENV_SUBPATH_PATTERNS = (
+    "/core/.env", "/api/.env", "/backend/.env", "/laravel/.env",
+    "/app/.env", "/web/.env", "/src/.env", "/server/.env",
+    "/config/.env", "/shared/.env", "/public/.env",
+)
+
 
 class BotBlockerMiddleware:
     """
-    Immediately reject known scanner/bot paths (WordPress probes, etc.)
-    with a minimal 404 before any other processing.
+    Immediately reject known scanner/bot paths (WordPress probes,
+    environment file enumeration, etc.) with a minimal 404 before
+    any other processing.
     """
 
     def __init__(self, get_response):
@@ -55,11 +75,17 @@ class BotBlockerMiddleware:
 
     def __call__(self, request):
         path = request.path.lower()
+        # WordPress scanner probes
         if any(path.startswith(prefix) or path.startswith("/" + prefix.lstrip("/"))
                for prefix in _WP_SCANNER_PREFIXES):
             return HttpResponseNotFound("Not Found")
         # Also catch paths containing wp-includes or wp-admin deeper in the path
         if "/wp-admin/" in path or "/wp-includes/" in path or "/wp-login" in path:
+            return HttpResponseNotFound("Not Found")
+        # Environment/config file probes
+        if any(path.startswith(p) for p in _ENV_SCANNER_PATHS):
+            return HttpResponseNotFound("Not Found")
+        if any(path == p for p in _ENV_SUBPATH_PATTERNS):
             return HttpResponseNotFound("Not Found")
         return self.get_response(request)
 

@@ -554,6 +554,87 @@ def home_view(request):
         is_published=True
     ).prefetch_related('images')[:6]
 
+    # ── Semi-finals grouped by sport (ordered: Soccer M/W first) ──
+    from competitions.models import KnockoutRound
+    from collections import OrderedDict
+    import json as _json
+
+    SPORT_ORDER = [
+        'football_men', 'football_women',
+        'basketball_men', 'basketball_women',
+        'basketball_3x3_men', 'basketball_3x3_women',
+        'volleyball_men', 'volleyball_women',
+        'handball_men', 'handball_women',
+    ]
+    SPORT_ICONS = {
+        'football_men': 'bi-dribbble', 'football_women': 'bi-dribbble',
+        'basketball_men': 'bi-basketball', 'basketball_women': 'bi-basketball',
+        'basketball_3x3_men': 'bi-basketball', 'basketball_3x3_women': 'bi-basketball',
+        'volleyball_men': 'bi-globe2', 'volleyball_women': 'bi-globe2',
+        'handball_men': 'bi-hand-index-fill', 'handball_women': 'bi-hand-index-fill',
+    }
+
+    semi_fixtures = Fixture.objects.filter(
+        is_knockout=True,
+        knockout_round=KnockoutRound.SEMIFINAL,
+    ).select_related(
+        'competition', 'home_team', 'away_team', 'venue'
+    ).order_by('bracket_position')
+
+    # Also fetch finals
+    final_fixtures = Fixture.objects.filter(
+        is_knockout=True,
+        knockout_round__in=[KnockoutRound.FINAL, KnockoutRound.THIRD_PLACE],
+    ).select_related(
+        'competition', 'home_team', 'away_team', 'venue'
+    ).order_by('knockout_round')
+
+    # Build ordered dict: sport_type -> {label, semis[], final, icon}
+    semis_by_sport = OrderedDict()
+    for st in SPORT_ORDER:
+        sport_semis = [f for f in semi_fixtures if f.competition.sport_type == st]
+        sport_finals = [f for f in final_fixtures if f.competition.sport_type == st]
+        if sport_semis or sport_finals:
+            comp = sport_semis[0].competition if sport_semis else sport_finals[0].competition
+            semis_by_sport[st] = {
+                'label': comp.get_sport_type_display(),
+                'comp_id': comp.id,
+                'semis': sport_semis,
+                'final': next((f for f in sport_finals if f.knockout_round == KnockoutRound.FINAL), None),
+                'third_place': next((f for f in sport_finals if f.knockout_round == KnockoutRound.THIRD_PLACE), None),
+                'icon': SPORT_ICONS.get(st, 'bi-trophy'),
+                'both_done': all(f.status == 'completed' for f in sport_semis) and len(sport_semis) == 2,
+            }
+
+    # JSON data for JS toggle (lightweight)
+    semis_json = _json.dumps({
+        st: {
+            'label': info['label'],
+            'comp_id': info['comp_id'],
+            'icon': info['icon'],
+            'semis': [
+                {
+                    'id': f.id,
+                    'home': f.home_team.name,
+                    'away': f.away_team.name,
+                    'home_score': f.home_score,
+                    'away_score': f.away_score,
+                    'status': f.status,
+                    'minute': f.match_minute,
+                    'kickoff': f.kickoff_time.strftime('%H:%M') if f.kickoff_time else '',
+                    'date': f.match_date.strftime('%d %b') if f.match_date else '',
+                    'venue': f.venue.name if f.venue else 'TBD',
+                    'bracket': f.bracket_position,
+                    'winner': f.winner.name if f.winner else None,
+                }
+                for f in info['semis']
+            ],
+            'final_id': info['final'].id if info['final'] else None,
+            'both_done': info['both_done'],
+        }
+        for st, info in semis_by_sport.items()
+    })
+
     return render(request, 'public/home.html', {
         'active_page': 'home',
         'stats': stats,
@@ -561,6 +642,8 @@ def home_view(request):
         'recent_results': recent_results,
         'live_matches': live_matches,
         'pictorial_albums': pictorial_albums,
+        'semis_by_sport': semis_by_sport,
+        'semis_json': semis_json,
     })
 
 
@@ -4240,6 +4323,169 @@ def public_live_matches_view(request):
             'goals': goals,
         })
     return JsonResponse({'live_matches': data})
+
+
+@role_required('coordinator', 'admin')
+@require_POST
+def coordinator_generate_semis_view(request, pk):
+    """
+    Auto-generate semi-final fixtures based on pool standings.
+    Standard bracket: Semi 1 = A1 vs B2, Semi 2 = B1 vs A2.
+    For 3+ pools: top teams from each pool advance and are seeded.
+    """
+    from competitions.models import (
+        Competition, Pool, PoolTeam, Fixture, FixtureStatus, KnockoutRound, Venue,
+    )
+    from matches.stats_engine import sort_pool_standings
+    from datetime import datetime
+
+    competition = get_object_or_404(Competition, pk=pk)
+    discipline = _coordinator_discipline(request.user)
+    if discipline and competition.sport_type not in _coordinator_variants(discipline) and not request.user.is_superuser:
+        messages.error(request, 'This competition is not in your discipline.')
+        return redirect('coordinator_dashboard')
+
+    pools = list(
+        Pool.objects.filter(competition=competition)
+        .prefetch_related('pool_teams__team')
+        .order_by('name')
+    )
+
+    if len(pools) < 2:
+        messages.error(request, 'Need at least 2 pools to generate semi-finals.')
+        return redirect('coordinator_competition_manage', pk=pk)
+
+    # Check all pools have completed fixtures
+    for pool in pools:
+        pool_fixtures = Fixture.objects.filter(competition=competition, pool=pool, is_knockout=False)
+        completed = pool_fixtures.filter(status='completed').count()
+        total = pool_fixtures.count()
+        if total == 0:
+            messages.error(request, f'{pool.name} has no fixtures. Play group stage first.')
+            return redirect('coordinator_competition_manage', pk=pk)
+        if completed < total:
+            uncompleted = total - completed
+            messages.warning(
+                request,
+                f'{pool.name} has {uncompleted} incomplete fixture(s). '
+                f'Semi-finals will be generated from current standings.'
+            )
+
+    # Get sorted standings per pool
+    pool_rankings = []
+    for pool in pools:
+        sorted_teams = sort_pool_standings(pool.pool_teams.all(), competition.sport_type)
+        pool_rankings.append({
+            'pool': pool,
+            'teams': sorted_teams,
+        })
+
+    # Standard 2-pool bracket: Semi 1 = A1 vs B2, Semi 2 = B1 vs A2
+    if len(pools) == 2:
+        a_teams = pool_rankings[0]['teams']
+        b_teams = pool_rankings[1]['teams']
+        if len(a_teams) < 2 or len(b_teams) < 2:
+            messages.error(request, 'Each pool must have at least 2 teams for semi-finals.')
+            return redirect('coordinator_competition_manage', pk=pk)
+
+        matchups = [
+            (a_teams[0].team, b_teams[1].team, 1),  # Semi 1: A1 vs B2
+            (b_teams[0].team, a_teams[1].team, 2),  # Semi 2: B1 vs A2
+        ]
+    else:
+        # 3+ pools: take top team from each pool, seed by points
+        top_teams = []
+        for pr in pool_rankings:
+            if pr['teams']:
+                top_teams.append(pr['teams'][0])
+        top_teams.sort(key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for), reverse=True)
+        if len(top_teams) < 4:
+            # Also take runners-up
+            for pr in pool_rankings:
+                if len(pr['teams']) >= 2:
+                    top_teams.append(pr['teams'][1])
+            top_teams.sort(key=lambda pt: (pt.points, pt.goal_difference, pt.goals_for), reverse=True)
+        teams_list = [pt.team for pt in top_teams[:4]]
+        if len(teams_list) < 4:
+            messages.error(request, 'Not enough qualifying teams for semi-finals.')
+            return redirect('coordinator_competition_manage', pk=pk)
+        matchups = [
+            (teams_list[0], teams_list[3], 1),  # #1 seed vs #4 seed
+            (teams_list[1], teams_list[2], 2),  # #2 seed vs #3 seed
+        ]
+
+    # Parse date/time from form
+    match_date_str = request.POST.get('semi_date', '').strip()
+    kickoff_time_str = request.POST.get('semi_time', '09:00').strip()
+    venue_name = request.POST.get('semi_venue', '').strip()
+
+    try:
+        match_date = datetime.strptime(match_date_str, '%Y-%m-%d').date() if match_date_str else timezone.now().date()
+    except ValueError:
+        match_date = timezone.now().date()
+
+    try:
+        kickoff_time = datetime.strptime(kickoff_time_str, '%H:%M').time()
+    except ValueError:
+        from datetime import time as dt_time
+        kickoff_time = dt_time(9, 0)
+
+    venue = _resolve_venue_by_name(venue_name)
+
+    # Check for existing semi-final fixtures to avoid duplicates
+    existing_semis = Fixture.objects.filter(
+        competition=competition,
+        is_knockout=True,
+        knockout_round=KnockoutRound.SEMIFINAL,
+    )
+    if existing_semis.exists():
+        messages.warning(
+            request,
+            f'{existing_semis.count()} semi-final fixture(s) already exist. '
+            f'Delete them first if you want to regenerate.'
+        )
+        return redirect('coordinator_competition_manage', pk=pk)
+
+    # Create the semi-final fixtures
+    created = []
+    for home_team, away_team, bracket_pos in matchups:
+        fixture = Fixture.objects.create(
+            competition=competition,
+            home_team=home_team,
+            away_team=away_team,
+            match_date=match_date,
+            kickoff_time=kickoff_time,
+            venue=venue,
+            is_knockout=True,
+            knockout_round=KnockoutRound.SEMIFINAL,
+            bracket_position=bracket_pos,
+            status=FixtureStatus.PENDING,
+            created_by=request.user,
+        )
+        created.append(fixture)
+        try:
+            from accounts.notifications import notify_fixture_update
+            notify_fixture_update(fixture, action='created')
+        except Exception:
+            pass
+
+    _clear_public_fixture_cache()
+
+    semi_descriptions = []
+    for i, (home, away, _) in enumerate(matchups, 1):
+        semi_descriptions.append(f'Semi {i}: {home.name} vs {away.name}')
+
+    messages.success(
+        request,
+        f'{len(created)} semi-final fixture(s) created: {"; ".join(semi_descriptions)}'
+    )
+
+    # Auto-advance competition status to knockout stage
+    if competition.status in ('upcoming', 'group_stage', 'active'):
+        competition.status = CompetitionStatus.KNOCKOUT
+        competition.save(update_fields=['status'])
+
+    return redirect('coordinator_competition_manage', pk=pk)
 
 
 @role_required('coordinator', 'admin')

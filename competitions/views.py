@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from drf_spectacular.utils import extend_schema
 
-from .models import Competition, Venue, Pool, PoolTeam, Fixture
+from .models import Competition, Venue, Pool, PoolTeam, Fixture, KnockoutRound, FixtureStatus
 from .serializers import (
     CompetitionSerializer, VenueSerializer,
     PoolSerializer, PoolTeamSerializer, FixtureSerializer,
@@ -29,13 +29,66 @@ class CompetitionViewSet(ModelViewSet):
     ordering_fields  = ["start_date", "name"]
 
     def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            return [permissions.IsAuthenticated()]
+        if self.action in ("list", "retrieve", "auto_create_final"):
+            return [permissions.AllowAny()]
         return [IsCompetitionManager()]
 
     @extend_schema(tags=["competitions"])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"], url_path="auto-create-final")
+    def auto_create_final(self, request, pk=None):
+        """Auto-create Final + 3rd-place fixtures when both semis are completed."""
+        comp = self.get_object()
+        semis = Fixture.objects.filter(
+            competition=comp,
+            is_knockout=True,
+            knockout_round=KnockoutRound.SEMIFINAL,
+        ).select_related("winner")
+
+        if semis.count() < 2:
+            return Response({"detail": "Less than 2 semi-finals found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not all(s.status == FixtureStatus.COMPLETED and s.winner for s in semis):
+            return Response({"detail": "Not all semi-finals completed yet."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if final already exists
+        if Fixture.objects.filter(competition=comp, is_knockout=True, knockout_round=KnockoutRound.FINAL).exists():
+            return Response({"detail": "Final already exists."}, status=status.HTTP_200_OK)
+
+        semis = list(semis.order_by("bracket_position"))
+        winners = [s.winner for s in semis]
+        losers = []
+        for s in semis:
+            losers.append(s.away_team if s.winner == s.home_team else s.home_team)
+
+        ref_semi = semis[0]
+        final = Fixture.objects.create(
+            competition=comp,
+            home_team=winners[0],
+            away_team=winners[1],
+            match_date=ref_semi.match_date,
+            kickoff_time="14:00",
+            is_knockout=True,
+            knockout_round=KnockoutRound.FINAL,
+            bracket_position=1,
+        )
+        third = Fixture.objects.create(
+            competition=comp,
+            home_team=losers[0],
+            away_team=losers[1],
+            match_date=ref_semi.match_date,
+            kickoff_time="12:00",
+            is_knockout=True,
+            knockout_round=KnockoutRound.THIRD_PLACE,
+            bracket_position=1,
+        )
+        return Response({
+            "detail": "Final and 3rd-place match created.",
+            "final_id": final.pk,
+            "third_place_id": third.pk,
+        }, status=status.HTTP_201_CREATED)
 
 
 # ── VENUE ─────────────────────────────────────────────────────────────────────
