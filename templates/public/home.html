@@ -1941,11 +1941,11 @@ a.hero-feat--link {
                 </div>
             </div>
 
-            <!-- Semi-Finals Showcase Card -->
+            <!-- Finals Showcase Card -->
             {% if semis_by_sport %}
             <div class="hero-semis-card" id="hscCard">
                 <div class="hsc-header">
-                    <span class="hsc-badge"><span class="pulse-dot"></span> Semi-Finals</span>
+                    <span class="hsc-badge"><span class="pulse-dot"></span> Finals</span>
                     <span class="hsc-title">County Finals 2026</span>
                 </div>
                 <!-- Sport toggle pills -->
@@ -1959,7 +1959,7 @@ a.hero-feat--link {
                 <div class="hsc-body" id="hscBody">
                     {% for sport, info in semis_by_sport.items %}
                     <div class="hsc-panel" data-sport="{{ sport }}" {% if not forloop.first %}style="display:none;"{% endif %}>
-                        <div class="hsc-sport-label"><i class="bi bi-trophy-fill"></i> {{ info.label }} Semi-Finals</div>
+                        <div class="hsc-sport-label"><i class="bi bi-trophy-fill"></i> {{ info.label }} — Knockout Stage</div>
                         {% for semi in info.semis %}
                         <div class="hsc-match{% if semi.status == 'live' %} hsc-match--live{% endif %}">
                             <span class="hsc-match-label">SF{{ semi.bracket_position|default:forloop.counter }}</span>
