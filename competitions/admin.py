@@ -39,7 +39,7 @@ class PoolAdmin(admin.ModelAdmin):
 class FixtureAdmin(admin.ModelAdmin):
     list_display  = ["__str__", "competition", "match_date", "kickoff_time", "venue", "status", "is_knockout", "knockout_round"]
     list_filter   = ["status", "competition", "match_date", "is_knockout", "knockout_round"]
-    search_fields = ["home_team__name", "away_team__name"]
+    search_fields = ["home_team__name", "away_team__name", "competition__name", "status", "knockout_round", "venue__name"]
     date_hierarchy = "match_date"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
