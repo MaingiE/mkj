@@ -40,11 +40,13 @@
 
         {% if fixture.status == 'live' %}
         <div style="display:flex;justify-content:center;gap:1.5rem;font-size:.8rem;color:rgba(255,255,255,.6);">
-            <span>Half: {{ fixture.live_half }}</span>
+            <span>{{ fixture.match_period_display }}</span>
             <span>&middot;</span>
             <span id="lmClock">
                 {% if fixture.live_paused %}
-                    PAUSED
+                    {% if is_in_penalties %}PENALTIES{% else %}PAUSED{% endif %}
+                {% elif is_in_penalties %}
+                    PENALTIES
                 {% else %}
                     <span class="match-timer" data-started="{{ fixture.live_started_at|date:'c' }}">--'</span>
                 {% endif %}
@@ -54,6 +56,15 @@
             <span>+{{ fixture.live_extra_minutes }} added</span>
             {% endif %}
         </div>
+        {% if is_in_penalties %}
+        <!-- Penalty Shootout Score Display -->
+        <div style="margin-top:.8rem;padding:.6rem 1.5rem;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);border-radius:12px;display:inline-block;">
+            <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#FFD54F;margin-bottom:.3rem;">Penalty Shootout</div>
+            <div style="font-size:1.5rem;font-weight:900;font-family:'Outfit',sans-serif;color:#FFD54F;">
+                {{ fixture.home_penalties|default:"0" }} &ndash; {{ fixture.away_penalties|default:"0" }}
+            </div>
+        </div>
+        {% endif %}
         <!-- Scorer summary under score -->
         {% if home_goals or away_goals %}
         <div style="display:flex;justify-content:center;gap:3rem;margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.55);">
@@ -372,11 +383,40 @@
         {% endif %}
 
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <!--  MATCH INFO: ADDED TIME & MANUAL SCORE CORRECTION          -->
+        <!--  MATCH INFO: PERIOD, ADDED TIME & MANUAL SCORE CORRECTION  -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="row g-3 mb-3">
+            <!-- Current Period -->
+            <div class="col-md-4">
+                <div class="card" style="border-radius:12px;">
+                    <div class="card-body" style="padding:1rem;">
+                        <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;"><i class="bi bi-clock-history"></i> Current Period</h6>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_match_info">
+                            <input type="hidden" name="added_time" value="{{ fixture.live_extra_minutes|default:0 }}">
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <label class="form-label" style="font-size:.72rem;">Period / Half</label>
+                                    <select name="live_half" class="form-select form-select-sm">
+                                        {% for val, label in period_choices %}
+                                        <option value="{{ val }}" {% if val == fixture.live_half %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">Set</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div style="font-size:.62rem;color:#999;margin-top:.4rem;">
+                            Now: <strong>{{ fixture.match_period_display }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Added Time -->
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card" style="border-radius:12px;">
                     <div class="card-body" style="padding:1rem;">
                         <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;"><i class="bi bi-stopwatch"></i> Added / Injury Time</h6>
@@ -397,7 +437,7 @@
                 </div>
             </div>
             <!-- Manual Score Override -->
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card" style="border-radius:12px;">
                     <div class="card-body" style="padding:1rem;">
                         <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;"><i class="bi bi-pencil-square"></i> Manual Score Correction</h6>
@@ -425,28 +465,86 @@
 
         <!-- Match Flow Controls -->
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;">
-            {% if fixture.live_half == 1 and not fixture.live_paused %}
+
+            {% if not is_in_penalties %}
+            <!-- ── Normal Period Flow ── -->
+            {% if fixture.live_half <= normal_periods and not fixture.live_paused %}
             <form method="post" style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="half_time">
                 <button type="submit" class="btn btn-warning" style="border-radius:50px;font-weight:600;">
-                    <i class="bi bi-pause-circle"></i> Half Time
+                    <i class="bi bi-pause-circle"></i> End {{ fixture.match_period_label }}
                 </button>
             </form>
             {% endif %}
 
-            {% if fixture.live_paused and fixture.live_half == 2 or fixture.live_half == 1 and fixture.live_paused %}
-            {% if fixture.live_half == 1 %}
+            {% if fixture.live_paused and fixture.live_half <= normal_periods %}
             <form method="post" style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="second_half">
                 <button type="submit" class="btn btn-info text-white" style="border-radius:50px;font-weight:600;">
-                    <i class="bi bi-play-circle"></i> Start 2nd Half
+                    <i class="bi bi-play-circle"></i> Start Next Period
                 </button>
             </form>
             {% endif %}
+
+            <!-- ── Extra Time Flow (Knockout only) ── -->
+            {% if fixture.is_knockout and sport_cfg.has_extra_time %}
+                {% if is_last_normal_period and fixture.live_paused and is_knockout_draw and not is_et_first and not is_et_second %}
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="start_extra_time">
+                    <button type="submit" class="btn btn-purple text-white" style="border-radius:50px;font-weight:600;background:#7b1fa2;border-color:#7b1fa2;">
+                        <i class="bi bi-clock-history"></i> Start Extra Time
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if is_et_first and not fixture.live_paused %}
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="et_half_time">
+                    <button type="submit" class="btn btn-warning" style="border-radius:50px;font-weight:600;">
+                        <i class="bi bi-pause-circle"></i> ET Half Time
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if is_et_second and fixture.live_paused %}
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="start_et_second">
+                    <button type="submit" class="btn btn-info text-white" style="border-radius:50px;font-weight:600;">
+                        <i class="bi bi-play-circle"></i> Start ET 2nd Half
+                    </button>
+                </form>
+                {% endif %}
             {% endif %}
 
+            <!-- ── Penalty Shootout (Knockout draw after ET) ── -->
+            {% if fixture.is_knockout and sport_cfg.has_penalties %}
+                {% if is_et_second and fixture.live_paused and is_knockout_draw %}
+                <form method="post" style="display:inline;" onsubmit="return confirm('Start penalty shootout?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="start_penalties">
+                    <button type="submit" class="btn text-white" style="border-radius:50px;font-weight:600;background:#e65100;border-color:#e65100;">
+                        <i class="bi bi-bullseye"></i> Start Penalties
+                    </button>
+                </form>
+                {% endif %}
+                <!-- Also allow penalties directly from FT if no ET configured or coordinator wants to skip -->
+                {% if is_last_normal_period and fixture.live_paused and is_knockout_draw and not sport_cfg.has_extra_time %}
+                <form method="post" style="display:inline;" onsubmit="return confirm('Start penalty shootout?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="start_penalties">
+                    <button type="submit" class="btn text-white" style="border-radius:50px;font-weight:600;background:#e65100;border-color:#e65100;">
+                        <i class="bi bi-bullseye"></i> Start Penalties
+                    </button>
+                </form>
+                {% endif %}
+            {% endif %}
+
+            <!-- ── Pause / Resume ── -->
             {% if not fixture.live_paused %}
             <form method="post" style="display:inline;">
                 {% csrf_token %}
@@ -455,7 +553,7 @@
                     <i class="bi bi-pause-fill"></i> Pause
                 </button>
             </form>
-            {% else %}
+            {% elif not is_last_normal_period or not is_knockout_draw %}
             <form method="post" style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="resume">
@@ -464,7 +562,62 @@
                 </button>
             </form>
             {% endif %}
+            {% endif %}
 
+            <!-- ── Penalty Shootout Controls ── -->
+            {% if is_in_penalties %}
+            <div class="w-100"></div>
+            <div class="card w-100 mb-2" style="border:2px solid #e65100;border-radius:14px;overflow:hidden;">
+                <div class="card-header" style="background:#e65100;color:#fff;padding:.6rem 1rem;text-align:center;">
+                    <h6 style="font-size:.85rem;font-weight:700;margin:0;"><i class="bi bi-bullseye"></i> Penalty Shootout</h6>
+                </div>
+                <div class="card-body" style="padding:1rem;">
+                    <!-- Quick +1 buttons -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6 text-center">
+                            <div style="font-size:.72rem;font-weight:600;color:#888;margin-bottom:.3rem;">{{ fixture.home_team.name }}</div>
+                            <div style="font-size:2rem;font-weight:900;font-family:'Outfit',sans-serif;color:#e65100;margin-bottom:.3rem;">{{ fixture.home_penalties|default:"0" }}</div>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="penalty_goal">
+                                <input type="hidden" name="team_side" value="home">
+                                <button type="submit" class="btn btn-success btn-sm" style="border-radius:8px;font-weight:600;"><i class="bi bi-check-circle"></i> Scored</button>
+                            </form>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div style="font-size:.72rem;font-weight:600;color:#888;margin-bottom:.3rem;">{{ fixture.away_team.name }}</div>
+                            <div style="font-size:2rem;font-weight:900;font-family:'Outfit',sans-serif;color:#e65100;margin-bottom:.3rem;">{{ fixture.away_penalties|default:"0" }}</div>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="penalty_goal">
+                                <input type="hidden" name="team_side" value="away">
+                                <button type="submit" class="btn btn-success btn-sm" style="border-radius:8px;font-weight:600;"><i class="bi bi-check-circle"></i> Scored</button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Manual correction -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_penalties">
+                        <div class="row g-2 align-items-end">
+                            <div class="col">
+                                <label class="form-label" style="font-size:.68rem;font-weight:600;">{{ fixture.home_team.name }}</label>
+                                <input type="number" name="home_penalties" class="form-control form-control-sm" value="{{ fixture.home_penalties|default:0 }}" min="0">
+                            </div>
+                            <div class="col">
+                                <label class="form-label" style="font-size:.68rem;font-weight:600;">{{ fixture.away_team.name }}</label>
+                                <input type="number" name="away_penalties" class="form-control form-control-sm" value="{{ fixture.away_penalties|default:0 }}" min="0">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">Correct</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ── End Match ── -->
             <form method="post" style="display:inline;" onsubmit="return confirm('End this match? The final score will be saved and standings updated.');">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="end_match">

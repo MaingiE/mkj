@@ -45,7 +45,7 @@ from .web_views import (
     public_fixtures_results_view,
     public_competition_detail_view, public_results_view,
     public_statistics_view, public_competition_standings_view,
-    public_live_matches_view,
+    public_live_matches_view, public_live_matches_page_view,
     contact_view, public_gallery_view,
     # SEO
     robots_txt_view, sitemap_xml_view,
@@ -229,6 +229,7 @@ urlpatterns = [
     path("results/competitions/<int:pk>/standings/", public_competition_standings_view, name="public_competition_standings"),
     path("contact/",                      contact_view,                   name="contact"),
     path("gallery/",                      public_gallery_view,            name="public_gallery"),
+    path("live/",                         public_live_matches_page_view,  name="public_live_matches"),
     path("api/live-matches/",             public_live_matches_view,       name="public_live_matches_api"),
 
     # ── NEWS & MEDIA ──────────────────────────────────────────────────────────

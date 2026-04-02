@@ -1062,3 +1062,79 @@ def admin_override_transfer(request, transfer_id):
     """Placeholder: Transfer override (future feature)."""
     messages.info(request, "Transfer system coming soon.")
     return redirect('dashboard')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#   FIXTURES MANAGEMENT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@login_required
+@user_passes_test(admin_required)
+def manage_fixtures(request):
+    """Full fixture list with search, status filter, sport filter, and knockout filter."""
+    from competitions.models import FixtureStatus, KnockoutRound
+
+    qs = Fixture.objects.select_related(
+        'competition', 'home_team', 'away_team', 'venue', 'winner'
+    ).order_by('-match_date', '-kickoff_time')
+
+    # ── Filters ──
+    search = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '')
+    sport_filter = request.GET.get('sport', '')
+    knockout_filter = request.GET.get('knockout', '')
+    date_filter = request.GET.get('date', '')
+
+    if search:
+        qs = qs.filter(
+            Q(home_team__name__icontains=search) |
+            Q(away_team__name__icontains=search) |
+            Q(competition__name__icontains=search) |
+            Q(venue__name__icontains=search)
+        )
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if sport_filter:
+        qs = qs.filter(competition__sport_type=sport_filter)
+    if knockout_filter == 'yes':
+        qs = qs.filter(is_knockout=True)
+    elif knockout_filter == 'no':
+        qs = qs.filter(is_knockout=False)
+    if date_filter:
+        qs = qs.filter(match_date=date_filter)
+
+    # ── Summary counts ──
+    all_fixtures = Fixture.objects.all()
+    counts = {
+        'total': all_fixtures.count(),
+        'live': all_fixtures.filter(status='live').count(),
+        'pending': all_fixtures.filter(status='pending').count(),
+        'completed': all_fixtures.filter(status='completed').count(),
+        'knockout': all_fixtures.filter(is_knockout=True).count(),
+    }
+
+    # ── Sport type choices for filter dropdown ──
+    sport_choices = Competition.objects.values_list(
+        'sport_type', flat=True
+    ).distinct().order_by('sport_type')
+    sport_labels = []
+    for st in sport_choices:
+        try:
+            label = Competition.objects.filter(sport_type=st).first().get_sport_type_display()
+        except Exception:
+            label = st
+        sport_labels.append((st, label))
+
+    context = {
+        'fixtures': qs[:200],
+        'counts': counts,
+        'search': search,
+        'status_filter': status_filter,
+        'sport_filter': sport_filter,
+        'knockout_filter': knockout_filter,
+        'date_filter': date_filter,
+        'status_choices': FixtureStatus.choices,
+        'sport_labels': sport_labels,
+        'knockout_round_display': dict(KnockoutRound.choices),
+    }
+    return render(request, 'admin_dashboard/manage_fixtures.html', context)

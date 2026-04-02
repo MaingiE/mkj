@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fixture Manager - Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ── */
+.fx-mgr { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem; }
+.fx-mgr h1 { font-size: 1.6rem; font-weight: 800; color: #0d2137; margin-bottom: .3rem; }
+.fx-mgr .subtitle { color: #666; font-size: .85rem; margin-bottom: 1.5rem; }
+
+/* ── Stat Cards ── */
+.fx-stats { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+.fx-stat {
+    flex: 1; min-width: 120px; padding: .8rem 1rem;
+    background: #fff; border-radius: 12px;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    text-align: center;
+}
+.fx-stat__num { font-size: 1.6rem; font-weight: 800; color: #124491; }
+.fx-stat__label { font-size: .7rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+.fx-stat--live .fx-stat__num { color: #C62828; }
+.fx-stat--pending .fx-stat__num { color: #F57F17; }
+.fx-stat--done .fx-stat__num { color: #2E7D32; }
+.fx-stat--ko .fx-stat__num { color: #6A1B9A; }
+
+/* ── Filter Bar ── */
+.fx-filter {
+    display: flex; flex-wrap: wrap; gap: .6rem; align-items: center;
+    padding: 1rem; background: #fff; border-radius: 12px;
+    border: 1px solid #e8e8e8; margin-bottom: 1.2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.fx-filter input[type="text"],
+.fx-filter input[type="date"],
+.fx-filter select {
+    padding: .45rem .65rem; border: 1px solid #ddd; border-radius: 8px;
+    font-size: .8rem; background: #fafafa; color: #333;
+    outline: none; transition: border-color .2s;
+}
+.fx-filter input:focus, .fx-filter select:focus { border-color: #124491; }
+.fx-filter input[type="text"] { flex: 1; min-width: 180px; }
+.fx-filter .btn-filter {
+    padding: .45rem .9rem; background: #124491; color: #fff;
+    border: none; border-radius: 8px; font-size: .78rem; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+}
+.fx-filter .btn-filter:hover { background: #0d3570; }
+.fx-filter .btn-clear {
+    padding: .45rem .7rem; background: #f5f5f5; color: #666;
+    border: 1px solid #ddd; border-radius: 8px; font-size: .78rem;
+    cursor: pointer; text-decoration: none; transition: all .2s;
+}
+.fx-filter .btn-clear:hover { background: #eee; color: #333; }
+
+/* ── Table ── */
+.fx-table-wrap {
+    background: #fff; border-radius: 12px;
+    border: 1px solid #e8e8e8; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.fx-table {
+    width: 100%; border-collapse: collapse; font-size: .8rem;
+}
+.fx-table th {
+    background: #f8f9fa; padding: .65rem .8rem;
+    font-size: .68rem; font-weight: 700; color: #666;
+    text-transform: uppercase; letter-spacing: .5px;
+    text-align: left; border-bottom: 1px solid #e8e8e8;
+}
+.fx-table td {
+    padding: .6rem .8rem; border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle; color: #333;
+}
+.fx-table tbody tr:hover { background: #f8fafd; }
+.fx-table .teams-cell { font-weight: 600; }
+.fx-table .comp-cell { font-size: .72rem; color: #666; }
+.fx-table .date-cell { white-space: nowrap; font-size: .75rem; }
+.fx-table .score-cell { font-weight: 700; text-align: center; min-width: 50px; }
+
+/* Status badges */
+.fx-badge {
+    display: inline-block; padding: .15rem .5rem; border-radius: 50px;
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+}
+.fx-badge--live { background: #FFEBEE; color: #C62828; }
+.fx-badge--pending { background: #FFF8E1; color: #F57F17; }
+.fx-badge--confirmed { background: #E3F2FD; color: #1565C0; }
+.fx-badge--completed { background: #E8F5E9; color: #2E7D32; }
+.fx-badge--postponed { background: #FFF3E0; color: #E65100; }
+.fx-badge--cancelled { background: #ECEFF1; color: #455A64; }
+.fx-badge--ko { background: #F3E5F5; color: #6A1B9A; }
+
+/* Live row pulse */
+.fx-row--live { background: #fffafa; }
+.fx-row--live td:first-child { border-left: 3px solid #C62828; }
+
+/* ── Empty state ── */
+.fx-empty { text-align: center; padding: 3rem 1rem; color: #999; }
+.fx-empty i { font-size: 2.5rem; margin-bottom: .5rem; display: block; color: #ddd; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .fx-stats { gap: .4rem; }
+    .fx-stat { min-width: 80px; padding: .5rem .6rem; }
+    .fx-stat__num { font-size: 1.2rem; }
+    .fx-filter { flex-direction: column; }
+    .fx-table-wrap { overflow-x: auto; }
+    .fx-table { min-width: 700px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fx-mgr">
+    <h1><i class="bi bi-calendar-event"></i> Fixture Manager</h1>
+    <p class="subtitle">Search, filter, and manage all fixtures across competitions</p>
+
+    <!-- Summary Stats -->
+    <div class="fx-stats">
+        <div class="fx-stat">
+            <div class="fx-stat__num">{{ counts.total }}</div>
+            <div class="fx-stat__label">Total</div>
+        </div>
+        <div class="fx-stat fx-stat--live">
+            <div class="fx-stat__num">{{ counts.live }}</div>
+            <div class="fx-stat__label">Live Now</div>
+        </div>
+        <div class="fx-stat fx-stat--pending">
+            <div class="fx-stat__num">{{ counts.pending }}</div>
+            <div class="fx-stat__label">Pending</div>
+        </div>
+        <div class="fx-stat fx-stat--done">
+            <div class="fx-stat__num">{{ counts.completed }}</div>
+            <div class="fx-stat__label">Completed</div>
+        </div>
+        <div class="fx-stat fx-stat--ko">
+            <div class="fx-stat__num">{{ counts.knockout }}</div>
+            <div class="fx-stat__label">Knockouts</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <form class="fx-filter" method="get" action="">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search team, competition, venue...">
+        <select name="status">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="sport">
+            <option value="">All Sports</option>
+            {% for val, label in sport_labels %}
+            <option value="{{ val }}" {% if sport_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="knockout">
+            <option value="">All Types</option>
+            <option value="yes" {% if knockout_filter == 'yes' %}selected{% endif %}>Knockout Only</option>
+            <option value="no" {% if knockout_filter == 'no' %}selected{% endif %}>Group Only</option>
+        </select>
+        <input type="date" name="date" value="{{ date_filter }}">
+        <button type="submit" class="btn-filter"><i class="bi bi-search"></i> Filter</button>
+        <a href="{% url 'manage_fixtures' %}" class="btn-clear"><i class="bi bi-x-lg"></i> Clear</a>
+    </form>
+
+    <!-- Fixtures Table -->
+    <div class="fx-table-wrap">
+        <table class="fx-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Match</th>
+                    <th>Competition</th>
+                    <th>Score</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Venue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fx in fixtures %}
+                <tr class="{% if fx.status == 'live' %}fx-row--live{% endif %}">
+                    <td>
+                        <span class="fx-badge fx-badge--{{ fx.status }}">
+                            {% if fx.status == 'live' %}<i class="bi bi-broadcast" style="margin-right:.2rem;"></i>{% endif %}
+                            {{ fx.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="teams-cell">
+                        {{ fx.home_team.name }}
+                        <span style="color:#999;font-weight:400;margin:0 .2rem;">vs</span>
+                        {{ fx.away_team.name }}
+                        {% if fx.winner %}
+                        <br><span style="font-size:.65rem;color:#2E7D32;font-weight:400;">Winner: {{ fx.winner.name }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="comp-cell">{{ fx.competition.name|truncatechars:30 }}</td>
+                    <td class="score-cell">
+                        {% if fx.status == 'completed' or fx.status == 'live' %}
+                            {{ fx.home_score|default:"0" }} - {{ fx.away_score|default:"0" }}
+                        {% else %}
+                            <span style="color:#ccc;">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="date-cell">{{ fx.match_date|date:"d M Y" }}</td>
+                    <td class="date-cell">{{ fx.kickoff_time|time:"H:i" }}</td>
+                    <td>
+                        {% if fx.is_knockout %}
+                            <span class="fx-badge fx-badge--ko">{{ fx.get_knockout_round_display|default:"KO" }}</span>
+                        {% else %}
+                            <span style="font-size:.7rem;color:#888;">Group{% if fx.pool %} · {{ fx.pool.name }}{% endif %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.75rem;color:#666;">{{ fx.venue.name|default:"TBD" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="fx-empty">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>No fixtures match your filters</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

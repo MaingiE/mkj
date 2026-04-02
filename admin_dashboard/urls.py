@@ -21,6 +21,7 @@ urlpatterns = [
     path('view-report/<int:report_id>/', views.view_report, name='view_report'),
     path('generate-fixtures/', admin_views.generate_fixtures_admin, name='generate_fixtures_admin'),
     path('reschedule-fixtures/', reschedule_admin_views.reschedule_fixtures_admin, name='reschedule_fixtures_admin'),
+    path('fixtures/', views.manage_fixtures, name='manage_fixtures'),
     
     # Activity Logs
     path('activity-logs/', activity_views.activity_logs, name='activity_logs'),

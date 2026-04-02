@@ -2165,16 +2165,19 @@ a.hero-feat--link {
                     <span class="live-card__team">{{ match.away_team.name }}</span>
                 </div>
                 <div class="live-card__bottom">
-                    {% if match.match_minute is not None %}
+                    {% if match.is_in_penalties %}
+                    <span class="live-card__minute"><span class="min-dot"></span> PEN {{ match.home_penalties|default:"0" }}-{{ match.away_penalties|default:"0" }}</span>
+                    {% elif match.match_minute is not None %}
                     <span class="live-card__minute"><span class="min-dot"></span> {{ match.match_minute }}'</span>
                     {% endif %}
+                    <span style="font-size:.55rem;color:rgba(255,255,255,.5);margin-left:.3rem;">{{ match.match_period_display }}</span>
                 </div>
                 <div class="live-card__venue"><i class="bi bi-geo-alt-fill"></i> {{ match.venue.name|default:"TBD" }}</div>
             </div>
             {% endfor %}
         </div>
         <div class="live-banner__follow">
-            <a href="{% url 'public_fixtures_results' %}">
+            <a href="{% url 'public_live_matches' %}">
                 Follow Live Matches <i class="bi bi-arrow-right arrow-bounce"></i>
             </a>
         </div>
@@ -2275,10 +2278,12 @@ a.hero-feat--link {
                 {% for match in live_matches %}
                 <div class="ffp-match ffp-match--live">
                     <div class="ffp-live-badge">
-                        <span class="ffp-live-dot"></span> LIVE
+                        <span class="ffp-live-dot"></span>
+                        {% if match.is_in_penalties %}PEN{% else %}LIVE{% endif %}
                         {% if match.match_minute is not None %}
                         <span class="ffp-match-minute">{{ match.match_minute }}'</span>
                         {% endif %}
+                        <span style="font-size:.55rem;opacity:.7;margin-left:.15rem;">{{ match.match_period_display }}</span>
                     </div>
                     <div class="ffp-match-comp">{{ match.competition.name }}</div>
                     <div class="ffp-match-teams">
@@ -2286,6 +2291,11 @@ a.hero-feat--link {
                         <span class="ffp-score" style="background:#fff0f0;color:#dc3545;">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>
                         <span>{{ match.away_team.name }}</span>
                     </div>
+                    {% if match.is_in_penalties %}
+                    <div style="text-align:center;font-size:.7rem;font-weight:700;color:#e65100;margin:.2rem 0;">
+                        Penalties: {{ match.home_penalties|default:"0" }} - {{ match.away_penalties|default:"0" }}
+                    </div>
+                    {% endif %}
                     {% with match.live_goals.all as goals %}
                     {% if goals %}
                     <div style="display:flex;justify-content:center;gap:2rem;font-size:.65rem;color:#888;margin-top:.25rem;">
@@ -2347,7 +2357,7 @@ a.hero-feat--link {
             </div>
         </div>
         <div class="ffp-footer">
-            <a href="{% url 'public_fixtures_results' %}">
+            <a href="{% url 'public_live_matches' %}" id="ffViewAllLink">
                 View All
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -2419,6 +2429,9 @@ a.hero-feat--link {
         var ffLive = document.getElementById('ffLive');
         var ffFixtures = document.getElementById('ffFixtures');
         var ffResults = document.getElementById('ffResults');
+        var ffViewAllLink = document.getElementById('ffViewAllLink');
+        var liveUrl = "{% url 'public_live_matches' %}";
+        var fixturesUrl = "{% url 'public_fixtures_results' %}";
         tabs.forEach(function(tab){
             tab.addEventListener('click', function(){
                 tabs.forEach(function(t){ t.classList.remove('active'); });
@@ -2427,6 +2440,7 @@ a.hero-feat--link {
                 if (ffLive) ffLive.style.display = which === 'live' ? '' : 'none';
                 if (ffFixtures) ffFixtures.style.display = which === 'fixtures' ? '' : 'none';
                 if (ffResults) ffResults.style.display = which === 'results' ? '' : 'none';
+                if (ffViewAllLink) ffViewAllLink.href = which === 'live' ? liveUrl : fixturesUrl;
             });
         });
 
@@ -2444,13 +2458,18 @@ a.hero-feat--link {
                         var html = '';
                         matches.forEach(function(m){
                             html += '<div class="ffp-match ffp-match--live">';
-                            html += '<div class="ffp-live-badge"><span class="ffp-live-dot"></span> LIVE';
+                            html += '<div class="ffp-live-badge"><span class="ffp-live-dot"></span> ';
+                            html += m.is_in_penalties ? 'PEN' : 'LIVE';
                             if (m.match_minute !== null) html += ' <span class="ffp-match-minute">' + m.match_minute + "'" + '</span>';
+                            if (m.period_display) html += ' <span style="font-size:.55rem;opacity:.7;margin-left:.15rem;">' + m.period_display + '</span>';
                             html += '</div>';
                             html += '<div class="ffp-match-comp">' + m.competition + '</div>';
                             html += '<div class="ffp-match-teams"><span>' + m.home_team + '</span>';
                             html += '<span class="ffp-score" style="background:#fff0f0;color:#dc3545;">' + m.home_score + ' - ' + m.away_score + '</span>';
                             html += '<span>' + m.away_team + '</span></div>';
+                            if (m.is_in_penalties) {
+                                html += '<div style="text-align:center;font-size:.7rem;font-weight:700;color:#e65100;margin:.2rem 0;">Penalties: ' + (m.home_penalties||0) + ' - ' + (m.away_penalties||0) + '</div>';
+                            }
                             if (m.goals && m.goals.length > 0) {
                                 var homeG = m.goals.filter(function(g){ return g.is_home; });
                                 var awayG = m.goals.filter(function(g){ return !g.is_home; });
@@ -2494,9 +2513,12 @@ a.hero-feat--link {
                             bhtml += '<span class="live-card__team">' + m.away_team + '</span>';
                             bhtml += '</div>';
                             bhtml += '<div class="live-card__bottom">';
-                            if (m.match_minute !== null) {
+                            if (m.is_in_penalties) {
+                                bhtml += '<span class="live-card__minute"><span class="min-dot"></span> PEN ' + (m.home_penalties||0) + '-' + (m.away_penalties||0) + '</span>';
+                            } else if (m.match_minute !== null) {
                                 bhtml += '<span class="live-card__minute"><span class="min-dot"></span> ' + m.match_minute + "'" + '</span>';
                             }
+                            if (m.period_display) bhtml += '<span style="font-size:.55rem;color:rgba(255,255,255,.5);margin-left:.3rem;">' + m.period_display + '</span>';
                             bhtml += '</div>';
                             bhtml += '<div class="live-card__venue"><i class="bi bi-geo-alt-fill"></i> ' + m.venue + '</div>';
                             bhtml += '</div>';

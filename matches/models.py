@@ -51,6 +51,7 @@ SPORT_CONFIG = {
         "period_labels": ["1st Half", "2nd Half"],
         "default_duration": 90,
         "has_extra_time": True,
+        "et_period_duration": 15,   # 2×15 min extra time
         "has_penalties": True,
         "score_unit": "goals",
         "event_types": [
@@ -93,6 +94,7 @@ SPORT_CONFIG = {
         "period_labels": ["Q1", "Q2", "Q3", "Q4"],
         "default_duration": 40,
         "has_extra_time": True,  # overtime periods
+        "et_period_duration": 5,    # 5-min OT
         "has_penalties": False,
         "score_unit": "points",
         "event_types": [
@@ -112,6 +114,7 @@ SPORT_CONFIG = {
         "period_labels": ["Regulation"],
         "default_duration": 10,
         "has_extra_time": True,  # OT first to 2
+        "et_period_duration": 0,    # sudden death
         "has_penalties": False,
         "score_unit": "points",
         "event_types": [
@@ -131,6 +134,7 @@ SPORT_CONFIG = {
         "period_labels": ["1st Half", "2nd Half"],
         "default_duration": 60,
         "has_extra_time": True,   # 2×5 min
+        "et_period_duration": 5,    # 2×5 min extra time
         "has_penalties": True,    # 7-metre throw shootout
         "score_unit": "goals",
         "event_types": [

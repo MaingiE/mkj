@@ -4216,11 +4216,23 @@ def coordinator_live_match_view(request, pk, fixture_pk):
                 messages.error(request, 'Goal not found.')
 
         elif action == 'update_match_info':
+            update_fields = ['updated_at']
             try:
                 fixture.live_extra_minutes = max(0, int(request.POST.get('added_time', 0) or 0))
+                update_fields.append('live_extra_minutes')
             except (ValueError, TypeError):
                 pass
-            fixture.save(update_fields=['live_extra_minutes', 'updated_at'])
+            # Manual period/half override
+            new_half = request.POST.get('live_half', '')
+            if new_half:
+                try:
+                    new_half = int(new_half)
+                    if 1 <= new_half <= 99:
+                        fixture.live_half = new_half
+                        update_fields.append('live_half')
+                except (ValueError, TypeError):
+                    pass
+            fixture.save(update_fields=update_fields)
             _clear_public_fixture_cache()
             messages.success(request, 'Match info updated.')
 
@@ -4233,16 +4245,86 @@ def coordinator_live_match_view(request, pk, fixture_pk):
             fixture.save(update_fields=['live_paused', 'updated_at'])
 
         elif action == 'half_time':
+            # Generic: end current period, advance to next, pause
             fixture.live_paused = True
-            fixture.live_half = 2
+            fixture.live_half += 1
             fixture.save(update_fields=['live_paused', 'live_half', 'updated_at'])
             _clear_public_fixture_cache()
 
         elif action == 'second_half':
+            # Generic: start next period, reset clock
             fixture.live_paused = False
-            fixture.live_started_at = timezone.now()  # reset clock for 2nd half
+            fixture.live_started_at = timezone.now()  # reset clock for new period
             fixture.save(update_fields=['live_paused', 'live_started_at', 'updated_at'])
             _clear_public_fixture_cache()
+
+        elif action == 'start_extra_time':
+            # Knockout: start ET 1st period (live_half = normal_periods + 1)
+            periods = sport_cfg.get('periods', 2)
+            fixture.live_half = periods + 1
+            fixture.live_paused = False
+            fixture.live_started_at = timezone.now()
+            fixture.save(update_fields=['live_half', 'live_paused', 'live_started_at', 'updated_at'])
+            _clear_public_fixture_cache()
+            messages.success(request, 'Extra time started.')
+
+        elif action == 'et_half_time':
+            # Pause between ET halves
+            periods = sport_cfg.get('periods', 2)
+            fixture.live_paused = True
+            fixture.live_half = periods + 2
+            fixture.save(update_fields=['live_paused', 'live_half', 'updated_at'])
+            _clear_public_fixture_cache()
+
+        elif action == 'start_et_second':
+            # Start ET 2nd half
+            fixture.live_paused = False
+            fixture.live_started_at = timezone.now()
+            fixture.save(update_fields=['live_paused', 'live_started_at', 'updated_at'])
+            _clear_public_fixture_cache()
+            messages.success(request, 'Extra time 2nd half started.')
+
+        elif action == 'start_penalties':
+            # Enter penalty shootout mode
+            fixture.live_half = 99
+            fixture.live_paused = True
+            fixture.home_penalties = 0
+            fixture.away_penalties = 0
+            fixture.home_score_et = fixture.home_score
+            fixture.away_score_et = fixture.away_score
+            fixture.save(update_fields=[
+                'live_half', 'live_paused', 'home_penalties', 'away_penalties',
+                'home_score_et', 'away_score_et', 'updated_at'
+            ])
+            _clear_public_fixture_cache()
+            messages.success(request, 'Penalty shootout started.')
+
+        elif action == 'update_penalties':
+            try:
+                hp = max(0, int(request.POST.get('home_penalties', 0)))
+                ap = max(0, int(request.POST.get('away_penalties', 0)))
+                fixture.home_penalties = hp
+                fixture.away_penalties = ap
+                fixture.save(update_fields=['home_penalties', 'away_penalties', 'updated_at'])
+                _clear_public_fixture_cache()
+                messages.success(request, f'Penalties updated: {hp} - {ap}')
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid penalty scores.')
+
+        elif action == 'penalty_goal':
+            # Quick +1 penalty for a side
+            side = request.POST.get('team_side', '')
+            if side == 'home':
+                fixture.home_penalties = (fixture.home_penalties or 0) + 1
+                fixture.save(update_fields=['home_penalties', 'updated_at'])
+            elif side == 'away':
+                fixture.away_penalties = (fixture.away_penalties or 0) + 1
+                fixture.save(update_fields=['away_penalties', 'updated_at'])
+            _clear_public_fixture_cache()
+
+        elif action == 'penalty_miss':
+            # Undo (+1 miss is just not adding) - actually this is just for UX
+            pass
 
         elif action == 'end_match':
             fixture.status = FixtureStatus.COMPLETED
@@ -4266,6 +4348,27 @@ def coordinator_live_match_view(request, pk, fixture_pk):
     first_half_goals = [g for g in live_goals if g.half == 1]
     second_half_goals = [g for g in live_goals if g.half == 2]
 
+    # Sport-aware period calculation
+    normal_periods = sport_cfg.get('periods', 2)
+    is_last_normal_period = fixture.live_half >= normal_periods
+    is_knockout_draw = (
+        fixture.is_knockout and
+        fixture.home_score is not None and fixture.away_score is not None and
+        fixture.home_score == fixture.away_score
+    )
+    is_et_first = fixture.live_half == normal_periods + 1
+    is_et_second = fixture.live_half == normal_periods + 2
+    is_in_penalties = fixture.live_half == 99
+
+    # Build period choices for manual selection
+    period_labels = list(sport_cfg.get('period_labels', ['1st Half', '2nd Half']))
+    period_choices = [(i + 1, label) for i, label in enumerate(period_labels)]
+    if sport_cfg.get('has_extra_time'):
+        period_choices.append((normal_periods + 1, 'Extra Time 1st'))
+        period_choices.append((normal_periods + 2, 'Extra Time 2nd'))
+    if sport_cfg.get('has_penalties'):
+        period_choices.append((99, 'Penalty Shootout'))
+
     return render(request, 'portal/coordinator/live_match.html', {
         'competition': competition,
         'fixture': fixture,
@@ -4278,6 +4381,56 @@ def coordinator_live_match_view(request, pk, fixture_pk):
         'second_half_goals': second_half_goals,
         'goal_type_choices': LiveGoal.GOAL_TYPE_CHOICES,
         'half_choices': LiveGoal.HALF_CHOICES,
+        'normal_periods': normal_periods,
+        'is_last_normal_period': is_last_normal_period,
+        'is_knockout_draw': is_knockout_draw,
+        'is_et_first': is_et_first,
+        'is_et_second': is_et_second,
+        'is_in_penalties': is_in_penalties,
+        'period_choices': period_choices,
+    })
+
+
+def public_live_matches_page_view(request):
+    """Public page showing all live matches + today's fixtures."""
+    from competitions.models import Fixture, FixtureStatus, LiveGoal
+    from datetime import date
+
+    today = date.today()
+    live_matches = Fixture.objects.filter(
+        status=FixtureStatus.LIVE
+    ).select_related(
+        'competition', 'home_team', 'away_team', 'venue'
+    ).prefetch_related('live_goals__team').order_by('competition__sport_type')
+
+    todays_fixtures = Fixture.objects.filter(
+        match_date=today
+    ).exclude(
+        status__in=[FixtureStatus.CANCELLED]
+    ).select_related(
+        'competition', 'home_team', 'away_team', 'venue'
+    ).prefetch_related('live_goals__team').order_by('kickoff_time')
+
+    # Group by sport for display
+    from collections import OrderedDict
+    live_by_sport = OrderedDict()
+    for f in live_matches:
+        sport = f.competition.get_sport_type_display()
+        live_by_sport.setdefault(sport, []).append(f)
+
+    today_by_sport = OrderedDict()
+    for f in todays_fixtures:
+        if f.status != 'live':  # avoid duplicates
+            sport = f.competition.get_sport_type_display()
+            today_by_sport.setdefault(sport, []).append(f)
+
+    return render(request, 'public/live_matches.html', {
+        'active_page': 'fixtures',
+        'live_matches': live_matches,
+        'live_by_sport': live_by_sport,
+        'todays_fixtures': todays_fixtures,
+        'today_by_sport': today_by_sport,
+        'today': today,
     })
 
 
@@ -4320,6 +4473,12 @@ def public_live_matches_view(request):
             'live_paused': f.live_paused,
             'live_extra_minutes': f.live_extra_minutes,
             'started_at': f.live_started_at.isoformat() if f.live_started_at else None,
+            'period_display': f.match_period_display,
+            'is_in_penalties': f.is_in_penalties,
+            'home_penalties': f.home_penalties,
+            'away_penalties': f.away_penalties,
+            'is_knockout': f.is_knockout,
+            'knockout_round': f.get_knockout_round_display() if f.knockout_round else '',
             'goals': goals,
         })
     return JsonResponse({'live_matches': data})

@@ -1,0 +1,334 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Live Matches — MKJ SUPA CUP 2026{% endblock %}
+
+{% block extra_css %}
+<style>
+.lm-page { max-width: 960px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+.lm-hero {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-radius: 20px;
+    color: #fff;
+}
+.lm-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .35rem .8rem;
+    background: rgba(220,53,69,.15);
+    border: 1px solid rgba(220,53,69,.3);
+    border-radius: 50px;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+}
+.lm-hero__badge .pulse-dot {
+    width: 8px; height: 8px;
+    background: #ff4444;
+    border-radius: 50%;
+    animation: lmPulse 1.2s ease infinite;
+}
+@keyframes lmPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .5; transform: scale(1.4); }
+}
+.lm-hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+}
+.lm-hero p {
+    color: rgba(255,255,255,.6);
+    font-size: .85rem;
+    margin: 0;
+}
+/* Live match cards */
+.lm-section { margin-bottom: 2rem; }
+.lm-section__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+    padding-bottom: .4rem;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.lm-section__title--live { border-bottom-color: #dc3545; color: #dc3545; }
+.lm-section__title--today { border-bottom-color: #124491; color: #124491; }
+.lm-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    margin-bottom: .8rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    transition: all .2s;
+}
+.lm-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-1px); }
+.lm-card--live {
+    border-left: 4px solid #dc3545;
+    background: #fffafa;
+}
+.lm-card--completed {
+    border-left: 4px solid #4caf50;
+}
+.lm-card--pending {
+    border-left: 4px solid #ffc107;
+}
+.lm-card__sport {
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #888;
+    margin-bottom: .5rem;
+}
+.lm-card__live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .15rem .5rem;
+    background: #dc3545;
+    color: #fff;
+    border-radius: 50px;
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    margin-bottom: .5rem;
+}
+.lm-card__live-badge .dot {
+    width: 6px; height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    animation: lmPulse 1.2s ease infinite;
+}
+.lm-card__teams {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: .4rem;
+}
+.lm-card__team {
+    flex: 1;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.lm-card__team--away { text-align: left; }
+.lm-card__score {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .3rem .7rem;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    min-width: 60px;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.lm-card__score--live { background: #fff0f0; color: #dc3545; }
+.lm-card__score--ft { background: #f0f8f0; color: #2e7d32; }
+.lm-card__vs {
+    padding: .25rem .5rem;
+    background: #f5f5f5;
+    border-radius: 6px;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #999;
+    flex-shrink: 0;
+}
+.lm-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: .7rem;
+    color: #999;
+}
+.lm-card__goals {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    font-size: .68rem;
+    color: #666;
+    margin: .4rem 0;
+}
+.lm-card__goals-side { flex: 1; }
+.lm-card__goals-home { text-align: right; }
+.lm-card__goals-away { text-align: left; }
+.lm-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #aaa;
+    font-size: .9rem;
+}
+.lm-empty i { font-size: 2.5rem; display: block; margin-bottom: .8rem; color: #ddd; }
+.lm-auto-refresh {
+    text-align: center;
+    font-size: .65rem;
+    color: #bbb;
+    margin-top: 1rem;
+}
+@media (max-width: 600px) {
+    .lm-card__teams { font-size: .85rem; gap: .3rem; }
+    .lm-card__score { font-size: .9rem; min-width: 50px; padding: .2rem .5rem; }
+    .lm-hero h1 { font-size: 1.3rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lm-page">
+    <!-- Hero -->
+    <div class="lm-hero">
+        <div class="lm-hero__badge"><span class="pulse-dot"></span> LIVE</div>
+        <h1>Live Matches</h1>
+        <p>{{ today|date:"l, d F Y" }} — County Finals 2026</p>
+    </div>
+
+    <!-- Live Matches Section -->
+    {% if live_by_sport %}
+    <div class="lm-section">
+        <div class="lm-section__title lm-section__title--live">
+            <i class="bi bi-broadcast"></i> Live Now ({{ live_matches|length }})
+        </div>
+        {% for sport, matches in live_by_sport.items %}
+        {% for match in matches %}
+        <div class="lm-card lm-card--live">
+            <div class="lm-card__sport">{{ sport }} — {{ match.competition.name }}</div>
+            <div class="lm-card__live-badge">
+                <span class="dot"></span>
+                {% if match.is_in_penalties %}
+                    PENALTIES
+                {% elif match.match_minute is not None %}
+                    LIVE &middot; {{ match.match_minute }}'
+                {% else %}
+                    LIVE
+                {% endif %}
+                {% if match.live_paused and not match.is_in_penalties %} ({{ match.match_period_display }}){% endif %}
+            </div>
+            {% if not match.is_in_penalties %}
+            <div style="text-align:center;font-size:.62rem;color:#888;margin-bottom:.3rem;font-weight:600;">
+                {{ match.match_period_display }}
+            </div>
+            {% endif %}
+            <div class="lm-card__teams">
+                <span class="lm-card__team">{{ match.home_team.name }}</span>
+                <span class="lm-card__score lm-card__score--live">
+                    {{ match.home_score|default:"0" }} &ndash; {{ match.away_score|default:"0" }}
+                </span>
+                <span class="lm-card__team lm-card__team--away">{{ match.away_team.name }}</span>
+            </div>
+            {% if match.is_in_penalties %}
+            <div style="text-align:center;margin:.4rem 0;">
+                <span style="display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .8rem;background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;font-size:.75rem;font-weight:700;color:#e65100;">
+                    <i class="bi bi-bullseye"></i> Pens: {{ match.home_penalties|default:"0" }} &ndash; {{ match.away_penalties|default:"0" }}
+                </span>
+            </div>
+            {% elif match.home_score_et is not None and match.away_score_et is not None %}
+            <div style="text-align:center;font-size:.62rem;color:#888;margin:.2rem 0;font-weight:500;">
+                AET: {{ match.home_score_et }} &ndash; {{ match.away_score_et }}
+                {% if match.home_penalties is not None %} | Pens: {{ match.home_penalties }} &ndash; {{ match.away_penalties }}{% endif %}
+            </div>
+            {% endif %}
+            {% with match.live_goals.all as goals %}
+            {% if goals %}
+            <div class="lm-card__goals">
+                <div class="lm-card__goals-side lm-card__goals-home">
+                    {% for g in goals %}{% if g.is_home %}
+                    <div>{{ g.scorer_name }} {{ g.minute_display }}{% if g.goal_type == 'penalty' %} <span style="color:#d4a017;">(P)</span>{% endif %}{% if g.goal_type == 'own_goal' %} <span style="color:#dc3545;">(OG)</span>{% endif %}</div>
+                    {% endif %}{% endfor %}
+                </div>
+                <div class="lm-card__goals-side lm-card__goals-away">
+                    {% for g in goals %}{% if not g.is_home %}
+                    <div>{{ g.scorer_name }} {{ g.minute_display }}{% if g.goal_type == 'penalty' %} <span style="color:#d4a017;">(P)</span>{% endif %}{% if g.goal_type == 'own_goal' %} <span style="color:#dc3545;">(OG)</span>{% endif %}</div>
+                    {% endif %}{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+            <div class="lm-card__meta">
+                <span><i class="bi bi-geo-alt-fill"></i> {{ match.venue.name|default:"TBD" }}</span>
+                <span><i class="bi bi-clock"></i> {{ match.kickoff_time|time:"H:i" }}</span>
+                {% if match.is_knockout and match.knockout_round %}
+                <span><i class="bi bi-trophy"></i> {{ match.get_knockout_round_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="lm-empty">
+        <i class="bi bi-broadcast"></i>
+        No live matches right now.<br>
+        <small>This page auto-refreshes every 30 seconds.</small>
+    </div>
+    {% endif %}
+
+    <!-- Today's Other Fixtures -->
+    {% if today_by_sport %}
+    <div class="lm-section">
+        <div class="lm-section__title lm-section__title--today">
+            <i class="bi bi-calendar-event"></i> Today's Fixtures
+        </div>
+        {% for sport, matches in today_by_sport.items %}
+        {% for match in matches %}
+        <div class="lm-card {% if match.status == 'completed' %}lm-card--completed{% elif match.status == 'pending' or match.status == 'confirmed' %}lm-card--pending{% endif %}">
+            <div class="lm-card__sport">{{ sport }} — {{ match.competition.name }}</div>
+            <div class="lm-card__teams">
+                <span class="lm-card__team">{{ match.home_team.name }}</span>
+                {% if match.status == 'completed' %}
+                <span class="lm-card__score lm-card__score--ft">
+                    {{ match.home_score|default:"0" }} &ndash; {{ match.away_score|default:"0" }}
+                    <small style="font-size:.55rem;font-weight:600;display:block;">FT</small>
+                </span>
+                {% elif match.status == 'pending' or match.status == 'confirmed' %}
+                <span class="lm-card__vs">{{ match.kickoff_time|time:"H:i" }}</span>
+                {% else %}
+                <span class="lm-card__vs">VS</span>
+                {% endif %}
+                <span class="lm-card__team lm-card__team--away">{{ match.away_team.name }}</span>
+            </div>
+            <div class="lm-card__meta">
+                <span><i class="bi bi-geo-alt-fill"></i> {{ match.venue.name|default:"TBD" }}</span>
+                {% if match.is_knockout and match.knockout_round %}
+                <span><i class="bi bi-trophy"></i> {{ match.get_knockout_round_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="lm-auto-refresh">
+        <i class="bi bi-arrow-repeat"></i> This page auto-refreshes every 30 seconds
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh every 30 seconds for live match updates
+setTimeout(function() { location.reload(); }, 30000);
+</script>
+{% endblock %}

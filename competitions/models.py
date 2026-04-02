@@ -345,15 +345,89 @@ class Fixture(models.Model):
         return label
 
     @property
+    def sport_config(self):
+        """Return sport configuration dict for this fixture's competition."""
+        from matches.models import get_sport_config
+        if self.competition_id:
+            return get_sport_config(self.competition.sport_type)
+        from matches.models import SPORT_CONFIG
+        return SPORT_CONFIG["football"]
+
+    @property
+    def match_period_display(self):
+        """Sport-aware current period label (e.g. '1st Half · 45 min', 'Q3 · 10 min')."""
+        cfg = self.sport_config
+        periods = cfg.get('periods', 2)
+        labels = cfg.get('period_labels', ['1st Half', '2nd Half'])
+        total = cfg.get('default_duration', 90)
+        per_period = total // periods if periods else 0
+
+        if self.live_half == 99:
+            return "Penalty Shootout"
+
+        if 1 <= self.live_half <= len(labels):
+            label = labels[self.live_half - 1]
+        elif self.live_half == periods + 1:
+            label = "Extra Time 1st"
+        elif self.live_half == periods + 2:
+            label = "Extra Time 2nd"
+        else:
+            label = f"Period {self.live_half}"
+
+        if per_period > 0 and 1 <= self.live_half <= periods:
+            return f"{label} · {per_period} min"
+        et_dur = cfg.get('et_period_duration', 0)
+        if et_dur and self.live_half in (periods + 1, periods + 2):
+            return f"{label} · {et_dur} min"
+        return label
+
+    @property
+    def match_period_label(self):
+        """Just the period name without duration (e.g. '1st Half', 'Q3')."""
+        cfg = self.sport_config
+        periods = cfg.get('periods', 2)
+        labels = cfg.get('period_labels', ['1st Half', '2nd Half'])
+        if self.live_half == 99:
+            return "Penalty Shootout"
+        if 1 <= self.live_half <= len(labels):
+            return labels[self.live_half - 1]
+        if self.live_half == periods + 1:
+            return "Extra Time 1st"
+        if self.live_half == periods + 2:
+            return "Extra Time 2nd"
+        return f"Period {self.live_half}"
+
+    @property
+    def is_in_penalties(self):
+        """True when the match is in penalty shootout phase."""
+        return self.live_half == 99
+
+    @property
     def match_minute(self):
         """Current match minute based on live_started_at clock. Returns None if not live."""
         if not self.live_started_at or self.status != 'live':
             return None
-        if self.live_paused:
-            return None  # clock paused
+        if self.live_paused or self.live_half == 99:
+            return None  # clock paused or penalties
         from django.utils import timezone as tz
         elapsed = (tz.now() - self.live_started_at).total_seconds()
-        return max(0, int(elapsed // 60))
+        raw_mins = max(0, int(elapsed // 60))
+
+        cfg = self.sport_config
+        periods = cfg.get('periods', 2)
+        total = cfg.get('default_duration', 90)
+        per_period = total // periods if periods else 0
+        et_dur = cfg.get('et_period_duration', 0)
+
+        if self.live_half <= periods:
+            offset = (self.live_half - 1) * per_period
+        elif self.live_half == periods + 1:
+            offset = total
+        elif self.live_half == periods + 2:
+            offset = total + et_dur
+        else:
+            offset = total
+        return offset + raw_mins
 
     @property
     def kickoff_datetime(self):
