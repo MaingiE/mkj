@@ -2573,7 +2573,7 @@ a.hero-feat--link {
                             }
                             ph += '</div></div>';
                         }
-                        ph += '<a href="{% url \'public_fixtures_results\' %}" class="hsc-follow"><i class="bi bi-broadcast"></i> Follow Live <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>';
+                        ph += '<a href="' + fixturesUrl + '" class="hsc-follow"><i class="bi bi-broadcast"></i> Follow Live <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>';
                         panel.innerHTML = ph;
                     });
                 }
