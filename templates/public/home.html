@@ -1959,7 +1959,7 @@ a.hero-feat--link {
                 <div class="hsc-body" id="hscBody">
                     {% for sport, info in semis_by_sport.items %}
                     <div class="hsc-panel" data-sport="{{ sport }}" {% if not forloop.first %}style="display:none;"{% endif %}>
-                        <div class="hsc-sport-label"><i class="bi bi-trophy-fill"></i> {{ info.label }} — Knockout Stage</div>
+                        <div class="hsc-sport-label"><i class="bi bi-trophy-fill"></i> {{ info.label }} — Semi-Finals Results</div>
                         {% for semi in info.semis %}
                         <div class="hsc-match{% if semi.status == 'live' %} hsc-match--live{% endif %}">
                             <span class="hsc-match-label">SF{{ semi.bracket_position|default:forloop.counter }}</span>
