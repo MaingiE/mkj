@@ -2518,6 +2518,65 @@ a.hero-feat--link {
                         bannerCards.innerHTML = bhtml;
                     }
                 }
+
+                /* ── Update semi-finals hero card ── */
+                var sc = data.semis_card || {};
+                var hscBody = document.getElementById('hscBody');
+                if (hscBody && Object.keys(sc).length > 0) {
+                    var panels = hscBody.querySelectorAll('.hsc-panel');
+                    panels.forEach(function(panel){
+                        var sport = panel.getAttribute('data-sport');
+                        var info = sc[sport];
+                        if (!info) return;
+                        var ph = '';
+                        ph += '<div class="hsc-sport-label"><i class="bi bi-trophy-fill"></i> ' + info.label + ' — Semi-Finals Results</div>';
+                        (info.semis || []).forEach(function(s, i){
+                            var isLive = s.status === 'live';
+                            ph += '<div class="hsc-match' + (isLive ? ' hsc-match--live' : '') + '">';
+                            ph += '<span class="hsc-match-label">SF' + (s.bracket || (i+1)) + '</span>';
+                            ph += '<div class="hsc-teams">';
+                            var hw = s.winner && s.winner === s.home ? ' hsc-team--winner' : '';
+                            var aw = s.winner && s.winner === s.away ? ' hsc-team--winner' : '';
+                            ph += '<div class="hsc-team' + hw + '"><span class="hsc-team-name">' + s.home + '</span>';
+                            if (s.status === 'completed' || s.status === 'live') ph += '<span class="hsc-team-score">' + (s.home_score||0) + '</span>';
+                            ph += '</div>';
+                            ph += '<div class="hsc-team' + aw + '"><span class="hsc-team-name">' + s.away + '</span>';
+                            if (s.status === 'completed' || s.status === 'live') ph += '<span class="hsc-team-score">' + (s.away_score||0) + '</span>';
+                            ph += '</div></div>';
+                            if (isLive) {
+                                ph += '<span class="hsc-match-status hsc-status--live">LIVE</span>';
+                            } else if (s.status === 'completed') {
+                                ph += '<span class="hsc-match-status hsc-status--ft">FT</span>';
+                                if (s.home_penalties !== null && s.away_penalties !== null) {
+                                    ph += '<span style="font-size:.55rem;color:#e65100;font-weight:700;display:block;">(' + s.home_penalties + '-' + s.away_penalties + ' pens)</span>';
+                                }
+                            }
+                            ph += '</div>';
+                        });
+                        if (info.final) {
+                            var f = info.final;
+                            ph += '<div class="hsc-final-row"><div class="hsc-final-label"><i class="bi bi-trophy-fill"></i> Final</div>';
+                            ph += '<div class="hsc-match"><span class="hsc-match-label">F</span><div class="hsc-teams">';
+                            ph += '<div class="hsc-team"><span class="hsc-team-name">' + f.home + '</span>';
+                            if (f.status === 'completed' || f.status === 'live') ph += '<span class="hsc-team-score">' + (f.home_score||0) + '</span>';
+                            ph += '</div>';
+                            ph += '<div class="hsc-team"><span class="hsc-team-name">' + f.away + '</span>';
+                            if (f.status === 'completed' || f.status === 'live') ph += '<span class="hsc-team-score">' + (f.away_score||0) + '</span>';
+                            ph += '</div></div>';
+                            if (f.status === 'live') {
+                                ph += '<span class="hsc-match-status hsc-status--live">LIVE</span>';
+                            } else if (f.status === 'completed') {
+                                ph += '<span class="hsc-match-status hsc-status--ft">FT</span>';
+                                if (f.home_penalties !== null && f.away_penalties !== null) {
+                                    ph += '<span style="font-size:.55rem;color:#e65100;font-weight:700;display:block;">(' + f.home_penalties + '-' + f.away_penalties + ' pens)</span>';
+                                }
+                            }
+                            ph += '</div></div>';
+                        }
+                        ph += '<a href="{% url \'public_fixtures_results\' %}" class="hsc-follow"><i class="bi bi-broadcast"></i> Follow Live <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>';
+                        panel.innerHTML = ph;
+                    });
+                }
             })
             .catch(function(){});
         }

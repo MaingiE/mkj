@@ -4477,7 +4477,7 @@ def public_live_matches_page_view(request):
 
 def public_live_matches_view(request):
     """Public JSON endpoint for live matches - no login required."""
-    from competitions.models import Fixture, FixtureStatus, LiveGoal
+    from competitions.models import Fixture, FixtureStatus, LiveGoal, KnockoutRound
     from django.http import JsonResponse
     live = Fixture.objects.filter(
         status=FixtureStatus.LIVE
@@ -4522,7 +4522,47 @@ def public_live_matches_view(request):
             'knockout_round': f.get_knockout_round_display() if f.knockout_round else '',
             'goals': goals,
         })
-    return JsonResponse({'live_matches': data})
+
+    # ── Semis / Finals card data ──
+    semi_qs = Fixture.objects.filter(
+        is_knockout=True,
+        knockout_round=KnockoutRound.SEMIFINAL,
+    ).select_related('competition', 'home_team', 'away_team', 'winner').order_by('bracket_position')
+
+    final_qs = Fixture.objects.filter(
+        is_knockout=True,
+        knockout_round__in=[KnockoutRound.FINAL, KnockoutRound.THIRD_PLACE],
+    ).select_related('competition', 'home_team', 'away_team', 'winner').order_by('knockout_round')
+
+    semis_card = {}
+    for f in semi_qs:
+        st = f.competition.sport_type
+        if st not in semis_card:
+            semis_card[st] = {'label': f.competition.get_sport_type_display(), 'semis': [], 'final': None}
+        semis_card[st]['semis'].append({
+            'id': f.id,
+            'home': f.home_team.name, 'away': f.away_team.name,
+            'home_score': f.home_score, 'away_score': f.away_score,
+            'home_penalties': f.home_penalties, 'away_penalties': f.away_penalties,
+            'status': f.status,
+            'winner': f.winner.name if f.winner else None,
+            'bracket': f.bracket_position,
+        })
+    for f in final_qs:
+        st = f.competition.sport_type
+        if st not in semis_card:
+            semis_card[st] = {'label': f.competition.get_sport_type_display(), 'semis': [], 'final': None}
+        if f.knockout_round == KnockoutRound.FINAL:
+            semis_card[st]['final'] = {
+                'id': f.id,
+                'home': f.home_team.name, 'away': f.away_team.name,
+                'home_score': f.home_score, 'away_score': f.away_score,
+                'home_penalties': f.home_penalties, 'away_penalties': f.away_penalties,
+                'status': f.status,
+                'winner': f.winner.name if f.winner else None,
+            }
+
+    return JsonResponse({'live_matches': data, 'semis_card': semis_card})
 
 
 @role_required('coordinator', 'admin')
