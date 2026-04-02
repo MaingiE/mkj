@@ -186,7 +186,7 @@
                 <tr>
                     <td>{{ fx.get_knockout_round_display }}</td>
                     <td>{{ fx.home_team.name|default:"TBA" }}</td>
-                    <td>{% if fx.home_score is not None %}{{ fx.home_score }} - {{ fx.away_score }}{% else %}-{% endif %}</td>
+                    <td>{% if fx.home_score is not None %}{{ fx.home_score }} - {{ fx.away_score }}{% if fx.home_penalties is not None %}<br><small style="color:#e65100;font-weight:600;">({{ fx.home_penalties }}-{{ fx.away_penalties }} pens)</small>{% endif %}{% else %}-{% endif %}</td>
                     <td>{{ fx.away_team.name|default:"TBA" }}</td>
                     <td>{{ fx.venue.name|default:"TBA" }}</td>
                     <td><span class="comp-badge" style="background:#f5f5f5;">{{ fx.get_status_display }}</span></td>

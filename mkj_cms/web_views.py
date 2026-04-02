@@ -3878,6 +3878,24 @@ def coordinator_edit_fixture_view(request, pk, fixture_pk):
             messages.error(request, 'Invalid score value. Please enter whole numbers.')
             return redirect('coordinator_edit_fixture', pk=pk, fixture_pk=fixture_pk)
 
+        # Penalty shootout scores (knockout only)
+        if fixture.is_knockout:
+            hp = request.POST.get('home_penalties', '').strip()
+            ap = request.POST.get('away_penalties', '').strip()
+            try:
+                fixture.home_penalties = int(hp) if hp != '' else None
+                fixture.away_penalties = int(ap) if ap != '' else None
+            except (ValueError, TypeError):
+                pass
+            winner_id = request.POST.get('winner_id', '').strip()
+            if winner_id:
+                try:
+                    fixture.winner_id = int(winner_id)
+                except (ValueError, TypeError):
+                    pass
+            elif fixture.home_score is not None and fixture.away_score is not None:
+                fixture.determine_winner()
+
         if (
             fixture.home_score is not None and fixture.away_score is not None
             and fixture.status in [FixtureStatus.PENDING, FixtureStatus.CONFIRMED]

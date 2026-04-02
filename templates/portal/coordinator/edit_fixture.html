@@ -63,6 +63,27 @@
                     <input type="number" name="away_score" class="form-control" value="{{ fixture.away_score|default_if_none:'' }}" min="0">
                 </div>
             </div>
+            {% if fixture.is_knockout %}
+            <div class="row g-3 mb-3">
+                <div class="col-12"><h6 style="font-size:.85rem;font-weight:700;margin:0;color:#e65100;"><i class="bi bi-bullseye"></i> Penalty Shootout (knockout matches only)</h6></div>
+                <div class="col-md-3">
+                    <label class="form-label">Home Penalties</label>
+                    <input type="number" name="home_penalties" class="form-control" value="{{ fixture.home_penalties|default_if_none:'' }}" min="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Away Penalties</label>
+                    <input type="number" name="away_penalties" class="form-control" value="{{ fixture.away_penalties|default_if_none:'' }}" min="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Winner</label>
+                    <select name="winner_id" class="form-select">
+                        <option value="">Auto-detect</option>
+                        <option value="{{ fixture.home_team_id }}" {% if fixture.winner_id == fixture.home_team_id %}selected{% endif %}>{{ fixture.home_team.name }}</option>
+                        <option value="{{ fixture.away_team_id }}" {% if fixture.winner_id == fixture.away_team_id %}selected{% endif %}>{{ fixture.away_team.name }}</option>
+                    </select>
+                </div>
+            </div>
+            {% endif %}
             <div class="row g-3 mb-3">
                 <div class="col-md-8">
                     <label class="form-label">Exceptional Case Reason (required for result/status changes)</label>
