@@ -41,19 +41,12 @@
         {% if fixture.status == 'live' %}
         <div style="display:flex;justify-content:center;gap:1.5rem;font-size:.8rem;color:rgba(255,255,255,.6);">
             <span>{{ fixture.match_period_display }}</span>
+            {% if is_in_penalties %}
             <span>&middot;</span>
-            <span id="lmClock">
-                {% if is_in_penalties %}
-                    PENALTIES
-                {% elif fixture.live_paused %}
-                    {% if fixture.live_paused_minute is not None %}{{ fixture.live_paused_minute }}'{% endif %} <span style="color:#FFD54F;font-size:.65rem;">(PAUSED)</span>
-                {% else %}
-                    <span class="match-timer" data-started="{{ fixture.live_started_at|date:'c' }}">{% if fixture.match_minute is not None %}{{ fixture.match_minute }}'{% else %}--'{% endif %}</span>
-                {% endif %}
-            </span>
-            {% if fixture.live_extra_minutes %}
+            <span style="color:#FFD54F;font-weight:700;">PENALTIES</span>
+            {% elif fixture.live_paused %}
             <span>&middot;</span>
-            <span>+{{ fixture.live_extra_minutes }} added</span>
+            <span style="color:#FFD54F;font-size:.65rem;">(PAUSED)</span>
             {% endif %}
         </div>
         {% if is_in_penalties %}
@@ -394,7 +387,7 @@
                         <form method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="update_match_info">
-                            <input type="hidden" name="added_time" value="{{ fixture.live_extra_minutes|default:0 }}">
+                            <input type="hidden" name="added_time" value="0">
                             <div class="row g-2 align-items-end">
                                 <div class="col">
                                     <label class="form-label" style="font-size:.72rem;">Period / Half</label>
@@ -409,33 +402,10 @@
                                 </div>
                             </div>
                         </form>
-                        <div style="font-size:.62rem;color:#999;margin-top:.4rem;">
-                            Now: <strong>{{ fixture.match_period_display }}</strong>
-                        </div>
                     </div>
                 </div>
             </div>
-            <!-- Added Time -->
-            <div class="col-md-4">
-                <div class="card" style="border-radius:12px;">
-                    <div class="card-body" style="padding:1rem;">
-                        <h6 style="font-size:.8rem;font-weight:700;color:#333;margin-bottom:.8rem;"><i class="bi bi-stopwatch"></i> Added / Injury Time</h6>
-                        <form method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="update_match_info">
-                            <div class="row g-2 align-items-end">
-                                <div class="col">
-                                    <label class="form-label" style="font-size:.72rem;">Added Time (mins)</label>
-                                    <input type="number" name="added_time" class="form-control form-control-sm" value="{{ fixture.live_extra_minutes|default:0 }}" min="0" max="30">
-                                </div>
-                                <div class="col-auto">
-                                    <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">Update</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+
             <!-- Manual Score Override -->
             <div class="col-md-4">
                 <div class="card" style="border-radius:12px;">
@@ -670,23 +640,6 @@ function toggleEditGoal(goalId) {
 }
 </script>
 
-{% if fixture.status == 'live' and not fixture.live_paused %}
-<script>
-(function(){
-    var timerEl = document.querySelector('.match-timer');
-    if (!timerEl) return;
-    var started = new Date(timerEl.getAttribute('data-started'));
-    function tick(){
-        var now = new Date();
-        var elapsed = Math.floor((now - started) / 1000);
-        var mins = Math.floor(elapsed / 60);
-        var secs = elapsed % 60;
-        timerEl.textContent = mins + "'" + (secs < 10 ? '0' : '') + secs;
-        requestAnimationFrame(tick);
-    }
-    tick();
-})();
-</script>
-{% endif %}
+
 
 {% endblock %}

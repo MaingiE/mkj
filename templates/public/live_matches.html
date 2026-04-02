@@ -307,6 +307,9 @@
                 <span class="lm-card__score lm-card__score--ft">
                     {{ match.home_score|default:"0" }} &ndash; {{ match.away_score|default:"0" }}
                     <small style="font-size:.55rem;font-weight:600;display:block;">FT</small>
+                    {% if match.home_penalties is not None and match.away_penalties is not None %}
+                    <small style="font-size:.55rem;font-weight:700;color:#e65100;display:block;">({{ match.home_penalties }}-{{ match.away_penalties }} pens)</small>
+                    {% endif %}
                 </span>
                 {% elif match.status == 'pending' or match.status == 'confirmed' %}
                 <span class="lm-card__vs">{{ match.kickoff_time|time:"H:i" }}</span>

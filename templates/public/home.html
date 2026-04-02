@@ -1978,9 +1978,12 @@ a.hero-feat--link {
                                 </div>
                             </div>
                             {% if semi.status == 'live' %}
-                            <span class="hsc-match-status hsc-status--live">{{ semi.match_minute|default:"" }}'</span>
+                            <span class="hsc-match-status hsc-status--live">LIVE</span>
                             {% elif semi.status == 'completed' %}
                             <span class="hsc-match-status hsc-status--ft">FT</span>
+                            {% if semi.home_penalties is not None and semi.away_penalties is not None %}
+                            <span style="font-size:.55rem;color:#e65100;font-weight:700;display:block;">({{ semi.home_penalties }}-{{ semi.away_penalties }} pens)</span>
+                            {% endif %}
                             {% else %}
                             <span class="hsc-match-status hsc-status--pending">{{ semi.kickoff_time|time:"H:i" }}</span>
                             {% endif %}
@@ -2006,9 +2009,12 @@ a.hero-feat--link {
                                     </div>
                                 </div>
                                 {% if info.final.status == 'live' %}
-                                <span class="hsc-match-status hsc-status--live">{{ info.final.match_minute|default:"" }}'</span>
+                                <span class="hsc-match-status hsc-status--live">LIVE</span>
                                 {% elif info.final.status == 'completed' %}
                                 <span class="hsc-match-status hsc-status--ft">FT</span>
+                                {% if info.final.home_penalties is not None and info.final.away_penalties is not None %}
+                                <span style="font-size:.55rem;color:#e65100;font-weight:700;display:block;">({{ info.final.home_penalties }}-{{ info.final.away_penalties }} pens)</span>
+                                {% endif %}
                                 {% else %}
                                 <span class="hsc-match-status hsc-status--pending">{{ info.final.kickoff_time|time:"H:i" }}</span>
                                 {% endif %}
@@ -2167,10 +2173,9 @@ a.hero-feat--link {
                 <div class="live-card__bottom">
                     {% if match.is_in_penalties %}
                     <span class="live-card__minute"><span class="min-dot"></span> PEN {{ match.home_penalties|default:"0" }}-{{ match.away_penalties|default:"0" }}</span>
-                    {% elif match.match_minute is not None %}
-                    <span class="live-card__minute"><span class="min-dot"></span> {{ match.match_minute }}'</span>
+                    {% else %}
+                    <span class="live-card__minute"><span class="min-dot"></span> LIVE</span>
                     {% endif %}
-                    <span style="font-size:.55rem;color:rgba(255,255,255,.5);margin-left:.3rem;">{{ match.match_period_display }}</span>
                 </div>
                 <div class="live-card__venue"><i class="bi bi-geo-alt-fill"></i> {{ match.venue.name|default:"TBD" }}</div>
             </div>
@@ -2280,10 +2285,6 @@ a.hero-feat--link {
                     <div class="ffp-live-badge">
                         <span class="ffp-live-dot"></span>
                         {% if match.is_in_penalties %}PEN{% else %}LIVE{% endif %}
-                        {% if match.match_minute is not None %}
-                        <span class="ffp-match-minute">{{ match.match_minute }}'</span>
-                        {% endif %}
-                        <span style="font-size:.55rem;opacity:.7;margin-left:.15rem;">{{ match.match_period_display }}</span>
                     </div>
                     <div class="ffp-match-comp">{{ match.competition.name }}</div>
                     <div class="ffp-match-teams">
@@ -2345,7 +2346,7 @@ a.hero-feat--link {
                     <div class="ffp-match-comp">{{ match.competition.name }}</div>
                     <div class="ffp-match-teams">
                         <span>{{ match.home_team.name }}</span>
-                        <span><span class="ffp-ft">FT</span><span class="ffp-score">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span></span>
+                        <span><span class="ffp-ft">FT</span><span class="ffp-score">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>{% if match.home_penalties is not None and match.away_penalties is not None %}<span style="font-size:.6rem;color:#e65100;font-weight:700;margin-left:.3rem;">({{ match.home_penalties }}-{{ match.away_penalties }} pens)</span>{% endif %}</span>
                         <span>{{ match.away_team.name }}</span>
                     </div>
                     <div class="ffp-match-meta"><span class="ffp-ft">FT</span> {{ match.match_date|date:"d M Y" }}</div>
@@ -2454,8 +2455,6 @@ a.hero-feat--link {
                             html += '<div class="ffp-match ffp-match--live">';
                             html += '<div class="ffp-live-badge"><span class="ffp-live-dot"></span> ';
                             html += m.is_in_penalties ? 'PEN' : 'LIVE';
-                            if (m.match_minute !== null) html += ' <span class="ffp-match-minute">' + m.match_minute + "'" + '</span>';
-                            if (m.period_display) html += ' <span style="font-size:.55rem;opacity:.7;margin-left:.15rem;">' + m.period_display + '</span>';
                             html += '</div>';
                             html += '<div class="ffp-match-comp">' + m.competition + '</div>';
                             html += '<div class="ffp-match-teams"><span>' + m.home_team + '</span>';
@@ -2509,10 +2508,9 @@ a.hero-feat--link {
                             bhtml += '<div class="live-card__bottom">';
                             if (m.is_in_penalties) {
                                 bhtml += '<span class="live-card__minute"><span class="min-dot"></span> PEN ' + (m.home_penalties||0) + '-' + (m.away_penalties||0) + '</span>';
-                            } else if (m.match_minute !== null) {
-                                bhtml += '<span class="live-card__minute"><span class="min-dot"></span> ' + m.match_minute + "'" + '</span>';
+                            } else {
+                                bhtml += '<span class="live-card__minute"><span class="min-dot"></span> LIVE</span>';
                             }
-                            if (m.period_display) bhtml += '<span style="font-size:.55rem;color:rgba(255,255,255,.5);margin-left:.3rem;">' + m.period_display + '</span>';
                             bhtml += '</div>';
                             bhtml += '<div class="live-card__venue"><i class="bi bi-geo-alt-fill"></i> ' + m.venue + '</div>';
                             bhtml += '</div>';
