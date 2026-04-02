@@ -66,6 +66,7 @@
 }
 .lm-section__title--live { border-bottom-color: #dc3545; color: #dc3545; }
 .lm-section__title--today { border-bottom-color: #124491; color: #124491; }
+.lm-section__title--upcoming { border-bottom-color: #e65100; color: #e65100; }
 .lm-card {
     background: #fff;
     border: 1px solid #eee;
@@ -85,6 +86,10 @@
 }
 .lm-card--pending {
     border-left: 4px solid #ffc107;
+}
+.lm-card--upcoming {
+    border-left: 4px solid #e65100;
+    background: #fff8f0;
 }
 .lm-card__sport {
     font-size: .65rem;
@@ -318,6 +323,32 @@
             </div>
         </div>
         {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Coming Up Shortly -->
+    {% if coming_up %}
+    <div class="lm-section">
+        <div class="lm-section__title lm-section__title--upcoming">
+            <i class="bi bi-clock-history"></i> Coming Up Shortly
+        </div>
+        {% for match in coming_up %}
+        <div class="lm-card lm-card--upcoming">
+            <div class="lm-card__sport">{{ match.competition.get_sport_type_display }} — {{ match.competition.name }}</div>
+            <div style="display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;background:#e65100;color:#fff;border-radius:50px;font-size:.6rem;font-weight:700;letter-spacing:.5px;margin-bottom:.5rem;">
+                <i class="bi bi-trophy-fill"></i> {{ match.get_knockout_round_display }}
+            </div>
+            <div class="lm-card__teams">
+                <span class="lm-card__team">{{ match.home_team.name }}</span>
+                <span class="lm-card__vs">{{ match.match_date|date:"d M" }} &middot; {{ match.kickoff_time|time:"H:i" }}</span>
+                <span class="lm-card__team lm-card__team--away">{{ match.away_team.name }}</span>
+            </div>
+            <div class="lm-card__meta">
+                <span><i class="bi bi-geo-alt-fill"></i> {{ match.venue.name|default:"TBD" }}</span>
+                <span><i class="bi bi-calendar-event"></i> {{ match.match_date|date:"l, d M Y" }}</span>
+            </div>
+        </div>
         {% endfor %}
     </div>
     {% endif %}

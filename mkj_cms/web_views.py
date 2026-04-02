@@ -4434,12 +4434,25 @@ def public_live_matches_page_view(request):
             sport = f.competition.get_sport_type_display()
             today_by_sport.setdefault(sport, []).append(f)
 
+    # Coming-up: pending/confirmed knockout fixtures (finals, semis) in the near future
+    from datetime import timedelta
+    upcoming_cutoff = today + timedelta(days=7)
+    coming_up = Fixture.objects.filter(
+        is_knockout=True,
+        status__in=[FixtureStatus.PENDING, FixtureStatus.CONFIRMED],
+        match_date__gte=today,
+        match_date__lte=upcoming_cutoff,
+    ).select_related(
+        'competition', 'home_team', 'away_team', 'venue'
+    ).order_by('match_date', 'kickoff_time')
+
     return render(request, 'public/live_matches.html', {
         'active_page': 'fixtures',
         'live_matches': live_matches,
         'live_by_sport': live_by_sport,
         'todays_fixtures': todays_fixtures,
         'today_by_sport': today_by_sport,
+        'coming_up': coming_up,
         'today': today,
     })
 
