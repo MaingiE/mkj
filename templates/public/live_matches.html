@@ -224,18 +224,10 @@
                 <span class="dot"></span>
                 {% if match.is_in_penalties %}
                     PENALTIES
-                {% elif match.match_minute is not None %}
-                    LIVE &middot; {{ match.match_minute }}'
                 {% else %}
                     LIVE
                 {% endif %}
-                {% if match.live_paused and not match.is_in_penalties %} ({{ match.match_period_display }}){% endif %}
             </div>
-            {% if not match.is_in_penalties %}
-            <div style="text-align:center;font-size:.62rem;color:#888;margin-bottom:.3rem;font-weight:600;">
-                {{ match.match_period_display }}
-            </div>
-            {% endif %}
             <div class="lm-card__teams">
                 <span class="lm-card__team">{{ match.home_team.name }}</span>
                 <span class="lm-card__score lm-card__score--live">
@@ -409,18 +401,10 @@
                 html += '<div class="lm-card__live-badge"><span class="dot"></span> ';
                 if (m.is_in_penalties) {
                     html += 'PENALTIES';
-                } else if (m.match_minute !== null) {
-                    html += 'LIVE &middot; ' + m.match_minute + "'";
                 } else {
                     html += 'LIVE';
                 }
-                if (m.live_paused && !m.is_in_penalties && m.period_display) html += ' (' + m.period_display + ')';
                 html += '</div>';
-
-                // Period display
-                if (!m.is_in_penalties && m.period_display) {
-                    html += '<div style="text-align:center;font-size:.62rem;color:#888;margin-bottom:.3rem;font-weight:600;">' + m.period_display + '</div>';
-                }
 
                 // Teams & score
                 html += '<div class="lm-card__teams">';
