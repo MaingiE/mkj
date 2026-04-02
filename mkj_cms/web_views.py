@@ -4926,6 +4926,126 @@ def coordinator_squads_view(request):
 
 
 @role_required('coordinator', 'admin')
+def coordinator_fixture_squads_view(request, pk, fixture_pk):
+    """Coordinator: manage starting XI, subs &amp; technical bench for a fixture."""
+    from competitions.models import Competition, Fixture
+    from teams.models import Player, Team, TechnicalBenchMember
+    from matches.models import (
+        SquadSubmission, SquadPlayer, SquadStatus,
+        get_squad_rules, get_starters_for_sport, get_sport_family,
+    )
+
+    competition = get_object_or_404(Competition, pk=pk)
+    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
+    sport_type = competition.sport_type
+    sport_family = get_sport_family(sport_type)
+    squad_rules = get_squad_rules(sport_type)
+    required_starters = get_starters_for_sport(sport_type)
+
+    def _build_team_context(team):
+        """Return squad context dict for one team in the fixture."""
+        players = Player.objects.filter(team=team).order_by('shirt_number')
+        submission = SquadSubmission.objects.filter(fixture=fixture, team=team).first()
+        starter_ids = []
+        sub_ids = []
+        if submission:
+            starter_ids = list(
+                submission.squad_players.filter(is_starter=True)
+                .values_list('player_id', flat=True)
+            )
+            sub_ids = list(
+                submission.squad_players.filter(is_starter=False)
+                .values_list('player_id', flat=True)
+            )
+        # Technical bench from source discipline
+        tech_bench = []
+        if team.source_discipline_id:
+            tech_bench = list(
+                TechnicalBenchMember.objects.filter(discipline_id=team.source_discipline_id)
+                .order_by('role')
+            )
+        return {
+            'team': team,
+            'players': players,
+            'submission': submission,
+            'starter_ids': starter_ids,
+            'sub_ids': sub_ids,
+            'tech_bench': tech_bench,
+        }
+
+    if request.method == 'POST':
+        team_pk = request.POST.get('team_pk')
+        team = get_object_or_404(Team, pk=team_pk)
+        if team not in (fixture.home_team, fixture.away_team):
+            messages.error(request, 'Team is not part of this fixture.')
+            return redirect('coordinator_fixture_squads', pk=pk, fixture_pk=fixture_pk)
+
+        selected_starters = request.POST.getlist('starters')
+        selected_subs = request.POST.getlist('subs')
+        starters_int = [int(x) for x in selected_starters if x]
+        subs_int = [int(x) for x in selected_subs if x]
+
+        overlap = set(starters_int) & set(subs_int)
+        errors = []
+        if overlap:
+            errors.append('A player cannot be both a starter and a substitute.')
+        if len(starters_int) > required_starters:
+            errors.append(f'Maximum {required_starters} starters allowed.')
+        max_subs = squad_rules.get('max_subs', 12)
+        max_squad = squad_rules.get('max_squad', 23)
+        if len(subs_int) > max_subs:
+            errors.append(f'Maximum {max_subs} substitutes allowed.')
+        if (len(starters_int) + len(subs_int)) > max_squad:
+            errors.append(f'Maximum {max_squad} total players allowed.')
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+        else:
+            submission, _ = SquadSubmission.objects.get_or_create(
+                fixture=fixture, team=team,
+            )
+            submission.squad_players.all().delete()
+            submission.status = SquadStatus.APPROVED
+            submission.submitted_at = timezone.now()
+            submission.reviewed_by = request.user
+            submission.reviewed_at = timezone.now()
+            submission.save()
+
+            starter_players = Player.objects.filter(pk__in=starters_int, team=team)
+            sub_players = Player.objects.filter(pk__in=subs_int, team=team)
+            for p in starter_players:
+                SquadPlayer.objects.create(
+                    submission=submission, player=p,
+                    is_starter=True, shirt_number=p.shirt_number,
+                )
+            for p in sub_players:
+                SquadPlayer.objects.create(
+                    submission=submission, player=p,
+                    is_starter=False, shirt_number=p.shirt_number,
+                )
+            messages.success(
+                request,
+                f'✅ Team list saved for {team.name}: '
+                f'{len(starters_int)} starters, {len(subs_int)} subs.',
+            )
+        return redirect('coordinator_fixture_squads', pk=pk, fixture_pk=fixture_pk)
+
+    home_ctx = _build_team_context(fixture.home_team)
+    away_ctx = _build_team_context(fixture.away_team)
+
+    return render(request, 'portal/coordinator/fixture_squads.html', {
+        'competition': competition,
+        'fixture': fixture,
+        'home': home_ctx,
+        'away': away_ctx,
+        'sport_family': sport_family,
+        'squad_rules': squad_rules,
+        'required_starters': required_starters,
+    })
+
+
+@role_required('coordinator', 'admin')
 def coordinator_statistics_view(request, pk):
     """Coordinator: View and manage statistics for a competition (top scorers, etc.)."""
     from competitions.models import Competition, Pool, PoolTeam

@@ -523,7 +523,7 @@
 
             <!-- ── Penalty Shootout (Knockout draw after ET) ── -->
             {% if fixture.is_knockout and sport_cfg.has_penalties %}
-                {% if is_et_second and fixture.live_paused and is_knockout_draw %}
+                {% if is_et_second and not is_et_first and fixture.live_paused and is_knockout_draw %}
                 <form method="post" style="display:inline;" onsubmit="return confirm('Start penalty shootout?');">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="start_penalties">
@@ -532,9 +532,9 @@
                     </button>
                 </form>
                 {% endif %}
-                <!-- Also allow penalties directly from FT if no ET configured or coordinator wants to skip -->
-                {% if is_last_normal_period and fixture.live_paused and is_knockout_draw and not sport_cfg.has_extra_time %}
-                <form method="post" style="display:inline;" onsubmit="return confirm('Start penalty shootout?');">
+                <!-- Allow penalties directly from FT if no ET or coordinator wants to skip ET -->
+                {% if is_last_normal_period and fixture.live_paused and is_knockout_draw and not is_et_first and not is_et_second %}
+                <form method="post" style="display:inline;" onsubmit="return confirm('Start penalty shootout? (Skipping extra time)');">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="start_penalties">
                     <button type="submit" class="btn text-white" style="border-radius:50px;font-weight:600;background:#e65100;border-color:#e65100;">
