@@ -603,7 +603,7 @@ def home_view(request):
                 'final': next((f for f in sport_finals if f.knockout_round == KnockoutRound.FINAL), None),
                 'third_place': next((f for f in sport_finals if f.knockout_round == KnockoutRound.THIRD_PLACE), None),
                 'icon': SPORT_ICONS.get(st, 'bi-trophy'),
-                'both_done': all(f.status == 'completed' for f in sport_semis) and len(sport_semis) == 2,
+                'both_done': all(f.status == 'completed' and f.winner for f in sport_semis) and len(sport_semis) == 2,
             }
 
     # JSON data for JS toggle (lightweight)
