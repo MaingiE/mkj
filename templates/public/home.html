@@ -896,6 +896,27 @@ a.hero-feat--link {
     color: #fff;
 }
 
+/* ── Text inputs share the same style as selects ── */
+.ligi-panel input[type="text"].ligi-select,
+.ligi-panel input[type="email"].ligi-select,
+.ligi-panel input[type="tel"].ligi-select {
+    background-image: none; /* no chevron on text inputs */
+}
+
+/* ── Field error messages ── */
+.ligi-field-error {
+    display: none;
+    font-size: .7rem;
+    color: #fca5a5;
+    margin-top: .25rem;
+    padding-left: .1rem;
+}
+
+/* ── Spinner keyframe ── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* ── COMING SOON ANIMATION ─────────────────────────────────────────────── */
 .ligi-coming-soon {
     text-align: center;
@@ -2095,6 +2116,7 @@ a.hero-feat--link {
                 Makueni County
             </div>
             <div class="ligi-step-form" id="ligiStepForm">
+                <!-- Step 1: Sub-county + Ward selection -->
                 <form class="ligi-panel__form" onsubmit="return false;">
                     <div class="ligi-field">
                         <label for="ligiSubCounty">Sub-County</label>
@@ -2121,29 +2143,117 @@ a.hero-feat--link {
                 </div>
                 <button type="button" class="ligi-next-btn" id="ligiNextBtn" disabled>Next &rarr;</button>
             </div>
-            <!-- Animated Coming Soon Message (revealed on Next click) -->
+
+            <!-- Step 2: Registration form (revealed after Next) -->
             <div class="ligi-step-reveal" id="ligiStepReveal">
-            <div class="ligi-coming-soon" id="ligiComingSoon">
-                <div class="ligi-cs-words">
-                    <span class="ligi-cs-word" style="--j:0">Enterprise</span>
-                    <span class="ligi-cs-word" style="--j:1">Grade</span>
-                    <span class="ligi-cs-word" style="--j:2">Ligi</span>
-                    <span class="ligi-cs-word" style="--j:3">Mashinani</span>
-                    <span class="ligi-cs-word" style="--j:4">and</span>
-                    <span class="ligi-cs-word" style="--j:5">Sub-County</span>
-                    <span class="ligi-cs-word" style="--j:6">Supa</span>
-                    <span class="ligi-cs-word" style="--j:7">Cup</span>
-                    <span class="ligi-cs-word" style="--j:8">Competition</span>
-                    <span class="ligi-cs-word" style="--j:9">Management</span>
-                    <span class="ligi-cs-word" style="--j:10">System</span>
+                <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:1.2rem;margin-bottom:1rem;">
+                    <p style="font-size:.75rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 .6rem;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span id="ligiLocationTag"></span>
+                    </p>
+                    <p style="font-size:.8rem;color:rgba(255,255,255,.55);margin:0;line-height:1.5;">
+                        Fill in your details below. Your registration will be reviewed by the ward sports council chair and then approved by the system admin. Login credentials will be sent to your email once approved.
+                    </p>
                 </div>
-                <div class="ligi-cs-bottom">
-                    <span class="ligi-cs-soon" style="--j:11">Coming</span>
-                    <span class="ligi-cs-soon" style="--j:12">Soon</span>
-                    <span class="ligi-cs-dots" style="--j:13">...</span>
+
+                <div class="ligi-panel__form" id="ligiRegForm" style="gap:.8rem">
+
+                    <!-- Team name -->
+                    <div class="ligi-field">
+                        <label for="ligiTeamName">Team Name</label>
+                        <input type="text" id="ligiTeamName" class="ligi-select" placeholder="e.g. Wote United FC" maxlength="200" autocomplete="off">
+                        <span class="ligi-field-error" id="errTeamName"></span>
+                    </div>
+
+                    <!-- Discipline -->
+                    <div class="ligi-field">
+                        <label for="ligiDiscipline">Sport / Discipline</label>
+                        <select id="ligiDiscipline" class="ligi-select">
+                            <option value="">Select Discipline</option>
+                            <option value="football_men">Soccer (Men)</option>
+                            <option value="football_women">Soccer (Women)</option>
+                            <option value="volleyball_men">Volleyball (Men)</option>
+                            <option value="volleyball_women">Volleyball (Women)</option>
+                            <option value="basketball_men">Basketball 5x5 (Men)</option>
+                            <option value="basketball_women">Basketball 5x5 (Women)</option>
+                            <option value="basketball_3x3_men">Basketball 3x3 (Men)</option>
+                            <option value="basketball_3x3_women">Basketball 3x3 (Women)</option>
+                            <option value="handball_men">Handball (Men)</option>
+                            <option value="handball_women">Handball (Women)</option>
+                        </select>
+                        <span class="ligi-field-error" id="errDiscipline"></span>
+                    </div>
+
+                    <!-- Manager name (two columns) -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+                        <div class="ligi-field" style="margin:0">
+                            <label for="ligiFirstName">First Name</label>
+                            <input type="text" id="ligiFirstName" class="ligi-select" placeholder="First name" maxlength="100" autocomplete="given-name">
+                            <span class="ligi-field-error" id="errFirstName"></span>
+                        </div>
+                        <div class="ligi-field" style="margin:0">
+                            <label for="ligiLastName">Last Name</label>
+                            <input type="text" id="ligiLastName" class="ligi-select" placeholder="Last name" maxlength="100" autocomplete="family-name">
+                            <span class="ligi-field-error" id="errLastName"></span>
+                        </div>
+                    </div>
+
+                    <!-- Position / Role -->
+                    <div class="ligi-field">
+                        <label for="ligiPosition">Your Role / Position</label>
+                        <select id="ligiPosition" class="ligi-select">
+                            <option value="">Select your role</option>
+                            <option value="Team Manager">Team Manager</option>
+                            <option value="Head Coach">Head Coach</option>
+                            <option value="Assistant Coach">Assistant Coach</option>
+                            <option value="Club Secretary">Club Secretary</option>
+                            <option value="Chairperson">Chairperson</option>
+                            <option value="Treasurer">Treasurer</option>
+                            <option value="Other Official">Other Official</option>
+                        </select>
+                        <span class="ligi-field-error" id="errPosition"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="ligi-field">
+                        <label for="ligiEmail">Email Address</label>
+                        <input type="email" id="ligiEmail" class="ligi-select" placeholder="you@example.com" maxlength="254" autocomplete="email">
+                        <span class="ligi-field-error" id="errEmail"></span>
+                    </div>
+
+                    <!-- Phone (WhatsApp) -->
+                    <div class="ligi-field">
+                        <label for="ligiPhone">WhatsApp Phone (must be WhatsApp-enabled)</label>
+                        <input type="tel" id="ligiPhone" class="ligi-select" placeholder="0712345678 or +254712345678" maxlength="15" autocomplete="tel">
+                        <span class="ligi-field-error" id="errPhone"></span>
+                    </div>
+
+                    <!-- Server-side error -->
+                    <div id="ligiFormError" style="display:none;background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);border-radius:8px;padding:.6rem .8rem;font-size:.8rem;color:#fca5a5;"></div>
+
+                    <button type="button" class="ligi-next-btn" id="ligiSubmitBtn" style="margin-top:.4rem;">
+                        <span id="ligiSubmitLabel">Submit Registration</span>
+                        <svg id="ligiSubmitSpinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none;margin-left:.4rem;animation:spin .8s linear infinite;vertical-align:middle"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    </button>
                 </div>
-                <p class="ligi-cs-tuned">Stay Tuned</p>
             </div>
+
+            <!-- Step 3: Success screen -->
+            <div class="ligi-step-reveal" id="ligiStepSuccess">
+                <div style="text-align:center;padding:1.5rem 0 .5rem;">
+                    <div style="width:64px;height:64px;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <h4 style="font-family:'Outfit',sans-serif;font-size:1.15rem;font-weight:800;color:#fff;margin:0 0 .5rem;">Registration Submitted!</h4>
+                    <p id="ligiSuccessMsg" style="font-size:.82rem;color:rgba(255,255,255,.65);line-height:1.6;margin:0 0 1rem;"></p>
+                    <div style="background:rgba(144,202,249,.07);border:1px solid rgba(144,202,249,.15);border-radius:10px;padding:.8rem 1rem;font-size:.76rem;color:rgba(255,255,255,.5);text-align:left;line-height:1.7;">
+                        <strong style="color:#90caf9;">What happens next?</strong><br>
+                        1. Ward Sports Council Chair reviews your application.<br>
+                        2. System Admin approves &amp; creates your portal account.<br>
+                        3. Login credentials are sent to your email.<br>
+                        4. Log in to add players to your team.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2645,92 +2755,211 @@ a.hero-feat--link {
     }
 
     /* ── Ligi Mashinani Panel ─────────────────────────────────────── */
-    var ligiToggle = document.getElementById('ligiToggle');
-    var ligiPanel  = document.getElementById('ligiPanel');
-    var ligiClose  = document.getElementById('ligiClose');
-    var ligiSub    = document.getElementById('ligiSubCounty');
-    var ligiWard   = document.getElementById('ligiWard');
+    (function(){
+        var ligiToggle   = document.getElementById('ligiToggle');
+        var ligiPanel    = document.getElementById('ligiPanel');
+        var ligiClose    = document.getElementById('ligiClose');
+        var ligiSub      = document.getElementById('ligiSubCounty');
+        var ligiWard     = document.getElementById('ligiWard');
+        var ligiNextBtn  = document.getElementById('ligiNextBtn');
+        var ligiStepForm = document.getElementById('ligiStepForm');
+        var ligiStepReveal  = document.getElementById('ligiStepReveal');
+        var ligiStepSuccess = document.getElementById('ligiStepSuccess');
 
-    var wardMap = {
-        'Makueni':      ['Wote','Muvau/Kikumini','Mavindini','Kitise/Kithuki','Kathonzweni','Nzaui/Kilili/Kalamba','Mbitini'],
-        'Kibwezi West': ['Makindu','Nguu/Masumba','Emali/Mulala','Nguumo'],
-        'Kibwezi East': ['Masongaleni','Mtito Andei','Thange','Ivingoni/Nzambani'],
-        'Kaiti':        ['Ukia','Kee','Kilungu','Ilima'],
-        'Kilome':       ['Kasikeu','Mukaa','Kiima Kiu/Kalanzoni'],
-        'Mbooni':       ['Tulimani','Mbooni','Kithungo/Kitundu','Kiteta/Kisau','Waia/Kako']
-    };
+        var wardMap = {
+            'Makueni':      ['Wote','Muvau/Kikumini','Mavindini','Kitise/Kithuki','Kathonzweni','Nzaui/Kilili/Kalamba','Mbitini'],
+            'Kibwezi West': ['Makindu','Nguu/Masumba','Emali/Mulala','Nguumo'],
+            'Kibwezi East': ['Masongaleni','Mtito Andei','Thange','Ivingoni/Nzambani'],
+            'Kaiti':        ['Ukia','Kee','Kilungu','Ilima'],
+            'Kilome':       ['Kasikeu','Mukaa','Kiima Kiu/Kalanzoni'],
+            'Mbooni':       ['Tulimani','Mbooni','Kithungo/Kitundu','Kiteta/Kisau','Waia/Kako']
+        };
 
-    if (ligiToggle && ligiPanel) {
-        ligiToggle.addEventListener('click', function(){
-            ligiPanel.classList.add('open');
-        });
-        ligiClose.addEventListener('click', function(){
-            ligiPanel.classList.remove('open');
-            /* Reset to form step */
-            var sf = document.getElementById('ligiStepForm');
-            var sr = document.getElementById('ligiStepReveal');
-            var cs = document.getElementById('ligiComingSoon');
-            if (sf) sf.style.display = '';
-            if (sr) sr.classList.remove('active');
-            if (cs) cs.classList.remove('animate');
-        });
-        ligiPanel.addEventListener('click', function(e){
-            if (e.target === ligiPanel) {
-                ligiPanel.classList.remove('open');
-                var sf = document.getElementById('ligiStepForm');
-                var sr = document.getElementById('ligiStepReveal');
-                var cs = document.getElementById('ligiComingSoon');
-                if (sf) sf.style.display = '';
-                if (sr) sr.classList.remove('active');
-                if (cs) cs.classList.remove('animate');
-            }
-        });
-        document.addEventListener('keydown', function(e){
-            if (e.key === 'Escape' && ligiPanel.classList.contains('open')) {
-                ligiPanel.classList.remove('open');
-                var sf = document.getElementById('ligiStepForm');
-                var sr = document.getElementById('ligiStepReveal');
-                var cs = document.getElementById('ligiComingSoon');
-                if (sf) sf.style.display = '';
-                if (sr) sr.classList.remove('active');
-                if (cs) cs.classList.remove('animate');
-            }
-        });
-    }
-    if (ligiSub && ligiWard) {
-        var ligiNextBtn    = document.getElementById('ligiNextBtn');
-        var ligiStepForm   = document.getElementById('ligiStepForm');
-        var ligiStepReveal = document.getElementById('ligiStepReveal');
-        var ligiComingSoon = document.getElementById('ligiComingSoon');
-
-        ligiSub.addEventListener('change', function(){
-            ligiWard.innerHTML = '<option value="">Select Ward</option>';
-            var wards = wardMap[this.value];
-            if (wards) {
-                ligiWard.disabled = false;
-                wards.forEach(function(w){
-                    var o = document.createElement('option');
-                    o.value = w; o.textContent = w;
-                    ligiWard.appendChild(o);
-                });
-            } else {
-                ligiWard.disabled = true;
-            }
+        /* ── helpers ── */
+        function resetPanel() {
+            if (ligiStepForm)    { ligiStepForm.style.display = ''; }
+            if (ligiStepReveal)  { ligiStepReveal.classList.remove('active'); }
+            if (ligiStepSuccess) { ligiStepSuccess.classList.remove('active'); }
+            /* reset sub-county / ward */
+            if (ligiSub)  { ligiSub.value = ''; }
+            if (ligiWard) { ligiWard.innerHTML = '<option value="">Select Ward</option>'; ligiWard.disabled = true; }
             if (ligiNextBtn) ligiNextBtn.disabled = true;
-        });
+            /* reset reg form fields */
+            ['ligiTeamName','ligiDiscipline','ligiFirstName','ligiLastName','ligiEmail','ligiPhone'].forEach(function(id){
+                var el = document.getElementById(id); if (el) el.value = '';
+            });
+            clearErrors();
+            var fe = document.getElementById('ligiFormError');
+            if (fe) { fe.style.display='none'; fe.innerHTML=''; }
+        }
 
-        ligiWard.addEventListener('change', function(){
-            if (ligiNextBtn) ligiNextBtn.disabled = !this.value;
-        });
+        function clearErrors() {
+            ['errTeamName','errDiscipline','errFirstName','errLastName','errEmail','errPhone'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) { el.textContent = ''; el.style.display = 'none'; }
+            });
+        }
+
+        function showError(fieldId, msg) {
+            var el = document.getElementById(fieldId);
+            if (el) { el.textContent = msg; el.style.display = 'block'; }
+        }
+
+        /* ── open / close ── */
+        if (ligiToggle && ligiPanel) {
+            ligiToggle.addEventListener('click', function(){
+                ligiPanel.classList.add('open');
+            });
+            ligiClose.addEventListener('click', function(){
+                ligiPanel.classList.remove('open');
+                resetPanel();
+            });
+            ligiPanel.addEventListener('click', function(e){
+                if (e.target === ligiPanel) {
+                    ligiPanel.classList.remove('open');
+                    resetPanel();
+                }
+            });
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Escape' && ligiPanel.classList.contains('open')) {
+                    ligiPanel.classList.remove('open');
+                    resetPanel();
+                }
+            });
+        }
+
+        /* ── Step 1: sub-county → ward → Next ── */
+        if (ligiSub && ligiWard) {
+            ligiSub.addEventListener('change', function(){
+                ligiWard.innerHTML = '<option value="">Select Ward</option>';
+                var wards = wardMap[this.value];
+                if (wards) {
+                    ligiWard.disabled = false;
+                    wards.forEach(function(w){
+                        var o = document.createElement('option');
+                        o.value = w; o.textContent = w;
+                        ligiWard.appendChild(o);
+                    });
+                } else {
+                    ligiWard.disabled = true;
+                }
+                if (ligiNextBtn) ligiNextBtn.disabled = true;
+            });
+
+            ligiWard.addEventListener('change', function(){
+                if (ligiNextBtn) ligiNextBtn.disabled = !this.value;
+            });
+        }
 
         if (ligiNextBtn) {
             ligiNextBtn.addEventListener('click', function(){
-                ligiStepForm.style.display = 'none';
-                ligiStepReveal.classList.add('active');
-                ligiComingSoon.classList.add('animate');
+                var sc   = ligiSub  ? ligiSub.value  : '';
+                var ward = ligiWard ? ligiWard.value : '';
+                if (!sc || !ward) return;
+
+                /* Show location tag in step 2 */
+                var tag = document.getElementById('ligiLocationTag');
+                if (tag) tag.textContent = ward + ', ' + sc;
+
+                /* Transition: hide step 1, show step 2 */
+                if (ligiStepForm)   ligiStepForm.style.display = 'none';
+                if (ligiStepReveal) ligiStepReveal.classList.add('active');
             });
         }
-    }
+
+        /* ── Step 2: Registration form submit ── */
+        var ligiSubmitBtn = document.getElementById('ligiSubmitBtn');
+        if (ligiSubmitBtn) {
+            ligiSubmitBtn.addEventListener('click', function(){
+                clearErrors();
+                var fe = document.getElementById('ligiFormError');
+                if (fe) { fe.style.display='none'; fe.innerHTML=''; }
+
+                var sc         = ligiSub   ? ligiSub.value   : '';
+                var ward       = ligiWard  ? ligiWard.value  : '';
+                var teamName   = (document.getElementById('ligiTeamName')   || {}).value || '';
+                var discipline = (document.getElementById('ligiDiscipline') || {}).value || '';
+                var firstName  = (document.getElementById('ligiFirstName')  || {}).value || '';
+                var lastName   = (document.getElementById('ligiLastName')   || {}).value || '';
+                var email      = (document.getElementById('ligiEmail')      || {}).value || '';
+                var phone      = (document.getElementById('ligiPhone')      || {}).value || '';
+
+                /* Basic client-side validation */
+                var hasErr = false;
+                if (!teamName.trim())   { showError('errTeamName',   'Team name is required.'); hasErr = true; }
+                if (!discipline)        { showError('errDiscipline',  'Select a discipline.'); hasErr = true; }
+                if (!firstName.trim())  { showError('errFirstName',   'First name is required.'); hasErr = true; }
+                if (!lastName.trim())   { showError('errLastName',    'Last name is required.'); hasErr = true; }
+                if (!email.trim() || email.indexOf('@') < 1) { showError('errEmail', 'Enter a valid email address.'); hasErr = true; }
+                if (!phone.trim())      { showError('errPhone',       'Phone number is required.'); hasErr = true; }
+                if (hasErr) return;
+
+                /* Show spinner, disable button */
+                var lbl = document.getElementById('ligiSubmitLabel');
+                var spn = document.getElementById('ligiSubmitSpinner');
+                ligiSubmitBtn.disabled = true;
+                if (lbl) lbl.textContent = 'Submitting…';
+                if (spn) spn.style.display = 'inline-block';
+
+                fetch('/ligi/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''
+                    },
+                    body: JSON.stringify({
+                        sub_county: sc,
+                        ward: ward,
+                        team_name: teamName.trim(),
+                        discipline: discipline,
+                        manager_first_name: firstName.trim(),
+                        manager_last_name:  lastName.trim(),
+                        manager_email: email.trim().toLowerCase(),
+                        manager_phone: phone.trim()
+                    })
+                })
+                .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+                .then(function(res){
+                    ligiSubmitBtn.disabled = false;
+                    if (lbl) lbl.textContent = 'Submit Registration';
+                    if (spn) spn.style.display = 'none';
+
+                    if (res.ok && res.data.success) {
+                        /* Show success step */
+                        if (ligiStepReveal)  ligiStepReveal.classList.remove('active');
+                        if (ligiStepSuccess) ligiStepSuccess.classList.add('active');
+                        var sm = document.getElementById('ligiSuccessMsg');
+                        if (sm) sm.innerHTML = res.data.message || 'Registration submitted successfully.';
+                    } else {
+                        /* Field errors */
+                        var errors = res.data.errors || {};
+                        var shown = false;
+                        var fieldMap = {
+                            team_name: 'errTeamName', discipline: 'errDiscipline',
+                            manager_first_name: 'errFirstName', manager_last_name: 'errLastName',
+                            manager_email: 'errEmail', manager_phone: 'errPhone'
+                        };
+                        Object.keys(errors).forEach(function(k){
+                            if (fieldMap[k]) { showError(fieldMap[k], errors[k]); shown = true; }
+                        });
+                        if (!shown && fe) {
+                            fe.innerHTML = res.data.message || 'Something went wrong. Please try again.';
+                            fe.style.display = 'block';
+                        }
+                    }
+                })
+                .catch(function(){
+                    ligiSubmitBtn.disabled = false;
+                    if (lbl) lbl.textContent = 'Submit Registration';
+                    if (spn) spn.style.display = 'none';
+                    if (fe) {
+                        fe.innerHTML = 'Network error. Please check your connection and try again.';
+                        fe.style.display = 'block';
+                    }
+                });
+            });
+        }
+    })();
 })();
 </script>
 {% endblock %}

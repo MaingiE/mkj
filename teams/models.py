@@ -1495,3 +1495,86 @@ class BulkPlayerUploadRow(models.Model):
 
     def __str__(self):
         return f"Row {self.row_number}: {self.full_name or (self.first_name + ' ' + self.last_name)}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI REGISTRATION
+#  Public-facing ward-level team manager pre-registration.
+#  Pending → Ward Sports Council Verified → System Admin Approved → Account Created
+# ══════════════════════════════════════════════════════════════════════════════
+
+class LigiMashinaniStatus(models.TextChoices):
+    PENDING      = "pending",      "Pending Ward Verification"
+    WARD_VERIFIED = "ward_verified", "Ward Sports Council Verified"
+    APPROVED     = "approved",     "System Admin Approved"
+    REJECTED     = "rejected",     "Rejected"
+
+
+LIGI_DISCIPLINE_CHOICES = [
+    ('football_men',        'Soccer (Men)'),
+    ('football_women',      'Soccer (Women)'),
+    ('volleyball_men',      'Volleyball (Men)'),
+    ('volleyball_women',    'Volleyball (Women)'),
+    ('basketball_men',      'Basketball 5x5 (Men)'),
+    ('basketball_women',    'Basketball 5x5 (Women)'),
+    ('basketball_3x3_men',  'Basketball 3x3 (Men)'),
+    ('basketball_3x3_women','Basketball 3x3 (Women)'),
+    ('handball_men',        'Handball (Men)'),
+    ('handball_women',      'Handball (Women)'),
+]
+
+
+class LigiMashinaniRegistration(models.Model):
+    """
+    A team manager registers their Ligi Mashinani / ward team online.
+    The registration starts as 'pending', is verified by the ward sports
+    council chair, then approved by the system admin who creates their portal account.
+    """
+    sub_county = models.CharField(max_length=100, help_text="Makueni sub-county")
+    ward       = models.CharField(max_length=100, help_text="Ward within the sub-county")
+
+    team_name  = models.CharField(max_length=200, help_text="Ward / Ligi Mashinani team name")
+    discipline = models.CharField(
+        max_length=30, choices=LIGI_DISCIPLINE_CHOICES,
+        help_text="Sport discipline",
+    )
+
+    manager_first_name = models.CharField(max_length=100, help_text="Team manager first name")
+    manager_last_name  = models.CharField(max_length=100, help_text="Team manager last name")
+    manager_email      = models.EmailField(unique=True, help_text="Team manager email address")
+    manager_phone      = models.CharField(max_length=13, help_text="WhatsApp-enabled phone number (+254...)")
+
+    status = models.CharField(
+        max_length=20, choices=LigiMashinaniStatus.choices,
+        default=LigiMashinaniStatus.PENDING,
+        help_text="Registration approval status",
+    )
+    rejection_reason = models.TextField(blank=True, default="")
+
+    # Set to True once a portal account has been auto-created on admin approval
+    account_created = models.BooleanField(
+        default=False,
+        help_text="Portal (Team Manager) account auto-created for this manager",
+    )
+
+    submitted_at = models.DateTimeField(default=timezone.now)
+    updated_at   = models.DateTimeField(auto_now=True)
+    notes        = models.TextField(blank=True, default="", help_text="Internal admin notes")
+
+    class Meta:
+        verbose_name          = "Ligi Mashinani Registration"
+        verbose_name_plural   = "Ligi Mashinani Registrations"
+        ordering              = ["-submitted_at"]
+
+    def __str__(self):
+        return (
+            f"{self.team_name} | {self.ward}, {self.sub_county} "
+            f"| {self.get_discipline_display()} | {self.get_status_display()}"
+        )
+
+    @property
+    def manager_full_name(self):
+        return f"{self.manager_first_name} {self.manager_last_name}".strip()
+
+    def get_discipline_display(self):
+        return dict(LIGI_DISCIPLINE_CHOICES).get(self.discipline, self.discipline)

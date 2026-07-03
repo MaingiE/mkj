@@ -14,10 +14,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
+# Support .env.test override: set TEST_MODE=1 in your shell to use db_test.sqlite3
+# e.g.  $env:TEST_MODE="1"; python manage.py runserver   (PowerShell)
+import os as _os
+if _os.environ.get("TEST_MODE") == "1":
+    # Use a dedicated test database so main data is never touched
+    _os.environ.setdefault("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db_test.sqlite3'}")
+    _os.environ.setdefault("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+
 # ── SECURITY ───────────────────────────────────────────────────────────────────
-SECRET_KEY = env("SECRET_KEY")
-DEBUG      = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["mkjsupacup.com", "www.mkjsupacup.com", ".railway.app"])
+SECRET_KEY = "django-insecure-local-dev-only-replace-this-in-production"
+DEBUG      = env.bool("DEBUG", default=True)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=(
+    ["127.0.0.1", "localhost"] if DEBUG else ["mkjsupacup.com", "www.mkjsupacup.com", ".railway.app"]
+))
 
 # ── APPS ───────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -269,20 +279,17 @@ else:
     }
 
 # ── SESSIONS ───────────────────────────────────────────────────────────────────
-# Use cached_db in production: reads come from Redis (fast), writes go to both
-# Redis + DB.  If cache.clear() or Redis eviction happens, the DB fallback
-# keeps the session alive — no more mass logouts.
 if DEBUG:
     SESSION_ENGINE = "django.contrib.sessions.backends.db"
 else:
     SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
     SESSION_CACHE_ALIAS = "default"
 
-SESSION_COOKIE_AGE = 60 * 60 * 2               # max 2 hours even if active
-SESSION_SAVE_EVERY_REQUEST = False              # only write session when modified (huge perf win)
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True          # kill session when browser closes
-SESSION_COOKIE_HTTPONLY = True                   # JS cannot read the session cookie
-AUTO_LOGOUT_IDLE_MINUTES = 30                   # log out after 30 min inactivity
+SESSION_COOKIE_AGE = 60 * 60 * 2
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+AUTO_LOGOUT_IDLE_MINUTES = 30
 
 # ── CELERY ─────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL        = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
@@ -293,8 +300,6 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE          = "Africa/Nairobi"
 
 # ── EMAIL ──────────────────────────────────────────────────────────────────────
-# Use logging SMTP backend (logs every outgoing email to DB) when
-# EMAIL_HOST_USER is set; fall back to console locally.
 _email_host_user = env("EMAIL_HOST_USER", default="")
 EMAIL_BACKEND    = env(
     "EMAIL_BACKEND",
@@ -305,15 +310,21 @@ EMAIL_BACKEND    = env(
     ),
 )
 EMAIL_HOST       = env("EMAIL_HOST",     default="mail.privateemail.com")
-EMAIL_PORT       = env.int("EMAIL_PORT", default=587)   # 587+STARTTLS works on Railway; 465/SSL is often blocked
-EMAIL_USE_TLS    = env.bool("EMAIL_USE_TLS", default=True)   # STARTTLS
-EMAIL_USE_SSL    = env.bool("EMAIL_USE_SSL", default=False)  # mutually exclusive with TLS
-EMAIL_TIMEOUT    = env.int("EMAIL_TIMEOUT", default=15)       # fail fast; sending is async (background thread)
+EMAIL_PORT       = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS    = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL    = env.bool("EMAIL_USE_SSL", default=False)
+EMAIL_TIMEOUT    = env.int("EMAIL_TIMEOUT", default=15)
 EMAIL_HOST_USER  = _email_host_user
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjsupacup.com>")
 BREVO_API_KEY       = env("BREVO_API_KEY", default="")
 SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
+
+# ── WHATSAPP (Brevo WhatsApp API) ─────────────────────────────────────────────
+# Set BREVO_WHATSAPP_SENDER to your WhatsApp Business number (+254XXXXXXXXX)
+# Set BREVO_WHATSAPP_TEMPLATE_CREDENTIALS to the numeric template ID from Brevo
+BREVO_WHATSAPP_SENDER                 = env("BREVO_WHATSAPP_SENDER", default="")
+BREVO_WHATSAPP_TEMPLATE_CREDENTIALS  = env("BREVO_WHATSAPP_TEMPLATE_CREDENTIALS", default="")
 
 # ── SEO CONFIGURATION ──────────────────────────────────────────────────────────
 SITE_NAME = "MKJ SUPA CUP"
@@ -340,8 +351,6 @@ SEO_KEYWORDS = [
 ]
 
 # ── IMAP (inbound mail fetch) ──────────────────────────────────────────────────
-# IMAP credentials are for the actual info@mkjsupacup.com mailbox (Namecheap
-# Private Email), which is separate from the SMTP relay (Brevo) used for sending.
 IMAP_HOST     = env("IMAP_HOST",     default="mail.privateemail.com")
 IMAP_PORT     = env.int("IMAP_PORT",  default=993)
 IMAP_USE_SSL  = env.bool("IMAP_USE_SSL", default=True)
@@ -358,9 +367,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── SQUAD RULES ────────────────────────────────────────────────────────────────
 SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF = 2
-# Default fallbacks - overridden by SPORT_SQUAD_RULES in matches/models.py
-SQUAD_MIN_STARTERS = 7      # Minimum starters required
-SQUAD_MIN_PLAYERS  = 7      # Absolute minimum players (starters only if no subs)
+SQUAD_MIN_STARTERS = 7
+SQUAD_MIN_PLAYERS  = 7
 SQUAD_MAX_PLAYERS  = 23
 SQUAD_MAX_STARTERS = 11
 SQUAD_MAX_SUBS     = 12
@@ -370,23 +378,19 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # ── PLAYER VERIFICATION APIs ──────────────────────────────────────────────────
-# FIFA Connect Integration (set API key in .env for production)
 FIFA_CONNECT_API_URL = env("FIFA_CONNECT_API_URL", default="https://api.fifaconnect.ke/v1")
 FIFA_CONNECT_API_KEY = env("FIFA_CONNECT_API_KEY", default="")
 FIFA_CONNECT_ENABLED = env.bool("FIFA_CONNECT_ENABLED", default=True)
 FIFA_CONNECT_TIMEOUT = env.int("FIFA_CONNECT_TIMEOUT", default=30)
 
-# Smile Identity - IPRS / Enhanced KYC Verification
-# Sign up at smileidentity.com → Dashboard → API Keys
-# Use sandbox for testing (SMILE_ENVIRONMENT=sandbox)
-SMILE_PARTNER_ID = env("SMILE_PARTNER_ID", default="")
-SMILE_API_KEY    = env("SMILE_API_KEY", default="")
-SMILE_ENVIRONMENT = env("SMILE_ENVIRONMENT", default="sandbox")  # 'sandbox' or 'production'
-SMILE_TIMEOUT    = env.int("SMILE_TIMEOUT", default=30)
+SMILE_PARTNER_ID  = env("SMILE_PARTNER_ID", default="")
+SMILE_API_KEY     = env("SMILE_API_KEY", default="")
+SMILE_ENVIRONMENT = env("SMILE_ENVIRONMENT", default="sandbox")
+SMILE_TIMEOUT     = env.int("SMILE_TIMEOUT", default=30)
 
-IPRS_ENABLED     = env.bool("IPRS_ENABLED", default=True)
+IPRS_ENABLED = env.bool("IPRS_ENABLED", default=True)
 
-# ── SERVER ERROR EMAIL (Django emails ADMINS on 500 errors) ────────────────────
+# ── SERVER ERROR EMAIL ─────────────────────────────────────────────────────────
 ADMINS = [tuple(a.split(":")) for a in env.list("ADMINS", default=[])]
 SERVER_EMAIL = env("SERVER_EMAIL", default="info@mkjsupacup.com")
 
@@ -402,14 +406,12 @@ if SENTRY_DSN:
     )
 
 # ── PRODUCTION SECURITY HARDENING ──────────────────────────────────────────────
-# These settings are enforced when DEBUG=False
 if not DEBUG:
-    # HTTPS enforcement
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000          # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -215,9 +215,12 @@ from .web_views import (
     match_squad_pdf_view,
 )
 
+from teams.ligi_views import ligi_register_view
+
 urlpatterns = [
     # ── PUBLIC WEBSITE ────────────────────────────────────────────────────────
     path("robots.txt",                    robots_txt_view,                name="robots_txt"),
+    path("ligi/register/",               ligi_register_view,             name="ligi_register"),
     path("sitemap.xml",                   sitemap_xml_view,               name="sitemap_xml"),
     path("",                              home_view,                      name="home"),
     path("about/",                        about_view,                     name="about"),

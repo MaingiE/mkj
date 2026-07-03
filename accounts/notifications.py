@@ -1,5 +1,5 @@
 """
-MKJ SUPA CUP - Centralized Email Notification System
+MKJ SUPA CUP - Centralized Email + WhatsApp Notification System
 
 Sends HTML emails for:
   1. Account creation (welcome + credentials)
@@ -10,8 +10,11 @@ Sends HTML emails for:
   6. Match report submitted → coordinator
   7. Team registration → admin, subcounty officer
 
-All emails are dispatched on a background daemon thread so they never
-block the web request - timeouts / SMTP errors only appear in server logs.
+WhatsApp notifications (via Brevo WhatsApp API):
+  - Account credentials to new users on approval
+
+All notifications are dispatched on background daemon threads so they
+never block the web request — timeouts / API errors only appear in logs.
 """
 import logging
 import threading
@@ -105,6 +108,116 @@ def _get_coordinators_for_discipline(discipline):
     ) or _get_users_by_role('coordinator')
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  WHATSAPP NOTIFICATIONS  (Brevo WhatsApp API)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def send_whatsapp(phone_number, template_id, params=None):
+    """
+    Send a WhatsApp template message via Brevo WhatsApp API.
+
+    Requirements (configure in .env / settings):
+      BREVO_API_KEY           — existing Brevo API key
+      BREVO_WHATSAPP_SENDER   — your WhatsApp Business sender number (e.g. +254XXXXXXXXX)
+      BREVO_WHATSAPP_TEMPLATE_CREDENTIALS — template ID for credentials message
+
+    The phone number must be in international format (+254XXXXXXXXX).
+    Returns True if dispatched (delivery is async), False if skipped/failed.
+    """
+    import requests as _req
+
+    api_key  = getattr(settings, 'BREVO_API_KEY', '')
+    sender   = getattr(settings, 'BREVO_WHATSAPP_SENDER', '')
+
+    if not api_key or not sender:
+        logger.warning(
+            "WhatsApp not configured (missing BREVO_API_KEY or BREVO_WHATSAPP_SENDER). "
+            "Skipping WhatsApp notification."
+        )
+        return False
+
+    if not phone_number or not phone_number.startswith('+'):
+        logger.warning("WhatsApp skipped — invalid/missing phone: %r", phone_number)
+        return False
+
+    payload = {
+        "senderNumber": sender,
+        "contactNumbers": [phone_number],
+        "templateId": template_id,
+    }
+    if params:
+        payload["params"] = params
+
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": api_key,
+    }
+
+    def _worker():
+        try:
+            resp = _req.post(
+                "https://api.brevo.com/v3/whatsapp/sendMessage",
+                json=payload,
+                headers=headers,
+                timeout=15,
+            )
+            if resp.status_code in (200, 201, 202):
+                logger.info("📱 WhatsApp sent template=%s → %s", template_id, phone_number)
+            else:
+                logger.error(
+                    "📱 WhatsApp API error %d template=%s → %s: %s",
+                    resp.status_code, template_id, phone_number, resp.text,
+                )
+        except Exception as exc:
+            logger.error("📱 WhatsApp send failed template=%s → %s: %s", template_id, phone_number, exc)
+
+    import threading
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    return True
+
+
+def notify_credentials_whatsapp(phone_number, first_name, email, temp_password, role_label="Team Manager"):
+    """
+    Send login credentials to the user's WhatsApp number.
+    Uses the BREVO_WHATSAPP_TEMPLATE_CREDENTIALS template.
+
+    The template should be created in Brevo with variables:
+      {{1}} = first name
+      {{2}} = email
+      {{3}} = password
+      {{4}} = login URL
+      {{5}} = role label
+
+    Example template body:
+      Hello {{1}}! Your MKJ SUPA CUP portal account is ready.
+      Email: {{2}}
+      Password: {{3}}
+      Role: {{5}}
+      Login: {{4}}
+      Please change your password on first login.
+    """
+    template_id = getattr(settings, 'BREVO_WHATSAPP_TEMPLATE_CREDENTIALS', None)
+    if not template_id:
+        logger.warning(
+            "BREVO_WHATSAPP_TEMPLATE_CREDENTIALS not set — skipping WhatsApp credentials message."
+        )
+        return False
+
+    return send_whatsapp(
+        phone_number=phone_number,
+        template_id=int(template_id),
+        params={
+            "1": first_name,
+            "2": email,
+            "3": temp_password,
+            "4": f"{SITE_URL}/portal/login/",
+            "5": role_label,
+        },
+    )
+
+
 def _base_html(title, body_content):
     """Wrap body content in a branded HTML email template."""
     logo_base = f"{SITE_URL}/static/img"
@@ -169,7 +282,8 @@ body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def notify_account_created(user, temporary_password, role_label=None):
-    """Send welcome email with login credentials to newly created user."""
+    """Send welcome email with login credentials to newly created user.
+    Also sends credentials via WhatsApp if the user has a phone number configured."""
     role_display = role_label or dict(
         getattr(user, 'UserRole', {})
     ).get(user.role, user.role or 'User')
@@ -193,6 +307,17 @@ def notify_account_created(user, temporary_password, role_label=None):
         _base_html("Your Account Details", body),
         [user.email],
     )
+
+    # Also send via WhatsApp if the user has a phone number
+    phone = getattr(user, 'phone', None)
+    if phone:
+        notify_credentials_whatsapp(
+            phone_number=phone,
+            first_name=user.first_name,
+            email=user.email,
+            temp_password=temporary_password,
+            role_label=role_display,
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
