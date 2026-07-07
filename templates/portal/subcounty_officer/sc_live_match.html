@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Live: {{ fixture }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h1><i class="bi bi-broadcast text-danger"></i> Live Match</h1>
+        <p class="text-muted mb-0">{{ competition.name }} &bull; {{ competition.sub_county }}</p>
+    </div>
+    <a href="{% url 'sc_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Scoreboard -->
+<div class="card mb-4 shadow" style="background: #1a237e; color: #fff; border-radius: 16px;">
+    <div class="card-body text-center py-4">
+        <div class="row align-items-center">
+            <div class="col-5"><h3 class="fw-bold mb-0">{{ fixture.home_team.name }}</h3></div>
+            <div class="col-2">
+                <div style="font-size: 2.5rem; font-weight: 900;">
+                    {{ fixture.home_score|default:"0" }} – {{ fixture.away_score|default:"0" }}
+                </div>
+                <div class="small opacity-75">Period {{ fixture.live_half|default:1 }}</div>
+            </div>
+            <div class="col-5"><h3 class="fw-bold mb-0">{{ fixture.away_team.name }}</h3></div>
+        </div>
+    </div>
+</div>
+
+<!-- Match controls -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Match Controls</div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            {% if fixture.status != 'live' %}
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="start_match">
+                <button class="btn btn-success"><i class="bi bi-play-fill"></i> Start Match</button>
+            </form>
+            {% endif %}
+            {% if fixture.status == 'live' %}
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="goal_home">
+                <button class="btn btn-primary btn-sm">+1 {{ fixture.home_team.name }}</button>
+            </form>
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="goal_away">
+                <button class="btn btn-primary btn-sm">+1 {{ fixture.away_team.name }}</button>
+            </form>
+            {% if fixture.live_paused %}
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="resume">
+                <button class="btn btn-warning btn-sm"><i class="bi bi-play"></i> Resume</button>
+            </form>
+            {% else %}
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="pause">
+                <button class="btn btn-warning btn-sm"><i class="bi bi-pause"></i> Pause</button>
+            </form>
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="half_time">
+                <button class="btn btn-outline-warning btn-sm">Half Time</button>
+            </form>
+            {% endif %}
+            <form method="post" onsubmit="return confirm('End this match?')">{% csrf_token %}
+                <input type="hidden" name="action" value="end_match">
+                <button class="btn btn-danger btn-sm"><i class="bi bi-stop-fill"></i> End Match</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if fixture.status == 'live' %}
+<!-- Update score manually -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Update Score</div>
+    <div class="card-body">
+        <form method="post" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_score">
+            <div class="col-auto">
+                <label class="form-label small">{{ fixture.home_team.name }}</label>
+                <input type="number" name="home_score" class="form-control form-control-sm"
+                    value="{{ fixture.home_score|default:0 }}" min="0" style="width:80px">
+            </div>
+            <div class="col-auto align-self-end pb-1 fw-bold">–</div>
+            <div class="col-auto">
+                <label class="form-label small">{{ fixture.away_team.name }}</label>
+                <input type="number" name="away_score" class="form-control form-control-sm"
+                    value="{{ fixture.away_score|default:0 }}" min="0" style="width:80px">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add goal event -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Record Goal Event</div>
+    <div class="card-body">
+        <form method="post" class="row g-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_goal">
+            <div class="col-md-3">
+                <label class="form-label small">Team</label>
+                <select name="team_side" class="form-select form-select-sm">
+                    <option value="home">{{ fixture.home_team.name }}</option>
+                    <option value="away">{{ fixture.away_team.name }}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Scorer Name</label>
+                <input type="text" name="scorer_name" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Minute</label>
+                <input type="number" name="goal_minute" class="form-control form-control-sm" min="0" value="0">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Goal Type</label>
+                <select name="goal_type" class="form-select form-select-sm">
+                    {% for val, label in goal_type_choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-success btn-sm w-100">
+                    <i class="bi bi-plus"></i> Record
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Goal log -->
+{% if live_goals %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Goals Recorded</div>
+    <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+            {% for g in live_goals %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    <strong>{{ g.scorer_name }}</strong> ({{ g.team.name }})
+                    — {{ g.minute }}&prime; | {{ g.get_goal_type_display }}
+                </span>
+                <form method="post" class="mb-0">{% csrf_token %}
+                    <input type="hidden" name="action" value="delete_goal">
+                    <input type="hidden" name="goal_id" value="{{ g.pk }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

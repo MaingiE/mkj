@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Player Verification – {{ sub_county }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-shield-check"></i> Player Verification</h1>
+        <p class="text-muted mb-0">Sub-County: <strong>{{ sub_county }}</strong> &bull; Level: Sub-County</p>
+    </div>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Summary counts -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem">
+    <div class="card text-center border-success">
+        <div class="card-body py-3">
+            <div class="fs-3 fw-bold text-success">{{ fully_verified.count }}</div>
+            <div class="small text-muted">Fully Verified</div>
+        </div>
+    </div>
+    <div class="card text-center border-warning">
+        <div class="card-body py-3">
+            <div class="fs-3 fw-bold text-warning">{{ in_progress.count }}</div>
+            <div class="small text-muted">In Progress</div>
+        </div>
+    </div>
+    <div class="card text-center border-danger">
+        <div class="card-body py-3">
+            <div class="fs-3 fw-bold text-danger">{{ rejected.count }}</div>
+            <div class="small text-muted">Rejected</div>
+        </div>
+    </div>
+</div>
+
+<!-- In-Progress -->
+{% if in_progress %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold text-warning-emphasis bg-warning-subtle">⏳ In Progress ({{ in_progress.count }})</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr><th>Name</th><th>Discipline</th><th>Team</th><th>Step</th><th class="text-end">Action</th></tr>
+                </thead>
+                <tbody>
+                {% for player in in_progress %}
+                <tr>
+                    <td>{{ player.first_name }} {{ player.last_name }}</td>
+                    <td>{{ player.discipline.get_sport_type_display|default:"—" }}</td>
+                    <td>{{ player.team|default:"—" }}</td>
+                    <td><span class="badge bg-warning text-dark">Step {{ player.current_verification_step }}/3</span></td>
+                    <td class="text-end">
+                        <a href="{% url 'sc_verify_player' player_pk=player.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil-square"></i> Verify
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Fully Verified -->
+{% if fully_verified %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold text-success-emphasis bg-success-subtle">✅ Fully Verified ({{ fully_verified.count }})</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr><th>Name</th><th>Discipline</th><th>Team</th><th>Status</th><th class="text-end">Action</th></tr>
+                </thead>
+                <tbody>
+                {% for player in fully_verified %}
+                <tr>
+                    <td>{{ player.first_name }} {{ player.last_name }}</td>
+                    <td>{{ player.discipline.get_sport_type_display|default:"—" }}</td>
+                    <td>{{ player.team|default:"—" }}</td>
+                    <td><span class="badge bg-success">Verified</span></td>
+                    <td class="text-end">
+                        <a href="{% url 'sc_verify_player' player_pk=player.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Rejected -->
+{% if rejected %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold text-danger-emphasis bg-danger-subtle">❌ Rejected ({{ rejected.count }})</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr><th>Name</th><th>Discipline</th><th>Team</th><th>Reason</th><th class="text-end">Action</th></tr>
+                </thead>
+                <tbody>
+                {% for player in rejected %}
+                <tr>
+                    <td>{{ player.first_name }} {{ player.last_name }}</td>
+                    <td>{{ player.discipline.get_sport_type_display|default:"—" }}</td>
+                    <td>{{ player.team|default:"—" }}</td>
+                    <td><span class="text-danger small">{{ player.rejection_reason|truncatewords:8|default:"—" }}</span></td>
+                    <td class="text-end">
+                        <a href="{% url 'sc_verify_player' player_pk=player.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-arrow-repeat"></i> Review
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not players %}
+<div class="card shadow-sm">
+    <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-people fs-2 d-block mb-2"></i>
+        No sub-county players found for <strong>{{ sub_county }}</strong>.
+    </div>
+</div>
+{% endif %}
+{% endblock %}

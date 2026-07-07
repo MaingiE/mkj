@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Remove Player — Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
+        <a href="{% url 'ward_tm_longlist' %}">Player Longlist</a>
+        <span>Remove Player</span>
+    </div>
+    <h1><i class="bi bi-trash"></i> Remove Player from Longlist</h1>
+    <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward &mdash; {{ discipline.get_sport_type_display }}</p>
+</div>
+
+<div class="card" style="padding:1.75rem;max-width:540px">
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:.9rem 1rem;margin-bottom:1.5rem;font-size:.88rem">
+        <strong><i class="bi bi-exclamation-triangle"></i> Confirm removal</strong>
+        <p style="margin:.5rem 0 0">
+            You are about to remove <strong>{{ player.first_name }} {{ player.last_name }}</strong>
+            (ID: {{ player.national_id_number }}) from the longlist.
+            This action cannot be undone.
+        </p>
+    </div>
+
+    <!-- Player summary -->
+    <div style="background:#f8f9fa;border-radius:6px;padding:1rem;margin-bottom:1.5rem;font-size:.88rem">
+        <div style="display:flex;gap:1rem;align-items:center">
+            {% if player.photo %}
+            <img src="{{ player.photo.url }}" alt="Photo" style="width:54px;height:54px;object-fit:cover;border-radius:50%;border:1px solid #dee2e6;flex-shrink:0">
+            {% else %}
+            <div style="width:54px;height:54px;background:#dee2e6;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i class="bi bi-person" style="font-size:1.4rem;color:#888"></i>
+            </div>
+            {% endif %}
+            <div>
+                <p style="font-weight:700;margin:0 0 .2rem">{{ player.first_name }} {{ player.last_name }}</p>
+                <p style="color:#666;margin:0 0 .2rem">National ID: {{ player.national_id_number }}</p>
+                {% if player.date_of_birth %}<p style="color:#666;margin:0">DOB: {{ player.date_of_birth|date:"d M Y" }}{% if player.age %} (Age {{ player.age }}){% endif %}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:flex;gap:.75rem">
+            <button type="submit" style="padding:.55rem 1.2rem;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.9rem">
+                <i class="bi bi-trash"></i> Yes, Remove Player
+            </button>
+            <a href="{% url 'ward_tm_longlist' %}" style="padding:.55rem 1.2rem;font-size:.9rem;color:#495057;text-decoration:none;border:1px solid #dee2e6;border-radius:6px">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

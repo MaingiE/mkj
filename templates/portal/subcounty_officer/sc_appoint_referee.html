@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Appoint Referees – {{ fixture }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-person-badge"></i> Appoint Referees</h1>
+        <p class="text-muted mb-0">
+            {{ fixture.home_team }} vs {{ fixture.away_team }} &bull;
+            {% if fixture.match_date %}{{ fixture.match_date }}{% endif %}
+            &bull; {{ competition.name }}
+        </p>
+    </div>
+    <a href="{% url 'sc_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to Competition
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Current appointments -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Current Appointments</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Role</th>
+                    <th>Referee</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for rd in roles_data %}
+            <tr>
+                <td>
+                    {{ rd.role_label }}
+                    {% if rd.is_mandatory %}<span class="badge bg-danger ms-1">Required</span>{% endif %}
+                </td>
+                <td>{{ rd.referee_name|default:"— Not assigned —" }}</td>
+                <td>
+                    {% if rd.appointment %}
+                    <span class="badge bg-{{ rd.status|yesno:'success,secondary,warning' }}">{{ rd.status_display }}</span>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    {% if rd.appointment %}
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove">
+                        <input type="hidden" name="appointment_id" value="{{ rd.appointment.pk }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Remove {{ rd.referee_name }}?')">
+                            <i class="bi bi-x-circle"></i> Remove
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">No roles defined for this sport type.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Appoint a referee -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Appoint a Referee</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="appoint">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Role</label>
+                    <select name="role" class="form-select" required>
+                        <option value="">— Select role —</option>
+                        {% for rd in roles_data %}
+                        <option value="{{ rd.role_key }}">
+                            {{ rd.role_label }}{% if rd.is_mandatory %} *{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Referee</label>
+                    <select name="referee_id" class="form-select" required>
+                        <option value="">— Select referee —</option>
+                        {% for ref in referees_list %}
+                        <option value="{{ ref.profile.pk }}"
+                            {% if ref.is_appointed_here %}disabled{% endif %}>
+                            {{ ref.full_name }} ({{ ref.level }})
+                            {% if ref.is_busy %}⚠ Busy{% endif %}
+                            {% if ref.is_appointed_here %}✓ Appointed{% endif %}
+                            — {{ ref.availability_label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Notes</label>
+                    <input type="text" name="notes" class="form-control" placeholder="Optional notes">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> Appoint
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Referee availability legend -->
+<div class="text-muted small">
+    <i class="bi bi-info-circle"></i>
+    ⚠ = has another fixture on the same date &bull;
+    ✓ = already appointed to this fixture
+</div>
+{% endblock %}

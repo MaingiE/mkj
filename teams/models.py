@@ -73,6 +73,12 @@ class CountyRegistration(models.Model):
         choices=CountyRegStatus.choices,
         default=CountyRegStatus.PENDING_PAYMENT,
     )
+    
+    level = models.CharField(
+        max_length=20,
+        default="county",
+        help_text="Competition level: ward, subcounty, or county",
+    )
 
     # Payment evidence
     mpesa_reference = models.CharField(max_length=100, blank=True, default="",
@@ -130,9 +136,20 @@ class CountyDiscipline(models.Model):
         default="",
         help_text="Sub-county or constituency that owns this discipline entry",
     )
+    level = models.CharField(
+        max_length=20,
+        default="county",
+        help_text="Competition level: ward, subcounty, or county",
+    )
+    ward = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="Ward for ward-level competitions",
+    )
 
     class Meta:
-        unique_together = ["registration", "sport_type", "sub_county"]
+        unique_together = ["registration", "sport_type", "sub_county", "level", "ward"]
         ordering = ["sub_county", "sport_type"]
 
     def __str__(self):
@@ -266,6 +283,23 @@ class CountyPlayer(models.Model):
         max_length=200, blank=True, default="",
         help_text="Team in Ligi Mashinani",
     )
+    
+    # ── Player promotion tracking (ward → sub-county → county) ────────────────
+    source_ward_player = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="subcounty_instances",
+        help_text="Ward player this sub-county player was promoted from",
+    )
+    source_subcounty_player = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="county_instances",
+        help_text="Sub-county player this county player was promoted from",
+    )
+    
     photo = models.ImageField(upload_to="county_players/photos/", null=True, blank=True,
                               help_text="Passport-size photo (required)")
     iprs_photo = models.ImageField(
@@ -446,6 +480,76 @@ class CountyPlayer(models.Model):
     @property
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WARD LONGLIST (Ligi Mashinani ward-level player rosters)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class WardLonglistStatus(models.TextChoices):
+    DRAFT          = "draft",          "Draft"
+    SUBMITTED      = "submitted",      "Submitted for Review"
+    WSCC_APPROVED  = "wscc_approved",  "WSCC Approved"
+    RETURNED       = "returned",       "Returned for Corrections"
+
+
+class WardLonglist(models.Model):
+    """
+    Ward-level player longlist for Ligi Mashinani competitions.
+    Created when a ward team manager is approved and linked to a ward discipline.
+    """
+    discipline = models.OneToOneField(
+        CountyDiscipline,
+        on_delete=models.CASCADE,
+        related_name="ward_longlist",
+        limit_choices_to={"level": "ward"},
+        help_text="Ward discipline this longlist belongs to",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=WardLonglistStatus.choices,
+        default=WardLonglistStatus.DRAFT,
+        help_text="Current status in the WSCC approval workflow",
+    )
+    submitted_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When the longlist was submitted for WSCC review",
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="ward_longlists_reviewed",
+        help_text="WSCC who reviewed this longlist",
+    )
+    reviewed_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When the WSCC reviewed this longlist",
+    )
+    return_reason = models.TextField(
+        blank=True, default="",
+        help_text="Reason provided by WSCC when returning longlist for corrections",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Ward Longlist"
+        verbose_name_plural = "Ward Longlists"
+
+    def __str__(self):
+        return f"{self.discipline} Longlist - {self.get_status_display()}"
+
+    @property
+    def is_locked(self):
+        """True when longlist cannot be edited (submitted or approved)."""
+        return self.status in (WardLonglistStatus.SUBMITTED, WardLonglistStatus.WSCC_APPROVED)
+
+    @property
+    def can_submit(self):
+        """True when longlist can be submitted (has players and is in draft/returned status)."""
+        return self.status in (WardLonglistStatus.DRAFT, WardLonglistStatus.RETURNED) and self.discipline.player_count > 0
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -693,6 +797,19 @@ class Team(models.Model):
 
     contact_phone = models.CharField(max_length=13, validators=[kenya_phone_validator])
     contact_email = models.EmailField(blank=True)
+
+    # ── Qualification tracking (sub-county → county promotion) ────────────────
+    qualified_to_county = models.BooleanField(
+        default=False,
+        help_text="True when this sub-county team has qualified to county finals",
+    )
+    qualifying_county_competition = models.ForeignKey(
+        "competitions.Competition",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="qualified_teams",
+        help_text="County competition this team qualified for",
+    )
 
     # ── Payment tracking ───────────────────────────────────────────────────────
     payment_confirmed    = models.BooleanField(default=True, help_text="Registration cleared for competition participation")
@@ -1578,3 +1695,34 @@ class LigiMashinaniRegistration(models.Model):
 
     def get_discipline_display(self):
         return dict(LIGI_DISCIPLINE_CHOICES).get(self.discipline, self.discipline)
+
+    def clean_discipline(self):
+        """Validate that discipline is one of the ten supported LIGI_DISCIPLINE_CHOICES.
+        Raises ValidationError identifying the discipline field if invalid.
+        Requirements: 9.1, 9.2
+        """
+        from django.core.exceptions import ValidationError as _VE
+        valid_keys = {d[0] for d in LIGI_DISCIPLINE_CHOICES}
+        if self.discipline and self.discipline not in valid_keys:
+            raise _VE(
+                {'discipline': (
+                    f'"{self.discipline}" is not a supported discipline. '
+                    f'Choose one of: {", ".join(dict(LIGI_DISCIPLINE_CHOICES).values())}.'
+                )},
+            )
+        return self.discipline
+
+    def clean(self):
+        """Full model validation — enforces discipline choices constraint.
+        Requirements: 9.1, 9.2
+        """
+        from django.core.exceptions import ValidationError as _VE
+        errors = {}
+        valid_keys = {d[0] for d in LIGI_DISCIPLINE_CHOICES}
+        if self.discipline and self.discipline not in valid_keys:
+            errors['discipline'] = (
+                f'"{self.discipline}" is not a supported discipline. '
+                f'Choose one of: {", ".join(dict(LIGI_DISCIPLINE_CHOICES).values())}.'
+            )
+        if errors:
+            raise _VE(errors)

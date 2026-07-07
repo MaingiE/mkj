@@ -158,6 +158,19 @@
         font-size: .85rem;
     }
     .no-data i { font-size: 1.5rem; display: block; margin-bottom: .3rem; }
+    .qualified-badge {
+        display: inline-block;
+        font-size: .68rem;
+        background: #E8F5E9;
+        color: #1B5E20;
+        border: 1px solid #A5D6A7;
+        padding: .1rem .45rem;
+        border-radius: 4px;
+        font-weight: 600;
+        white-space: nowrap;
+        margin-left: .3rem;
+        vertical-align: middle;
+    }
 </style>
 {% endblock %}
 
@@ -215,6 +228,53 @@
     </div>
 </div>
 
+<!-- Pending Team Registrations — qualified sub-county teams awaiting acceptance -->
+{% with qualified_pending=eligible_teams|dictsortreversed:"qualified_to_county" %}
+{% if eligible_teams %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="background:#F3E5F5;display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="color:#4A148C;margin:0;font-size:1rem;"><i class="bi bi-people-fill"></i> Pending Team Registrations ({{ eligible_teams.count }})</h3>
+        <a href="{% url 'cm_manage_pools' pk=competition.pk %}" class="btn btn-primary btn-sm" style="font-size:.75rem;"><i class="bi bi-collection"></i> Add to Pool</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table style="width:100%;border-collapse:collapse;font-size:.83rem;">
+            <thead>
+                <tr style="background:#FAFAFA;border-bottom:1px solid #eee;">
+                    <th style="padding:.5rem 1rem;text-align:left;font-weight:600;color:#555;">Team</th>
+                    <th style="padding:.5rem .75rem;text-align:left;font-weight:600;color:#555;">Sub-County</th>
+                    <th style="padding:.5rem .75rem;text-align:left;font-weight:600;color:#555;">Status</th>
+                    <th style="padding:.5rem .75rem;text-align:left;font-weight:600;color:#555;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in eligible_teams %}
+                <tr style="border-bottom:1px solid #f5f5f5;">
+                    <td style="padding:.55rem 1rem;font-weight:600;">{{ team.name }}</td>
+                    <td style="padding:.55rem .75rem;color:#555;">
+                        {% if team.sub_county %}{{ team.sub_county }}{% else %}<span style="color:#bbb;">—</span>{% endif %}
+                    </td>
+                    <td style="padding:.55rem .75rem;">
+                        {% if team.qualified_to_county %}
+                        <span class="qualified-badge"><i class="bi bi-patch-check-fill"></i> Qualified from {{ team.sub_county }}</span>
+                        {% else %}
+                        <span style="font-size:.72rem;background:#e8edf5;color:#124491;padding:.1rem .4rem;border-radius:4px;">Direct Entry</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:.55rem .75rem;">
+                        <a href="{% url 'cm_manage_pools' pk=competition.pk %}" class="btn btn-success btn-sm" style="font-size:.72rem;padding:.15rem .5rem;" title="Accept — add to a pool">
+                            <i class="bi bi-check-lg"></i> Accept
+                        </a>
+                        <span style="font-size:.7rem;color:#999;margin-left:.3rem;">or defer by not adding to any pool</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
 <!-- Pool Standings -->
 <div class="section-title">
     <span><i class="bi bi-collection"></i> Pool Standings</span>
@@ -246,6 +306,9 @@
                     <td>
                         <span class="pos-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-other{% endif %}">{{ forloop.counter }}</span>
                         {{ pt.team.name }}
+                        {% if pt.team.qualified_to_county and pt.team.sub_county %}
+                        <span class="qualified-badge"><i class="bi bi-patch-check-fill"></i> Qualified from {{ pt.team.sub_county }}</span>
+                        {% endif %}
                     </td>
                     <td>{{ pt.played }}</td>
                     <td>{{ pt.won }}</td>

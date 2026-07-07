@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Ward Longlists — WSCC Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <span>All Longlists</span>
+    </div>
+    <h1><i class="bi bi-list-ul"></i> Ward Longlists</h1>
+    <p>{{ sub_county|title }} Sub-County</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div class="alert alert--{{ msg.tags }}" style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Status filter -->
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center">
+    <span style="font-size:.85rem;color:#888">Filter by status:</span>
+    <a href="{% url 'wscc_longlists' %}"
+       style="padding:.3rem .8rem;border-radius:20px;font-size:.82rem;text-decoration:none;
+              {% if not status_filter %}background:#124491;color:#fff;{% else %}background:#e2e3e5;color:#495057;{% endif %}">
+        All
+    </a>
+    {% for value, label in status_choices %}
+    <a href="{% url 'wscc_longlists' %}?status={{ value }}"
+       style="padding:.3rem .8rem;border-radius:20px;font-size:.82rem;text-decoration:none;
+              {% if status_filter == value %}background:#124491;color:#fff;{% else %}background:#e2e3e5;color:#495057;{% endif %}">
+        {{ label }}
+    </a>
+    {% endfor %}
+</div>
+
+{% if longlists %}
+<div class="card" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+        <thead>
+            <tr style="background:#f0f4ff;text-align:left">
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Ward</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Discipline</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Status</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Players</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Submitted</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Reviewed By</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ll in longlists %}
+            <tr style="border-bottom:1px solid #dee2e6{% if forloop.last %};border-bottom:none{% endif %}">
+                <td style="padding:.65rem 1rem;font-weight:500">{{ ll.discipline.ward|title }}</td>
+                <td style="padding:.65rem 1rem">{{ ll.discipline.get_sport_type_display }}</td>
+                <td style="padding:.65rem 1rem">
+                    {% if ll.status == 'submitted' %}
+                        <span style="background:#fff3cd;color:#856404;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">
+                            <i class="bi bi-send"></i> Submitted
+                        </span>
+                    {% elif ll.status == 'wscc_approved' %}
+                        <span style="background:#d1e7dd;color:#0a3622;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">
+                            <i class="bi bi-check-circle"></i> Approved
+                        </span>
+                    {% elif ll.status == 'returned' %}
+                        <span style="background:#f8d7da;color:#842029;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">
+                            <i class="bi bi-arrow-return-left"></i> Returned
+                        </span>
+                    {% elif ll.status == 'draft' %}
+                        <span style="background:#e2e3e5;color:#41464b;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">
+                            <i class="bi bi-pencil"></i> Draft
+                        </span>
+                    {% else %}
+                        <span style="background:#e2e3e5;color:#41464b;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">
+                            {{ ll.get_status_display }}
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="padding:.65rem 1rem;text-align:center">{{ ll.discipline.players.count }}</td>
+                <td style="padding:.65rem 1rem;color:#888;font-size:.83rem">
+                    {% if ll.submitted_at %}{{ ll.submitted_at|date:"d M Y" }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+                </td>
+                <td style="padding:.65rem 1rem;font-size:.83rem">
+                    {% if ll.reviewed_by %}
+                        {{ ll.reviewed_by.get_full_name|default:ll.reviewed_by.email }}
+                        {% if ll.reviewed_at %}<br><span style="color:#aaa">{{ ll.reviewed_at|date:"d M Y" }}</span>{% endif %}
+                    {% else %}
+                        <span style="color:#ccc">—</span>
+                    {% endif %}
+                </td>
+                <td style="padding:.65rem 1rem">
+                    <a href="{% url 'wscc_longlist_detail' ll.pk %}"
+                       style="padding:.3rem .65rem;font-size:.82rem;background:#124491;color:#fff;border-radius:4px;text-decoration:none">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p style="font-size:.82rem;color:#888;margin-top:.5rem">{{ longlists|length }} longlist{{ longlists|length|pluralize }} shown</p>
+{% else %}
+<div class="card" style="padding:2.5rem;text-align:center;color:#888">
+    <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+    <p style="margin:0">No longlists found{% if status_filter %} with status "{{ status_filter }}"{% endif %}.</p>
+    {% if status_filter %}
+    <a href="{% url 'wscc_longlists' %}" style="display:inline-block;margin-top:.75rem;font-size:.88rem;color:#124491">
+        Clear filter
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div style="margin-top:1.25rem">
+    <a href="{% url 'wscc_dashboard' %}" style="font-size:.88rem;color:#124491">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Ward Team Manager Dashboard - Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <span>Ligi Mashinani</span>
+        <span>Dashboard</span>
+    </div>
+    <h1><i class="bi bi-speedometer2"></i> Ligi Mashinani — Ward Team Manager</h1>
+    <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward</p>
+</div>
+
+<!-- Summary Card -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1.2rem">
+        <i class="bi bi-info-circle"></i> Team Overview
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">
+
+        <div style="background:#f8f9fa;border-radius:8px;padding:1rem;text-align:center">
+            <div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Ward</div>
+            <div style="font-size:1.05rem;font-weight:700;color:#124491">{{ ward|title }}</div>
+        </div>
+
+        <div style="background:#f8f9fa;border-radius:8px;padding:1rem;text-align:center">
+            <div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Sub-County</div>
+            <div style="font-size:1.05rem;font-weight:700;color:#124491">{{ sub_county|title }}</div>
+        </div>
+
+        <div style="background:#f8f9fa;border-radius:8px;padding:1rem;text-align:center">
+            <div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Discipline</div>
+            <div style="font-size:1.05rem;font-weight:700;color:#124491">{{ discipline.get_sport_type_display }}</div>
+        </div>
+
+        <div style="background:#f8f9fa;border-radius:8px;padding:1rem;text-align:center">
+            <div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Players Registered</div>
+            <div style="font-size:1.4rem;font-weight:700;color:#124491">{{ player_count }}</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Longlist Status Card -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem">
+        <i class="bi bi-list-check"></i> Player Longlist Status
+    </h2>
+
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+        <span style="font-size:.9rem;color:#555">Current status:</span>
+        {% if longlist.status == 'draft' %}
+            <span style="background:#fff3cd;color:#856404;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                <i class="bi bi-pencil"></i> Draft
+            </span>
+        {% elif longlist.status == 'submitted' %}
+            <span style="background:#cfe2ff;color:#084298;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                <i class="bi bi-send"></i> Submitted for Review
+            </span>
+        {% elif longlist.status == 'wscc_approved' %}
+            <span style="background:#d1e7dd;color:#0a3622;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                <i class="bi bi-check-circle"></i> WSCC Approved
+            </span>
+        {% elif longlist.status == 'returned' %}
+            <span style="background:#f8d7da;color:#842029;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                <i class="bi bi-arrow-return-left"></i> Returned for Corrections
+            </span>
+        {% else %}
+            <span style="background:#e2e3e5;color:#41464b;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                {{ longlist.get_status_display }}
+            </span>
+        {% endif %}
+    </div>
+
+    {% if longlist.status == 'returned' and longlist.return_reason %}
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.88rem">
+        <strong><i class="bi bi-exclamation-triangle"></i> Returned with reason:</strong>
+        <p style="margin:.4rem 0 0">{{ longlist.return_reason }}</p>
+    </div>
+    {% endif %}
+
+    {% if longlist.submitted_at %}
+    <p style="font-size:.83rem;color:#888;margin-bottom:.4rem">
+        <i class="bi bi-calendar-event"></i> Submitted: {{ longlist.submitted_at|date:"d M Y, H:i" }}
+    </p>
+    {% endif %}
+
+    {% if longlist.reviewed_at and longlist.reviewed_by %}
+    <p style="font-size:.83rem;color:#888;margin-bottom:0">
+        <i class="bi bi-person-check"></i> Reviewed by {{ longlist.reviewed_by.get_full_name|default:longlist.reviewed_by.email }}
+        on {{ longlist.reviewed_at|date:"d M Y, H:i" }}
+    </p>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="padding:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem">
+        <i class="bi bi-lightning"></i> Quick Actions
+    </h2>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <a href="{% url 'ward_tm_longlist' %}" class="btn btn--primary">
+            <i class="bi bi-people"></i> Manage Player Longlist
+        </a>
+        {% if longlist.can_submit %}
+        <a href="{% url 'ward_tm_submit_longlist' %}" class="btn btn--secondary">
+            <i class="bi bi-send"></i> Submit Longlist for Review
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

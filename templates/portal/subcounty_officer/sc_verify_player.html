@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}Verify Player – {{ player.first_name }} {{ player.last_name }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h1><i class="bi bi-person-check"></i> Verify Player</h1>
+        <p class="text-muted mb-0">
+            {{ player.first_name }} {{ player.last_name }} &bull;
+            {{ player.discipline.get_sport_type_display|default:"—" }} &bull;
+            Sub-County Level
+        </p>
+    </div>
+    <a href="{% url 'sc_verification_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Summary stat cards -->
+<div class="stats-grid mb-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:{% if is_fully_verified %}#e8f5ed;color:#2E7D32{% elif player.verification_status == 'rejected' %}#fce4ec;color:#C62828{% else %}#fff3e0;color:#e65100{% endif %}">
+            {% if is_fully_verified %}✅{% elif player.verification_status == 'rejected' %}❌{% else %}⏳{% endif %}
+        </div>
+        <div class="stat-info">
+            <h3>{% if is_fully_verified %}Fully Verified{% elif player.verification_status == 'rejected' %}Rejected{% else %}Step {{ current_step }}/3{% endif %}</h3>
+            <p>{% if is_fully_verified %}All Steps Complete{% elif player.verification_status == 'rejected' %}{{ player.rejection_reason|truncatewords:8 }}{% else %}{{ player.step_label }}{% endif %}</p>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-person"></i></div>
+        <div class="stat-info"><h3>{{ player.age }}</h3><p>Age</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-geo-alt"></i></div>
+        <div class="stat-info"><h3>{{ player.discipline.sub_county|default:"—" }}</h3><p>Sub-County</p></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="bi bi-trophy"></i></div>
+        <div class="stat-info"><h3>{{ player.discipline.get_sport_type_display }}</h3><p>Discipline</p></div>
+    </div>
+</div>
+
+<!-- Step progress bar -->
+<div class="card mb-3">
+    <div class="card-body" style="padding:1.5rem 1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;position:relative">
+            <div style="position:absolute;top:24px;left:60px;right:60px;height:3px;background:#e0e0e0;z-index:0"></div>
+            {% for s in steps %}
+            <div style="display:flex;flex-direction:column;align-items:center;z-index:1;flex:1;position:relative">
+                <div style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;
+                    {% if s.passed %}background:#2E7D32;color:#fff;border:3px solid #2E7D32;
+                    {% elif s.failed %}background:#C62828;color:#fff;border:3px solid #C62828;
+                    {% elif s.active %}background:#124491;color:#fff;border:3px solid #124491;box-shadow:0 0 0 4px rgba(18,68,145,.2);
+                    {% else %}background:#f5f5f5;color:#bbb;border:3px solid #e0e0e0;{% endif %}">
+                    {% if s.passed %}✓{% elif s.failed %}✗{% else %}{{ s.num }}{% endif %}
+                </div>
+                <p style="margin:.5rem 0 0;font-size:.75rem;font-weight:{% if s.active or s.passed or s.failed %}700{% else %}400{% endif %};
+                          color:{% if s.passed %}#2E7D32{% elif s.failed %}#C62828{% elif s.active %}#124491{% else %}#bbb{% endif %};
+                          text-align:center;line-height:1.2">{{ s.title }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if is_fully_verified %}
+<div class="card mb-3" style="border:2px solid #2E7D32;background:#e8f5ed">
+    <div class="card-body text-center" style="padding:2rem">
+        <div style="font-size:3rem">🎉</div>
+        <h2 style="color:#2E7D32;margin:.5rem 0">Player Fully Verified</h2>
+        <p style="color:#555">{{ player.first_name }} {{ player.last_name }} is now eligible for squad selection.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Player details -->
+<div class="card mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-person-vcard"></i> Player Details</div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+                <p><strong>Full Name:</strong> {{ player.first_name }} {{ player.last_name }}</p>
+                <p><strong>Date of Birth:</strong> {{ player.date_of_birth|date:"d M Y"|default:"—" }}</p>
+                <p><strong>National ID:</strong> {{ player.national_id_number|default:"—" }}</p>
+            </div>
+            <div>
+                <p><strong>Sub-County:</strong> {{ player.discipline.sub_county|default:"—" }}</p>
+                <p><strong>Ward:</strong> {{ player.ward|default:"—" }}</p>
+                <p><strong>Phone:</strong> {{ player.phone|default:"—" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ STEP 1: DOCUMENT VERIFICATION ═══════ -->
+<div class="card mb-3" id="step1"
+     style="border-left:4px solid {% if steps.0.passed %}#2E7D32{% elif steps.0.failed %}#C62828{% elif steps.0.active %}#124491{% else %}#e0e0e0{% endif %}">
+    <div class="card-header" style="display:flex;align-items:center;gap:.75rem">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.8rem;font-weight:800;
+            {% if steps.0.passed %}background:#2E7D32;color:#fff{% elif steps.0.failed %}background:#C62828;color:#fff{% elif steps.0.active %}background:#124491;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
+            {% if steps.0.passed %}✓{% elif steps.0.failed %}✗{% else %}1{% endif %}
+        </span>
+        <h3 class="mb-0">📄 Step 1 – Document Verification</h3>
+        {% if steps.0.passed %}<span class="badge bg-success ms-auto">PASSED</span>{% endif %}
+        {% if steps.0.failed %}<span class="badge bg-danger ms-auto">REJECTED</span>{% endif %}
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
+            <div class="text-center p-3 bg-light rounded">
+                <p class="fw-bold mb-1">📸 Photo</p>
+                {% if player.photo %}<a href="{{ player.photo.url }}" target="_blank"><img src="{{ player.photo.url }}" alt="Photo" style="max-width:100px;max-height:130px;border-radius:4px;border:1px solid #ddd"></a>{% else %}<span class="text-danger fw-semibold">Missing</span>{% endif %}
+            </div>
+            <div class="text-center p-3 bg-light rounded">
+                <p class="fw-bold mb-1">🪪 ID Document</p>
+                {% if player.id_document %}<a href="{{ player.id_document.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">View Document</a>{% else %}<span class="text-danger fw-semibold">Missing</span>{% endif %}
+            </div>
+            <div class="text-center p-3 bg-light rounded">
+                <p class="fw-bold mb-1">📜 Birth Certificate</p>
+                {% if player.birth_certificate %}<a href="{{ player.birth_certificate.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">View</a>{% else %}<span class="text-muted">Not uploaded</span>{% endif %}
+            </div>
+        </div>
+        {% if steps.0.active %}
+        <div class="d-flex gap-3 flex-wrap align-items-end">
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="doc_verify">
+                <button type="submit" class="btn btn-success">✅ Documents Verified</button>
+            </form>
+            <form method="post" class="d-flex gap-2 align-items-end flex-wrap">{% csrf_token %}<input type="hidden" name="action" value="doc_reject">
+                <div><label class="form-label small fw-semibold mb-1">Rejection Reason</label>
+                    <input type="text" name="doc_rejection_reason" class="form-control form-control-sm" style="min-width:240px" placeholder="e.g. Blurry ID photo" required>
+                </div>
+                <button type="submit" class="btn btn-danger">❌ Reject Documents</button>
+            </form>
+        </div>
+        {% elif steps.0.failed %}
+        <div class="alert alert-danger py-2">
+            <strong>Rejection Reason:</strong> {{ player.doc_rejection_reason|default:"—" }}
+        </div>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_step"><input type="hidden" name="reset_target" value="1">
+            <button type="submit" class="btn btn-outline-primary btn-sm">🔄 Reset Step 1</button>
+        </form>
+        {% elif steps.0.passed %}
+        <div class="d-flex align-items-center justify-content-between p-2 bg-light-success rounded">
+            <span class="text-success fw-semibold">✓ Documents verified{% if player.doc_verified_at %} – {{ player.doc_verified_at|date:"d M Y H:i" }}{% endif %}</span>
+            <form method="post" class="mb-0">{% csrf_token %}<input type="hidden" name="action" value="reset_step"><input type="hidden" name="reset_target" value="1">
+                <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('This will reset ALL steps. Continue?')">🔄 Reset</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ═══════ STEP 2: AGE VERIFICATION ═══════ -->
+<div class="card mb-3" id="step2"
+     style="border-left:4px solid {% if steps.1.passed %}#2E7D32{% elif steps.1.failed %}#C62828{% elif steps.1.active %}#124491{% else %}#e0e0e0{% endif %};{% if steps.1.locked %}opacity:.5{% endif %}">
+    <div class="card-header" style="display:flex;align-items:center;gap:.75rem">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.8rem;font-weight:800;
+            {% if steps.1.passed %}background:#2E7D32;color:#fff{% elif steps.1.failed %}background:#C62828;color:#fff{% elif steps.1.active %}background:#124491;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
+            {% if steps.1.passed %}✓{% elif steps.1.failed %}✗{% else %}2{% endif %}
+        </span>
+        <h3 class="mb-0">🪪 Step 2 – Age Verification (IPRS)</h3>
+        {% if steps.1.passed %}<span class="badge bg-success ms-auto">VERIFIED</span>{% endif %}
+        {% if steps.1.failed %}<span class="badge bg-danger ms-auto">FAILED</span>{% endif %}
+        {% if steps.1.locked %}<span class="ms-auto text-muted small"><i class="bi bi-lock-fill"></i> Complete Step 1 first</span>{% endif %}
+    </div>
+    {% if not steps.1.locked %}
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div class="text-center p-2 bg-light rounded">
+                <p class="small text-muted mb-0">Date of Birth</p>
+                <p class="fw-bold mb-0">{{ player.date_of_birth|date:"d M Y"|default:"—" }}</p>
+            </div>
+            <div class="text-center p-2 bg-light rounded">
+                <p class="small text-muted mb-0">Calculated Age</p>
+                <p class="fw-bold mb-0">{{ player.age }} years</p>
+            </div>
+            <div class="text-center p-2 bg-light rounded">
+                <p class="small text-muted mb-0">National ID</p>
+                <p class="fw-bold mb-0">{{ player.national_id_number|default:"—" }}</p>
+            </div>
+        </div>
+        {% if steps.1.active %}
+        <div class="d-flex gap-3 flex-wrap align-items-end">
+            <form method="post" class="d-flex gap-2 align-items-end flex-wrap">{% csrf_token %}<input type="hidden" name="action" value="iprs_verify">
+                <div><label class="form-label small fw-semibold mb-1">Notes (optional)</label>
+                    <input type="text" name="iprs_age_notes" class="form-control form-control-sm" style="min-width:240px" placeholder="e.g. DOB confirmed via IPRS">
+                </div>
+                <button type="submit" class="btn btn-success">✅ Age Verified</button>
+            </form>
+            <form method="post" class="d-flex gap-2 align-items-end flex-wrap">{% csrf_token %}<input type="hidden" name="action" value="iprs_fail">
+                <div><label class="form-label small fw-semibold mb-1">Reason for failure</label>
+                    <input type="text" name="iprs_age_notes" class="form-control form-control-sm" style="min-width:240px" placeholder="e.g. DOB mismatch" required>
+                </div>
+                <button type="submit" class="btn btn-danger">❌ Age Verification Failed</button>
+            </form>
+        </div>
+        {% elif steps.1.failed %}
+        <div class="alert alert-danger py-2"><strong>Failure Reason:</strong> {{ player.iprs_age_notes|default:"—" }}</div>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_step"><input type="hidden" name="reset_target" value="2">
+            <button type="submit" class="btn btn-outline-primary btn-sm">🔄 Reset Step 2</button>
+        </form>
+        {% elif steps.1.passed %}
+        <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded">
+            <span class="text-success fw-semibold">✓ Age verified{% if player.iprs_age_verified_at %} – {{ player.iprs_age_verified_at|date:"d M Y H:i" }}{% endif %}{% if player.iprs_age_notes %} ({{ player.iprs_age_notes }}){% endif %}</span>
+            <form method="post" class="mb-0">{% csrf_token %}<input type="hidden" name="action" value="reset_step"><input type="hidden" name="reset_target" value="2">
+                <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('This will reset Steps 2–3. Continue?')">🔄 Reset</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ═══════ STEP 3: HIGHER LEAGUES CHECK ═══════ -->
+<div class="card mb-3" id="step3"
+     style="border-left:4px solid {% if steps.2.passed %}#2E7D32{% elif steps.2.failed %}#C62828{% elif steps.2.active %}#124491{% else %}#e0e0e0{% endif %};{% if steps.2.locked %}opacity:.5{% endif %}">
+    <div class="card-header" style="display:flex;align-items:center;gap:.75rem">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.8rem;font-weight:800;
+            {% if steps.2.passed %}background:#2E7D32;color:#fff{% elif steps.2.failed %}background:#C62828;color:#fff{% elif steps.2.active %}background:#124491;color:#fff{% else %}background:#e0e0e0;color:#888{% endif %}">
+            {% if steps.2.passed %}✓{% elif steps.2.failed %}✗{% else %}3{% endif %}
+        </span>
+        <h3 class="mb-0">
+            {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
+            ⚽ Step 3 – FIFA Connect &amp; Higher Leagues (FKF, KUSF, FIFA Connect)
+            {% else %}
+            🏆 Step 3 – Higher Leagues Check (National Teams, KUSF Federation)
+            {% endif %}
+        </h3>
+        {% if steps.2.passed %}<span class="badge bg-success ms-auto">CLEAR</span>{% endif %}
+        {% if steps.2.failed %}<span class="badge bg-danger ms-auto">FLAGGED</span>{% endif %}
+        {% if steps.2.locked %}<span class="ms-auto text-muted small"><i class="bi bi-lock-fill"></i> Complete Step 2 first</span>{% endif %}
+    </div>
+    {% if not steps.2.locked %}
+    <div class="card-body">
+        {% if steps.2.active %}
+        <div class="alert alert-info py-2 small mb-3">
+            {% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}
+            <strong>⚽ Football – check:</strong> FKF registered clubs (KPL, NSL, FKF-PL), KUSF, FIFA Connect player registry.
+            {% elif player.discipline.sport_type == 'volleyball_men' or player.discipline.sport_type == 'volleyball_women' %}
+            <strong>🏐 Volleyball – check:</strong> KVF national teams, KUSF university competitions, Division 1 clubs.
+            {% elif 'basketball' in player.discipline.sport_type %}
+            <strong>🏀 Basketball – check:</strong> BKF national teams, KUSF competitions, KBL clubs.
+            {% elif 'handball' in player.discipline.sport_type %}
+            <strong>🤾 Handball – check:</strong> KHF national teams, KUSF competitions, premier league clubs.
+            {% else %}
+            <strong>🏆 Check:</strong> National federation teams, KUSF university competitions, higher league clubs.
+            {% endif %}
+        </div>
+        <div class="d-flex gap-3 flex-wrap align-items-end">
+            <form method="post" class="d-flex gap-2 align-items-end flex-wrap">{% csrf_token %}<input type="hidden" name="action" value="league_clear">
+                <div><label class="form-label small fw-semibold mb-1">Notes (optional)</label>
+                    <input type="text" name="higher_league_details" class="form-control form-control-sm" style="min-width:240px" placeholder="e.g. Checked KUSF, national teams – clear">
+                </div>
+                <button type="submit" class="btn btn-success">✅ Player is Clear</button>
+            </form>
+            <form method="post" class="d-flex gap-2 align-items-end flex-wrap">{% csrf_token %}<input type="hidden" name="action" value="league_flag">
+                <div><label class="form-label small fw-semibold mb-1">League / Federation details</label>
+                    <input type="text" name="higher_league_details" class="form-control form-control-sm" style="min-width:240px"
+                           placeholder="{% if player.discipline.sport_type == 'football_men' or player.discipline.sport_type == 'football_women' %}e.g. KPL – Gor Mahia FC{% else %}e.g. Kenya National Team{% endif %}" required>
+                </div>
+                <button type="submit" class="btn btn-danger">🚩 Flag – Higher League / National Team</button>
+            </form>
+        </div>
+        {% elif steps.2.failed %}
+        <div class="alert alert-danger py-2"><strong>Flagged:</strong> {{ player.higher_league_details|default:"—" }}</div>
+        <p class="text-muted small"><i class="bi bi-info-circle"></i> This player is blocked from squad selection until manually cleared by a Verification Officer or SCSO.</p>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_step"><input type="hidden" name="reset_target" value="3">
+            <button type="submit" class="btn btn-outline-primary btn-sm">🔄 Reset Step 3</button>
+        </form>
+        {% elif steps.2.passed %}
+        <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded">
+            <span class="text-success fw-semibold">✓ Higher Leagues check clear{% if player.higher_league_checked_at %} – {{ player.higher_league_checked_at|date:"d M Y H:i" }}{% endif %}{% if player.higher_league_details %} ({{ player.higher_league_details }}){% endif %}</span>
+            <form method="post" class="mb-0">{% csrf_token %}<input type="hidden" name="action" value="reset_step"><input type="hidden" name="reset_target" value="3">
+                <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('This will reset Step 3. Continue?')">🔄 Reset</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-3 d-flex align-items-center gap-3">
+    <a href="{% url 'sc_verification_dashboard' %}" class="fw-semibold text-decoration-none">← Back to Verification Dashboard</a>
+    {% if is_fully_verified %}
+    <span class="ms-auto badge bg-success fs-6 py-2 px-3">🎉 ALL STEPS COMPLETE</span>
+    {% endif %}
+</div>
+{% endblock %}

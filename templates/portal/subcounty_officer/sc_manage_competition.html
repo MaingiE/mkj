@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}{{ competition.name }} – Manage – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-gear"></i> {{ competition.name }}</h1>
+        <p class="text-muted mb-0">
+            {{ competition.get_sport_type_display }} &bull; {{ competition.season }} &bull;
+            <span class="badge bg-secondary">{{ competition.get_status_display }}</span> &bull;
+            {{ competition.sub_county }}
+        </p>
+    </div>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Quick-action tiles -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <a href="{% url 'sc_manage_pools' pk=competition.pk %}" class="card text-center text-decoration-none h-100 p-3 border-0 shadow-sm">
+            <i class="bi bi-grid-3x3 fs-2 text-primary mb-1"></i>
+            <div class="fw-semibold small">Manage Pools</div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{% url 'sc_generate_fixtures' pk=competition.pk %}" class="card text-center text-decoration-none h-100 p-3 border-0 shadow-sm">
+            <i class="bi bi-calendar3 fs-2 text-success mb-1"></i>
+            <div class="fw-semibold small">Generate Fixtures</div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{% url 'sc_edit_standings' pk=competition.pk %}" class="card text-center text-decoration-none h-100 p-3 border-0 shadow-sm">
+            <i class="bi bi-table fs-2 text-warning mb-1"></i>
+            <div class="fw-semibold small">Edit Standings</div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{% url 'sc_competitions' %}" class="card text-center text-decoration-none h-100 p-3 border-0 shadow-sm">
+            <i class="bi bi-arrow-left-circle fs-2 text-secondary mb-1"></i>
+            <div class="fw-semibold small">All Competitions</div>
+        </a>
+    </div>
+</div>
+
+<!-- Pool standings summary -->
+<h5 class="mt-2">Pool Standings</h5>
+{% if pool_data %}
+{% for item in pool_data %}
+<div class="card mb-3 shadow-sm">
+    <div class="card-header fw-semibold">{{ item.pool.name }}</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light"><tr>
+                    <th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>Pts</th>
+                </tr></thead>
+                <tbody>
+                    {% for pt in item.teams %}
+                    <tr>
+                        <td>{{ pt.team.name }}</td>
+                        <td>{{ pt.played }}</td><td>{{ pt.won }}</td>
+                        <td>{{ pt.drawn }}</td><td>{{ pt.lost }}</td>
+                        <td>{{ pt.goals_for }}</td><td>{{ pt.goals_against }}</td>
+                        <td><strong>{{ pt.points }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-muted">No pools yet. <a href="{% url 'sc_manage_pools' pk=competition.pk %}">Create pools first.</a></p>
+{% endif %}
+
+<!-- Fixtures summary -->
+<h5 class="mt-3">Group Stage Fixtures</h5>
+{% if group_fixtures %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover">
+        <thead class="table-light"><tr>
+            <th>Date</th><th>Home</th><th>Score</th><th>Away</th><th>Status</th><th>Live</th>
+        </tr></thead>
+        <tbody>
+            {% for fx in group_fixtures %}
+            <tr>
+                <td>{{ fx.match_date|default:"TBD" }}</td>
+                <td>{{ fx.home_team.name }}</td>
+                <td>{{ fx.home_score|default:"—" }} – {{ fx.away_score|default:"—" }}</td>
+                <td>{{ fx.away_team.name }}</td>
+                <td><span class="badge bg-secondary">{{ fx.status }}</span></td>
+                <td>
+                    <a href="{% url 'sc_live_match' pk=competition.pk fixture_pk=fx.pk %}" class="btn btn-xs btn-outline-success btn-sm">
+                        <i class="bi bi-broadcast"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted">No fixtures yet.</p>
+{% endif %}
+{% endblock %}

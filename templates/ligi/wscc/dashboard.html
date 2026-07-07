@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}WSCC Dashboard — Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <span>Ligi Mashinani</span>
+        <span>WSCC Dashboard</span>
+    </div>
+    <h1><i class="bi bi-shield-check"></i> Ward Sports Council Chair — Dashboard</h1>
+    <p>{{ sub_county|title }} Sub-County</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div class="alert alert--{{ msg.tags }}" style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Stats summary cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1.1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#856404">{{ counts.submitted }}</div>
+        <div style="font-size:.8rem;color:#856404;text-transform:uppercase;letter-spacing:.05em">Awaiting Review</div>
+    </div>
+    <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:1.1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#0a3622">{{ counts.approved }}</div>
+        <div style="font-size:.8rem;color:#0a3622;text-transform:uppercase;letter-spacing:.05em">Approved</div>
+    </div>
+    <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:8px;padding:1.1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#842029">{{ counts.returned }}</div>
+        <div style="font-size:.8rem;color:#842029;text-transform:uppercase;letter-spacing:.05em">Returned</div>
+    </div>
+    <div style="background:#e2e3e5;border:1px solid #d3d6db;border-radius:8px;padding:1.1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#41464b">{{ counts.draft }}</div>
+        <div style="font-size:.8rem;color:#41464b;text-transform:uppercase;letter-spacing:.05em">Draft</div>
+    </div>
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:1.1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#124491">{{ counts.total }}</div>
+        <div style="font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.05em">Total</div>
+    </div>
+</div>
+
+<!-- Longlists Awaiting Review -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <h2 style="font-size:1.1rem;color:#333;margin:0">
+            <i class="bi bi-hourglass-split"></i> Awaiting Review
+        </h2>
+        <a href="{% url 'wscc_longlists' %}" style="font-size:.85rem;color:#124491;text-decoration:none">
+            View All Longlists <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    {% if submitted_longlists %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+            <thead>
+                <tr style="background:#f0f4ff;text-align:left">
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Ward</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Discipline</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Players</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Submitted</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ll in submitted_longlists %}
+                <tr style="border-bottom:1px solid #dee2e6{% if forloop.last %};border-bottom:none{% endif %}">
+                    <td style="padding:.65rem 1rem;font-weight:500">{{ ll.discipline.ward|title }}</td>
+                    <td style="padding:.65rem 1rem">{{ ll.discipline.get_sport_type_display }}</td>
+                    <td style="padding:.65rem 1rem">{{ ll.discipline.players.count }}</td>
+                    <td style="padding:.65rem 1rem;color:#888;font-size:.85rem">
+                        {% if ll.submitted_at %}{{ ll.submitted_at|date:"d M Y, H:i" }}{% else %}—{% endif %}
+                    </td>
+                    <td style="padding:.65rem 1rem">
+                        <a href="{% url 'wscc_longlist_detail' ll.pk %}"
+                           style="padding:.3rem .75rem;font-size:.82rem;background:#124491;color:#fff;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-eye"></i> Review
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:2rem;text-align:center;color:#888">
+        <i class="bi bi-check-circle" style="font-size:2rem;display:block;margin-bottom:.75rem;color:#198754"></i>
+        <p style="margin:0">No longlists are currently awaiting review.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick navigation -->
+<div class="card" style="padding:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem">
+        <i class="bi bi-lightning"></i> Quick Actions
+    </h2>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <a href="{% url 'wscc_longlists' %}" class="btn btn--primary">
+            <i class="bi bi-list-ul"></i> All Longlists
+        </a>
+        <a href="{% url 'wscc_longlists' %}?status=submitted" class="btn btn--secondary">
+            <i class="bi bi-hourglass-split"></i> Submitted Only
+        </a>
+        <a href="{% url 'wscc_longlists' %}?status=wscc_approved" class="btn btn--secondary">
+            <i class="bi bi-check-circle"></i> Approved
+        </a>
+    </div>
+</div>
+{% endblock %}

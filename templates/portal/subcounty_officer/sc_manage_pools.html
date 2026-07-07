@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Manage Pools – {{ competition.name }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-grid-3x3"></i> Pools — {{ competition.name }}</h1>
+        <p class="text-muted mb-0">{{ competition.sub_county }} &bull; {{ competition.get_sport_type_display }}</p>
+    </div>
+    <a href="{% url 'sc_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Create pool -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Create Pool</div>
+    <div class="card-body">
+        <form method="post" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_pool">
+            <div class="col-md-5">
+                <label class="form-label small">Pool Name</label>
+                <input type="text" name="pool_name" class="form-control form-control-sm" placeholder="e.g. Group A" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small">Venue (optional)</label>
+                <select name="venue_name" class="form-select form-select-sm">
+                    <option value="">-- No venue --</option>
+                    {% for v in venues %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-plus"></i> Add Pool
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Existing pools -->
+{% if pools %}
+{% for pool in pools %}
+<div class="card shadow-sm mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>{{ pool.name }}</strong>
+        <form method="post" class="mb-0" onsubmit="return confirm('Delete pool {{ pool.name }}?')">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_pool">
+            <input type="hidden" name="pool_id" value="{{ pool.pk }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash"></i> Delete
+            </button>
+        </form>
+    </div>
+    <div class="card-body">
+        <!-- Teams in pool -->
+        {% if pool.pool_teams.all %}
+        <ul class="list-group list-group-flush mb-3">
+            {% for pt in pool.pool_teams.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                {{ pt.team.name }}
+                <form method="post" class="mb-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_team">
+                    <input type="hidden" name="pool_team_id" value="{{ pt.pk }}">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x"></i> Remove
+                    </button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted small mb-2">No teams in this pool yet.</p>
+        {% endif %}
+        <!-- Add team to pool -->
+        <form method="post" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_team">
+            <input type="hidden" name="pool_id" value="{{ pool.pk }}">
+            <div class="col-md-8">
+                <label class="form-label small">Add team from {{ competition.sub_county }}</label>
+                {% if available_teams %}
+                <select name="team_id" class="form-select form-select-sm">
+                    <option value="">-- Select team --</option>
+                    {% for t in available_teams %}
+                    <option value="{{ t.pk }}">{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" name="team_name" class="form-control form-control-sm"
+                    placeholder="Team name (auto-creates if not found)">
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-success btn-sm w-100">
+                    <i class="bi bi-person-plus"></i> Add Team
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">No pools created yet.</div>
+{% endif %}
+{% endblock %}

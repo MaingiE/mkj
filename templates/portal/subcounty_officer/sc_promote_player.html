@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Promote Player – {{ player.first_name }} {{ player.last_name }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-arrow-up-circle"></i> Promote Player to Sub-County Level</h1>
+        <p class="text-muted mb-0">
+            Target Sub-County: <strong>{{ target_sub_county }}</strong>
+        </p>
+    </div>
+    <a href="{% url 'sc_verification_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if already_promoted %}
+<!-- Player already promoted -->
+<div class="alert alert-warning d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    <div>
+        <strong>Already Promoted.</strong>
+        This player has already been promoted to sub-county level
+        (<a href="{% url 'sc_verify_player' player_pk=already_promoted.pk %}">view sub-county record</a>).
+    </div>
+</div>
+{% else %}
+
+<!-- Ward-level player details card -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold bg-light">
+        <i class="bi bi-person-badge"></i> Ward-Level Player Details
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 text-center mb-3 mb-md-0">
+                {% if player.photo %}
+                <img src="{{ player.photo.url }}" alt="Passport photo"
+                     class="img-thumbnail" style="max-height:150px;">
+                {% else %}
+                <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                     style="height:150px;width:120px;margin:auto">
+                    <i class="bi bi-person fs-1"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-9">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Full Name</dt>
+                    <dd class="col-sm-8">{{ player.first_name }} {{ player.last_name }}</dd>
+
+                    <dt class="col-sm-4">National ID</dt>
+                    <dd class="col-sm-8">{{ player.national_id_number|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Date of Birth</dt>
+                    <dd class="col-sm-8">
+                        {{ player.date_of_birth|default:"—" }}
+                        {% if player.age %}<span class="text-muted">(age {{ player.age }})</span>{% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">Discipline</dt>
+                    <dd class="col-sm-8">{{ player.discipline.get_sport_type_display|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Ward</dt>
+                    <dd class="col-sm-8">{{ player.ward|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Phone</dt>
+                    <dd class="col-sm-8">{{ player.phone|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Position</dt>
+                    <dd class="col-sm-8">{{ player.position|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Huduma No.</dt>
+                    <dd class="col-sm-8">{{ player.huduma_number|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Ward Verification</dt>
+                    <dd class="col-sm-8">
+                        {% if player.verification_status == 'verified' %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
+                        {% elif player.verification_status == 'rejected' %}
+                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Rejected</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">
+                            {{ player.get_verification_status_display|default:"Pending" }}
+                        </span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Documents section -->
+{% if player.id_document or player.birth_certificate %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold bg-light">
+        <i class="bi bi-file-earmark-text"></i> Identity Documents
+    </div>
+    <div class="card-body d-flex flex-wrap gap-3">
+        {% if player.id_document %}
+        <div class="text-center">
+            <p class="small fw-semibold mb-1">National ID</p>
+            <a href="{{ player.id_document.url }}" target="_blank">
+                <img src="{{ player.id_document.url }}" alt="National ID"
+                     class="img-thumbnail" style="max-height:120px;">
+            </a>
+        </div>
+        {% endif %}
+        {% if player.birth_certificate %}
+        <div class="text-center">
+            <p class="small fw-semibold mb-1">Birth Certificate</p>
+            <a href="{{ player.birth_certificate.url }}" target="_blank">
+                <img src="{{ player.birth_certificate.url }}" alt="Birth Certificate"
+                     class="img-thumbnail" style="max-height:120px;">
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- What happens on promotion info box -->
+<div class="alert alert-info mb-4">
+    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> What happens when you promote?</h6>
+    <ul class="mb-0">
+        <li>A <strong>new linked player record</strong> is created at sub-county level for <strong>{{ target_sub_county }}</strong>.</li>
+        <li>All identity fields and document images are copied from the ward record.</li>
+        <li><strong>Fresh verification is required</strong> — the 4-step verification process must be completed at sub-county level.</li>
+        <li>The ward-level record is not modified and remains independently managed.</li>
+    </ul>
+</div>
+
+<!-- Confirm promotion form -->
+<div class="card shadow-sm">
+    <div class="card-header fw-semibold bg-warning-subtle text-warning-emphasis">
+        <i class="bi bi-arrow-up-circle"></i> Confirm Promotion
+    </div>
+    <div class="card-body">
+        <p class="mb-3">
+            You are about to promote
+            <strong>{{ player.first_name }} {{ player.last_name }}</strong>
+            (National ID: <code>{{ player.national_id_number }}</code>)
+            to sub-county level in <strong>{{ target_sub_county }}</strong>.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-arrow-up-circle"></i> Confirm Promotion
+                </button>
+                <a href="{% url 'sc_verification_dashboard' %}" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endif %}{# end if already_promoted #}
+
+{% endblock %}

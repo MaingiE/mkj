@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}Longlist Detail — WSCC Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <a href="{% url 'wscc_longlists' %}">All Longlists</a>
+        <span>{{ discipline.ward|title }} — {{ discipline.get_sport_type_display }}</span>
+    </div>
+    <h1><i class="bi bi-person-lines-fill"></i> Longlist Review</h1>
+    <p>{{ discipline.ward|title }} Ward &mdash; {{ discipline.sub_county|title }} Sub-County &mdash; {{ discipline.get_sport_type_display }}</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div class="alert alert--{{ msg.tags }}" style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Longlist status & meta -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div>
+            <span style="font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.05em">Status</span><br>
+            {% if longlist.status == 'submitted' %}
+                <span style="background:#fff3cd;color:#856404;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                    <i class="bi bi-send"></i> Submitted for Review
+                </span>
+            {% elif longlist.status == 'wscc_approved' %}
+                <span style="background:#d1e7dd;color:#0a3622;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                    <i class="bi bi-check-circle"></i> WSCC Approved
+                </span>
+            {% elif longlist.status == 'returned' %}
+                <span style="background:#f8d7da;color:#842029;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                    <i class="bi bi-arrow-return-left"></i> Returned for Corrections
+                </span>
+            {% else %}
+                <span style="background:#e2e3e5;color:#41464b;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+                    {{ longlist.get_status_display }}
+                </span>
+            {% endif %}
+        </div>
+        <div>
+            <span style="font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.05em">Players</span><br>
+            <span style="font-size:1.2rem;font-weight:700;color:#124491">{{ player_count }}</span>
+        </div>
+        {% if longlist.submitted_at %}
+        <div>
+            <span style="font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.05em">Submitted</span><br>
+            <span style="font-size:.9rem">{{ longlist.submitted_at|date:"d M Y, H:i" }}</span>
+        </div>
+        {% endif %}
+        {% if longlist.reviewed_by %}
+        <div>
+            <span style="font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.05em">Last Reviewed By</span><br>
+            <span style="font-size:.9rem">{{ longlist.reviewed_by.get_full_name|default:longlist.reviewed_by.email }}
+                {% if longlist.reviewed_at %}<span style="color:#888"> on {{ longlist.reviewed_at|date:"d M Y" }}</span>{% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if longlist.status == 'returned' and longlist.return_reason %}
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:.9rem 1rem;margin-top:1rem;font-size:.88rem">
+        <strong><i class="bi bi-exclamation-triangle"></i> Previous return reason:</strong>
+        <p style="margin:.4rem 0 0;white-space:pre-wrap">{{ longlist.return_reason }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Approve / Return action forms — only show for submitted longlists -->
+{% if longlist.status == 'submitted' %}
+<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
+
+    <!-- Approve form -->
+    <form method="post" action="{% url 'wscc_approve_longlist' longlist.pk %}"
+          style="flex:1;min-width:280px"
+          onsubmit="return confirm('Approve this longlist? The Ward Team Manager will be notified.');">
+        {% csrf_token %}
+        <div class="card" style="padding:1.25rem;border:2px solid #badbcc">
+            <h3 style="font-size:1rem;color:#0a3622;margin-bottom:.75rem"><i class="bi bi-check-circle"></i> Approve Longlist</h3>
+            <p style="font-size:.87rem;color:#555;margin-bottom:1rem">
+                Approving will allow the Ward Team Manager to select match-day squads from this longlist.
+                An email notification will be sent to them.
+            </p>
+            <button type="submit"
+                    style="background:#198754;color:#fff;border:none;padding:.55rem 1.25rem;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:600">
+                <i class="bi bi-check-circle"></i> Approve
+            </button>
+        </div>
+    </form>
+
+    <!-- Return form -->
+    <form method="post" action="{% url 'wscc_return_longlist' longlist.pk %}"
+          style="flex:1;min-width:280px">
+        {% csrf_token %}
+        <div class="card" style="padding:1.25rem;border:2px solid #f5c2c7">
+            <h3 style="font-size:1rem;color:#842029;margin-bottom:.75rem"><i class="bi bi-arrow-return-left"></i> Return for Corrections</h3>
+            <div style="margin-bottom:.75rem">
+                <label for="return_reason" style="font-size:.85rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">
+                    Reason for return <span style="color:#dc3545">*</span>
+                </label>
+                <textarea id="return_reason" name="return_reason" rows="4" required
+                          placeholder="Describe the corrections needed (e.g. missing ID documents for players 3, 7; incorrect date of birth for player 2)…"
+                          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.87rem;resize:vertical;box-sizing:border-box"></textarea>
+                <p style="font-size:.78rem;color:#888;margin:.25rem 0 0">Required — cannot be blank or whitespace only.</p>
+            </div>
+            <button type="submit"
+                    style="background:#dc3545;color:#fff;border:none;padding:.55rem 1.25rem;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:600">
+                <i class="bi bi-arrow-return-left"></i> Return for Corrections
+            </button>
+        </div>
+    </form>
+
+</div>
+{% elif longlist.status == 'wscc_approved' %}
+<div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.9rem;color:#0a3622">
+    <i class="bi bi-check-circle-fill"></i> <strong>This longlist has been approved.</strong>
+    The Ward Team Manager can now select match-day squads from these players.
+    <br><br>
+    <em>You can still return an approved longlist if corrections are needed — use the form below.</em>
+    <form method="post" action="{% url 'wscc_return_longlist' longlist.pk %}" style="margin-top:1rem">
+        {% csrf_token %}
+        <div style="margin-bottom:.75rem">
+            <label for="return_reason_approved" style="font-size:.85rem;font-weight:600;color:#333;display:block;margin-bottom:.3rem">
+                Reason for return <span style="color:#dc3545">*</span>
+            </label>
+            <textarea id="return_reason_approved" name="return_reason" rows="3" required
+                      placeholder="Reason for returning an already-approved longlist…"
+                      style="width:100%;max-width:480px;padding:.5rem .7rem;border:1px solid #dee2e6;border-radius:6px;font-size:.86rem;resize:vertical;box-sizing:border-box"></textarea>
+        </div>
+        <button type="submit"
+                style="background:#dc3545;color:#fff;border:none;padding:.45rem 1rem;border-radius:6px;cursor:pointer;font-size:.86rem;font-weight:600">
+            <i class="bi bi-arrow-return-left"></i> Return for Corrections
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Player table (Req 4.5) -->
+{% if players %}
+<div class="card" style="overflow-x:auto">
+    <div style="padding:1rem 1rem .75rem;border-bottom:1px solid #dee2e6">
+        <h2 style="font-size:1rem;color:#333;margin:0"><i class="bi bi-people"></i> Players ({{ player_count }})</h2>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead>
+            <tr style="background:#f8f9fa;text-align:left">
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">#</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Full Name</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">National ID</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Date of Birth</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Age</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Photo</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">National ID Doc</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Birth Certificate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr style="border-bottom:1px solid #f0f0f0{% if forloop.last %};border-bottom:none{% endif %}">
+                <td style="padding:.6rem .9rem;color:#aaa">{{ forloop.counter }}</td>
+
+                <!-- Full Name (Req 4.5) -->
+                <td style="padding:.6rem .9rem;font-weight:600">{{ player.first_name }} {{ player.last_name }}</td>
+
+                <!-- National ID -->
+                <td style="padding:.6rem .9rem;font-family:monospace">{{ player.national_id_number }}</td>
+
+                <!-- Date of Birth -->
+                <td style="padding:.6rem .9rem">
+                    {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+                </td>
+
+                <!-- Calculated Age (Req 4.5) -->
+                <td style="padding:.6rem .9rem;font-weight:600">
+                    {% if player.age is not None %}
+                        {{ player.age }} yrs
+                    {% else %}
+                        <span style="color:#dc3545;font-size:.8rem"><i class="bi bi-exclamation-circle"></i> Unknown</span>
+                    {% endif %}
+                </td>
+
+                <!-- Passport Photo (Req 4.5) -->
+                <td style="padding:.6rem .9rem">
+                    {% if player.photo %}
+                        <a href="{{ player.photo.url }}" target="_blank" title="View full-size photo">
+                            <img src="{{ player.photo.url }}" alt="Photo of {{ player.first_name }}"
+                                 style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6">
+                        </a>
+                    {% else %}
+                        <span style="color:#dc3545;font-size:.8rem"><i class="bi bi-exclamation-circle"></i> Missing</span>
+                    {% endif %}
+                </td>
+
+                <!-- National ID Document (Req 4.5) -->
+                <td style="padding:.6rem .9rem">
+                    {% if player.id_document %}
+                        <a href="{{ player.id_document.url }}" target="_blank"
+                           style="padding:.25rem .6rem;font-size:.78rem;background:#e8edf5;color:#124491;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-file-earmark-image"></i> View
+                        </a>
+                    {% else %}
+                        <span style="color:#dc3545;font-size:.8rem"><i class="bi bi-exclamation-circle"></i> Missing</span>
+                    {% endif %}
+                </td>
+
+                <!-- Birth Certificate (Req 4.5) -->
+                <td style="padding:.6rem .9rem">
+                    {% if player.birth_certificate %}
+                        <a href="{{ player.birth_certificate.url }}" target="_blank"
+                           style="padding:.25rem .6rem;font-size:.78rem;background:#e8edf5;color:#124491;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-file-earmark-image"></i> View
+                        </a>
+                    {% else %}
+                        <span style="color:#888;font-size:.8rem">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card" style="padding:2rem;text-align:center;color:#888">
+    <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+    <p style="margin:0">No players on this longlist.</p>
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap">
+    <a href="{% url 'wscc_longlists' %}" style="font-size:.88rem;color:#124491">
+        <i class="bi bi-arrow-left"></i> Back to All Longlists
+    </a>
+    <a href="{% url 'wscc_dashboard' %}" style="font-size:.88rem;color:#124491">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+</div>
+{% endblock %}

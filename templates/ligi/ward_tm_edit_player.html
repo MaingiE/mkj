@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Edit Player — Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
+        <a href="{% url 'ward_tm_longlist' %}">Player Longlist</a>
+        <span>Edit Player</span>
+    </div>
+    <h1><i class="bi bi-pencil-square"></i> Edit Player</h1>
+    <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward &mdash; {{ discipline.get_sport_type_display }}</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="padding:1.75rem;max-width:700px">
+    <p style="font-size:.88rem;color:#555;margin-bottom:1.25rem">
+        Editing: <strong>{{ player.first_name }} {{ player.last_name }}</strong>
+    </p>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div style="background:#f8d7da;color:#842029;border:1px solid #f5c2c7;border-radius:6px;padding:.8rem 1rem;margin-bottom:1rem">
+            {% for error in form.non_field_errors %}
+            <p style="margin:0">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div>
+                <label for="{{ form.first_name.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.first_name.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.last_name.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.last_name.label }}</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.last_name.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div>
+                <label for="{{ form.national_id_number.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.national_id_number.label }}</label>
+                {{ form.national_id_number }}
+                {% if form.national_id_number.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.national_id_number.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.date_of_birth.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.date_of_birth.label }}</label>
+                {{ form.date_of_birth }}
+                {% if form.date_of_birth.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.date_of_birth.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div>
+                <label for="{{ form.huduma_number.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.huduma_number.label }}</label>
+                {{ form.huduma_number }}
+                {% if form.huduma_number.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.huduma_number.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.phone.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.phone.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div style="margin-bottom:1rem">
+            <label for="{{ form.position.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.position.label }}</label>
+            {{ form.position }}
+            {% if form.position.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.position.errors.0 }}</p>{% endif %}
+        </div>
+
+        <hr style="margin:1.25rem 0;border:none;border-top:1px solid #dee2e6">
+        <p style="font-size:.84rem;color:#555;font-weight:600;margin-bottom:1rem">
+            <i class="bi bi-image"></i> Documents &amp; Photos
+        </p>
+
+        <!-- Show current files if they exist -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div>
+                <label for="{{ form.photo.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.photo.label }}</label>
+                {% if player.photo %}
+                <div style="margin-bottom:.4rem">
+                    <img src="{{ player.photo.url }}" alt="Current photo" style="height:60px;width:60px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6">
+                    <span style="font-size:.78rem;color:#888;display:block;margin-top:.2rem">Current photo</span>
+                </div>
+                {% endif %}
+                {{ form.photo }}
+                {% if form.photo.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.photo.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.id_document.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.id_document.label }}</label>
+                {% if player.id_document %}
+                <p style="font-size:.78rem;color:#198754;margin-bottom:.3rem"><i class="bi bi-check-circle"></i> Document on file</p>
+                {% endif %}
+                {{ form.id_document }}
+                {% if form.id_document.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.id_document.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div style="margin-bottom:1.5rem">
+            <label for="{{ form.birth_certificate.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.birth_certificate.label }}</label>
+            {% if player.birth_certificate %}
+            <p style="font-size:.78rem;color:#198754;margin-bottom:.3rem"><i class="bi bi-check-circle"></i> Certificate on file</p>
+            {% endif %}
+            {{ form.birth_certificate }}
+            {% if form.birth_certificate.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.birth_certificate.errors.0 }}</p>{% endif %}
+            <p style="font-size:.78rem;color:#888;margin:.3rem 0 0">Leave blank to keep existing document.</p>
+        </div>
+
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button type="submit" class="btn btn--primary">
+                <i class="bi bi-check"></i> Save Changes
+            </button>
+            <a href="{% url 'ward_tm_longlist' %}" style="padding:.5rem 1rem;font-size:.88rem;color:#666;text-decoration:none;border:1px solid #dee2e6;border-radius:6px">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

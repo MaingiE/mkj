@@ -492,6 +492,150 @@ class CountyPlayerForm(forms.ModelForm):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  WARD LONGLIST - Add / Edit Player Form (Ligi Mashinani)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class WardLonglistPlayerForm(forms.ModelForm):
+    """
+    Form used by Ward Team Managers to add or edit a player in their ward longlist.
+
+    Differences from CountyPlayerForm:
+    - birth_certificate is not required (national_id_number OR birth certificate suffices)
+    - national_id_number validation checks for duplicates across ALL CountyPlayer records
+    - photo (passport photo) is required
+    - At least one identity document (id_document or birth_certificate) is required
+    - phone is optional at ward level (not all ward players have phones)
+    - sub_county and ward are NOT shown — they are set automatically from the discipline
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Phone is optional at ward level
+        self.fields['phone'].required = False
+        self.fields['phone'].help_text = 'Phone number (optional at ward level)'
+        # Huduma number is optional
+        self.fields['huduma_number'].required = False
+        # Photo is required
+        self.fields['photo'].required = True
+        # id_document not individually required — validated together with birth_certificate in clean()
+        self.fields['id_document'].required = False
+        # birth_certificate is optional on its own
+        self.fields['birth_certificate'].required = False
+
+    class Meta:
+        model = CountyPlayer
+        fields = [
+            'first_name', 'last_name', 'date_of_birth',
+            'national_id_number', 'huduma_number', 'phone',
+            'position',
+            'photo', 'id_document', 'birth_certificate',
+        ]
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'First name as on ID/birth certificate',
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Last name as on ID/birth certificate',
+            }),
+            'date_of_birth': forms.DateInput(attrs={
+                'class': 'form-control', 'type': 'date',
+            }),
+            'national_id_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. 12345678',
+                'pattern': '\\d{5,10}',
+                'minlength': '5',
+                'maxlength': '10',
+                'inputmode': 'numeric',
+            }),
+            'huduma_number': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Huduma Namba (optional)',
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '712345678 (optional)',
+                'pattern': '\\d{9}',
+                'minlength': '9',
+                'maxlength': '9',
+                'inputmode': 'numeric',
+            }),
+            'position': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'e.g. GK, CB, CM, ST (optional)',
+            }),
+            'photo': forms.FileInput(attrs={
+                'class': 'form-control', 'accept': 'image/*',
+            }),
+            'id_document': forms.FileInput(attrs={
+                'class': 'form-control', 'accept': 'image/*,.pdf',
+            }),
+            'birth_certificate': forms.FileInput(attrs={
+                'class': 'form-control', 'accept': 'image/*,.pdf',
+            }),
+        }
+        labels = {
+            'first_name': 'First Name *',
+            'last_name': 'Last Name *',
+            'date_of_birth': 'Date of Birth *',
+            'national_id_number': 'National ID Number *',
+            'huduma_number': 'Huduma Namba (optional)',
+            'phone': 'Phone Number',
+            'position': 'Position (optional)',
+            'photo': 'Passport Photo *',
+            'id_document': 'Copy of National ID',
+            'birth_certificate': 'Copy of Birth Certificate',
+        }
+
+    def clean_national_id_number(self):
+        nid = self.cleaned_data.get('national_id_number', '').strip()
+        if not nid:
+            raise ValidationError('National ID number is required.')
+        nid = validate_national_id_or_raise(nid, 'National ID number')
+        # Check duplicate across ALL CountyPlayer records (system-wide uniqueness)
+        qs = CountyPlayer.objects.filter(national_id_number=nid)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            existing = qs.first()
+            raise ValidationError(
+                f'A player with National ID {nid} is already registered '
+                f'({existing.first_name} {existing.last_name} — '
+                f'{existing.discipline.get_sport_type_display()}).'
+            )
+        return nid
+
+    def clean_date_of_birth(self):
+        dob = self.cleaned_data.get('date_of_birth')
+        if not dob:
+            raise ValidationError('Date of birth is required.')
+        today = timezone.now().date()
+        if dob >= today:
+            raise ValidationError('Date of birth must be in the past.')
+        return dob
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if not phone:
+            # Phone is optional at ward level
+            return ''
+        return validate_kenya_phone_or_raise(phone, 'Phone number')
+
+    def clean(self):
+        cleaned = super().clean()
+        # Require at least one identity document (national ID copy OR birth certificate)
+        id_doc = cleaned.get('id_document')
+        birth_cert = cleaned.get('birth_certificate')
+        # When editing, existing values count — check the instance too
+        has_id_doc = bool(id_doc) or bool(getattr(self.instance, 'id_document', None))
+        has_birth_cert = bool(birth_cert) or bool(getattr(self.instance, 'birth_certificate', None))
+        if not has_id_doc and not has_birth_cert:
+            raise ValidationError(
+                'At least one identity document is required: '
+                'upload either a copy of the National ID or a Birth Certificate.'
+            )
+        return cleaned
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  TECHNICAL BENCH - Add / Edit Form
 # ══════════════════════════════════════════════════════════════════════════════
 

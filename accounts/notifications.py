@@ -358,8 +358,44 @@ def notify_new_player(player, team=None):
 #  3. FIXTURE CREATED / UPDATED
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _get_ward_team_managers_for_team(team):
+    """Return email list of ward-level team managers for a given Team.
+
+    For ward-level teams, finds the manager via the team's source_discipline
+    (CountyDiscipline at level='ward'), looking up the User with
+    role='team_manager' whose ward and sub_county match.
+    Also includes team.manager directly if set.
+    Requirement: 13.4
+    """
+    from accounts.models import User
+    if not team:
+        return []
+    emails = []
+    # Always include the direct team.manager FK if present
+    if team.manager and team.manager.email:
+        emails.append(team.manager.email)
+    # For ward-level teams, also look up via ward + sub_county on User
+    try:
+        discipline = team.source_discipline
+        if discipline and discipline.level == 'ward' and discipline.ward and discipline.sub_county:
+            ward_managers = User.objects.filter(
+                role='team_manager',
+                ward=discipline.ward,
+                sub_county=discipline.sub_county,
+                is_active=True,
+            ).values_list('email', flat=True)
+            emails.extend(list(ward_managers))
+    except Exception:
+        pass
+    return emails
+
+
 def notify_fixture_update(fixture, action='updated'):
-    """Notify team managers and subcounty officers about fixture changes."""
+    """Notify team managers (including ward-level) and subcounty officers about fixture changes.
+
+    Req 13.4: Ward Team Managers of both participating teams are emailed with
+    venue, date, and kick-off time when a fixture is created/published.
+    """
     home = fixture.home_team
     away = fixture.away_team
     match_label = f"{home.name if home else 'TBD'} vs {away.name if away else 'TBD'}"
@@ -381,11 +417,9 @@ def notify_fixture_update(fixture, action='updated'):
 <a href="{SITE_URL}/portal/dashboard/" class="btn">View in Portal</a>"""
 
     recipients = []
-    # Team managers
-    if home and home.manager and home.manager.email:
-        recipients.append(home.manager.email)
-    if away and away.manager and away.manager.email:
-        recipients.append(away.manager.email)
+    # Team managers — includes ward-level TMs (Req 13.4)
+    recipients += _get_ward_team_managers_for_team(home)
+    recipients += _get_ward_team_managers_for_team(away)
     # Subcounty officers for both teams
     if home:
         recipients += _get_subcounty_officers(getattr(home, 'sub_county', ''))
@@ -398,6 +432,85 @@ def notify_fixture_update(fixture, action='updated'):
         f"Fixture {action.title()} - {match_label}",
         _base_html(f"Fixture {action.title()}", body),
         recipients,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  3b. PLAYER VERIFICATION STATUS CHANGE → Ward Team Manager  (Req 13.5)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def notify_ward_tm_verification_status(player, status, rejection_reason=''):
+    """Email the Ward Team Manager when a player's verification status changes.
+
+    Args:
+        player: CountyPlayer instance whose verification status changed.
+        status: 'verified' or 'rejected'.
+        rejection_reason: Human-readable reason string (required when rejected).
+
+    Requirement: 13.5
+    Returns True if the email was dispatched (delivery is async), False otherwise.
+    """
+    from accounts.models import User
+
+    player_name = f"{player.first_name} {player.last_name}"
+
+    # Locate the Ward Team Manager: match by ward and sub_county on User
+    ward = getattr(player, 'ward', '') or (
+        player.discipline.ward if player.discipline else ''
+    )
+    sub_county = getattr(player, 'sub_county', '') or (
+        player.discipline.sub_county if player.discipline else ''
+    )
+
+    ward_tm_email = None
+    if ward and sub_county:
+        tm = User.objects.filter(
+            role='team_manager',
+            ward=ward,
+            sub_county=sub_county,
+            is_active=True,
+        ).first()
+        if tm and tm.email:
+            ward_tm_email = tm.email
+
+    if not ward_tm_email:
+        logger.warning(
+            "notify_ward_tm_verification_status: no ward TM found for "
+            "player %s (ward=%r, sub_county=%r)", player_name, ward, sub_county,
+        )
+        return False
+
+    if status == 'verified':
+        outcome_label = 'Approved ✅'
+        outcome_detail = (
+            '<p>The player has passed all verification steps and is eligible '
+            'for sub-county squad selection.</p>'
+        )
+        subject_suffix = 'Approved'
+    else:
+        reason_text = rejection_reason or 'No reason provided'
+        outcome_label = f'Rejected ❌'
+        outcome_detail = (
+            f'<p>The player did not pass verification. Reason:</p>'
+            f'<div class="alert">{reason_text}</div>'
+        )
+        subject_suffix = 'Rejected'
+
+    body = f"""
+<p>Dear Ward Team Manager,</p>
+<p>The verification status for player <strong>{player_name}</strong> has been updated.</p>
+<dl class="info-box">
+ <dt>Player</dt><dd>{player_name}</dd>
+ <dt>Outcome</dt><dd>{outcome_label}</dd>
+</dl>
+{outcome_detail}
+<p>Please log in to the portal for full details.</p>
+<a href="{SITE_URL}/portal/dashboard/" class="btn">View in Portal</a>"""
+
+    return _send(
+        f"Player Verification {subject_suffix} - {player_name}",
+        _base_html(f"Player Verification {subject_suffix}", body),
+        [ward_tm_email],
     )
 
 

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Edit Standings – {{ competition.name }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-table"></i> Edit Standings — {{ competition.name }}</h1>
+        <p class="text-muted mb-0">{{ competition.sub_county }} &bull; {{ competition.get_sport_type_display }}</p>
+    </div>
+    <a href="{% url 'sc_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if pool_data %}
+{% for item in pool_data %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>{{ item.pool.name }}</strong>
+        <form method="post" class="mb-0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="recalculate">
+            <input type="hidden" name="pool_id" value="{{ item.pool.pk }}">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Recalculate
+            </button>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light"><tr>
+                    <th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th>
+                    <th>GF</th><th>GA</th><th>Bonus</th><th>Pts</th><th>Override</th>
+                </tr></thead>
+                <tbody>
+                    {% for pt in item.teams %}
+                    <tr>
+                        <td>{{ pt.team.name }}</td>
+                        <td>{{ pt.played }}</td><td>{{ pt.won }}</td>
+                        <td>{{ pt.drawn }}</td><td>{{ pt.lost }}</td>
+                        <td>{{ pt.goals_for }}</td><td>{{ pt.goals_against }}</td>
+                        <td>{{ pt.bonus_points }}</td>
+                        <td><strong>{{ pt.points }}</strong></td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-outline-warning btn-sm"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#override-{{ pt.pk }}">
+                                Edit
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="override-{{ pt.pk }}">
+                        <td colspan="10">
+                            <div class="alert alert-warning p-2 mb-0">
+                                <strong>Exceptional override only.</strong>
+                                This action is logged and reported.
+                            </div>
+                            <form method="post" class="row g-2 p-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_standings">
+                                <input type="hidden" name="pool_team_id" value="{{ pt.pk }}">
+                                <div class="col-3"><label class="form-label small">Played</label>
+                                    <input type="number" name="played" class="form-control form-control-sm" value="{{ pt.played }}" min="0"></div>
+                                <div class="col-3"><label class="form-label small">Won</label>
+                                    <input type="number" name="won" class="form-control form-control-sm" value="{{ pt.won }}" min="0"></div>
+                                <div class="col-3"><label class="form-label small">Drawn</label>
+                                    <input type="number" name="drawn" class="form-control form-control-sm" value="{{ pt.drawn }}" min="0"></div>
+                                <div class="col-3"><label class="form-label small">Lost</label>
+                                    <input type="number" name="lost" class="form-control form-control-sm" value="{{ pt.lost }}" min="0"></div>
+                                <div class="col-3"><label class="form-label small">Goals For</label>
+                                    <input type="number" name="goals_for" class="form-control form-control-sm" value="{{ pt.goals_for }}" min="0"></div>
+                                <div class="col-3"><label class="form-label small">Goals Against</label>
+                                    <input type="number" name="goals_against" class="form-control form-control-sm" value="{{ pt.goals_against }}" min="0"></div>
+                                <div class="col-3"><label class="form-label small">Bonus Pts</label>
+                                    <input type="number" name="bonus_points" class="form-control form-control-sm" value="{{ pt.bonus_points }}" min="0"></div>
+                                <div class="col-12">
+                                    <label class="form-label small">Exceptional Reason <span class="text-danger">*</span> (min 12 chars)</label>
+                                    <input type="text" name="exceptional_reason" class="form-control form-control-sm" minlength="12" required>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="confirm_exceptional" value="1" id="conf-{{ pt.pk }}" required>
+                                        <label class="form-check-label small" for="conf-{{ pt.pk }}">
+                                            I confirm this is an exceptional case and accept that this override is logged.
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="bi bi-save"></i> Save Override
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<form method="post" class="mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="recalculate_all">
+    <button type="submit" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-arrow-repeat"></i> Recalculate All Pools
+    </button>
+</form>
+{% else %}
+<div class="alert alert-info">No pools or teams to show.</div>
+{% endif %}
+{% endblock %}

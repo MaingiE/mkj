@@ -77,6 +77,7 @@ class UserRole(models.TextChoices):
     CHIEF_OFFICER_SPORTS = "chief_officer_sports", "Chief Officer - Sports"
     GOVERNOR            = "governor",            "Governor"
     WAZIRI_SPORTS       = "waziri_sports",       "Waziri - Sports"
+    WARD_SPORTS_COUNCIL_CHAIR = "ward_sports_council_chair", "Ward Sports Council Chair"
     ADMIN               = "admin",               "System Admin"
 
 
@@ -163,6 +164,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=100, blank=True, default="",
         help_text="Sub-county or constituency assignment for sub-county sports officers",
     )
+    ward        = models.CharField(
+        max_length=100, blank=True, default="",
+        help_text="Ward assignment for ward-level roles such as WSCC and ward team managers",
+    )
     profile_photo = models.ImageField(upload_to="profiles/", null=True, blank=True)
     is_active   = models.BooleanField(default=True)
     is_staff    = models.BooleanField(default=False)
@@ -194,6 +199,33 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
 
+    def clean(self):
+        """
+        Enforce uniqueness: only one active WSCC may exist per ward at any time.
+
+        This check applies on both create and update.  On update, the current
+        instance is excluded from the duplicate search so that saving an
+        existing WSCC without changing their ward does not raise a false error.
+        """
+        super().clean()
+        if (
+            self.role == UserRole.WARD_SPORTS_COUNCIL_CHAIR
+            and self.is_active
+            and self.ward  # ward must be non-blank
+        ):
+            qs = User.objects.filter(
+                role=UserRole.WARD_SPORTS_COUNCIL_CHAIR,
+                is_active=True,
+                ward=self.ward,
+            )
+            if self.pk:
+                # Exclude the current record when updating an existing user
+                qs = qs.exclude(pk=self.pk)
+            if qs.exists():
+                raise ValidationError(
+                    {"ward": "An active WSCC already exists for this ward."}
+                )
+
     # ── Role helpers ──────────────────────────────────────────────────────────
     @property
     def is_competition_manager(self): return self.role == UserRole.COMPETITION_MANAGER
@@ -219,6 +251,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_secretary_general(self): return self.role == UserRole.SECRETARY_GENERAL
     @property
     def is_subcounty_sports_officer(self): return self.role == UserRole.SUBCOUNTY_SPORTS_OFFICER
+    @property
+    def is_ward_sports_council_chair(self): return self.role == UserRole.WARD_SPORTS_COUNCIL_CHAIR
     @property
     def is_chief_sports_officer(self): return self.role == UserRole.CHIEF_SPORTS_OFFICER
     @property

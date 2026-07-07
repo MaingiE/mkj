@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Player Longlist — Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
+        <span>Player Longlist</span>
+    </div>
+    <h1><i class="bi bi-people"></i> Player Longlist</h1>
+    <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward &mdash; {{ discipline.get_sport_type_display }}</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div class="alert alert--{{ msg.tags }}" style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Status / action strip -->
+<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+    <!-- Longlist status badge -->
+    {% if longlist.status == 'draft' %}
+        <span style="background:#fff3cd;color:#856404;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+            <i class="bi bi-pencil"></i> Draft
+        </span>
+    {% elif longlist.status == 'submitted' %}
+        <span style="background:#cfe2ff;color:#084298;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+            <i class="bi bi-send"></i> Submitted for Review
+        </span>
+    {% elif longlist.status == 'wscc_approved' %}
+        <span style="background:#d1e7dd;color:#0a3622;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+            <i class="bi bi-check-circle"></i> WSCC Approved
+        </span>
+    {% elif longlist.status == 'returned' %}
+        <span style="background:#f8d7da;color:#842029;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;font-weight:600">
+            <i class="bi bi-arrow-return-left"></i> Returned for Corrections
+        </span>
+    {% endif %}
+
+    <!-- Add player button (only when longlist is editable) -->
+    {% if not longlist.is_locked %}
+    <a href="{% url 'ward_tm_add_player' %}" class="btn btn--primary" style="margin-left:auto">
+        <i class="bi bi-person-plus"></i> Add Player
+    </a>
+    {% endif %}
+
+    <!-- Submit button -->
+    {% if longlist.can_submit %}
+    <a href="{% url 'ward_tm_submit_longlist' %}" class="btn btn--secondary">
+        <i class="bi bi-send"></i> Submit for Review
+    </a>
+    {% endif %}
+</div>
+
+{% if longlist.status == 'returned' and longlist.return_reason %}
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:.9rem 1rem;margin-bottom:1.5rem;font-size:.88rem">
+    <strong><i class="bi bi-exclamation-triangle"></i> Returned with reason:</strong>
+    <p style="margin:.4rem 0 0">{{ longlist.return_reason }}</p>
+</div>
+{% endif %}
+
+<!-- Player list -->
+{% if players %}
+<div class="card" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+        <thead>
+            <tr style="background:#f0f4ff;text-align:left">
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">#</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Full Name</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">National ID</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Date of Birth</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Age</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Position</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Photo</th>
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Docs</th>
+                {% if not longlist.is_locked %}
+                <th style="padding:.7rem 1rem;border-bottom:2px solid #dee2e6">Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr style="border-bottom:1px solid #dee2e6{% if forloop.last %};border-bottom:none{% endif %}">
+                <td style="padding:.65rem 1rem;color:#888">{{ forloop.counter }}</td>
+                <td style="padding:.65rem 1rem;font-weight:500">{{ player.first_name }} {{ player.last_name }}</td>
+                <td style="padding:.65rem 1rem;font-family:monospace">{{ player.national_id_number }}</td>
+                <td style="padding:.65rem 1rem">
+                    {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#aaa">—</span>{% endif %}
+                </td>
+                <td style="padding:.65rem 1rem">
+                    {% if player.age %}{{ player.age }}{% else %}<span style="color:#aaa">—</span>{% endif %}
+                </td>
+                <td style="padding:.65rem 1rem">{{ player.position|default:"—" }}</td>
+                <td style="padding:.65rem 1rem">
+                    {% if player.photo %}
+                        <img src="{{ player.photo.url }}" alt="Photo" style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:1px solid #dee2e6">
+                    {% else %}
+                        <span style="color:#dc3545;font-size:.8rem"><i class="bi bi-exclamation-circle"></i> Missing</span>
+                    {% endif %}
+                </td>
+                <td style="padding:.65rem 1rem">
+                    {% if player.id_document or player.birth_certificate %}
+                        <span style="color:#198754;font-size:.8rem"><i class="bi bi-check-circle"></i> OK</span>
+                    {% else %}
+                        <span style="color:#dc3545;font-size:.8rem"><i class="bi bi-exclamation-circle"></i> Missing</span>
+                    {% endif %}
+                </td>
+                {% if not longlist.is_locked %}
+                <td style="padding:.65rem 1rem">
+                    <div style="display:flex;gap:.4rem">
+                        <a href="{% url 'ward_tm_edit_player' player.pk %}"
+                           style="padding:.25rem .55rem;font-size:.78rem;background:#e9ecef;color:#495057;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'ward_tm_delete_player' player.pk %}"
+                           style="padding:.25rem .55rem;font-size:.78rem;background:#f8d7da;color:#842029;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-trash"></i> Remove
+                        </a>
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p style="font-size:.82rem;color:#888;margin-top:.6rem">{{ player_count }} player{{ player_count|pluralize }} registered</p>
+{% else %}
+<div class="card" style="padding:2rem;text-align:center;color:#888">
+    <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+    <p style="margin:0">No players added yet.</p>
+    {% if not longlist.is_locked %}
+    <a href="{% url 'ward_tm_add_player' %}" class="btn btn--primary" style="margin-top:1rem;display:inline-block">
+        <i class="bi bi-person-plus"></i> Add Your First Player
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem">
+    <a href="{% url 'ward_tm_dashboard' %}" style="font-size:.88rem;color:#124491">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -49,6 +49,16 @@
         padding: .1rem .4rem;
         border-radius: 4px;
     }
+    .qualified-badge {
+        font-size: .68rem;
+        background: #E8F5E9;
+        color: #1B5E20;
+        border: 1px solid #A5D6A7;
+        padding: .1rem .45rem;
+        border-radius: 4px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
     .pool-empty {
         padding: 1rem;
         text-align: center;
@@ -150,6 +160,9 @@
             <div class="team-info">
                 <strong>{{ pt.team.name }}</strong>
                 <span class="county-tag">{{ pt.team.county }}</span>
+                {% if pt.team.qualified_to_county and pt.team.sub_county %}
+                <span class="qualified-badge"><i class="bi bi-patch-check-fill"></i> Qualified from {{ pt.team.sub_county }}</span>
+                {% endif %}
             </div>
             <form method="post" style="margin:0;">
                 {% csrf_token %}
@@ -172,7 +185,7 @@
                 <select name="team_id" required>
                     <option value="">+ Add team...</option>
                     {% for team in eligible_teams %}
-                    <option value="{{ team.pk }}">{{ team.name }} ({{ team.county }})</option>
+                    <option value="{{ team.pk }}">{{ team.name }} ({{ team.county }}){% if team.qualified_to_county and team.sub_county %} — Qualified from {{ team.sub_county }}{% endif %}</option>
                     {% endfor %}
                 </select>
                 <button type="submit" class="btn btn-primary btn-sm" style="font-size:.78rem;"><i class="bi bi-plus"></i></button>
@@ -195,8 +208,11 @@
     <div class="card-body" style="font-size:.85rem;max-height:250px;overflow-y:auto;">
         <div style="display:flex;flex-wrap:wrap;gap:.4rem;">
             {% for team in eligible_teams %}
-            <span style="background:#e8f5ed;color:#124491;padding:.2rem .6rem;border-radius:6px;font-size:.78rem;">
+            <span style="background:#e8f5ed;color:#124491;padding:.2rem .6rem;border-radius:6px;font-size:.78rem;display:inline-flex;align-items:center;gap:.3rem;">
                 {{ team.name }} <span style="opacity:.6;">({{ team.county }})</span>
+                {% if team.qualified_to_county and team.sub_county %}
+                <span class="qualified-badge"><i class="bi bi-patch-check-fill"></i> Qualified from {{ team.sub_county }}</span>
+                {% endif %}
             </span>
             {% endfor %}
         </div>

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Generate Fixtures – {{ competition.name }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-calendar3"></i> Generate Fixtures — {{ competition.name }}</h1>
+        <p class="text-muted mb-0">{{ competition.sub_county }} &bull; {{ competition.get_sport_type_display }}</p>
+    </div>
+    <a href="{% url 'sc_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if existing_count %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>{{ existing_count }}</strong> fixtures already exist for this competition.
+    Generating new fixtures will not remove existing ones.
+    <form method="post" class="d-inline ms-2" onsubmit="return confirm('Delete all {{ existing_count }} existing fixtures?')">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear">
+        <button type="submit" class="btn btn-sm btn-danger">
+            <i class="bi bi-trash"></i> Clear All Fixtures
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+    {% for pool in pools %}
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-2 shadow-sm">
+            <div class="fw-semibold">{{ pool.name }}</div>
+            <div class="text-muted small">{{ pool.pool_teams.count }} team{{ pool.pool_teams.count|pluralize }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<p class="text-muted small">Total teams in pools: <strong>{{ total_pool_teams }}</strong></p>
+
+<div class="card shadow-sm" style="max-width: 600px;">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+                <input type="date" name="start_date" class="form-control" required>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Kick-off Time</label>
+                    <input type="time" name="kickoff_time" class="form-control" value="14:00">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Default Venue</label>
+                    <select name="venue_name" class="form-select">
+                        <option value="">-- No default --</option>
+                        {% for v in venues %}<option value="{{ v.name }}">{{ v.name }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Group stage interval (days)</label>
+                    <input type="number" name="group_interval" class="form-control" value="7" min="1">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Knockout interval (days)</label>
+                    <input type="number" name="knockout_interval" class="form-control" value="3" min="1">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Knockout teams</label>
+                    <input type="number" name="knockout_teams" class="form-control" placeholder="auto">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-calendar-check"></i> Generate Fixtures
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

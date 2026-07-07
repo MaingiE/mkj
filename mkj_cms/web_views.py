@@ -55,10 +55,12 @@ from teams.models import (
     TechnicalBenchMember, TechnicalBenchRole, PlayerStatus,
     CountyDelegationMember, CountyDelegationRole,
     ScoutShortlistSubmission, ScoutShortlistSubmissionStatus,
+    WardLonglist, WardLonglistStatus,
 )
 from teams.forms import (
     PlayerRegistrationForm,
     CountyPlayerForm,
+    WardLonglistPlayerForm,
     TechnicalBenchForm, CountyDelegationMemberForm, KitColorsForm,
 )
 from referees.models import (
@@ -372,22 +374,190 @@ def _next_available_shirt_number(team):
     return None
 
 
-def _discipline_queryset_for_user(user):
+def _discipline_queryset_for_user(user, level=None):
+    """Return CountyDiscipline queryset scoped to the user's sub_county (and optionally level/ward).
+    
+    Args:
+        user: The user to scope the queryset for
+        level: Optional CompetitionLevel filter (ward/subcounty/county)
+    
+    Returns:
+        QuerySet of CountyDiscipline objects filtered by user role and optional level
+    """
     disciplines = CountyDiscipline.objects.select_related("registration", "linked_team")
+    
     if user.role == UserRole.DIRECTOR_SPORTS:
-        return disciplines.filter(registration__user=user)
-    if user.role == UserRole.CHIEF_SPORTS_OFFICER:
-        return disciplines.all()
-    if user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
-        return disciplines.filter(
+        qs = disciplines.filter(registration__user=user)
+    elif user.role == UserRole.CHIEF_SPORTS_OFFICER:
+        qs = disciplines.all()
+    elif user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+        qs = disciplines.filter(
             registration__county=user.county,
             sub_county=user.sub_county,
         )
-    return disciplines
+    elif user.role == UserRole.TEAM_MANAGER and hasattr(user, 'ward') and user.ward:
+        # Ward team managers see only their ward's disciplines
+        qs = disciplines.filter(
+            sub_county=user.sub_county,
+            ward=user.ward,
+        )
+    elif user.role == UserRole.WARD_SPORTS_COUNCIL_CHAIR and hasattr(user, 'ward') and user.ward:
+        # WSCC sees all disciplines in their assigned ward
+        qs = disciplines.filter(
+            sub_county=user.sub_county,
+            ward=user.ward,
+        )
+    else:
+        qs = disciplines
+    
+    # Apply optional level filter
+    if level is not None:
+        qs = qs.filter(level=level)
+    
+    return qs
 
 
 def _get_managed_discipline(user, discipline_pk):
     return get_object_or_404(_discipline_queryset_for_user(user), pk=discipline_pk)
+
+
+def _competition_queryset_for_user(user, level=None):
+    """Return Competition queryset scoped to the user's sub_county and optional level.
+    
+    Args:
+        user: The user to scope the queryset for
+        level: Optional CompetitionLevel filter (ward/subcounty/county)
+    
+    Returns:
+        QuerySet of Competition objects filtered by user role, sub_county, and optional level
+    """
+    from competitions.models import CompetitionLevel
+    
+    competitions = Competition.objects.select_related("created_by")
+    
+    if user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER:
+        # SCSO sees only competitions in their sub-county
+        qs = competitions.filter(sub_county=user.sub_county)
+        # If level is not specified for SCSO, default to subcounty level
+        if level is None:
+            qs = qs.filter(level=CompetitionLevel.SUBCOUNTY)
+        else:
+            qs = qs.filter(level=level)
+    elif user.role == UserRole.TEAM_MANAGER and hasattr(user, 'ward') and user.ward:
+        # Ward team managers see ward-level competitions in their ward
+        qs = competitions.filter(
+            sub_county=user.sub_county,
+            ward=user.ward,
+            level=CompetitionLevel.WARD,
+        )
+    elif user.role == UserRole.WARD_SPORTS_COUNCIL_CHAIR and hasattr(user, 'sub_county') and user.sub_county:
+        # WSCC sees ward-level competitions in their sub-county
+        qs = competitions.filter(
+            sub_county=user.sub_county,
+            level=CompetitionLevel.WARD,
+        )
+    elif user.role == UserRole.CHIEF_SPORTS_OFFICER or user.is_superuser:
+        # Chief officers and superusers see everything
+        qs = competitions
+        if level is not None:
+            qs = qs.filter(level=level)
+    else:
+        # Default: county-level competitions for other roles
+        qs = competitions
+        if level is not None:
+            qs = qs.filter(level=level)
+        else:
+            qs = qs.filter(level=CompetitionLevel.COUNTY)
+    
+    return qs
+
+
+def subcounty_scope_required(get_object_fn):
+    """Decorator factory: raises HTTP 403 if retrieved object.sub_county != request.user.sub_county.
+
+    This is a decorator factory — it takes a callable that returns the object to scope-check,
+    then returns a view decorator that performs the check before executing the view.
+
+    Usage (wrapping an object-detail view)::
+
+        def _get_competition(request, pk):
+            return get_object_or_404(Competition, pk=pk)
+
+        @role_required('subcounty_sports_officer', 'admin')
+        @subcounty_scope_required(_get_competition)
+        def sc_competition_manage_view(request, pk):
+            competition = get_object_or_404(Competition, pk=pk)
+            ...
+
+    When the decorated view is called:
+    1. ``get_object_fn(request, *args, **kwargs)`` is invoked to retrieve the target object.
+    2. If the requesting user is a SUBCOUNTY_SPORTS_OFFICER and the object's ``sub_county``
+       does not match ``request.user.sub_county``, PermissionDenied (HTTP 403) is raised.
+    3. Otherwise the wrapped view executes normally.
+
+    Requirements: 12.1, 12.2
+    """
+    from django.core.exceptions import PermissionDenied
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            # Retrieve the target object and verify sub_county ownership
+            obj = get_object_fn(request, *args, **kwargs)
+            if (
+                request.user.role == UserRole.SUBCOUNTY_SPORTS_OFFICER
+                and hasattr(obj, 'sub_county')
+                and obj.sub_county != request.user.sub_county
+            ):
+                logger.warning(
+                    "subcounty_scope_required: access denied for user %s (sub_county=%s) "
+                    "on object %r (sub_county=%s)",
+                    request.user.email,
+                    request.user.sub_county,
+                    obj,
+                    obj.sub_county,
+                )
+                raise PermissionDenied(
+                    "You do not have permission to access a resource from another sub-county."
+                )
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def _check_subcounty_access(request, obj):
+    """Helper function to check if user has access to an object based on sub_county.
+    
+    Raises PermissionDenied (403) if:
+    - User is SUBCOUNTY_SPORTS_OFFICER
+    - Object has a sub_county attribute
+    - Object's sub_county != user's sub_county
+    
+    Args:
+        request: The HTTP request object
+        obj: The object to check (Competition, Team, Fixture, etc.)
+    
+    Raises:
+        PermissionDenied: If access check fails
+    """
+    from django.core.exceptions import PermissionDenied
+    
+    # Only enforce for SCSO role
+    if request.user.role != UserRole.SUBCOUNTY_SPORTS_OFFICER:
+        return
+    
+    # Check if object has sub_county and if it matches user's sub_county
+    if hasattr(obj, 'sub_county'):
+        if obj.sub_county != request.user.sub_county:
+            logger.warning(
+                "Access denied: User %s (sub_county=%s) attempted to access %s (sub_county=%s)",
+                request.user.email,
+                request.user.sub_county,
+                obj,
+                obj.sub_county,
+            )
+            raise PermissionDenied("You do not have permission to access this resource from another sub-county.")
+
 
 
 def _ensure_competition_for_sport_type(sport_type):
@@ -6520,12 +6690,12 @@ def cm_competition_manage_view(request, pk):
         pk__in=PoolTeam.objects.filter(
             pool__competition=competition
         ).values_list('team_id', flat=True)
-    ).order_by('sub_county', 'name')
+    ).select_related('qualifying_county_competition').order_by('sub_county', 'name')
 
     # All teams already in this competition
     teams_in_comp = Team.objects.filter(
         pool_memberships__pool__competition=competition
-    ).distinct()
+    ).distinct().select_related('qualifying_county_competition').order_by('sub_county', 'name')
 
     # Fixtures
     group_fixtures = Fixture.objects.filter(
@@ -6643,7 +6813,7 @@ def cm_manage_pools_view(request, pk):
         status='registered',
         payment_confirmed=True,
         sport_type=competition.sport_type,
-    ).exclude(pk__in=assigned_ids).order_by('sub_county', 'name')
+    ).exclude(pk__in=assigned_ids).order_by('sub_county', 'name').select_related('qualifying_county_competition')
 
     from matches.models import get_sport_family
     sport_family = get_sport_family(competition.sport_type)
@@ -8984,6 +9154,7 @@ def leadership_scout_report_detail_view(request, pk):
 @role_required('subcounty_sports_officer', 'admin')
 def subcounty_officer_dashboard_view(request):
     """Dashboard for sub-county sports officers."""
+    from competitions.models import CompetitionLevel
     user = request.user
     sub_county = user.sub_county or 'Unassigned'
     county_reg = _get_primary_registration_for_user(user, auto_create=True)
@@ -9005,6 +9176,14 @@ def subcounty_officer_dashboard_view(request):
         teams__in=teams
     ).distinct()
 
+    # Sub-county competition stats (level=subcounty, scoped to officer's sub_county)
+    sc_competitions_qs = Competition.objects.filter(
+        level=CompetitionLevel.SUBCOUNTY,
+        sub_county=user.sub_county,
+    ) if user.sub_county else Competition.objects.none()
+    sc_competitions_count = sc_competitions_qs.count()
+    sc_recent_competitions = sc_competitions_qs.order_by('-created_at')[:5]
+
     stats = {
         'county': user.county or 'Unassigned',
         'sub_county': sub_county,
@@ -9014,6 +9193,7 @@ def subcounty_officer_dashboard_view(request):
         'bench_members': bench_count,
         'fixtures': my_fixtures.count(),
         'competitions': my_competitions.count(),
+        'sc_competitions': sc_competitions_count,
     }
 
     upcoming_fixtures = my_fixtures.filter(
@@ -9036,6 +9216,8 @@ def subcounty_officer_dashboard_view(request):
         'disciplines': disciplines,
         'county_reg': county_reg,
         'my_pool_teams': my_pool_teams,
+        'sc_competitions_count': sc_competitions_count,
+        'sc_recent_competitions': sc_recent_competitions,
     })
 
 
@@ -9295,6 +9477,730 @@ def subcounty_officer_referees_view(request):
         'levels': RefereeLevel.choices,
         'referee_types': Specialisation.choices,
         'user_sub_county': user_sub_county,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SUB-COUNTY COMPETITION PORTAL  (Tasks 10.1, 10.3, 10.5)
+#   Requirements: 6.1–6.8, 9.4, 9.5, 12.1, 12.2
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _get_sc_competition(request, pk, **kwargs):
+    """Helper: fetch competition by pk — used by subcounty_scope_required."""
+    return get_object_or_404(Competition, pk=pk)
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_competitions_view(request):
+    """List all sub-county competitions scoped to the officer's sub_county.
+
+    Requirements: 6.1
+    """
+    from competitions.models import CompetitionLevel, CompetitionStatus
+    user = request.user
+    competitions = Competition.objects.filter(
+        level=CompetitionLevel.SUBCOUNTY,
+        sub_county=user.sub_county,
+    ).order_by('-created_at') if user.sub_county else Competition.objects.none()
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        competitions = competitions.filter(status=status_filter)
+
+    return render(request, 'portal/subcounty_officer/sc_competitions.html', {
+        'competitions': competitions,
+        'status_choices': CompetitionStatus.choices,
+        'current_status': status_filter,
+        'sub_county': user.sub_county,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_create_competition_view(request):
+    """Create a new sub-county competition.
+
+    Automatically sets level=subcounty and sub_county from the officer's profile;
+    any form-submitted values for those fields are ignored.
+    Requirements: 6.2
+    """
+    from competitions.models import CompetitionLevel, CompetitionFormat, AgeGroup, CompetitionStatus
+    from admin_dashboard.models import ActivityLog
+
+    user = request.user
+    if not user.sub_county:
+        messages.error(request, 'Your sub-county is not set. Contact admin.')
+        return redirect('sc_competitions')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        sport_type = request.POST.get('sport_type', '').strip()
+        season = request.POST.get('season', '').strip()
+        format_type = request.POST.get('format_type', CompetitionFormat.GROUP_AND_KNOCKOUT)
+        age_group = request.POST.get('age_group', AgeGroup.OPEN)
+        start_date = request.POST.get('start_date') or None
+        end_date = request.POST.get('end_date') or None
+
+        errors = []
+        if not name:
+            errors.append('Competition name is required.')
+        if not sport_type or sport_type not in dict(SportType.choices):
+            errors.append('A valid sport type is required.')
+        if not season:
+            errors.append('Season is required.')
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+        else:
+            try:
+                competition = Competition.objects.create(
+                    name=name,
+                    sport_type=sport_type,
+                    season=season,
+                    format_type=format_type,
+                    age_group=age_group,
+                    start_date=start_date,
+                    end_date=end_date,
+                    status=CompetitionStatus.UPCOMING,
+                    # Force level and sub_county from profile — ignore any form values
+                    level=CompetitionLevel.SUBCOUNTY,
+                    sub_county=user.sub_county,
+                    created_by=user,
+                )
+                ActivityLog.objects.create(
+                    user=user,
+                    action='CREATE',
+                    description=f'{user.get_full_name()} created sub-county competition "{competition.name}" for {user.sub_county}.',
+                    object_repr=str(competition),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(request, f'Competition "{competition.name}" created.')
+                return redirect('sc_competition_manage', pk=competition.pk)
+            except Exception as exc:
+                logger.error('sc_create_competition_view error: %s', exc)
+                messages.error(request, f'Could not create competition: {exc}')
+
+    return render(request, 'portal/subcounty_officer/sc_create_competition.html', {
+        'sport_choices': SportType.choices,
+        'format_choices': CompetitionFormat.choices,
+        'age_groups': AgeGroup.choices,
+        'sub_county': user.sub_county,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_competition_manage_view(request, pk):
+    """Central management hub for a sub-county competition.
+
+    Requirements: 6.3, 9.4, 9.5
+    """
+    from competitions.models import Pool, PoolTeam, Fixture, Venue, KnockoutRound
+    from matches.models import MatchReport
+    from matches.stats_engine import sort_pool_standings
+
+    competition = get_object_or_404(Competition, pk=pk)
+    _check_subcounty_access(request, competition)
+
+    pools = Pool.objects.filter(competition=competition).prefetch_related(
+        'pool_teams__team'
+    ).order_by('name')
+
+    pool_data = []
+    for pool in pools:
+        sorted_teams = sort_pool_standings(pool.pool_teams.all(), competition.sport_type)
+        pool_data.append({'pool': pool, 'teams': sorted_teams})
+
+    eligible_teams = Team.objects.filter(
+        status='registered',
+        sport_type=competition.sport_type,
+        sub_county=competition.sub_county,
+    ).exclude(
+        pk__in=PoolTeam.objects.filter(pool__competition=competition).values_list('team_id', flat=True)
+    ).order_by('name')
+
+    teams_in_comp = Team.objects.filter(
+        pool_memberships__pool__competition=competition
+    ).distinct()
+
+    group_fixtures = Fixture.objects.filter(
+        competition=competition, is_knockout=False
+    ).select_related('home_team', 'away_team', 'venue', 'pool').order_by('match_date', 'kickoff_time')
+
+    knockout_fixtures = Fixture.objects.filter(
+        competition=competition, is_knockout=True
+    ).select_related('home_team', 'away_team', 'venue', 'winner').order_by('knockout_round', 'bracket_position')
+
+    venues = Venue.objects.filter(is_active=True).order_by('name')
+
+    report_counts = MatchReport.objects.filter(
+        fixture__competition=competition
+    ).aggregate(
+        pending=Count('id', filter=Q(status='submitted')),
+        approved=Count('id', filter=Q(status='approved')),
+    )
+
+    return render(request, 'portal/subcounty_officer/sc_manage_competition.html', {
+        'competition': competition,
+        'pool_data': pool_data,
+        'eligible_teams': eligible_teams,
+        'teams_in_comp': teams_in_comp,
+        'group_fixtures': group_fixtures,
+        'knockout_fixtures': knockout_fixtures,
+        'venues': venues,
+        'pending_reports': report_counts['pending'],
+        'approved_reports': report_counts['approved'],
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_manage_pools_view(request, pk):
+    """Manage pools for a sub-county competition: create/delete pools, add/remove teams.
+
+    Enforces cross-sub-county block (Task 10.5): teams from a different sub_county
+    cannot be added to this competition.
+    Requirements: 6.3, 6.8, 12.1, 12.2
+    """
+    from competitions.models import Pool, PoolTeam, Venue
+    from admin_dashboard.models import ActivityLog
+    from teams.models import County, TeamStatus
+
+    competition = get_object_or_404(Competition, pk=pk)
+    _check_subcounty_access(request, competition)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'create_pool':
+            pool_name = request.POST.get('pool_name', '').strip()
+            venue_name = request.POST.get('venue_name', '').strip()
+            if not pool_name:
+                messages.error(request, 'Pool name is required.')
+            elif Pool.objects.filter(competition=competition, name=pool_name).exists():
+                messages.error(request, f'Pool "{pool_name}" already exists.')
+            else:
+                venue = _resolve_venue_by_name(venue_name)
+                Pool.objects.create(competition=competition, name=pool_name, venue=venue)
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='CREATE',
+                    description=f'{request.user.get_full_name()} created pool "{pool_name}" in {competition.name}.',
+                    object_repr=str(competition),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(request, f'Pool "{pool_name}" created.')
+
+        elif action == 'delete_pool':
+            pool_id = request.POST.get('pool_id')
+            try:
+                pool = Pool.objects.get(pk=pool_id, competition=competition)
+                name = pool.name
+                pool.delete()
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='DELETE',
+                    description=f'{request.user.get_full_name()} deleted pool "{name}" from {competition.name}.',
+                    object_repr=str(competition),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(request, f'Pool "{name}" deleted.')
+            except Pool.DoesNotExist:
+                messages.error(request, 'Pool not found.')
+
+        elif action == 'add_team':
+            pool_id = request.POST.get('pool_id')
+            team_id = request.POST.get('team_id', '').strip()
+            team_name_input = request.POST.get('team_name', '').strip()
+            try:
+                pool = Pool.objects.get(pk=pool_id, competition=competition)
+
+                if team_id:
+                    try:
+                        team = Team.objects.get(pk=team_id)
+                    except Team.DoesNotExist:
+                        messages.error(request, 'Team not found.')
+                        return redirect('sc_manage_pools', pk=pk)
+                else:
+                    # Create/get team by name within this sub_county
+                    makueni_county, _ = County.objects.get_or_create(
+                        name='Makueni', defaults={'code': 'MAK', 'capital': 'Wote'},
+                    )
+                    sport_label = competition.get_sport_type_display()
+                    name = team_name_input or f"{competition.sub_county} {sport_label}"
+                    team, _ = Team.objects.get_or_create(
+                        name=name,
+                        defaults={
+                            'county': makueni_county,
+                            'sub_county': competition.sub_county,
+                            'sport_type': competition.sport_type,
+                            'competition': competition,
+                            'status': TeamStatus.REGISTERED,
+                            'contact_phone': '+254700000000',
+                        },
+                    )
+
+                # ── Task 10.5: cross-sub-county block ───────────────────────
+                if (team.sub_county and competition.sub_county
+                        and team.sub_county != competition.sub_county):
+                    messages.error(
+                        request,
+                        f'Sub-county mismatch: {team.name} belongs to '
+                        f'"{team.sub_county}" but this competition is for '
+                        f'"{competition.sub_county}". Cross-sub-county team '
+                        f'additions are not permitted.'
+                    )
+                    return redirect('sc_manage_pools', pk=pk)
+
+                if PoolTeam.objects.filter(pool__competition=competition, team=team).exists():
+                    messages.error(request, f'{team.name} is already in a pool for this competition.')
+                else:
+                    if team.competition != competition:
+                        team.competition = competition
+                        team.save(update_fields=['competition'])
+                    PoolTeam.objects.create(pool=pool, team=team)
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        action='CREATE',
+                        description=f'{request.user.get_full_name()} added team "{team.name}" to pool "{pool.name}" in {competition.name}.',
+                        object_repr=str(competition),
+                        ip_address=request.META.get('REMOTE_ADDR', ''),
+                    )
+                    messages.success(request, f'{team.name} added to {pool.name}.')
+                    auto_fixtures = _auto_generate_pool_fixtures(pool, competition, request.user)
+                    if auto_fixtures:
+                        messages.info(request, f'{len(auto_fixtures)} fixtures auto-generated for {pool.name}.')
+            except Pool.DoesNotExist:
+                messages.error(request, 'Pool not found.')
+
+        elif action == 'remove_team':
+            pt_id = request.POST.get('pool_team_id')
+            try:
+                pt = PoolTeam.objects.get(pk=pt_id, pool__competition=competition)
+                name = pt.team.name
+                pool_name = pt.pool.name
+                pt.delete()
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='DELETE',
+                    description=f'{request.user.get_full_name()} removed team "{name}" from pool "{pool_name}" in {competition.name}.',
+                    object_repr=str(competition),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(request, f'{name} removed from {pool_name}.')
+            except PoolTeam.DoesNotExist:
+                messages.error(request, 'Team assignment not found.')
+
+        return redirect('sc_manage_pools', pk=pk)
+
+    pools = Pool.objects.filter(competition=competition).prefetch_related(
+        'pool_teams__team'
+    ).select_related('venue').order_by('name')
+
+    # Only show teams from the same sub_county and sport_type that aren't already in a pool
+    assigned_team_ids = PoolTeam.objects.filter(
+        pool__competition=competition
+    ).values_list('team_id', flat=True)
+    available_teams = Team.objects.filter(
+        sub_county=competition.sub_county,
+        sport_type=competition.sport_type,
+    ).exclude(pk__in=assigned_team_ids).order_by('name')
+
+    venues = Venue.objects.filter(is_active=True).order_by('name')
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
+
+    return render(request, 'portal/subcounty_officer/sc_manage_pools.html', {
+        'competition': competition,
+        'pools': pools,
+        'available_teams': available_teams,
+        'venues': venues,
+        'sport_family': sport_family,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_generate_fixtures_view(request, pk):
+    """Generate fixtures for a sub-county competition.
+
+    Only includes Team records linked to the relevant sub-county competition.
+    Requirements: 6.3, 6.4
+    """
+    from competitions.models import Competition, Fixture, Venue, Pool
+    from competitions.fixture_engine import generate_all_fixtures
+    from admin_dashboard.models import ActivityLog
+
+    competition = get_object_or_404(Competition, pk=pk)
+    _check_subcounty_access(request, competition)
+
+    existing_count = Fixture.objects.filter(competition=competition).count()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'generate':
+            start_date_str = request.POST.get('start_date', '')
+            kickoff_time_str = request.POST.get('kickoff_time', '14:00')
+            group_interval = int(request.POST.get('group_interval', 7))
+            knockout_interval = int(request.POST.get('knockout_interval', 3))
+            venue_name = request.POST.get('venue_name', '').strip()
+            knockout_teams = request.POST.get('knockout_teams', '')
+
+            from datetime import datetime
+            try:
+                start_date_val = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid start date.')
+                return redirect('sc_generate_fixtures', pk=pk)
+
+            try:
+                kickoff_time = datetime.strptime(kickoff_time_str, '%H:%M').time()
+            except (ValueError, TypeError):
+                kickoff_time = datetime.strptime('14:00', '%H:%M').time()
+
+            venue = _resolve_venue_by_name(venue_name)
+            ko_teams = int(knockout_teams) if knockout_teams else None
+
+            try:
+                fixtures = generate_all_fixtures(
+                    competition, start_date_val, kickoff_time,
+                    group_interval=group_interval,
+                    knockout_interval=knockout_interval,
+                    knockout_teams=ko_teams,
+                    venue=venue,
+                    created_by=request.user,
+                )
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='FIXTURES_GENERATED',
+                    description=(
+                        f'{request.user.get_full_name()} generated {len(fixtures)} '
+                        f'fixtures for sub-county competition {competition.name}.'
+                    ),
+                    object_repr=str(competition),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(request, f'{len(fixtures)} fixtures generated for {competition.name}.')
+                _clear_public_fixture_cache()
+            except ValueError as e:
+                messages.error(request, str(e))
+
+            return redirect('sc_competition_manage', pk=pk)
+
+        elif action == 'clear':
+            count = Fixture.objects.filter(competition=competition).count()
+            Fixture.objects.filter(competition=competition).delete()
+            messages.warning(request, f'{count} fixtures deleted.')
+            _clear_public_fixture_cache()
+            return redirect('sc_generate_fixtures', pk=pk)
+
+    venues = Venue.objects.filter(is_active=True).order_by('name')
+    pools = Pool.objects.filter(competition=competition).prefetch_related('pool_teams')
+    total_pool_teams = sum(p.pool_teams.count() for p in pools)
+
+    return render(request, 'portal/subcounty_officer/sc_generate_fixtures.html', {
+        'competition': competition,
+        'existing_count': existing_count,
+        'venues': venues,
+        'pools': pools,
+        'total_pool_teams': total_pool_teams,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_live_match_view(request, pk, fixture_pk):
+    """Live match tracking for a sub-county competition fixture.
+
+    Requirements: 6.7
+    """
+    from competitions.models import Competition, Fixture, FixtureStatus, LiveGoal
+    from matches.models import get_sport_family, SPORT_CONFIG
+    from matches.stats_engine import recalculate_pool_standings
+    from admin_dashboard.models import ActivityLog
+
+    competition = get_object_or_404(Competition, pk=pk)
+    _check_subcounty_access(request, competition)
+
+    fixture = get_object_or_404(Fixture, pk=fixture_pk, competition=competition)
+    sport_family = get_sport_family(competition.sport_type)
+    sport_cfg = SPORT_CONFIG.get(sport_family, SPORT_CONFIG['football'])
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'start_match':
+            fixture.status = FixtureStatus.LIVE
+            fixture.live_started_at = timezone.now()
+            fixture.live_half = 1
+            fixture.live_paused = False
+            fixture.live_paused_minute = None
+            fixture.home_score = 0
+            fixture.away_score = 0
+            fixture.save()
+            _clear_public_fixture_cache()
+            messages.success(request, f'Match started: {fixture}')
+
+        elif action == 'update_score':
+            try:
+                fixture.home_score = max(0, int(request.POST.get('home_score', 0)))
+                fixture.away_score = max(0, int(request.POST.get('away_score', 0)))
+                fixture.save(update_fields=['home_score', 'away_score', 'updated_at'])
+                _clear_public_fixture_cache()
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid score values.')
+
+        elif action == 'goal_home':
+            if fixture.home_score is not None:
+                fixture.home_score += 1
+                fixture.save(update_fields=['home_score', 'updated_at'])
+                _clear_public_fixture_cache()
+
+        elif action == 'goal_away':
+            if fixture.away_score is not None:
+                fixture.away_score += 1
+                fixture.save(update_fields=['away_score', 'updated_at'])
+                _clear_public_fixture_cache()
+
+        elif action == 'add_goal':
+            team_side = request.POST.get('team_side', '')
+            scorer_name = request.POST.get('scorer_name', '').strip()
+            if team_side in ('home', 'away') and scorer_name:
+                team_obj = fixture.home_team if team_side == 'home' else fixture.away_team
+                try:
+                    minute = int(request.POST.get('goal_minute', 0))
+                    added_time_val = int(request.POST.get('goal_added_time', 0) or 0)
+                    half = int(request.POST.get('goal_half', fixture.live_half or 1))
+                except (ValueError, TypeError):
+                    minute, added_time_val, half = 0, 0, fixture.live_half or 1
+                goal_type = request.POST.get('goal_type', 'normal')
+                if goal_type not in dict(LiveGoal.GOAL_TYPE_CHOICES):
+                    goal_type = 'normal'
+                LiveGoal.objects.create(
+                    fixture=fixture, team=team_obj,
+                    scorer_name=scorer_name,
+                    minute=max(0, minute), added_time=max(0, added_time_val),
+                    half=half, goal_type=goal_type,
+                    assist_name=request.POST.get('assist_name', '').strip(),
+                    notes=request.POST.get('goal_notes', '').strip(),
+                )
+                _clear_public_fixture_cache()
+                messages.success(request, f'Goal recorded: {scorer_name} ({minute}\')')
+            else:
+                messages.error(request, 'Scorer name and team are required.')
+
+        elif action == 'delete_goal':
+            goal_id = request.POST.get('goal_id')
+            try:
+                goal = LiveGoal.objects.get(pk=goal_id, fixture=fixture)
+                goal.delete()
+                _clear_public_fixture_cache()
+                messages.success(request, 'Goal removed.')
+            except LiveGoal.DoesNotExist:
+                messages.error(request, 'Goal not found.')
+
+        elif action == 'update_match_info':
+            update_fields = ['updated_at']
+            try:
+                fixture.live_extra_minutes = max(0, int(request.POST.get('added_time', 0) or 0))
+                update_fields.append('live_extra_minutes')
+            except (ValueError, TypeError):
+                pass
+            new_half = request.POST.get('live_half', '')
+            if new_half:
+                try:
+                    new_half_int = int(new_half)
+                    if 1 <= new_half_int <= 99:
+                        fixture.live_half = new_half_int
+                        update_fields.append('live_half')
+                except (ValueError, TypeError):
+                    pass
+            fixture.save(update_fields=update_fields)
+            _clear_public_fixture_cache()
+            messages.success(request, 'Match info updated.')
+
+        elif action == 'pause':
+            fixture.live_paused_minute = fixture.match_minute
+            fixture.live_paused = True
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'updated_at'])
+
+        elif action == 'resume':
+            fixture.live_paused = False
+            fixture.live_paused_minute = None
+            fixture.live_started_at = timezone.now()
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_started_at', 'updated_at'])
+
+        elif action == 'half_time':
+            fixture.live_paused_minute = fixture.match_minute
+            fixture.live_paused = True
+            fixture.live_half += 1
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_half', 'updated_at'])
+            _clear_public_fixture_cache()
+
+        elif action == 'second_half':
+            fixture.live_paused = False
+            fixture.live_paused_minute = None
+            fixture.live_started_at = timezone.now()
+            fixture.save(update_fields=['live_paused', 'live_paused_minute', 'live_started_at', 'updated_at'])
+            _clear_public_fixture_cache()
+
+        elif action == 'end_match':
+            fixture.status = FixtureStatus.COMPLETED
+            fixture.live_paused = True
+            fixture.determine_winner()
+            fixture.save()
+            if fixture.pool_id:
+                recalculate_pool_standings(fixture.pool)
+            _clear_public_fixture_cache()
+            ActivityLog.objects.create(
+                user=request.user,
+                action='UPDATE',
+                description=f'{request.user.get_full_name()} ended match {fixture} in {competition.name}.',
+                object_repr=str(fixture),
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+            messages.success(request, f'Match ended: {fixture}')
+            return redirect('sc_competition_manage', pk=pk)
+
+        return redirect('sc_live_match', pk=pk, fixture_pk=fixture_pk)
+
+    live_goals = fixture.live_goals.select_related('team').all()
+    home_goals = [g for g in live_goals if g.team_id == fixture.home_team_id and g.goal_type != 'own_goal']
+    home_goals += [g for g in live_goals if g.team_id == fixture.away_team_id and g.goal_type == 'own_goal']
+    away_goals = [g for g in live_goals if g.team_id == fixture.away_team_id and g.goal_type != 'own_goal']
+    away_goals += [g for g in live_goals if g.team_id == fixture.home_team_id and g.goal_type == 'own_goal']
+
+    normal_periods = sport_cfg.get('periods', 2)
+    is_last_normal_period = fixture.live_half >= normal_periods
+    is_knockout_draw = (
+        fixture.is_knockout and
+        fixture.home_score is not None and fixture.away_score is not None and
+        fixture.home_score == fixture.away_score
+    )
+
+    period_labels = list(sport_cfg.get('period_labels', ['1st Half', '2nd Half']))
+    period_choices = [(i + 1, label) for i, label in enumerate(period_labels)]
+    if sport_cfg.get('has_extra_time'):
+        period_choices.append((normal_periods + 1, 'Extra Time 1st'))
+        period_choices.append((normal_periods + 2, 'Extra Time 2nd'))
+    if sport_cfg.get('has_penalties'):
+        period_choices.append((99, 'Penalty Shootout'))
+
+    return render(request, 'portal/subcounty_officer/sc_live_match.html', {
+        'competition': competition,
+        'fixture': fixture,
+        'sport_family': sport_family,
+        'sport_cfg': sport_cfg,
+        'live_goals': live_goals,
+        'home_goals': sorted(home_goals, key=lambda g: (g.half, g.minute, g.added_time)),
+        'away_goals': sorted(away_goals, key=lambda g: (g.half, g.minute, g.added_time)),
+        'goal_type_choices': LiveGoal.GOAL_TYPE_CHOICES,
+        'half_choices': LiveGoal.HALF_CHOICES,
+        'normal_periods': normal_periods,
+        'is_last_normal_period': is_last_normal_period,
+        'is_knockout_draw': is_knockout_draw,
+        'period_choices': period_choices,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_edit_standings_view(request, pk):
+    """Edit pool standings for a sub-county competition.
+
+    Applies the same sport-specific points calculation as county finals.
+    Requirements: 6.5, 9.4
+    """
+    from competitions.models import Competition, Pool, PoolTeam
+    from admin_dashboard.models import ActivityLog
+
+    competition = get_object_or_404(Competition, pk=pk)
+    _check_subcounty_access(request, competition)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'update_standings':
+            pool_team_id = request.POST.get('pool_team_id')
+            exceptional_reason = request.POST.get('exceptional_reason', '').strip()
+            confirm_exceptional = request.POST.get('confirm_exceptional') == '1'
+            if not confirm_exceptional:
+                messages.error(request, 'Standings overrides are allowed only for exceptional cases. Tick confirmation to proceed.')
+                return redirect('sc_edit_standings', pk=pk)
+            if len(exceptional_reason) < 12:
+                messages.error(request, 'Provide a clear exceptional-case reason (at least 12 characters).')
+                return redirect('sc_edit_standings', pk=pk)
+            try:
+                pt = PoolTeam.objects.get(pk=pool_team_id, pool__competition=competition)
+                before_state = {
+                    'played': pt.played, 'won': pt.won, 'drawn': pt.drawn, 'lost': pt.lost,
+                    'goals_for': pt.goals_for, 'goals_against': pt.goals_against,
+                    'bonus_points': pt.bonus_points,
+                }
+                pt.played = int(request.POST.get('played', pt.played))
+                pt.won = int(request.POST.get('won', pt.won))
+                pt.drawn = int(request.POST.get('drawn', pt.drawn))
+                pt.lost = int(request.POST.get('lost', pt.lost))
+                pt.goals_for = int(request.POST.get('goals_for', pt.goals_for))
+                pt.goals_against = int(request.POST.get('goals_against', pt.goals_against))
+                pt.bonus_points = int(request.POST.get('bonus_points', pt.bonus_points))
+                pt.save()
+                after_state = {
+                    'played': pt.played, 'won': pt.won, 'drawn': pt.drawn, 'lost': pt.lost,
+                    'goals_for': pt.goals_for, 'goals_against': pt.goals_against,
+                    'bonus_points': pt.bonus_points,
+                }
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='STANDINGS_OVERRIDE',
+                    description=(
+                        f'{request.user.get_full_name()} made an exceptional standings override '
+                        f'for {pt.team.name} in {pt.pool.name} ({competition.name}). '
+                        f'Reason: {exceptional_reason}'
+                    ),
+                    object_repr=str(pt),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                    extra_data={
+                        'exceptional_case': True,
+                        'reason': exceptional_reason,
+                        'before': before_state,
+                        'after': after_state,
+                    },
+                )
+                messages.success(request, f'Standings updated for {pt.team.name}.')
+            except PoolTeam.DoesNotExist:
+                messages.error(request, 'Pool team not found.')
+
+        elif action == 'recalculate':
+            pool_id = request.POST.get('pool_id')
+            try:
+                pool = Pool.objects.get(pk=pool_id, competition=competition)
+                from matches.stats_engine import recalculate_pool_standings
+                recalculate_pool_standings(pool)
+                messages.success(request, f'Standings recalculated for {pool.name}.')
+            except Pool.DoesNotExist:
+                messages.error(request, 'Pool not found.')
+
+        elif action == 'recalculate_all':
+            from matches.stats_engine import recalculate_pool_standings
+            for pool in Pool.objects.filter(competition=competition):
+                recalculate_pool_standings(pool)
+            messages.success(request, f'All pool standings recalculated for {competition.name}.')
+
+        return redirect('sc_edit_standings', pk=pk)
+
+    pools = Pool.objects.filter(competition=competition).prefetch_related(
+        'pool_teams__team'
+    ).order_by('name')
+    from matches.stats_engine import sort_pool_standings
+    pool_data = []
+    for pool in pools:
+        sorted_teams = sort_pool_standings(pool.pool_teams.select_related('team').all(), competition.sport_type)
+        pool_data.append({'pool': pool, 'teams': sorted_teams})
+
+    from matches.models import get_sport_family
+    sport_family = get_sport_family(competition.sport_type)
+
+    return render(request, 'portal/subcounty_officer/sc_edit_standings.html', {
+        'competition': competition,
+        'sport_family': sport_family,
+        'pool_data': pool_data,
     })
 
 
@@ -11378,4 +12284,1803 @@ def edit_county_player_view(request, pk):
         'discipline': player.discipline,
         'wards_json': json.dumps(MAKUENI_SUBCOUNTY_WARDS),
         'next': request.GET.get('next', ''),
+    })
+
+
+# ── LIGI MASHINANI: Ward Team Manager Portal ──────────────────────────────────
+
+@role_required('team_manager')
+def ward_tm_dashboard_view(request):
+    """
+    Ward Team Manager dashboard for the Ligi Mashinani portal.
+
+    - Gated to users with role=TEAM_MANAGER.
+    - Redirects to /portal/ (dashboard) if the user has no linked WardLonglist
+      (i.e. they are a county-level team manager, not a ward TM).
+    - Displays ward, sub-county, discipline (sport type), longlist status,
+      player count, and a link to the longlist page.
+
+    Requirements: 2.5
+    URL: /ligi/dashboard/
+    """
+    user = request.user
+
+    # Fetch the ward-level discipline for this user
+    discipline = CountyDiscipline.objects.filter(
+        sub_county=user.sub_county,
+        ward=user.ward,
+        level='ward',
+    ).select_related('registration', 'ward_longlist').first()
+
+    # Guard: no ward discipline → not a Ligi Mashinani TM; send to regular dashboard
+    if discipline is None:
+        messages.warning(
+            request,
+            'No ward team found for your account. '
+            'Please contact the administrator if this is unexpected.',
+        )
+        return redirect('dashboard')
+
+    # Fetch the linked WardLonglist (created atomically on approval)
+    try:
+        longlist = discipline.ward_longlist
+    except WardLonglist.DoesNotExist:
+        longlist = None
+
+    # Guard: ward discipline exists but no longlist yet → not fully onboarded
+    if longlist is None:
+        messages.warning(
+            request,
+            'Your ward team record is being set up. '
+            'Please contact the administrator if this persists.',
+        )
+        return redirect('dashboard')
+
+    # Count players registered in this ward discipline
+    player_count = CountyPlayer.objects.filter(discipline=discipline).count()
+
+    context = {
+        'discipline': discipline,
+        'longlist': longlist,
+        'ward': user.ward,
+        'sub_county': user.sub_county,
+        'player_count': player_count,
+    }
+    return render(request, 'ligi/ward_tm_dashboard.html', context)
+
+
+# ── LIGI MASHINANI: Ward Team Manager — Longlist CRUD ─────────────────────────
+
+def _get_ward_tm_context(user):
+    """
+    Helper shared by all ward TM longlist views.
+
+    Returns (discipline, longlist) for the requesting user, or None/None if the
+    user has no linked ward discipline / longlist — caller should guard and
+    redirect in that case.
+    """
+    discipline = CountyDiscipline.objects.filter(
+        sub_county=user.sub_county,
+        ward=user.ward,
+        level='ward',
+    ).select_related('registration', 'ward_longlist').first()
+
+    if discipline is None:
+        return None, None
+
+    try:
+        longlist = discipline.ward_longlist
+    except WardLonglist.DoesNotExist:
+        longlist = None
+
+    return discipline, longlist
+
+
+@role_required('team_manager')
+def ward_tm_longlist_view(request):
+    """
+    Display all CountyPlayer objects for the Ward Team Manager's ward discipline
+    (level=ward, sub_county/ward matching the logged-in user).
+
+    Requirements: 3.1, 12.1
+    URL: /ligi/longlist/
+    """
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+
+    if discipline is None or longlist is None:
+        messages.warning(
+            request,
+            'No ward team found for your account. '
+            'Please contact the administrator if this is unexpected.',
+        )
+        return redirect('ward_tm_dashboard')
+
+    players = CountyPlayer.objects.filter(
+        discipline=discipline,
+    ).order_by('last_name', 'first_name')
+
+    context = {
+        'discipline': discipline,
+        'longlist': longlist,
+        'players': players,
+        'player_count': players.count(),
+        'ward': user.ward,
+        'sub_county': user.sub_county,
+    }
+    return render(request, 'ligi/ward_tm_longlist.html', context)
+
+
+@role_required('team_manager')
+def ward_tm_add_player_view(request):
+    """
+    Add a player to the ward longlist.
+
+    Enforces:
+    - Required fields: full name, national ID number, DOB, passport photo,
+      at least one identity document (national ID copy or birth certificate)
+    - Duplicate national ID check (system-wide)
+    - Age calculated and stored from DOB on save
+    - Blocked if longlist is locked (submitted or wscc_approved)
+
+    Requirements: 3.2, 3.3, 3.4
+    URL: /ligi/longlist/add-player/
+    """
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+
+    if discipline is None or longlist is None:
+        messages.warning(request, 'No ward team found for your account.')
+        return redirect('ward_tm_dashboard')
+
+    # Block if longlist is submitted or approved (4.7 / 3.6)
+    if longlist.is_locked:
+        messages.error(
+            request,
+            'Your longlist has been submitted or approved and cannot be modified. '
+            'Contact your WSCC to return it for corrections.',
+        )
+        return redirect('ward_tm_longlist')
+
+    if request.method == 'POST':
+        form = WardLonglistPlayerForm(request.POST, request.FILES)
+        if form.is_valid():
+            player = form.save(commit=False)
+            player.discipline = discipline
+            # Set ward/sub-county from the user's profile (not form input)
+            player.sub_county = user.sub_county
+            player.ward = user.ward
+            # Normalise empty phone to default '0000000000' if model requires a value;
+            # the model allows blank but has a validator — store empty string directly.
+            if not player.phone:
+                player.phone = ''
+            # Calculate and store age from DOB (Req 3.3)
+            if player.date_of_birth:
+                from django.utils import timezone as tz
+                today = tz.now().date()
+                dob = player.date_of_birth
+                player.age_value = (
+                    today.year - dob.year
+                    - ((today.month, today.day) < (dob.month, dob.day))
+                )
+            player.save()
+            messages.success(
+                request,
+                f'{player.first_name} {player.last_name} added to the longlist.',
+            )
+            action = request.POST.get('action', 'add_more')
+            if action == 'finish':
+                return redirect('ward_tm_longlist')
+            # Stay on form for another player
+            form = WardLonglistPlayerForm()
+    else:
+        form = WardLonglistPlayerForm()
+
+    context = {
+        'form': form,
+        'discipline': discipline,
+        'longlist': longlist,
+        'ward': user.ward,
+        'sub_county': user.sub_county,
+    }
+    return render(request, 'ligi/ward_tm_add_player.html', context)
+
+
+@role_required('team_manager')
+def ward_tm_edit_player_view(request, player_pk):
+    """
+    Edit a player on the ward longlist.
+
+    Blocked if longlist status is wscc_approved (Req 4.7).
+
+    Requirements: 3.2, 3.3, 3.4, 4.7
+    URL: /ligi/longlist/<int:player_pk>/edit/
+    """
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+
+    if discipline is None or longlist is None:
+        messages.warning(request, 'No ward team found for your account.')
+        return redirect('ward_tm_dashboard')
+
+    # Fetch the player; ensure it belongs to this user's discipline
+    player = get_object_or_404(CountyPlayer, pk=player_pk, discipline=discipline)
+
+    # Block edit if longlist is locked (submitted or wscc_approved)
+    if longlist.is_locked:
+        messages.error(
+            request,
+            'Your longlist has been submitted or approved. '
+            'Players cannot be edited until the WSCC returns it for corrections.',
+        )
+        return redirect('ward_tm_longlist')
+
+    if request.method == 'POST':
+        form = WardLonglistPlayerForm(request.POST, request.FILES, instance=player)
+        if form.is_valid():
+            updated_player = form.save(commit=False)
+            # Recalculate age from updated DOB (Req 3.3)
+            if updated_player.date_of_birth:
+                from django.utils import timezone as tz
+                today = tz.now().date()
+                dob = updated_player.date_of_birth
+                updated_player.age_value = (
+                    today.year - dob.year
+                    - ((today.month, today.day) < (dob.month, dob.day))
+                )
+            updated_player.save()
+            messages.success(
+                request,
+                f'{updated_player.first_name} {updated_player.last_name} updated successfully.',
+            )
+            return redirect('ward_tm_longlist')
+    else:
+        form = WardLonglistPlayerForm(instance=player)
+
+    context = {
+        'form': form,
+        'player': player,
+        'discipline': discipline,
+        'longlist': longlist,
+        'ward': user.ward,
+        'sub_county': user.sub_county,
+    }
+    return render(request, 'ligi/ward_tm_edit_player.html', context)
+
+
+@role_required('team_manager')
+def ward_tm_delete_player_view(request, player_pk):
+    """
+    Delete a player from the ward longlist.
+
+    Blocked if longlist status is wscc_approved (Req 4.7).
+
+    Requirements: 3.1, 4.7
+    URL: /ligi/longlist/<int:player_pk>/delete/
+    """
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+
+    if discipline is None or longlist is None:
+        messages.warning(request, 'No ward team found for your account.')
+        return redirect('ward_tm_dashboard')
+
+    # Fetch the player; ensure it belongs to this user's discipline
+    player = get_object_or_404(CountyPlayer, pk=player_pk, discipline=discipline)
+
+    # Block delete if longlist is locked (submitted or wscc_approved)
+    if longlist.is_locked:
+        messages.error(
+            request,
+            'Your longlist has been submitted or approved. '
+            'Players cannot be removed until the WSCC returns it for corrections.',
+        )
+        return redirect('ward_tm_longlist')
+
+    if request.method == 'POST':
+        name = f'{player.first_name} {player.last_name}'
+        player.delete()
+        messages.success(request, f'{name} removed from the longlist.')
+        return redirect('ward_tm_longlist')
+
+    context = {
+        'player': player,
+        'discipline': discipline,
+        'longlist': longlist,
+        'ward': user.ward,
+        'sub_county': user.sub_county,
+    }
+    return render(request, 'ligi/ward_tm_delete_player.html', context)
+
+
+@role_required('team_manager')
+def ward_tm_submit_longlist_view(request):
+    """
+    Submit the ward team's longlist to the WSCC for review.
+
+    POST-only. On GET, redirects back to the longlist page.
+
+    Guards:
+    - User must have a linked ward discipline and WardLonglist.
+    - Longlist status must be 'draft' or 'returned'; already submitted/approved
+      longlists are rejected with an error message.
+    - Longlist must have at least one player; zero-player submission is rejected
+      with a validation message (Req 3.7).
+
+    On successful submission:
+    - Sets WardLonglist.status = 'submitted' and submitted_at = timezone.now().
+    - Saves the longlist (prevents further edits until WSCC returns it).
+    - Sends an email notification to the assigned WSCC for this ward (Req 13.1);
+      if the email backend fails, logs to ActivityLog and shows messages.warning
+      — the primary request completes normally (Req 13.6).
+
+    Requirements: 3.5, 3.6, 3.7, 13.1
+    URL: /ligi/longlist/submit/
+    """
+    user = request.user
+
+    # POST-only: reject GET with redirect
+    if request.method != 'POST':
+        return redirect('ward_tm_longlist')
+
+    discipline, longlist = _get_ward_tm_context(user)
+
+    if discipline is None or longlist is None:
+        messages.warning(
+            request,
+            'No ward team found for your account. '
+            'Please contact the administrator if this is unexpected.',
+        )
+        return redirect('ward_tm_dashboard')
+
+    # Only allow submission from draft or returned states
+    if longlist.status not in (WardLonglistStatus.DRAFT, WardLonglistStatus.RETURNED):
+        if longlist.status == WardLonglistStatus.SUBMITTED:
+            messages.error(
+                request,
+                'Your longlist has already been submitted and is awaiting WSCC review. '
+                'You cannot submit it again until the WSCC returns it.',
+            )
+        elif longlist.status == WardLonglistStatus.WSCC_APPROVED:
+            messages.error(
+                request,
+                'Your longlist has already been approved by the WSCC. '
+                'No further submission is required.',
+            )
+        else:
+            messages.error(
+                request,
+                'Your longlist cannot be submitted in its current state. '
+                'Please contact the administrator for assistance.',
+            )
+        return redirect('ward_tm_longlist')
+
+    # Zero-player guard (Req 3.7)
+    player_count = CountyPlayer.objects.filter(discipline=discipline).count()
+    if player_count == 0:
+        messages.error(
+            request,
+            'Your longlist has no players. Please add at least one player before submitting.',
+        )
+        return redirect('ward_tm_longlist')
+
+    # Set status to submitted and record submission timestamp
+    longlist.status = WardLonglistStatus.SUBMITTED
+    longlist.submitted_at = timezone.now()
+    longlist.save(update_fields=['status', 'submitted_at', 'updated_at'])
+
+    messages.success(
+        request,
+        'Your longlist has been submitted for WSCC review. '
+        'You will be notified when the review is complete.',
+    )
+
+    # ── Email notification to assigned WSCC (Req 13.1) ────────────────────
+    # Find the active WSCC for this ward
+    wscc = User.objects.filter(
+        role='ward_sports_council_chair',
+        ward=user.ward,
+        is_active=True,
+    ).first()
+
+    if wscc and wscc.email:
+        try:
+            from accounts.notifications import _send, _base_html
+            sport_label = discipline.get_sport_type_display() if hasattr(discipline, 'get_sport_type_display') else str(discipline.sport_type)
+            manager_name = f'{user.first_name} {user.last_name}'.strip() or user.email
+            body = f"""
+<p>Dear <strong>{wscc.first_name} {wscc.last_name}</strong>,</p>
+<p>A new ward team player longlist is awaiting your review.</p>
+<dl class="info-box">
+ <dt>Ward</dt><dd>{user.ward}</dd>
+ <dt>Sub-County</dt><dd>{user.sub_county}</dd>
+ <dt>Discipline</dt><dd>{sport_label}</dd>
+ <dt>Team Manager</dt><dd>{manager_name}</dd>
+ <dt>Players on Longlist</dt><dd>{player_count}</dd>
+ <dt>Submitted</dt><dd>{longlist.submitted_at.strftime('%d %b %Y at %H:%M') if longlist.submitted_at else 'Now'}</dd>
+</dl>
+<p>Please log in to the portal to review the longlist and either approve it or return it with corrections.</p>
+<a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', 'https://mkjsupacup.com')}/ligi/wscc/longlists/" class="btn">Review Longlist</a>"""
+
+            _send(
+                f'Ward Longlist Awaiting Review — {user.ward} ({sport_label})',
+                _base_html('Longlist Submitted for Review', body),
+                [wscc.email],
+            )
+            logger.info(
+                'Longlist submission email sent to WSCC %s for ward=%s discipline=%s',
+                wscc.email, user.ward, discipline.sport_type,
+            )
+        except Exception as email_exc:
+            logger.error(
+                'Longlist submission email failed for ward=%s WSCC=%s: %s',
+                user.ward, wscc.email if wscc else 'none', email_exc,
+            )
+            # Log failure to ActivityLog; do NOT re-raise — primary request has already succeeded
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='OTHER',
+                    description=(
+                        f'Email notification failed: longlist submission notification '
+                        f'to WSCC {wscc.email} for ward={user.ward}, '
+                        f'discipline={discipline.sport_type}. Error: {email_exc}'
+                    ),
+                    obj=longlist,
+                    ip_address=get_client_ip(request),
+                    extra_data={
+                        'event': 'email_failed',
+                        'recipient': wscc.email,
+                        'ward': user.ward,
+                        'discipline': str(discipline.sport_type),
+                        'error': str(email_exc),
+                    },
+                )
+            except Exception:
+                pass  # Activity logging must never abort the request
+            messages.warning(
+                request,
+                'Your longlist was submitted successfully, but the email notification '
+                'to your WSCC could not be sent. The WSCC will still see your submission '
+                'when they log in.',
+            )
+    elif wscc is None:
+        logger.warning(
+            'No active WSCC found for ward=%s sub_county=%s — skipping notification.',
+            user.ward, user.sub_county,
+        )
+
+    return redirect('ward_tm_longlist')
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Ligi Mashinani — Ward-Level Match Day Squad Selection
+# ═════════════════════════════════════════════════════════════════════════════
+
+@role_required('team_manager')
+def ward_tm_fixtures_view(request):
+    """
+    Display upcoming and recent ward fixtures for the Ward Team Manager.
+
+    Requirements: 5.1, 5.3
+    """
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+
+    if discipline is None or longlist is None:
+        messages.error(request, 'You do not have a ward discipline linked to your account.')
+        return redirect('ward_tm_dashboard')
+
+    # Get the team linked to this discipline
+    try:
+        team = discipline.linked_team
+    except Exception:
+        team = None
+
+    fixtures = []
+    if team is not None:
+        from django.db.models import Q
+        fixtures = Fixture.objects.filter(
+            Q(home_team=team) | Q(away_team=team)
+        ).select_related(
+            'competition', 'home_team', 'away_team', 'venue'
+        ).order_by('match_date', 'kickoff_time')
+
+    # Attach squad submission info to each fixture
+    squad_map = {}
+    if team and fixtures.exists():
+        fixture_ids = fixtures.values_list('pk', flat=True)
+        for sq in SquadSubmission.objects.filter(fixture_id__in=fixture_ids, team=team):
+            squad_map[sq.fixture_id] = sq
+
+    fixture_data = []
+    for f in fixtures:
+        fixture_data.append({
+            'fixture': f,
+            'submission': squad_map.get(f.pk),
+        })
+
+    return render(request, 'ligi/ward_tm_fixtures.html', {
+        'fixture_data': fixture_data,
+        'team': team,
+        'discipline': discipline,
+        'longlist': longlist,
+    })
+
+
+@role_required('team_manager')
+def ward_tm_ward_squad_view(request, fixture_pk):
+    """
+    Ward Team Manager selects a match-day squad for a ward fixture.
+
+    Requirements: 5.1, 5.2, 5.3, 5.5
+
+    - Only CountyPlayer objects whose WardLonglist.status = wscc_approved are shown.
+    - SQUAD_LIMITS per sport type are enforced; over-limit submissions are rejected.
+    - On submit: SquadSubmission.submitted_at is recorded and the squad is locked
+      once within SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF of kick-off.
+    """
+    from django.conf import settings as conf
+
+    SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF = getattr(
+        conf, 'SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF', 2
+    )
+
+    user = request.user
+
+    # ── Resolve the TM's ward discipline & longlist ───────────────────────
+    discipline, longlist = _get_ward_tm_context(user)
+    if discipline is None or longlist is None:
+        messages.error(
+            request,
+            'You do not have a ward discipline linked to your account. '
+            'Please contact the administrator.',
+        )
+        return redirect('ward_tm_dashboard')
+
+    # ── Resolve the fixture (must belong to the same competition level/ward) ─
+    fixture = get_object_or_404(Fixture, pk=fixture_pk)
+
+    sport_type = fixture.competition.sport_type
+    squad_limit = SQUAD_LIMITS.get(sport_type, 30)
+
+    # ── Determine which team this TM manages in the fixture ───────────────
+    # Ward teams are linked to a CountyDiscipline via Team.source_discipline
+    try:
+        team = discipline.linked_team
+    except Exception:
+        team = None
+
+    if team is None or (fixture.home_team != team and fixture.away_team != team):
+        messages.error(
+            request,
+            'Your team is not participating in this fixture.',
+        )
+        return redirect('ward_tm_fixtures')
+
+    # ── Deadline enforcement ──────────────────────────────────────────────
+    from datetime import timedelta
+    kickoff_dt = fixture.kickoff_datetime  # naive datetime from Fixture.kickoff_datetime
+    if timezone.is_naive(kickoff_dt):
+        kickoff_dt = timezone.make_aware(kickoff_dt, timezone.get_current_timezone())
+
+    deadline = kickoff_dt - timedelta(hours=SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF)
+    now = timezone.now()
+    deadline_passed = now >= deadline
+
+    # ── Existing squad submission ──────────────────────────────────────────
+    existing = SquadSubmission.objects.filter(fixture=fixture, team=team).first()
+
+    # Squad is locked once submitted and within the deadline window
+    squad_locked = (
+        existing is not None
+        and existing.status == SquadStatus.SUBMITTED
+        and deadline_passed
+    )
+
+    # ── WSCC-approved players only (Req 5.1, 7.5, 7.7) ──────────────────
+    # Exclude players flagged in the Higher League Check (Req 7.7) and
+    # exclude players whose verification_status is not 'verified' at
+    # sub-county level (Req 7.5 — applied here as a ward-level guard too).
+    approved_players = CountyPlayer.objects.filter(
+        discipline=discipline,
+        discipline__ward_longlist__status=WardLonglistStatus.WSCC_APPROVED,
+    ).exclude(
+        higher_league_status='flagged'
+    ).order_by('last_name', 'first_name')
+
+    # Current selected player PKs
+    selected_pks = []
+    if existing:
+        selected_pks = list(
+            existing.squad_players
+            .filter(county_player__isnull=False)
+            .values_list('county_player_id', flat=True)
+        )
+
+    if request.method == 'POST':
+        # ── Lock guard ────────────────────────────────────────────────────
+        if squad_locked:
+            messages.error(
+                request,
+                f'Squad submission is locked — the kick-off deadline has passed '
+                f'({deadline.strftime("%d %b %Y %H:%M")}).',
+            )
+            return redirect('ward_tm_fixtures')
+
+        selected_ids = request.POST.getlist('players')
+        selected_ids = [int(pk) for pk in selected_ids if pk]
+
+        # ── Enforce squad size limit (Req 5.2, 5.5) ──────────────────────
+        if len(selected_ids) > squad_limit:
+            messages.error(
+                request,
+                f'Squad exceeds the maximum allowed size for this discipline. '
+                f'Maximum allowed: {squad_limit} players. '
+                f'You selected: {len(selected_ids)} players.',
+            )
+            # Re-render with selections intact
+            return render(request, 'ligi/ward_tm_ward_squad.html', {
+                'fixture': fixture,
+                'team': team,
+                'approved_players': approved_players,
+                'selected_pks': selected_ids,
+                'squad_limit': squad_limit,
+                'sport_type': sport_type,
+                'existing': existing,
+                'deadline': deadline,
+                'deadline_passed': deadline_passed,
+                'squad_locked': squad_locked,
+            })
+
+        # Validate all submitted PKs belong to approved_players
+        valid_pks = set(approved_players.values_list('pk', flat=True))
+        invalid = [pk for pk in selected_ids if pk not in valid_pks]
+        if invalid:
+            messages.error(request, 'One or more selected players are not on your WSCC-approved longlist.')
+            return redirect('ward_tm_ward_squad', fixture_pk=fixture_pk)
+
+        selected_players = list(approved_players.filter(pk__in=selected_ids))
+
+        # ── Save / update SquadSubmission (Req 5.3) ───────────────────────
+        if existing:
+            existing.squad_players.all().delete()
+            submission = existing
+        else:
+            submission = SquadSubmission.objects.create(fixture=fixture, team=team)
+
+        submission.status = SquadStatus.SUBMITTED
+        submission.submitted_at = timezone.now()
+        submission.rejection_reason = ''
+        submission.save()
+
+        for cp in selected_players:
+            SquadPlayer.objects.create(
+                submission=submission,
+                county_player=cp,
+                is_starter=True,
+                shirt_number=cp.jersey_number or 0,
+            )
+
+        messages.success(
+            request,
+            f'✅ Match-day squad submitted for {fixture.home_team} vs {fixture.away_team}. '
+            f'{len(selected_players)} player(s) selected.',
+        )
+        return redirect('ward_tm_fixtures')
+
+    return render(request, 'ligi/ward_tm_ward_squad.html', {
+        'fixture': fixture,
+        'team': team,
+        'approved_players': approved_players,
+        'selected_pks': selected_pks,
+        'squad_limit': squad_limit,
+        'sport_type': sport_type,
+        'existing': existing,
+        'deadline': deadline,
+        'deadline_passed': deadline_passed,
+        'squad_locked': squad_locked,
+    })
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Ligi Mashinani — Ward Sports Council Chair (WSCC) Portal
+# ═════════════════════════════════════════════════════════════════════════════
+
+def _get_wscc_sub_county(user):
+    """Return the sub-county to scope all WSCC queries.
+    Superusers/admins get an empty string (no scoping restriction).
+    """
+    if user.is_superuser or user.role == 'admin':
+        return None  # None = no sub_county filter for admin
+    return user.sub_county or ''
+
+
+def _wscc_longlist_queryset(user):
+    """Return WardLonglist queryset scoped to the WSCC's sub-county.
+
+    Filters by discipline.sub_county matching the WSCC's assigned sub_county so that
+    longlists from other sub-counties are never visible (Requirements 4.2, 10.5).
+    """
+    qs = WardLonglist.objects.select_related(
+        'discipline__registration',
+        'reviewed_by',
+    ).prefetch_related(
+        'discipline__players',
+    )
+    sub_county = _get_wscc_sub_county(user)
+    if sub_county is not None:
+        qs = qs.filter(discipline__sub_county=sub_county)
+    return qs
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_dashboard_view(request):
+    """WSCC dashboard showing submitted longlists for wards in the WSCC's sub-county.
+
+    Displays counts and a quick list of submitted/pending longlists so the WSCC
+    can see at a glance what needs review.
+
+    Requirements: 4.2, 10.5
+    URL: /ligi/wscc/dashboard/
+    """
+    user = request.user
+    all_longlists = _wscc_longlist_queryset(user)
+
+    submitted_longlists = all_longlists.filter(
+        status=WardLonglistStatus.SUBMITTED
+    ).order_by('-submitted_at')
+
+    counts = {
+        'submitted': all_longlists.filter(status=WardLonglistStatus.SUBMITTED).count(),
+        'approved': all_longlists.filter(status=WardLonglistStatus.WSCC_APPROVED).count(),
+        'returned': all_longlists.filter(status=WardLonglistStatus.RETURNED).count(),
+        'draft': all_longlists.filter(status=WardLonglistStatus.DRAFT).count(),
+        'total': all_longlists.count(),
+    }
+
+    context = {
+        'submitted_longlists': submitted_longlists,
+        'counts': counts,
+        'sub_county': user.sub_county if not user.is_superuser else 'All',
+    }
+    return render(request, 'ligi/wscc/dashboard.html', context)
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_longlists_view(request):
+    """List all longlists for the wards in the WSCC's sub-county.
+
+    Supports optional status filter via GET ?status= parameter.
+
+    Requirements: 4.2, 10.5
+    URL: /ligi/wscc/longlists/
+    """
+    user = request.user
+    longlists = _wscc_longlist_queryset(user).order_by('-submitted_at', '-created_at')
+
+    # Optional status filter
+    status_filter = request.GET.get('status', '').strip()
+    valid_statuses = {s.value for s in WardLonglistStatus}
+    if status_filter and status_filter in valid_statuses:
+        longlists = longlists.filter(status=status_filter)
+
+    context = {
+        'longlists': longlists,
+        'status_filter': status_filter,
+        'status_choices': WardLonglistStatus.choices,
+        'sub_county': user.sub_county if not user.is_superuser else 'All',
+    }
+    return render(request, 'ligi/wscc/longlists.html', context)
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_longlist_detail_view(request, longlist_pk):
+    """Review a longlist: display identity document images, calculated age, and full name for each player.
+
+    The WSCC can see all players' photos, ID documents, birth certificates, calculated ages,
+    and full names before deciding to approve or return.
+
+    Requirements: 4.5
+    URL: /ligi/wscc/longlists/<int:longlist_pk>/
+    """
+    user = request.user
+    # Fetch longlist; scope to WSCC's sub-county
+    longlist = get_object_or_404(_wscc_longlist_queryset(user), pk=longlist_pk)
+    discipline = longlist.discipline
+
+    players = CountyPlayer.objects.filter(discipline=discipline).order_by('last_name', 'first_name')
+
+    context = {
+        'longlist': longlist,
+        'discipline': discipline,
+        'players': players,
+        'player_count': players.count(),
+        'sub_county': user.sub_county if not user.is_superuser else 'All',
+    }
+    return render(request, 'ligi/wscc/longlist_detail.html', context)
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_approve_longlist_view(request, longlist_pk):
+    """Approve a ward longlist (POST only).
+
+    Sets WardLonglist.status = wscc_approved, records reviewed_by and reviewed_at,
+    and sends an approval email to the Ward Team Manager.
+
+    Email failures are caught, logged to ActivityLog, and shown as messages.warning
+    so the approval always completes successfully (Requirements 13.2, 13.6).
+
+    Requirements: 4.3, 13.2
+    URL: /ligi/wscc/longlists/<int:longlist_pk>/approve/
+    """
+    if request.method != 'POST':
+        messages.error(request, 'This action requires a POST request.')
+        return redirect('wscc_longlists')
+
+    user = request.user
+    longlist = get_object_or_404(_wscc_longlist_queryset(user), pk=longlist_pk)
+    discipline = longlist.discipline
+
+    # Only submitted longlists can be approved
+    if longlist.status != WardLonglistStatus.SUBMITTED:
+        messages.error(
+            request,
+            f'This longlist cannot be approved because its current status is '
+            f'"{longlist.get_status_display()}". Only submitted longlists can be approved.',
+        )
+        return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
+
+    # Approve the longlist
+    longlist.status = WardLonglistStatus.WSCC_APPROVED
+    longlist.reviewed_by = user
+    longlist.reviewed_at = timezone.now()
+    longlist.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
+
+    messages.success(
+        request,
+        f'Longlist for {discipline.ward} Ward ({discipline.get_sport_type_display()}) '
+        f'has been approved successfully.',
+    )
+
+    # ── Send approval email to Ward Team Manager (Req 13.2) ───────────────
+    # Find the active Ward Team Manager for this discipline's ward
+    ward_tm = User.objects.filter(
+        role='team_manager',
+        ward=discipline.ward,
+        sub_county=discipline.sub_county,
+        is_active=True,
+    ).first()
+
+    if ward_tm and ward_tm.email:
+        try:
+            from accounts.notifications import _send, _base_html
+            sport_label = discipline.get_sport_type_display() if hasattr(discipline, 'get_sport_type_display') else str(discipline.sport_type)
+            wscc_name = f'{user.first_name} {user.last_name}'.strip() or user.email
+            body = f"""
+<p>Dear <strong>{ward_tm.first_name} {ward_tm.last_name}</strong>,</p>
+<p>Your player longlist has been <strong style="color:#198754">approved</strong> by the Ward Sports Council Chairperson.</p>
+<dl class="info-box">
+ <dt>Ward</dt><dd>{discipline.ward}</dd>
+ <dt>Sub-County</dt><dd>{discipline.sub_county}</dd>
+ <dt>Discipline</dt><dd>{sport_label}</dd>
+ <dt>Approved By</dt><dd>{wscc_name}</dd>
+ <dt>Approved On</dt><dd>{longlist.reviewed_at.strftime('%d %b %Y at %H:%M') if longlist.reviewed_at else 'Just now'}</dd>
+</dl>
+<p>You can now select match-day squads from your approved player list when fixtures are published.</p>
+<a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', 'https://mkjsupacup.com')}/ligi/longlist/" class="btn">View Your Longlist</a>"""
+
+            _send(
+                f'Your Longlist Has Been Approved — {discipline.ward} Ward ({sport_label})',
+                _base_html('Longlist Approved by WSCC', body),
+                [ward_tm.email],
+            )
+            logger.info(
+                'Longlist approval email sent to Ward TM %s for ward=%s discipline=%s',
+                ward_tm.email, discipline.ward, discipline.sport_type,
+            )
+        except Exception as email_exc:
+            logger.error(
+                'Longlist approval email failed for ward=%s TM=%s: %s',
+                discipline.ward, ward_tm.email if ward_tm else 'none', email_exc,
+            )
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='OTHER',
+                    description=(
+                        f'Email notification failed: longlist approval notification '
+                        f'to Ward TM {ward_tm.email} for ward={discipline.ward}, '
+                        f'discipline={discipline.sport_type}. Error: {email_exc}'
+                    ),
+                    obj=longlist,
+                    ip_address=get_client_ip(request),
+                    extra_data={
+                        'event': 'email_failed',
+                        'recipient': ward_tm.email,
+                        'ward': discipline.ward,
+                        'discipline': str(discipline.sport_type),
+                        'error': str(email_exc),
+                    },
+                )
+            except Exception:
+                pass
+            messages.warning(
+                request,
+                'Longlist approved, but the email notification to the Ward Team Manager '
+                'could not be sent. They will see the approval when they log in.',
+            )
+
+    return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_return_longlist_view(request, longlist_pk):
+    """Return a ward longlist for corrections (POST only).
+
+    Requires a non-empty, non-whitespace written reason. If the reason is absent or
+    whitespace-only, the action is rejected and the longlist status is NOT changed
+    (Requirements 4.4, Property 10).
+
+    Sets WardLonglist.status = returned, stores return_reason, records reviewed_by
+    and reviewed_at, and sends an email to the Ward Team Manager containing the reason.
+
+    Email failures are caught, logged to ActivityLog, and shown as messages.warning
+    so the return action always completes successfully (Requirements 13.3, 13.6).
+
+    Requirements: 4.4, 3.8, 13.3
+    URL: /ligi/wscc/longlists/<int:longlist_pk>/return/
+    """
+    if request.method != 'POST':
+        messages.error(request, 'This action requires a POST request.')
+        return redirect('wscc_longlists')
+
+    user = request.user
+    longlist = get_object_or_404(_wscc_longlist_queryset(user), pk=longlist_pk)
+    discipline = longlist.discipline
+
+    # Validate written reason — must be non-empty and not whitespace-only (Req 4.4)
+    return_reason = request.POST.get('return_reason', '').strip()
+    if not return_reason:
+        messages.error(
+            request,
+            'A written reason is required to return a longlist. '
+            'Please provide a clear explanation so the Ward Team Manager can make corrections.',
+        )
+        return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
+
+    # Only submitted or wscc_approved longlists can be returned
+    if longlist.status not in (WardLonglistStatus.SUBMITTED, WardLonglistStatus.WSCC_APPROVED):
+        messages.error(
+            request,
+            f'This longlist cannot be returned because its current status is '
+            f'"{longlist.get_status_display()}". Only submitted or approved longlists can be returned.',
+        )
+        return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
+
+    # Return the longlist — set status to 'returned' and store reason (Req 3.8)
+    longlist.status = WardLonglistStatus.RETURNED
+    longlist.return_reason = return_reason
+    longlist.reviewed_by = user
+    longlist.reviewed_at = timezone.now()
+    longlist.save(update_fields=['status', 'return_reason', 'reviewed_by', 'reviewed_at', 'updated_at'])
+
+    messages.success(
+        request,
+        f'Longlist for {discipline.ward} Ward ({discipline.get_sport_type_display()}) '
+        f'has been returned for corrections.',
+    )
+
+    # ── Send return email to Ward Team Manager (Req 13.3) ─────────────────
+    ward_tm = User.objects.filter(
+        role='team_manager',
+        ward=discipline.ward,
+        sub_county=discipline.sub_county,
+        is_active=True,
+    ).first()
+
+    if ward_tm and ward_tm.email:
+        try:
+            from accounts.notifications import _send, _base_html
+            sport_label = discipline.get_sport_type_display() if hasattr(discipline, 'get_sport_type_display') else str(discipline.sport_type)
+            wscc_name = f'{user.first_name} {user.last_name}'.strip() or user.email
+            body = f"""
+<p>Dear <strong>{ward_tm.first_name} {ward_tm.last_name}</strong>,</p>
+<p>Your player longlist has been <strong style="color:#dc3545">returned for corrections</strong> by the Ward Sports Council Chairperson.</p>
+<dl class="info-box">
+ <dt>Ward</dt><dd>{discipline.ward}</dd>
+ <dt>Sub-County</dt><dd>{discipline.sub_county}</dd>
+ <dt>Discipline</dt><dd>{sport_label}</dd>
+ <dt>Returned By</dt><dd>{wscc_name}</dd>
+ <dt>Returned On</dt><dd>{longlist.reviewed_at.strftime('%d %b %Y at %H:%M') if longlist.reviewed_at else 'Just now'}</dd>
+</dl>
+<div class="alert">
+ <strong>Reason for return:</strong><br>
+ {return_reason}
+</div>
+<p>Please log in to the portal, make the required corrections, and resubmit your longlist for review.</p>
+<a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', 'https://mkjsupacup.com')}/ligi/longlist/" class="btn">View &amp; Correct Your Longlist</a>"""
+
+            _send(
+                f'Your Longlist Has Been Returned — {discipline.ward} Ward ({sport_label})',
+                _base_html('Longlist Returned for Corrections', body),
+                [ward_tm.email],
+            )
+            logger.info(
+                'Longlist return email sent to Ward TM %s for ward=%s discipline=%s',
+                ward_tm.email, discipline.ward, discipline.sport_type,
+            )
+        except Exception as email_exc:
+            logger.error(
+                'Longlist return email failed for ward=%s TM=%s: %s',
+                discipline.ward, ward_tm.email if ward_tm else 'none', email_exc,
+            )
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='OTHER',
+                    description=(
+                        f'Email notification failed: longlist return notification '
+                        f'to Ward TM {ward_tm.email} for ward={discipline.ward}, '
+                        f'discipline={discipline.sport_type}. Error: {email_exc}'
+                    ),
+                    obj=longlist,
+                    ip_address=get_client_ip(request),
+                    extra_data={
+                        'event': 'email_failed',
+                        'recipient': ward_tm.email,
+                        'ward': discipline.ward,
+                        'discipline': str(discipline.sport_type),
+                        'error': str(email_exc),
+                    },
+                )
+            except Exception:
+                pass
+            messages.warning(
+                request,
+                'Longlist returned successfully, but the email notification to the '
+                'Ward Team Manager could not be sent. They will see the return reason '
+                'when they log in.',
+            )
+
+    return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SUB-COUNTY COMPETITION — REFEREE APPOINTMENT  (Task 10.7)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_appoint_referee_view(request, pk, fixture_pk):
+    """Appoint referees to a sub-county competition fixture.
+
+    Reuses the same referee appointment workflow as referee_appoint_view but
+    scoped to sub-county fixtures only.
+
+    Gate: @role_required('subcounty_sports_officer', 'admin')
+    Verifies: fixture.competition.level == 'subcounty' and sub-county access.
+    Requirements: 6.6
+    URL: /portal/subcounty/competitions/<int:pk>/fixtures/<int:fixture_pk>/appoint-referee/
+    """
+    from competitions.models import Fixture
+    from referees.models import (
+        RefereeProfile, RefereeAppointment, RefereeAvailability,
+        AppointmentRole, get_required_roles,
+    )
+    from referees.models import get_optional_roles
+    from admin_dashboard.models import ActivityLog
+
+    fixture = get_object_or_404(
+        Fixture.objects.select_related('competition', 'home_team', 'away_team', 'venue'),
+        pk=fixture_pk,
+    )
+
+    # Verify this fixture belongs to a subcounty competition scoped to this officer
+    if fixture.competition.level != 'subcounty':
+        raise PermissionDenied("This fixture does not belong to a sub-county competition.")
+    _check_subcounty_access(request, fixture.competition)
+
+    required_roles = get_required_roles(fixture.competition.sport_type)
+    optional_roles = get_optional_roles(fixture.competition.sport_type)
+    all_roles = required_roles + optional_roles
+    role_labels = dict(AppointmentRole.choices)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'appoint':
+            role = request.POST.get('role', '')
+            referee_id = request.POST.get('referee_id', '')
+            notes = request.POST.get('notes', '')
+
+            if role not in all_roles:
+                messages.error(request, 'Invalid role.')
+            elif not referee_id:
+                messages.error(request, 'Please select a referee.')
+            else:
+                try:
+                    referee_profile = RefereeProfile.objects.get(pk=referee_id, is_approved=True)
+                except RefereeProfile.DoesNotExist:
+                    messages.error(request, 'Selected referee not found or not approved.')
+                    return redirect('sc_appoint_referee', pk=pk, fixture_pk=fixture.pk)
+
+                # Replace any existing appointment for this role
+                existing_same_role = RefereeAppointment.objects.filter(
+                    fixture=fixture, role=role
+                ).exclude(status='replaced').first()
+                if existing_same_role:
+                    existing_same_role.status = 'replaced'
+                    existing_same_role.save()
+
+                # Check for same-day conflicts
+                conflict = RefereeAppointment.objects.filter(
+                    referee=referee_profile,
+                    fixture__match_date=fixture.match_date,
+                    status__in=['pending', 'confirmed'],
+                ).exclude(fixture=fixture).first()
+                if conflict:
+                    messages.warning(
+                        request,
+                        f'⚠️ {referee_profile.user.get_full_name()} already has an appointment '
+                        f'on {fixture.match_date.strftime("%d %b %Y")} '
+                        f'({conflict.fixture}). Appointment created anyway — please verify.',
+                    )
+
+                appointment = RefereeAppointment.objects.create(
+                    fixture=fixture,
+                    referee=referee_profile,
+                    role=role,
+                    appointed_by=request.user,
+                    notes=notes,
+                )
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='CREATE',
+                    description=(
+                        f'{request.user.get_full_name()} appointed '
+                        f'{referee_profile.user.get_full_name()} as '
+                        f'{role_labels.get(role, role)} for sub-county fixture {fixture}.'
+                    ),
+                    object_repr=str(appointment),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(
+                    request,
+                    f'✅ {referee_profile.user.get_full_name()} appointed as '
+                    f'{role_labels.get(role, role)} for {fixture}.',
+                )
+
+        elif action == 'remove':
+            appt_id = request.POST.get('appointment_id', '')
+            try:
+                appt = RefereeAppointment.objects.get(pk=appt_id, fixture=fixture)
+                ref_name = appt.referee.user.get_full_name()
+                role_display = appt.get_role_display()
+                appt.status = 'replaced'
+                appt.save()
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action='DELETE',
+                    description=(
+                        f'{request.user.get_full_name()} removed {ref_name} '
+                        f'({role_display}) from sub-county fixture {fixture}.'
+                    ),
+                    object_repr=str(appt),
+                    ip_address=request.META.get('REMOTE_ADDR', ''),
+                )
+                messages.success(request, f'🔄 {ref_name} ({role_display}) removed from this fixture.')
+            except RefereeAppointment.DoesNotExist:
+                messages.error(request, 'Appointment not found.')
+
+        return redirect('sc_appoint_referee', pk=pk, fixture_pk=fixture.pk)
+
+    # ── Build role data ──────────────────────────────────────────────────────
+    current_appointments = {
+        a.role: a for a in RefereeAppointment.objects.filter(
+            fixture=fixture
+        ).exclude(status='replaced').select_related('referee__user')
+    }
+
+    roles_data = []
+    for role_key in required_roles:
+        appt = current_appointments.get(role_key)
+        roles_data.append({
+            'role_key': role_key,
+            'role_label': role_labels.get(role_key, role_key),
+            'appointment': appt,
+            'referee_name': appt.referee.user.get_full_name() if appt else None,
+            'status': appt.status if appt else None,
+            'status_display': appt.get_status_display() if appt else None,
+            'is_mandatory': True,
+        })
+    for role_key in optional_roles:
+        appt = current_appointments.get(role_key)
+        roles_data.append({
+            'role_key': role_key,
+            'role_label': role_labels.get(role_key, role_key),
+            'appointment': appt,
+            'referee_name': appt.referee.user.get_full_name() if appt else None,
+            'status': appt.status if appt else None,
+            'status_display': appt.get_status_display() if appt else None,
+            'is_mandatory': False,
+        })
+
+    approved_referees = RefereeProfile.objects.filter(
+        is_approved=True
+    ).select_related('user').order_by('user__last_name')
+
+    availability_map = dict(
+        RefereeAvailability.objects.filter(
+            referee__in=approved_referees,
+            date=fixture.match_date,
+        ).values_list('referee_id', 'status')
+    )
+
+    busy_on_date = set(
+        RefereeAppointment.objects.filter(
+            fixture__match_date=fixture.match_date,
+            status__in=['pending', 'confirmed'],
+        ).exclude(fixture=fixture).values_list('referee_id', flat=True)
+    )
+
+    already_appointed_ids = set(a.referee_id for a in current_appointments.values())
+
+    referees_list = []
+    for ref in approved_referees:
+        avail = availability_map.get(ref.pk, None)
+        is_busy = ref.pk in busy_on_date
+        is_appointed_here = ref.pk in already_appointed_ids
+        referees_list.append({
+            'profile': ref,
+            'full_name': ref.user.get_full_name(),
+            'level': ref.get_level_display(),
+            'county': ref.county,
+            'total_matches': ref.total_matches,
+            'avg_rating': ref.avg_rating,
+            'availability': avail,
+            'availability_label': (
+                'Available' if avail == 'available'
+                else 'Unavailable' if avail == 'unavailable'
+                else 'Not Set'
+            ),
+            'is_busy': is_busy,
+            'is_appointed_here': is_appointed_here,
+        })
+
+    return render(request, 'portal/subcounty_officer/sc_appoint_referee.html', {
+        'competition': fixture.competition,
+        'fixture': fixture,
+        'roles_data': roles_data,
+        'referees_list': referees_list,
+        'required_roles': required_roles,
+        'role_labels': role_labels,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SUB-COUNTY COMPETITION — TEAM QUALIFICATION  (Task 10.8)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_qualify_teams_view(request, pk):
+    """Designate qualifying teams from a completed sub-county competition.
+
+    Allows the SCSO to mark teams as qualified_to_county=True and link them to
+    the appropriate county-level Competition (same sport_type and season).
+
+    Eligibility: competition.status must be 'completed'.
+    Duplicate qualification (same team × same county competition) is prevented.
+
+    Requirements: 11.1, 11.2, 11.3, 11.4
+    URL: /portal/subcounty/competitions/<int:pk>/qualify/
+    """
+    from competitions.models import Competition, Pool, PoolTeam, CompetitionLevel
+    from admin_dashboard.models import ActivityLog
+    from matches.stats_engine import sort_pool_standings
+
+    competition = get_object_or_404(Competition, pk=pk)
+    _check_subcounty_access(request, competition)
+
+    # Only allow qualification when competition is completed (Req 11.1)
+    if competition.status != 'completed':
+        messages.error(
+            request,
+            'Teams can only be qualified once the competition is marked as completed.',
+        )
+        return redirect('sc_competition_manage', pk=pk)
+
+    # Find a matching county competition (same sport_type and season) for linking
+    county_comp = Competition.objects.filter(
+        level=CompetitionLevel.COUNTY,
+        sport_type=competition.sport_type,
+        season=competition.season,
+    ).first()
+
+    if request.method == 'POST':
+        qualify_pks = request.POST.getlist('qualify_teams')
+        qualified_count = 0
+        skipped_count = 0
+
+        for team_pk in qualify_pks:
+            try:
+                team = Team.objects.get(pk=team_pk)
+            except Team.DoesNotExist:
+                continue
+
+            # Prevent duplicate: skip if already qualified to the same county comp (Req 11.4)
+            if (team.qualified_to_county and
+                    county_comp is not None and
+                    team.qualifying_county_competition_id == county_comp.pk):
+                skipped_count += 1
+                continue
+
+            team.qualified_to_county = True
+            if county_comp is not None:
+                team.qualifying_county_competition = county_comp
+            team.save(update_fields=['qualified_to_county', 'qualifying_county_competition'])
+
+            ActivityLog.objects.create(
+                user=request.user,
+                action='UPDATE',
+                description=(
+                    f'{request.user.get_full_name()} qualified team "{team.name}" '
+                    f'from {competition.name} to county level'
+                    + (f' ({county_comp.name})' if county_comp else ' (no county competition linked).')
+                ),
+                object_repr=str(team),
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+            qualified_count += 1
+
+        if qualified_count:
+            messages.success(
+                request,
+                f'{qualified_count} team(s) qualified to county level.'
+                + (f' Linked to: {county_comp.name}.' if county_comp else ''),
+            )
+        if skipped_count:
+            messages.info(
+                request,
+                f'{skipped_count} team(s) skipped — already qualified to the same county competition.',
+            )
+
+        return redirect('sc_qualify_teams', pk=pk)
+
+    # ── Build pool standings for display ────────────────────────────────────
+    pools = Pool.objects.filter(competition=competition).prefetch_related(
+        'pool_teams__team'
+    ).order_by('name')
+
+    pool_data = []
+    for pool in pools:
+        sorted_teams = sort_pool_standings(
+            pool.pool_teams.select_related('team').all(),
+            competition.sport_type,
+        )
+        pool_data.append({'pool': pool, 'teams': sorted_teams})
+
+    # All teams in this competition (for qualification selection)
+    all_teams = Team.objects.filter(
+        pool_memberships__pool__competition=competition
+    ).distinct()
+
+    return render(request, 'portal/subcounty_officer/sc_qualify_teams.html', {
+        'competition': competition,
+        'pool_data': pool_data,
+        'all_teams': all_teams,
+        'county_comp': county_comp,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   SUB-COUNTY VERIFICATION  (Task 11.1)
+#   Requirements: 7.1, 7.2, 7.4, 7.6
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'verification_officer', 'admin')
+def sc_verification_dashboard_view(request):
+    """Sub-county player verification dashboard.
+
+    Filters players by sub_county = request.user.sub_county and level = subcounty,
+    then separates them into fully_verified / rejected / in_progress buckets.
+    Requirements: 7.1, 7.6, 12.3
+    URL: /portal/subcounty/verification/
+    """
+    from teams.models import CountyPlayer
+
+    user = request.user
+    sub_county = user.sub_county or ''
+
+    players = CountyPlayer.objects.filter(
+        discipline__sub_county=sub_county,
+        discipline__level='subcounty',
+    ).select_related('discipline', 'team').order_by('last_name', 'first_name')
+
+    fully_verified = players.filter(verification_status='verified')
+    rejected = players.filter(verification_status='rejected')
+    in_progress = players.exclude(
+        verification_status__in=('verified', 'rejected')
+    )
+
+    return render(request, 'portal/subcounty_officer/sc_verification_dashboard.html', {
+        'players': players,
+        'fully_verified': fully_verified,
+        'rejected': rejected,
+        'in_progress': in_progress,
+        'sub_county': sub_county,
+    })
+
+
+@role_required('subcounty_sports_officer', 'verification_officer', 'admin')
+def sc_verify_player_view(request, player_pk):
+    """4-step sequential verification for a sub-county CountyPlayer.
+
+    Step 1: Document Verification (photo, ID, birth cert)
+    Step 2: Age Verification (IPRS)
+    Step 3: Higher Leagues Check (National Teams, KUSF, FIFA Connect)
+
+    Mirrors vo_verify_county_player_view but scoped to sub-county level.
+    Requirements: 7.1, 7.2, 7.4
+    URL: /portal/subcounty/verification/<int:player_pk>/
+    """
+    from teams.models import CountyPlayer
+
+    player = get_object_or_404(CountyPlayer, pk=player_pk)
+
+    # Scope check — player must belong to this officer's sub-county at subcounty level
+    user = request.user
+    if not user.is_superuser and user.role != 'admin':
+        if (player.discipline.sub_county != (user.sub_county or '')
+                or player.discipline.level != 'subcounty'):
+            raise PermissionDenied(
+                "You do not have access to this player's verification."
+            )
+
+    if player.director_locked:
+        messages.error(
+            request,
+            'This player has been locked by the Director of Sports. '
+            'No verification changes can be made.',
+        )
+        return redirect('sc_verification_dashboard')
+
+    step = player.current_verification_step  # 1-3, or 4 if done
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        now = timezone.now()
+
+        # ── Step 1: Document Verification ─────────────────────────────────
+        if action == 'doc_verify' and step == 1:
+            player.doc_status = 'verified'
+            player.doc_verified_at = now
+            player.doc_rejection_reason = ''
+            player.update_overall_status()
+            player.save()
+            messages.success(
+                request,
+                f'📄 Step 1 – Documents verified for {player.get_full_name}.',
+            )
+
+        elif action == 'doc_reject' and step == 1:
+            reason = request.POST.get('doc_rejection_reason', '').strip()
+            player.doc_status = 'rejected'
+            player.doc_rejection_reason = reason or 'Documents not acceptable'
+            player.update_overall_status()
+            player.rejection_reason = (
+                f'Step 1 – Documents: {player.doc_rejection_reason}'
+            )
+            player.save()
+            messages.warning(
+                request,
+                f'❌ Step 1 – Documents rejected for {player.get_full_name}.',
+            )
+            # Req 13.5 — notify ward TM of rejection
+            try:
+                from accounts.notifications import notify_ward_tm_verification_status
+                notify_ward_tm_verification_status(
+                    player, 'rejected',
+                    rejection_reason=player.doc_rejection_reason,
+                )
+            except Exception as _notify_exc:
+                from admin_dashboard.models import ActivityLog
+                try:
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        action='EMAIL_FAILED',
+                        description=(
+                            f'Failed to send doc-rejection notification for '
+                            f'{player.get_full_name}: {_notify_exc}'
+                        ),
+                        object_repr=str(player),
+                        ip_address=request.META.get('REMOTE_ADDR', ''),
+                    )
+                except Exception:
+                    pass
+                messages.warning(
+                    request,
+                    'Ward Team Manager notification could not be sent immediately.',
+                )
+
+        # ── Step 2: Age Verification (IPRS) ───────────────────────────────
+        elif action == 'iprs_verify' and step == 2:
+            notes = request.POST.get('iprs_age_notes', '').strip()
+            player.iprs_age_status = 'verified'
+            player.iprs_age_verified_at = now
+            player.iprs_age_notes = notes
+            player.huduma_status = 'verified'
+            player.huduma_verified_at = now
+            player.update_overall_status()
+            player.save()
+            messages.success(
+                request,
+                f'🪪 Step 2 – Age verified for {player.get_full_name}.',
+            )
+
+        elif action == 'iprs_fail' and step == 2:
+            notes = request.POST.get('iprs_age_notes', '').strip()
+            player.iprs_age_status = 'failed'
+            player.iprs_age_notes = notes or 'Age verification failed'
+            player.iprs_age_verified_at = now
+            player.update_overall_status()
+            player.rejection_reason = (
+                f'Step 2 – Age Verification: {player.iprs_age_notes}'
+            )
+            player.save()
+            messages.warning(
+                request,
+                f'❌ Step 2 – Age verification failed for {player.get_full_name}.',
+            )
+            # Req 13.5 — notify ward TM of rejection
+            try:
+                from accounts.notifications import notify_ward_tm_verification_status
+                notify_ward_tm_verification_status(
+                    player, 'rejected',
+                    rejection_reason=player.iprs_age_notes,
+                )
+            except Exception as _notify_exc:
+                from admin_dashboard.models import ActivityLog
+                try:
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        action='EMAIL_FAILED',
+                        description=(
+                            f'Failed to send age-fail notification for '
+                            f'{player.get_full_name}: {_notify_exc}'
+                        ),
+                        object_repr=str(player),
+                        ip_address=request.META.get('REMOTE_ADDR', ''),
+                    )
+                except Exception:
+                    pass
+                messages.warning(
+                    request,
+                    'Ward Team Manager notification could not be sent immediately.',
+                )
+
+        # ── Step 3: Higher Leagues Check ──────────────────────────────────
+        elif action == 'league_clear' and step == 3:
+            details = request.POST.get('higher_league_details', '').strip()
+            player.higher_league_status = 'clear'
+            player.higher_league_details = details
+            player.higher_league_checked_at = now
+            player.update_overall_status()
+            player.save()
+            if player.is_verified:
+                messages.success(
+                    request,
+                    f'🎉 All steps complete! {player.get_full_name} is FULLY VERIFIED.',
+                )
+                # Req 13.5 — notify ward TM that player is fully verified
+                try:
+                    from accounts.notifications import notify_ward_tm_verification_status
+                    notify_ward_tm_verification_status(player, 'verified')
+                except Exception as _notify_exc:
+                    from admin_dashboard.models import ActivityLog
+                    try:
+                        ActivityLog.objects.create(
+                            user=request.user,
+                            action='EMAIL_FAILED',
+                            description=(
+                                f'Failed to send verification-approved notification for '
+                                f'{player.get_full_name}: {_notify_exc}'
+                            ),
+                            object_repr=str(player),
+                            ip_address=request.META.get('REMOTE_ADDR', ''),
+                        )
+                    except Exception:
+                        pass
+                    messages.warning(
+                        request,
+                        'Ward Team Manager notification could not be sent immediately.',
+                    )
+            else:
+                messages.success(
+                    request,
+                    f'🏆 Step 3 – Higher Leagues check clear for {player.get_full_name}.',
+                )
+
+        elif action == 'league_flag' and step == 3:
+            # Req 7.7: set higher_league_status='flagged'; blocks squad inclusion
+            details = request.POST.get('higher_league_details', '').strip()
+            player.higher_league_status = 'flagged'
+            player.higher_league_details = (
+                details or 'Player found in higher league / national team'
+            )
+            player.higher_league_checked_at = now
+            player.update_overall_status()
+            player.rejection_reason = (
+                f'Step 3 – Higher Leagues: {player.higher_league_details}'
+            )
+            player.save()
+            messages.warning(
+                request,
+                f'🚩 Step 3 – Player flagged in higher league for {player.get_full_name}.',
+            )
+            # Req 13.5 — notify ward TM of rejection (higher league flag)
+            try:
+                from accounts.notifications import notify_ward_tm_verification_status
+                notify_ward_tm_verification_status(
+                    player, 'rejected',
+                    rejection_reason=player.higher_league_details,
+                )
+            except Exception as _notify_exc:
+                from admin_dashboard.models import ActivityLog
+                try:
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        action='EMAIL_FAILED',
+                        description=(
+                            f'Failed to send league-flag notification for '
+                            f'{player.get_full_name}: {_notify_exc}'
+                        ),
+                        object_repr=str(player),
+                        ip_address=request.META.get('REMOTE_ADDR', ''),
+                    )
+                except Exception:
+                    pass
+                messages.warning(
+                    request,
+                    'Ward Team Manager notification could not be sent immediately.',
+                )
+
+        # ── Reset a failed step (cascade to downstream steps) ─────────────
+        elif action == 'reset_step':
+            reset_target = request.POST.get('reset_target', '')
+            if reset_target == '1':
+                player.doc_status = 'not_checked'
+                player.doc_rejection_reason = ''
+                player.doc_verified_at = None
+                player.iprs_age_status = 'not_checked'
+                player.iprs_age_verified_at = None
+                player.iprs_age_notes = ''
+                player.huduma_status = 'not_checked'
+                player.huduma_verified_at = None
+                player.huduma_notes = ''
+                player.higher_league_status = 'not_checked'
+                player.higher_league_details = ''
+                player.higher_league_checked_at = None
+            elif reset_target == '2':
+                player.iprs_age_status = 'not_checked'
+                player.iprs_age_verified_at = None
+                player.iprs_age_notes = ''
+                player.huduma_status = 'not_checked'
+                player.huduma_verified_at = None
+                player.huduma_notes = ''
+                player.higher_league_status = 'not_checked'
+                player.higher_league_details = ''
+                player.higher_league_checked_at = None
+            elif reset_target == '3':
+                player.higher_league_status = 'not_checked'
+                player.higher_league_details = ''
+                player.higher_league_checked_at = None
+            player.rejection_reason = ''
+            player.update_overall_status()
+            player.save()
+            messages.info(
+                request,
+                f'🔄 Step {reset_target} and downstream steps reset for '
+                f'{player.get_full_name}.',
+            )
+
+        return redirect('sc_verify_player', player_pk=player.pk)
+
+    # ── Build step statuses for template ──────────────────────────────────
+    steps = [
+        {
+            'num': 1, 'title': 'Document Verification',
+            'icon': '📄',
+            'status': player.doc_status,
+            'passed': player.doc_status == 'verified',
+            'failed': player.doc_status == 'rejected',
+            'active': step == 1,
+            'locked': False,
+        },
+        {
+            'num': 2, 'title': 'Age Verification',
+            'icon': '🪪',
+            'status': player.iprs_age_status,
+            'passed': player.iprs_age_status == 'verified',
+            'failed': player.iprs_age_status == 'failed',
+            'active': step == 2,
+            'locked': step < 2,
+        },
+        {
+            'num': 3, 'title': 'Higher Leagues',
+            'icon': '🏆',
+            'status': player.higher_league_status,
+            'passed': player.higher_league_status == 'clear',
+            'failed': player.higher_league_status == 'flagged',
+            'active': step == 3,
+            'locked': step < 3,
+        },
+    ]
+
+    return render(request, 'portal/subcounty_officer/sc_verify_player.html', {
+        'player': player,
+        'steps': steps,
+        'current_step': step,
+        'is_fully_verified': step == 4,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_promote_player_view(request, player_pk):
+    """Promote a ward-level player to sub-county level.
+
+    GET:  Fetch the ward-level CountyPlayer (level='ward', sub_county matches
+          the officer's sub-county) and show the promotion confirmation form.
+    POST: Call promote_to_subcounty(), redirect to verification dashboard on
+          success or re-render the form with an error on failure.
+
+    Requirements: 8.1, 8.4, 8.6
+    URL: /portal/subcounty/promote/<int:player_pk>/
+    """
+    from teams.models import CountyPlayer
+    from teams.services import promote_to_subcounty
+
+    # Fetch the ward player — must be ward-level and belong to the officer's sub-county
+    player = get_object_or_404(
+        CountyPlayer,
+        pk=player_pk,
+        discipline__level='ward',
+        discipline__sub_county=request.user.sub_county,
+    )
+
+    if request.method == 'POST':
+        target_sub_county = request.user.sub_county
+        try:
+            subcounty_player = promote_to_subcounty(
+                ward_player=player,
+                target_sub_county=target_sub_county,
+                created_by=request.user,
+            )
+            messages.success(
+                request,
+                f'✅ {player.first_name} {player.last_name} has been promoted to '
+                f'sub-county level ({target_sub_county}). '
+                f'Fresh verification is required.',
+            )
+            return redirect('sc_verification_dashboard')
+        except ValueError as exc:
+            messages.error(request, f'⚠️ Promotion failed: {exc}')
+        except Exception as exc:
+            logger.exception('Unexpected error during player promotion: %s', exc)
+            messages.error(
+                request,
+                'An unexpected error occurred during promotion. Please try again.',
+            )
+
+    # For GET (or POST with errors) — check if already promoted
+    already_promoted = player.subcounty_instances.filter(
+        discipline__sub_county=request.user.sub_county,
+    ).first()
+
+    return render(request, 'portal/subcounty_officer/sc_promote_player.html', {
+        'player': player,
+        'already_promoted': already_promoted,
+        'target_sub_county': request.user.sub_county,
     })

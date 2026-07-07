@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Qualify Teams – {{ competition.name }} – MKJ Portal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-trophy"></i> Qualify Teams to County Level</h1>
+        <p class="text-muted mb-0">
+            {{ competition.name }} &bull; {{ competition.get_sport_type_display }} &bull;
+            {{ competition.season }} &bull; {{ competition.sub_county }}
+        </p>
+    </div>
+    <a href="{% url 'sc_competition_manage' pk=competition.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to Competition
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if county_comp %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Qualifying teams will be linked to county competition:
+    <strong>{{ county_comp.name }}</strong> ({{ county_comp.season }}).
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    No county-level competition found for <strong>{{ competition.get_sport_type_display }}</strong>
+    in season <strong>{{ competition.season }}</strong>. Teams will be marked as qualified but
+    not yet linked to a county competition.
+</div>
+{% endif %}
+
+<!-- Pool standings with qualification badges -->
+{% for item in pool_data %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">{{ item.pool.name }}</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th class="text-center">P</th>
+                        <th class="text-center">W</th>
+                        <th class="text-center">D</th>
+                        <th class="text-center">L</th>
+                        <th class="text-center">GF</th>
+                        <th class="text-center">GA</th>
+                        <th class="text-center">GD</th>
+                        <th class="text-center">Pts</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for pt in item.teams %}
+                <tr {% if pt.team.qualified_to_county %}class="table-success"{% endif %}>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        {{ pt.team.name }}
+                        {% if pt.team.qualified_to_county %}
+                        <span class="badge bg-success ms-1">
+                            <i class="bi bi-trophy-fill"></i> Qualified
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">{{ pt.played }}</td>
+                    <td class="text-center">{{ pt.won }}</td>
+                    <td class="text-center">{{ pt.drawn }}</td>
+                    <td class="text-center">{{ pt.lost }}</td>
+                    <td class="text-center">{{ pt.goals_for }}</td>
+                    <td class="text-center">{{ pt.goals_against }}</td>
+                    <td class="text-center">{{ pt.goal_difference }}</td>
+                    <td class="text-center fw-bold">{{ pt.points }}</td>
+                    <td class="text-center">
+                        {% if pt.team.qualified_to_county %}
+                        <span class="badge bg-success">Qualified</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="11" class="text-center text-muted py-2">No teams in this pool.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="alert alert-secondary">No pools found for this competition.</div>
+{% endfor %}
+
+<!-- Qualification form -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">Designate Qualifying Teams</div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Select the teams to qualify to county level. Teams already qualified to the same
+            county competition will be skipped automatically.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-2 mb-3">
+                {% for team in all_teams %}
+                <div class="col-12 col-md-6">
+                    <div class="form-check border rounded p-2 {% if team.qualified_to_county %}border-success bg-light{% endif %}">
+                        <input class="form-check-input" type="checkbox" name="qualify_teams"
+                               value="{{ team.pk }}" id="team_{{ team.pk }}"
+                               {% if team.qualified_to_county %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="team_{{ team.pk }}">
+                            {{ team.name }}
+                            {% if team.qualified_to_county %}
+                            <span class="badge bg-success ms-1">Already Qualified</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <p class="text-muted">No teams found in this competition.</p>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-trophy"></i> Save Qualification
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

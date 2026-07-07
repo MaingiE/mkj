@@ -290,17 +290,29 @@ class SquadSubmission(models.Model):
 class SquadPlayer(models.Model):
     """Individual player entry in a squad submission."""
     submission   = models.ForeignKey(SquadSubmission, on_delete=models.CASCADE, related_name="squad_players")
-    player       = models.ForeignKey("teams.Player", on_delete=models.CASCADE)
+    player       = models.ForeignKey("teams.Player", on_delete=models.CASCADE, null=True, blank=True)
+    # Ward-level squad entries link to CountyPlayer instead of Player
+    county_player = models.ForeignKey(
+        "teams.CountyPlayer",
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="ward_squad_entries",
+        help_text="Ward-level squad entry links to a CountyPlayer rather than a Player",
+    )
     is_starter   = models.BooleanField(default=True)
-    shirt_number = models.PositiveIntegerField()  # May differ from regular number
+    shirt_number = models.PositiveIntegerField(default=0)  # May differ from regular number
 
     class Meta:
-        unique_together = ["submission", "player"]
-        ordering        = ["-is_starter", "shirt_number"]
+        ordering = ["-is_starter", "shirt_number"]
 
     def __str__(self):
         role = "Starter" if self.is_starter else "Sub"
-        return f"#{self.shirt_number} {self.player.get_full_name()} ({role})"
+        name = (
+            self.player.get_full_name() if self.player_id
+            else f"{self.county_player.first_name} {self.county_player.last_name}" if self.county_player_id
+            else "Unknown"
+        )
+        return f"#{self.shirt_number} {name} ({role})"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

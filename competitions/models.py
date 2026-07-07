@@ -58,6 +58,12 @@ class CompetitionStatus(models.TextChoices):
     CANCELLED    = "cancelled",    "Cancelled"
 
 
+class CompetitionLevel(models.TextChoices):
+    WARD      = "ward",      "Ward (Ligi Mashinani)"
+    SUBCOUNTY = "subcounty", "Sub-County MKJ Finals"
+    COUNTY    = "county",    "County MKJ Supa Cup"
+
+
 class AgeGroup(models.TextChoices):
     U13 = "U13", "Under 13"
     U15 = "U15", "Under 15"
@@ -100,6 +106,19 @@ class Competition(models.Model):
     qualify_from_group = models.PositiveIntegerField(
         default=2, help_text="Number of teams that qualify from each group to knockout"
     )
+    level = models.CharField(
+        max_length=20, choices=CompetitionLevel.choices,
+        default=CompetitionLevel.COUNTY,
+        help_text="Competition level in the pipeline",
+    )
+    sub_county = models.CharField(
+        max_length=100, blank=True, default="",
+        help_text="Makueni sub-county for subcounty/ward competitions",
+    )
+    ward = models.CharField(
+        max_length=100, blank=True, default="",
+        help_text="Ward for ward-level competitions",
+    )
     created_by  = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
         related_name="competitions_created"
@@ -114,6 +133,19 @@ class Competition(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.season})"
+
+    def clean(self):
+        errors = {}
+        if self.level == CompetitionLevel.SUBCOUNTY:
+            if not self.sub_county:
+                errors["sub_county"] = "sub_county is required for subcounty-level competitions."
+        elif self.level == CompetitionLevel.WARD:
+            if not self.sub_county:
+                errors["sub_county"] = "sub_county is required for ward-level competitions."
+            if not self.ward:
+                errors["ward"] = "ward is required for ward-level competitions."
+        if errors:
+            raise ValidationError(errors)
 
     @property
     def has_group_stage(self):
