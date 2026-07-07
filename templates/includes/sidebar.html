@@ -141,7 +141,24 @@
     </div>
 
     {% elif user.role == 'team_manager' %}
-    <!-- TEAM MANAGER SIDEBAR -->
+    {% if user.ward %}
+    <!-- LIGI MASHINANI WARD TEAM MANAGER SIDEBAR -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>Ligi Mashinani</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'ward_tm_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'ward_tm_dashboard' %}active{% endif %}">
+                <span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+            </a>
+            <a href="{% url 'ward_tm_longlist' %}" class="sidebar-link {% if 'ward_tm_longlist' in request.resolver_match.url_name or 'ward_tm_add_player' in request.resolver_match.url_name or 'ward_tm_edit_player' in request.resolver_match.url_name %}active{% endif %}">
+                <span class="icon"><i class="bi bi-people"></i></span> Player Longlist
+            </a>
+            <a href="{% url 'ward_tm_fixtures' %}" class="sidebar-link {% if 'ward_tm_fixtures' in request.resolver_match.url_name or 'ward_tm_ward_squad' in request.resolver_match.url_name %}active{% endif %}">
+                <span class="icon"><i class="bi bi-calendar-event"></i></span> Fixtures &amp; Squads
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <!-- MKJ SUPA CUP TEAM MANAGER SIDEBAR -->
     <div class="sidebar-section">
         <div class="sidebar-section-toggle"><h4>My Team</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
@@ -167,6 +184,7 @@
             <a href="{% url 'appeals_list' %}" class="sidebar-link"><span class="icon"><i class="bi bi-list-ul"></i></span> My Appeals</a>
         </div>
     </div>
+    {% endif %}
     {% elif user.role == 'treasurer' %}
     <!-- TREASURER SIDEBAR -->
     <div class="sidebar-section">

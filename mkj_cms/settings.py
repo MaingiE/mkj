@@ -306,7 +306,7 @@ EMAIL_BACKEND    = env(
     default=(
         "admin_dashboard.email_backend.LoggingSMTPBackend"
         if _email_host_user
-        else "django.core.mail.backends.console.EmailBackend"
+        else "django.core.mail.backends.dummy.EmailBackend"
     ),
 )
 EMAIL_HOST       = env("EMAIL_HOST",     default="mail.privateemail.com")

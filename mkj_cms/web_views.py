@@ -1587,7 +1587,8 @@ def dashboard_view(request):
         'verification_officer': 'vo_dashboard',
         'coordinator': 'coordinator_dashboard',
         'cec_sports': 'dashboard',
-        'team_manager': 'team_manager_dashboard',
+        # team_manager handled below (ward TM → ligi dashboard, county TM → team_manager_dashboard)
+        # 'team_manager': 'team_manager_dashboard',
         'secretary_general': 'sg_dashboard',
         'jury_chair': 'jury_dashboard',
         'media_manager': 'media_dashboard',
@@ -1602,6 +1603,20 @@ def dashboard_view(request):
     redirect_name = role_redirects.get(user.role)
     if redirect_name:
         return redirect(redirect_name)
+
+    # ── Team Manager: route to Ligi dashboard if ward TM, else MKJ dashboard ──
+    if user.role == 'team_manager':
+        from teams.models import CountyDiscipline, WardLonglist
+        is_ward_tm = CountyDiscipline.objects.filter(
+            sub_county=user.sub_county,
+            ward=user.ward,
+            level='ward',
+        ).filter(
+            ward_longlist__isnull=False,
+        ).exists()
+        if is_ward_tm and user.ward:
+            return redirect('ward_tm_dashboard')
+        return redirect('team_manager_dashboard')
 
     # Only admin/generic roles reach here — compute stats
     stats = {
@@ -14253,6 +14268,17 @@ def ligi_registration_approve_view(request, pk):
             reg.status = 'approved'
             reg.account_created = True
             reg.save(update_fields=['status', 'account_created', 'updated_at'])
+
+        # Always print credentials to terminal so they're visible during local dev
+        print("\n" + "="*60)
+        print("  LIGI MASHINANI — NEW ACCOUNT CREATED")
+        print("="*60)
+        print(f"  Team:      {reg.team_name}")
+        print(f"  Ward:      {reg.ward}, {reg.sub_county}")
+        print(f"  Email:     {user.email}")
+        print(f"  Password:  {temp_password}")
+        print(f"  Login URL: http://127.0.0.1:8000/portal/login/")
+        print("="*60 + "\n")
 
         # Send credentials email outside the transaction
         try:
