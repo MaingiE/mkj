@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Ligi Mashinani Registrations — MKJ Portal{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-people-fill"></i> Ligi Mashinani Registrations</h1>
+        <p class="text-muted mb-0">Review and approve ward team manager registrations</p>
+    </div>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Summary Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem">
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#856404">{{ counts.pending }}</div>
+        <div style="font-size:.8rem;color:#856404;text-transform:uppercase">Pending</div>
+    </div>
+    <div style="background:#cfe2ff;border:1px solid #b6d4fe;border-radius:8px;padding:1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#084298">{{ counts.ward_verified }}</div>
+        <div style="font-size:.8rem;color:#084298;text-transform:uppercase">Ward Verified</div>
+    </div>
+    <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#0a3622">{{ counts.approved }}</div>
+        <div style="font-size:.8rem;color:#0a3622;text-transform:uppercase">Approved</div>
+    </div>
+    <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:8px;padding:1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#842029">{{ counts.rejected }}</div>
+        <div style="font-size:.8rem;color:#842029;text-transform:uppercase">Rejected</div>
+    </div>
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:1rem;text-align:center">
+        <div style="font-size:2rem;font-weight:700;color:#124491">{{ counts.total }}</div>
+        <div style="font-size:.8rem;color:#888;text-transform:uppercase">Total</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label small fw-semibold">Search</label>
+                <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
+                       placeholder="Team, manager, ward, email…">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Sub-County</label>
+                <select name="sub_county" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    {% for val, label in sub_county_choices %}
+                    <option value="{{ val }}" {% if sub_county_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small fw-semibold">Discipline</label>
+                <select name="discipline" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    {% for val, label in discipline_choices %}
+                    <option value="{{ val }}" {% if discipline_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+                <a href="{% url 'ligi_registrations_list' %}" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-x"></i> Clear
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Registrations Table -->
+{% if registrations %}
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.88rem">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th>Ward / Sub-County</th>
+                        <th>Discipline</th>
+                        <th>Manager</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for reg in registrations %}
+                <tr>
+                    <td class="text-muted">{{ reg.pk }}</td>
+                    <td><strong>{{ reg.team_name }}</strong></td>
+                    <td>
+                        {{ reg.ward }}<br>
+                        <span class="text-muted small">{{ reg.sub_county }}</span>
+                    </td>
+                    <td>{{ reg.get_discipline_display|default:reg.discipline }}</td>
+                    <td>
+                        {{ reg.manager_first_name }} {{ reg.manager_last_name }}<br>
+                        <span class="text-muted small">{{ reg.manager_email }}</span>
+                    </td>
+                    <td class="text-muted small">
+                        {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if reg.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif reg.status == 'ward_verified' %}
+                            <span class="badge bg-info text-dark">Ward Verified</span>
+                        {% elif reg.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% if reg.account_created %}<br><span class="badge bg-light text-success border border-success" style="font-size:.7rem">Account Created</span>{% endif %}
+                        {% elif reg.status == 'rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ reg.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'ligi_registration_detail' reg.pk %}"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer text-muted small">
+        {{ registrations|length }} registration{{ registrations|length|pluralize }} shown
+    </div>
+</div>
+{% else %}
+<div class="card shadow-sm">
+    <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+        No registrations found{% if search or status_filter or sub_county_filter or discipline_filter %} for the current filters{% endif %}.
+    </div>
+</div>
+{% endif %}
+{% endblock %}

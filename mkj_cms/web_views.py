@@ -14084,3 +14084,282 @@ def sc_promote_player_view(request, player_pk):
         'already_promoted': already_promoted,
         'target_sub_county': request.user.sub_county,
     })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#   LIGI MASHINANI REGISTRATIONS — Frontend Portal (Admin / System Admin)
+#   URL prefix: /portal/ligi-registrations/
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('admin')
+def ligi_registrations_list_view(request):
+    """
+    Admin portal page: list all Ligi Mashinani registrations with filters.
+    Supports filter by status, sub_county, discipline, and text search.
+    """
+    from teams.models import LigiMashinaniRegistration, LIGI_DISCIPLINE_CHOICES
+    from accounts.models import MakueniSubCounty
+
+    status_filter    = request.GET.get('status', '').strip()
+    sub_county_filter = request.GET.get('sub_county', '').strip()
+    discipline_filter = request.GET.get('discipline', '').strip()
+    search           = request.GET.get('q', '').strip()
+
+    qs = LigiMashinaniRegistration.objects.order_by('-submitted_at')
+
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if sub_county_filter:
+        qs = qs.filter(sub_county=sub_county_filter)
+    if discipline_filter:
+        qs = qs.filter(discipline=discipline_filter)
+    if search:
+        qs = qs.filter(
+            Q(team_name__icontains=search) |
+            Q(manager_first_name__icontains=search) |
+            Q(manager_last_name__icontains=search) |
+            Q(manager_email__icontains=search) |
+            Q(ward__icontains=search)
+        )
+
+    # Summary counts
+    all_regs = LigiMashinaniRegistration.objects.all()
+    counts = {
+        'total':         all_regs.count(),
+        'pending':       all_regs.filter(status='pending').count(),
+        'ward_verified': all_regs.filter(status='ward_verified').count(),
+        'approved':      all_regs.filter(status='approved').count(),
+        'rejected':      all_regs.filter(status='rejected').count(),
+    }
+
+    status_choices = [
+        ('pending',       'Pending'),
+        ('ward_verified', 'Ward Verified'),
+        ('approved',      'Approved'),
+        ('rejected',      'Rejected'),
+    ]
+
+    return render(request, 'portal/admin/ligi_registrations_list.html', {
+        'registrations':      qs,
+        'counts':             counts,
+        'status_choices':     status_choices,
+        'sub_county_choices': MakueniSubCounty.choices,
+        'discipline_choices': LIGI_DISCIPLINE_CHOICES,
+        'status_filter':      status_filter,
+        'sub_county_filter':  sub_county_filter,
+        'discipline_filter':  discipline_filter,
+        'search':             search,
+    })
+
+
+@role_required('admin')
+def ligi_registration_detail_view(request, pk):
+    """
+    Admin portal page: view a single Ligi Mashinani registration detail.
+    """
+    from teams.models import LigiMashinaniRegistration
+    reg = get_object_or_404(LigiMashinaniRegistration, pk=pk)
+    return render(request, 'portal/admin/ligi_registration_detail.html', {'reg': reg})
+
+
+@role_required('admin')
+@require_POST
+def ligi_registration_approve_view(request, pk):
+    """
+    Approve a single Ligi Mashinani registration and create the Ward TM portal account.
+    Reuses the same atomic logic as the Django admin action.
+    """
+    from teams.models import (
+        LigiMashinaniRegistration, CountyRegistration, CountyRegStatus,
+        CountyDiscipline, WardLonglist, TeamStatus,
+    )
+    from accounts.models import UserRole
+    from accounts.notifications import notify_account_created
+    from admin_dashboard.activity_logger import log_activity
+
+    reg = get_object_or_404(LigiMashinaniRegistration, pk=pk)
+
+    if reg.status == 'approved' or reg.account_created:
+        messages.warning(request, f'"{reg.team_name}" is already approved.')
+        return redirect('ligi_registration_detail', pk=pk)
+
+    if User.objects.filter(email__iexact=reg.manager_email).exists():
+        messages.error(request, f'An account for {reg.manager_email} already exists. Cannot re-approve.')
+        return redirect('ligi_registration_detail', pk=pk)
+
+    temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+
+    try:
+        with transaction.atomic():
+            phone_value = reg.manager_phone if reg.manager_phone.startswith('+') else None
+            user = User.objects.create_user(
+                email=reg.manager_email,
+                password=temp_password,
+                first_name=reg.manager_first_name,
+                last_name=reg.manager_last_name,
+                phone=phone_value,
+                role=UserRole.TEAM_MANAGER,
+                sub_county=reg.sub_county,
+                ward=reg.ward,
+                must_change_password=True,
+            )
+
+            makueni_reg, _ = CountyRegistration.objects.get_or_create(
+                county='Makueni',
+                defaults={
+                    'user': user,
+                    'status': CountyRegStatus.APPROVED,
+                    'director_phone': reg.manager_phone,
+                    'level': 'ward',
+                    'approved_at': timezone.now(),
+                },
+            )
+
+            discipline, _ = CountyDiscipline.objects.get_or_create(
+                registration=makueni_reg,
+                sport_type=reg.discipline,
+                sub_county=reg.sub_county,
+                level='ward',
+                ward=reg.ward,
+            )
+
+            from teams.models import County, get_or_create_county_record
+            county_obj = get_or_create_county_record('Makueni')
+            team, team_created = Team.objects.get_or_create(
+                source_discipline=discipline,
+                defaults={
+                    'name': reg.team_name,
+                    'county': county_obj,
+                    'sub_county': reg.sub_county,
+                    'sport_type': reg.discipline,
+                    'manager': user,
+                    'status': TeamStatus.REGISTERED,
+                    'contact_phone': reg.manager_phone,
+                    'contact_email': reg.manager_email,
+                    'payment_confirmed': True,
+                    'payment_confirmed_at': timezone.now(),
+                },
+            )
+            if not team_created:
+                team.manager = user
+                team.status = TeamStatus.REGISTERED
+                team.save(update_fields=['manager', 'status', 'updated_at'])
+
+            WardLonglist.objects.get_or_create(
+                discipline=discipline,
+                defaults={'status': 'draft'},
+            )
+
+            reg.status = 'approved'
+            reg.account_created = True
+            reg.save(update_fields=['status', 'account_created', 'updated_at'])
+
+        # Send credentials email outside the transaction
+        try:
+            notify_account_created(user, temp_password, 'Team Manager (Ligi Mashinani)')
+        except Exception as email_exc:
+            logger.error('Credentials email failed for %s: %s', user.email, email_exc)
+            messages.warning(request, f'Account created but email notification failed: {email_exc}')
+
+        try:
+            log_activity(
+                user=request.user,
+                action='ADMIN_ACTION',
+                description=(
+                    f'Portal: Approved Ligi Mashinani registration for {reg.team_name} '
+                    f'({reg.ward}, {reg.sub_county}) — account created for {user.email}'
+                ),
+                obj=reg,
+            )
+        except Exception:
+            pass
+
+        messages.success(request, f'✅ "{reg.team_name}" approved. Portal account created for {user.email}.')
+
+    except Exception as exc:
+        try:
+            reg.status = 'pending'
+            reg.save(update_fields=['status', 'updated_at'])
+        except Exception:
+            pass
+        logger.exception('Portal approval failed for Ligi reg #%d: %s', reg.pk, exc)
+        messages.error(request, f'❌ Approval failed: {exc}')
+
+    return redirect('ligi_registration_detail', pk=pk)
+
+
+@role_required('admin')
+@require_POST
+def ligi_registration_reject_view(request, pk):
+    """
+    Reject a Ligi Mashinani registration and email the manager with the reason.
+    """
+    from teams.models import LigiMashinaniRegistration
+    from accounts.notifications import _send, _base_html
+    from admin_dashboard.activity_logger import log_activity
+
+    reg = get_object_or_404(LigiMashinaniRegistration, pk=pk)
+
+    if reg.status == 'approved':
+        messages.warning(request, 'Cannot reject an already-approved registration.')
+        return redirect('ligi_registration_detail', pk=pk)
+
+    reason = request.POST.get('rejection_reason', '').strip()
+    if not reason:
+        messages.error(request, 'A rejection reason is required.')
+        return redirect('ligi_registration_detail', pk=pk)
+
+    reg.rejection_reason = reason
+    reg.status = 'rejected'
+    reg.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+
+    # Email the manager
+    try:
+        body = f"""
+<p>Dear <strong>{reg.manager_first_name} {reg.manager_last_name}</strong>,</p>
+<p>Thank you for registering <strong>{reg.team_name}</strong> for Ligi Mashinani ({reg.ward}, {reg.sub_county}).</p>
+<p>Unfortunately, your registration has been <strong>declined</strong>:</p>
+<div class="alert">{reason}</div>
+<p>If you believe this is an error, please contact the MKJ SUPA CUP administration.</p>
+<a href="mailto:info@mkjsupacup.com" class="btn">Contact Administration</a>"""
+        _send(
+            'Ligi Mashinani Registration — Declined',
+            _base_html('Registration Status Update', body),
+            [reg.manager_email],
+        )
+    except Exception as email_exc:
+        logger.error('Rejection email failed for %s: %s', reg.manager_email, email_exc)
+        messages.warning(request, f'Registration rejected but email notification failed.')
+
+    try:
+        log_activity(
+            user=request.user,
+            action='ADMIN_ACTION',
+            description=(
+                f'Portal: Rejected Ligi Mashinani registration for {reg.team_name} '
+                f'({reg.ward}, {reg.sub_county}). Reason: {reason}'
+            ),
+            obj=reg,
+        )
+    except Exception:
+        pass
+
+    messages.success(request, f'❌ "{reg.team_name}" registration rejected. Manager has been notified.')
+    return redirect('ligi_registration_detail', pk=pk)
+
+
+@role_required('admin')
+@require_POST
+def ligi_registration_ward_verify_view(request, pk):
+    """
+    Mark a pending registration as ward-council-verified (pre-approval step).
+    """
+    from teams.models import LigiMashinaniRegistration
+    reg = get_object_or_404(LigiMashinaniRegistration, pk=pk)
+    if reg.status == 'pending':
+        reg.status = 'ward_verified'
+        reg.save(update_fields=['status', 'updated_at'])
+        messages.success(request, f'"{reg.team_name}" marked as Ward Council Verified.')
+    else:
+        messages.warning(request, f'Cannot mark as verified — current status is "{reg.status}".')
+    return redirect('ligi_registration_detail', pk=pk)

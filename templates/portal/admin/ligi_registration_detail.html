@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}{{ reg.team_name }} — Ligi Mashinani Registration{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1><i class="bi bi-person-badge"></i> {{ reg.team_name }}</h1>
+        <p class="text-muted mb-0">Ligi Mashinani Registration #{{ reg.pk }}</p>
+    </div>
+    <a href="{% url 'ligi_registrations_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Status Banner -->
+<div class="alert
+    {% if reg.status == 'approved' %}alert-success
+    {% elif reg.status == 'rejected' %}alert-danger
+    {% elif reg.status == 'ward_verified' %}alert-info
+    {% else %}alert-warning{% endif %}
+    d-flex align-items-center gap-2 mb-4">
+    <i class="bi
+        {% if reg.status == 'approved' %}bi-check-circle-fill
+        {% elif reg.status == 'rejected' %}bi-x-circle-fill
+        {% elif reg.status == 'ward_verified' %}bi-patch-check-fill
+        {% else %}bi-hourglass-split{% endif %} fs-5"></i>
+    <div>
+        <strong>Status: {{ reg.get_status_display|default:reg.status|title }}</strong>
+        {% if reg.account_created %} — Portal account has been created.{% endif %}
+        {% if reg.status == 'rejected' and reg.rejection_reason %}
+        <br><span class="small">Reason: {{ reg.rejection_reason }}</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Registration Details -->
+    <div class="col-12 col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold"><i class="bi bi-people"></i> Team Details</div>
+            <div class="card-body">
+                <dl class="row mb-0" style="font-size:.92rem">
+                    <dt class="col-5 text-muted">Team Name</dt>
+                    <dd class="col-7 fw-semibold">{{ reg.team_name }}</dd>
+
+                    <dt class="col-5 text-muted">Discipline</dt>
+                    <dd class="col-7">{{ reg.get_discipline_display|default:reg.discipline }}</dd>
+
+                    <dt class="col-5 text-muted">Ward</dt>
+                    <dd class="col-7">{{ reg.ward }}</dd>
+
+                    <dt class="col-5 text-muted">Sub-County</dt>
+                    <dd class="col-7">{{ reg.sub_county }}</dd>
+
+                    <dt class="col-5 text-muted">Submitted</dt>
+                    <dd class="col-7">{{ reg.submitted_at|date:"d M Y, H:i"|default:"—" }}</dd>
+
+                    <dt class="col-5 text-muted">Last Updated</dt>
+                    <dd class="col-7">{{ reg.updated_at|date:"d M Y, H:i"|default:"—" }}</dd>
+
+                    {% if reg.notes %}
+                    <dt class="col-5 text-muted">Notes</dt>
+                    <dd class="col-7">{{ reg.notes }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold"><i class="bi bi-person"></i> Team Manager</div>
+            <div class="card-body">
+                <dl class="row mb-0" style="font-size:.92rem">
+                    <dt class="col-5 text-muted">Full Name</dt>
+                    <dd class="col-7 fw-semibold">{{ reg.manager_first_name }} {{ reg.manager_last_name }}</dd>
+
+                    <dt class="col-5 text-muted">Email</dt>
+                    <dd class="col-7">
+                        <a href="mailto:{{ reg.manager_email }}">{{ reg.manager_email }}</a>
+                    </dd>
+
+                    <dt class="col-5 text-muted">Phone</dt>
+                    <dd class="col-7">{{ reg.manager_phone|default:"—" }}</dd>
+
+                    <dt class="col-5 text-muted">Account Created</dt>
+                    <dd class="col-7">
+                        {% if reg.account_created %}
+                        <span class="badge bg-success">Yes</span>
+                        {% else %}
+                        <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="col-12 col-lg-5">
+
+        {% if reg.status != 'approved' %}
+        <!-- APPROVE -->
+        <div class="card shadow-sm mb-3 border-success">
+            <div class="card-header fw-semibold text-success bg-success-subtle">
+                <i class="bi bi-check-circle"></i> Approve Registration
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Approving will atomically create a Ward Team Manager portal account,
+                    the ward discipline, team record, and player longlist.
+                    Login credentials will be emailed to <strong>{{ reg.manager_email }}</strong>.
+                </p>
+                <form method="post" action="{% url 'ligi_registration_approve' reg.pk %}"
+                      onsubmit="return confirm('Approve {{ reg.team_name }} and create the portal account?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> Approve &amp; Create Account
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- WARD VERIFY (only if pending) -->
+        {% if reg.status == 'pending' %}
+        <div class="card shadow-sm mb-3 border-info">
+            <div class="card-header fw-semibold text-info bg-info-subtle">
+                <i class="bi bi-patch-check"></i> Mark as Ward Council Verified
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Mark this registration as verified by the ward council — an intermediate step before final approval.
+                </p>
+                <form method="post" action="{% url 'ligi_registration_ward_verify' reg.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info w-100 text-white">
+                        <i class="bi bi-patch-check"></i> Mark as Ward Verified
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- REJECT -->
+        {% if reg.status != 'rejected' %}
+        <div class="card shadow-sm border-danger">
+            <div class="card-header fw-semibold text-danger bg-danger-subtle">
+                <i class="bi bi-x-circle"></i> Reject Registration
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'ligi_registration_reject' reg.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">
+                            Rejection Reason <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="rejection_reason" rows="3" required class="form-control form-control-sm"
+                                  placeholder="State clearly why this registration is being declined…">{% if reg.rejection_reason %}{{ reg.rejection_reason }}{% endif %}</textarea>
+                        <div class="form-text">The manager will be notified by email with this reason.</div>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100"
+                            onclick="return confirm('Reject this registration? The manager will be notified.')">
+                        <i class="bi bi-x-circle"></i> Reject &amp; Notify Manager
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Already approved -->
+        <div class="card shadow-sm border-success">
+            <div class="card-body text-center text-success py-4">
+                <i class="bi bi-check-circle-fill fs-2 d-block mb-2"></i>
+                <strong>Registration Approved</strong><br>
+                <span class="text-muted small">Portal account has been created for {{ reg.manager_email }}.</span>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

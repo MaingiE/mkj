@@ -241,6 +241,12 @@ from .web_views import (
     wscc_longlist_detail_view,
     wscc_approve_longlist_view,
     wscc_return_longlist_view,
+    # Ligi Mashinani: Admin registration management portal
+    ligi_registrations_list_view,
+    ligi_registration_detail_view,
+    ligi_registration_approve_view,
+    ligi_registration_reject_view,
+    ligi_registration_ward_verify_view,
 )
 
 from teams.ligi_views import ligi_register_view
@@ -570,6 +576,18 @@ urlpatterns = [
 
     # ── ADMIN DASHBOARD ───────────────────────────────────────────────────────
     path("portal/admin-dashboard/", include("admin_dashboard.urls")),
+
+    # ── LIGI MASHINANI REGISTRATIONS (Admin portal) ───────────────────────────
+    path("portal/ligi-registrations/",
+         ligi_registrations_list_view,       name="ligi_registrations_list"),
+    path("portal/ligi-registrations/<int:pk>/",
+         ligi_registration_detail_view,      name="ligi_registration_detail"),
+    path("portal/ligi-registrations/<int:pk>/approve/",
+         ligi_registration_approve_view,     name="ligi_registration_approve"),
+    path("portal/ligi-registrations/<int:pk>/reject/",
+         ligi_registration_reject_view,      name="ligi_registration_reject"),
+    path("portal/ligi-registrations/<int:pk>/ward-verify/",
+         ligi_registration_ward_verify_view, name="ligi_registration_ward_verify"),
 
     # ── APPEALS & JURY ────────────────────────────────────────────────────────
     path("portal/appeals/", include("appeals.urls")),
