@@ -2111,6 +2111,47 @@ a.hero-feat--link {
                 </div>
                 <h3>Register for Ligi Mashinani</h3>
             </div>
+
+            {% if ligi_reg_deadline %}
+            <!-- Countdown to deadline -->
+            <div id="ligiCountdownWrap" style="background:rgba(144,202,249,.08);border:1px solid rgba(144,202,249,.2);border-radius:12px;padding:.9rem 1rem;margin-bottom:1.2rem;text-align:center">
+                <p style="font-size:.7rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 .5rem">
+                    ⏳ Registration closes in
+                </p>
+                <div id="ligiCountdown" style="display:flex;justify-content:center;gap:.75rem" data-deadline="{{ ligi_reg_deadline|date:'c' }}">
+                    <div style="min-width:48px;text-align:center">
+                        <div id="cdDays" style="font-size:1.6rem;font-weight:800;color:#90caf9;font-family:'Outfit',sans-serif">--</div>
+                        <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase">Days</div>
+                    </div>
+                    <div style="font-size:1.6rem;color:rgba(255,255,255,.3);line-height:1.6">:</div>
+                    <div style="min-width:48px;text-align:center">
+                        <div id="cdHours" style="font-size:1.6rem;font-weight:800;color:#90caf9;font-family:'Outfit',sans-serif">--</div>
+                        <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase">Hours</div>
+                    </div>
+                    <div style="font-size:1.6rem;color:rgba(255,255,255,.3);line-height:1.6">:</div>
+                    <div style="min-width:48px;text-align:center">
+                        <div id="cdMins" style="font-size:1.6rem;font-weight:800;color:#90caf9;font-family:'Outfit',sans-serif">--</div>
+                        <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase">Mins</div>
+                    </div>
+                    <div style="font-size:1.6rem;color:rgba(255,255,255,.3);line-height:1.6">:</div>
+                    <div style="min-width:48px;text-align:center">
+                        <div id="cdSecs" style="font-size:1.6rem;font-weight:800;color:#fbbf24;font-family:'Outfit',sans-serif">--</div>
+                        <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase">Secs</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not ligi_team_reg_open %}
+            <!-- Registration CLOSED banner — replaces the form -->
+            <div style="text-align:center;padding:1.5rem 0">
+                <div style="width:64px;height:64px;background:rgba(220,38,38,.15);border:2px solid rgba(220,38,38,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                </div>
+                <h4 style="font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;color:#f87171;margin:0 0 .5rem">Registration Closed</h4>
+                <p style="font-size:.85rem;color:rgba(255,255,255,.55);line-height:1.6;margin:0">{{ ligi_reg_closed_msg }}</p>
+            </div>
+            {% else %}
             <div class="ligi-county-badge">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 Makueni County
@@ -2237,6 +2278,8 @@ a.hero-feat--link {
                     </button>
                 </div>
             </div>
+
+            {% endif %}{# end ligi_team_reg_open #}
 
             <!-- Step 3: Success screen -->
             <div class="ligi-step-reveal" id="ligiStepSuccess">
@@ -2962,4 +3005,43 @@ a.hero-feat--link {
     })();
 })();
 </script>
+
+{% if ligi_reg_deadline %}
+<script>
+(function() {
+  var deadline = new Date("{{ ligi_reg_deadline|date:'c' }}").getTime();
+  function tick() {
+    var now = Date.now();
+    var diff = deadline - now;
+    var wrap = document.getElementById('ligiCountdownWrap');
+    if (!wrap) return;
+    if (diff <= 0) {
+      document.getElementById('cdDays').textContent  = '00';
+      document.getElementById('cdHours').textContent = '00';
+      document.getElementById('cdMins').textContent  = '00';
+      document.getElementById('cdSecs').textContent  = '00';
+      wrap.style.background = 'rgba(220,38,38,.1)';
+      return;
+    }
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('cdDays').textContent  = String(d).padStart(2,'0');
+    document.getElementById('cdHours').textContent = String(h).padStart(2,'0');
+    document.getElementById('cdMins').textContent  = String(m).padStart(2,'0');
+    document.getElementById('cdSecs').textContent  = String(s).padStart(2,'0');
+    // Turn amber when under 24 hours
+    if (diff < 86400000) {
+      document.getElementById('cdDays').style.color  = '#fbbf24';
+      document.getElementById('cdHours').style.color = '#fbbf24';
+      document.getElementById('cdMins').style.color  = '#fbbf24';
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+{% endif %}
+
 {% endblock %}

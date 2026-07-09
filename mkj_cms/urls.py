@@ -247,6 +247,8 @@ from .web_views import (
     ligi_registration_approve_view,
     ligi_registration_reject_view,
     ligi_registration_ward_verify_view,
+    # Ligi Mashinani: Settings / Window Control
+    ligi_settings_view,
 )
 
 from teams.ligi_views import ligi_register_view
@@ -588,6 +590,9 @@ urlpatterns = [
          ligi_registration_reject_view,      name="ligi_registration_reject"),
     path("portal/ligi-registrations/<int:pk>/ward-verify/",
          ligi_registration_ward_verify_view, name="ligi_registration_ward_verify"),
+
+    # ── LIGI MASHINANI: Settings / Window Control ─────────────────────────────
+    path("portal/ligi/settings/",  ligi_settings_view, name="ligi_settings"),
 
     # ── APPEALS & JURY ────────────────────────────────────────────────────────
     path("portal/appeals/", include("appeals.urls")),

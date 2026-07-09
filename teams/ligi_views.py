@@ -49,6 +49,15 @@ def ligi_register_view(request):
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"success": False, "message": "Invalid request data."}, status=400)
 
+    # ── Gate: team registration window must be open ───────────────────────
+    from teams.models import LigiSettings
+    ligi_cfg = LigiSettings.get()
+    if not ligi_cfg.team_registration_open:
+        return JsonResponse({
+            "success": False,
+            "message": ligi_cfg.team_registration_closed_message,
+        }, status=403)
+
     errors = {}
 
     # ── Sub-county & ward ─────────────────────────────────────────────────

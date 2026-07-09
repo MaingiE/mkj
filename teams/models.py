@@ -1726,3 +1726,96 @@ class LigiMashinaniRegistration(models.Model):
             )
         if errors:
             raise _VE(errors)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI SYSTEM SETTINGS (singleton)
+#  Controlled by Chief Sports Officer, Director of Sports, and System Admin.
+#  Opens / closes: team registration, player registration, and transfer window.
+# ══════════════════════════════════════════════════════════════════════════════
+
+class LigiSettings(models.Model):
+    """
+    Singleton settings record controlling which Ligi Mashinani windows are open.
+
+    Only one row ever exists (pk=1).  Use LigiSettings.get() to read values.
+    Authorised roles: chief_sports_officer, director_sports, admin.
+    """
+    # ── Team registration (LigiMashinaniRegistration submissions) ─────────
+    team_registration_open = models.BooleanField(
+        default=True,
+        help_text="Allow new Ligi Mashinani team registrations on the public homepage.",
+    )
+    team_registration_closed_message = models.CharField(
+        max_length=300,
+        blank=True,
+        default="Team registration for Ligi Mashinani is currently closed.",
+        help_text="Message shown to the public when team registration is closed.",
+    )
+
+    # ── Player registration (Ward TM adding players to longlist) ──────────
+    player_registration_open = models.BooleanField(
+        default=True,
+        help_text="Allow Ward Team Managers to add players to their ward longlist.",
+    )
+    player_registration_closed_message = models.CharField(
+        max_length=300,
+        blank=True,
+        default="Player registration for Ligi Mashinani is currently closed.",
+        help_text="Message shown to Ward TM when player registration is closed.",
+    )
+
+    # ── Transfer window ───────────────────────────────────────────────────
+    transfer_window_open = models.BooleanField(
+        default=False,
+        help_text="Allow player transfers between ward teams during the transfer window.",
+    )
+    transfer_window_closed_message = models.CharField(
+        max_length=300,
+        blank=True,
+        default="The Ligi Mashinani transfer window is currently closed.",
+        help_text="Message shown to Ward TM when the transfer window is closed.",
+    )
+
+    # ── Registration deadline (drives public countdown) ───────────────────
+    registration_deadline = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Optional deadline datetime for team registration. "
+            "Shown as a live countdown on the public homepage. "
+            "Leave blank to hide the countdown."
+        ),
+    )
+
+    # ── Audit trail ───────────────────────────────────────────────────────
+    last_changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="ligi_settings_changes",
+        help_text="Last user to change these settings.",
+    )
+    last_changed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Ligi Mashinani Settings"
+        verbose_name_plural = "Ligi Mashinani Settings"
+
+    def __str__(self):
+        flags = []
+        if self.team_registration_open:
+            flags.append("TeamReg✓")
+        if self.player_registration_open:
+            flags.append("PlayerReg✓")
+        if self.transfer_window_open:
+            flags.append("Transfer✓")
+        return "LigiSettings [" + ", ".join(flags) + "]" if flags else "LigiSettings [all closed]"
+
+    @classmethod
+    def get(cls):
+        """Return the singleton instance, creating it with defaults if absent."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

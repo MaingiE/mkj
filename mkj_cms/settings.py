@@ -306,7 +306,12 @@ EMAIL_BACKEND    = env(
     default=(
         "admin_dashboard.email_backend.LoggingSMTPBackend"
         if _email_host_user
-        else "django.core.mail.backends.dummy.EmailBackend"
+        else (
+            # Local dev: print emails to the terminal so you can see them without SMTP
+            "django.core.mail.backends.console.EmailBackend"
+            if DEBUG
+            else "django.core.mail.backends.dummy.EmailBackend"
+        )
     ),
 )
 EMAIL_HOST       = env("EMAIL_HOST",     default="mail.privateemail.com")

@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% block title %}Ligi Mashinani — Window Control{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <span>Ligi Mashinani</span>
+    <span>Window Control</span>
+  </div>
+  <h1><i class="bi bi-toggles"></i> Ligi Mashinani — Window Control</h1>
+  <p style="color:#666;font-size:.9rem">
+    Control which registration and transfer windows are open for Ligi Mashinani.
+    Changes take effect immediately for all users.
+  </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1.2rem">
+  {% for msg in messages %}
+  <div style="padding:.8rem 1.1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+    {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+    {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── THREE WINDOW CARDS ─────────────────────────────────────── -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin-bottom:2rem">
+
+  <!-- 1. Team Registration -->
+  <div class="card" style="padding:1.5rem;border-top:4px solid {% if settings_obj.team_registration_open %}#198754{% else %}#dc3545{% endif %}">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+      <span style="font-size:1.8rem">📋</span>
+      <div>
+        <h2 style="font-size:1.05rem;margin:0;color:#333">Team Registration</h2>
+        <p style="font-size:.8rem;color:#888;margin:0">Public homepage form for new ward teams</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem">
+      {% if settings_obj.team_registration_open %}
+        <span style="background:#d1e7dd;color:#0a3622;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;font-weight:700">
+          🟢 OPEN
+        </span>
+      {% else %}
+        <span style="background:#f8d7da;color:#842029;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;font-weight:700">
+          🔴 CLOSED
+        </span>
+      {% endif %}
+    </div>
+
+    <form method="post" style="margin-bottom:.75rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="toggle_team_reg">
+      <button type="submit"
+        style="width:100%;padding:.65rem;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem;
+          {% if settings_obj.team_registration_open %}background:#dc3545;color:#fff;{% else %}background:#198754;color:#fff;{% endif %}">
+        {% if settings_obj.team_registration_open %}🔒 Close Registration{% else %}🔓 Open Registration{% endif %}
+      </button>
+    </form>
+
+    <details style="margin-top:.5rem">
+      <summary style="font-size:.82rem;color:#666;cursor:pointer">Edit closed message</summary>
+      <form method="post" style="margin-top:.75rem">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_messages">
+        <textarea name="team_registration_closed_message"
+          style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:4px;font-size:.82rem;resize:vertical"
+          rows="3">{{ settings_obj.team_registration_closed_message }}</textarea>
+        <input type="hidden" name="player_registration_closed_message" value="{{ settings_obj.player_registration_closed_message }}">
+        <input type="hidden" name="transfer_window_closed_message" value="{{ settings_obj.transfer_window_closed_message }}">
+        <button type="submit" style="margin-top:.4rem;padding:.35rem .75rem;background:#124491;color:#fff;border:none;border-radius:4px;font-size:.8rem;cursor:pointer">
+          Save Message
+        </button>
+      </form>
+    </details>
+  </div>
+
+  <!-- 2. Player Registration -->
+  <div class="card" style="padding:1.5rem;border-top:4px solid {% if settings_obj.player_registration_open %}#198754{% else %}#dc3545{% endif %}">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+      <span style="font-size:1.8rem">👤</span>
+      <div>
+        <h2 style="font-size:1.05rem;margin:0;color:#333">Player Registration</h2>
+        <p style="font-size:.8rem;color:#888;margin:0">Ward TM adding players to longlist</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem">
+      {% if settings_obj.player_registration_open %}
+        <span style="background:#d1e7dd;color:#0a3622;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;font-weight:700">
+          🟢 OPEN
+        </span>
+      {% else %}
+        <span style="background:#f8d7da;color:#842029;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;font-weight:700">
+          🔴 CLOSED
+        </span>
+      {% endif %}
+    </div>
+
+    <form method="post" style="margin-bottom:.75rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="toggle_player_reg">
+      <button type="submit"
+        style="width:100%;padding:.65rem;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem;
+          {% if settings_obj.player_registration_open %}background:#dc3545;color:#fff;{% else %}background:#198754;color:#fff;{% endif %}">
+        {% if settings_obj.player_registration_open %}🔒 Close Player Reg{% else %}🔓 Open Player Reg{% endif %}
+      </button>
+    </form>
+
+    <details style="margin-top:.5rem">
+      <summary style="font-size:.82rem;color:#666;cursor:pointer">Edit closed message</summary>
+      <form method="post" style="margin-top:.75rem">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_messages">
+        <input type="hidden" name="team_registration_closed_message" value="{{ settings_obj.team_registration_closed_message }}">
+        <textarea name="player_registration_closed_message"
+          style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:4px;font-size:.82rem;resize:vertical"
+          rows="3">{{ settings_obj.player_registration_closed_message }}</textarea>
+        <input type="hidden" name="transfer_window_closed_message" value="{{ settings_obj.transfer_window_closed_message }}">
+        <button type="submit" style="margin-top:.4rem;padding:.35rem .75rem;background:#124491;color:#fff;border:none;border-radius:4px;font-size:.8rem;cursor:pointer">
+          Save Message
+        </button>
+      </form>
+    </details>
+  </div>
+
+  <!-- 3. Transfer Window -->
+  <div class="card" style="padding:1.5rem;border-top:4px solid {% if settings_obj.transfer_window_open %}#198754{% else %}#6c757d{% endif %}">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+      <span style="font-size:1.8rem">🔄</span>
+      <div>
+        <h2 style="font-size:1.05rem;margin:0;color:#333">Transfer Window</h2>
+        <p style="font-size:.8rem;color:#888;margin:0">Player transfers between ward teams</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem">
+      {% if settings_obj.transfer_window_open %}
+        <span style="background:#d1e7dd;color:#0a3622;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;font-weight:700">
+          🟢 OPEN
+        </span>
+      {% else %}
+        <span style="background:#e2e3e5;color:#41464b;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;font-weight:700">
+          ⚫ CLOSED
+        </span>
+      {% endif %}
+    </div>
+
+    <form method="post" style="margin-bottom:.75rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="toggle_transfer">
+      <button type="submit"
+        style="width:100%;padding:.65rem;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem;
+          {% if settings_obj.transfer_window_open %}background:#dc3545;color:#fff;{% else %}background:#198754;color:#fff;{% endif %}">
+        {% if settings_obj.transfer_window_open %}🔒 Close Transfer Window{% else %}🔓 Open Transfer Window{% endif %}
+      </button>
+    </form>
+
+    <details style="margin-top:.5rem">
+      <summary style="font-size:.82rem;color:#666;cursor:pointer">Edit closed message</summary>
+      <form method="post" style="margin-top:.75rem">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_messages">
+        <input type="hidden" name="team_registration_closed_message" value="{{ settings_obj.team_registration_closed_message }}">
+        <input type="hidden" name="player_registration_closed_message" value="{{ settings_obj.player_registration_closed_message }}">
+        <textarea name="transfer_window_closed_message"
+          style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:4px;font-size:.82rem;resize:vertical"
+          rows="3">{{ settings_obj.transfer_window_closed_message }}</textarea>
+        <button type="submit" style="margin-top:.4rem;padding:.35rem .75rem;background:#124491;color:#fff;border:none;border-radius:4px;font-size:.8rem;cursor:pointer">
+          Save Message
+        </button>
+      </form>
+    </details>
+  </div>
+
+</div>
+
+<!-- ── REGISTRATION DEADLINE ─────────────────────────────────── -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-top:4px solid #fbbf24">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+    <span style="font-size:1.8rem">⏳</span>
+    <div>
+      <h2 style="font-size:1.05rem;margin:0;color:#333">Registration Deadline Countdown</h2>
+      <p style="font-size:.8rem;color:#888;margin:0">Shows a live countdown on the public homepage registration panel</p>
+    </div>
+  </div>
+
+  {% if settings_obj.registration_deadline %}
+  <div style="background:#fff3cd;border:1px solid #ffecb5;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#856404">
+    Current deadline: <strong>{{ settings_obj.registration_deadline|date:"d M Y" }} at {{ settings_obj.registration_deadline|time:"H:i" }}</strong>
+    (Nairobi time)
+  </div>
+  {% else %}
+  <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#888">
+    No deadline set — countdown is hidden on homepage.
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="set_deadline">
+    <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <label style="font-size:.8rem;color:#555;display:block;margin-bottom:.35rem;font-weight:600">Set New Deadline</label>
+        <input type="datetime-local" name="registration_deadline"
+          value="{% if settings_obj.registration_deadline %}{{ settings_obj.registration_deadline|date:'Y-m-d' }}T{{ settings_obj.registration_deadline|time:'H:i' }}{% endif %}"
+          style="width:100%;padding:.6rem .8rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+      </div>
+      <button type="submit" style="padding:.6rem 1.2rem;background:#fbbf24;color:#1a1a1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.88rem">
+        ⏱ Set Deadline
+      </button>
+      {% if settings_obj.registration_deadline %}
+      <button type="submit" name="action" value="clear_deadline"
+        style="padding:.6rem 1rem;background:#f8f9fa;color:#6c757d;border:1px solid #dee2e6;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">
+        ✕ Clear Countdown
+      </button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- ── CURRENT STATUS SUMMARY ─────────────────────────────────── -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-info-circle"></i> Current Status Summary</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+    <thead>
+      <tr style="background:#f0f4ff">
+        <th style="padding:.6rem 1rem;text-align:left;border-bottom:2px solid #dee2e6">Window</th>
+        <th style="padding:.6rem 1rem;text-align:left;border-bottom:2px solid #dee2e6">Status</th>
+        <th style="padding:.6rem 1rem;text-align:left;border-bottom:2px solid #dee2e6">Closed Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #dee2e6">
+        <td style="padding:.65rem 1rem;font-weight:500">📋 Team Registration</td>
+        <td style="padding:.65rem 1rem">
+          {% if settings_obj.team_registration_open %}
+            <span style="color:#198754;font-weight:600">🟢 Open</span>
+          {% else %}
+            <span style="color:#dc3545;font-weight:600">🔴 Closed</span>
+          {% endif %}
+        </td>
+        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.team_registration_closed_message }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #dee2e6">
+        <td style="padding:.65rem 1rem;font-weight:500">👤 Player Registration</td>
+        <td style="padding:.65rem 1rem">
+          {% if settings_obj.player_registration_open %}
+            <span style="color:#198754;font-weight:600">🟢 Open</span>
+          {% else %}
+            <span style="color:#dc3545;font-weight:600">🔴 Closed</span>
+          {% endif %}
+        </td>
+        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.player_registration_closed_message }}</td>
+      </tr>
+      <tr>
+        <td style="padding:.65rem 1rem;font-weight:500">🔄 Transfer Window</td>
+        <td style="padding:.65rem 1rem">
+          {% if settings_obj.transfer_window_open %}
+            <span style="color:#198754;font-weight:600">🟢 Open</span>
+          {% else %}
+            <span style="color:#6c757d;font-weight:600">⚫ Closed</span>
+          {% endif %}
+        </td>
+        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.transfer_window_closed_message }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if settings_obj.last_changed_by %}
+  <p style="font-size:.8rem;color:#888;margin-top:1rem;margin-bottom:0">
+    <i class="bi bi-clock-history"></i>
+    Last changed by <strong>{{ settings_obj.last_changed_by.get_full_name }}</strong>
+    ({{ settings_obj.last_changed_by.get_role_display }})
+    {% if settings_obj.last_changed_at %}
+      on {{ settings_obj.last_changed_at|date:"d M Y" }} at {{ settings_obj.last_changed_at|time:"H:i" }}
+    {% endif %}
+  </p>
+  {% endif %}
+</div>
+
+<!-- ── RECENT CHANGE LOG ───────────────────────────────────────── -->
+{% if recent_logs %}
+<div class="card" style="padding:1.5rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-clock-history"></i> Recent Changes</h2>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead>
+        <tr style="background:#f8f9fa">
+          <th style="padding:.55rem 1rem;text-align:left;border-bottom:1px solid #dee2e6">When</th>
+          <th style="padding:.55rem 1rem;text-align:left;border-bottom:1px solid #dee2e6">By</th>
+          <th style="padding:.55rem 1rem;text-align:left;border-bottom:1px solid #dee2e6">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in recent_logs %}
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:.55rem 1rem;color:#888;white-space:nowrap">
+            {{ log.timestamp|date:"d M Y H:i" }}
+          </td>
+          <td style="padding:.55rem 1rem;font-weight:500">
+            {{ log.user.get_full_name|default:log.user.email }}
+          </td>
+          <td style="padding:.55rem 1rem;color:#555">{{ log.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

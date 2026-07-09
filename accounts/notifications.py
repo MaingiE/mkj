@@ -116,6 +116,10 @@ def send_whatsapp(phone_number, template_id, params=None):
     """
     Send a WhatsApp template message via Brevo WhatsApp API.
 
+    In local development (DEBUG=True and no BREVO_API_KEY set), the message is
+    printed to the terminal instead of being sent, so you can see exactly what
+    would be delivered without needing real credentials.
+
     Requirements (configure in .env / settings):
       BREVO_API_KEY           — existing Brevo API key
       BREVO_WHATSAPP_SENDER   — your WhatsApp Business sender number (e.g. +254XXXXXXXXX)
@@ -128,16 +132,22 @@ def send_whatsapp(phone_number, template_id, params=None):
 
     api_key  = getattr(settings, 'BREVO_API_KEY', '')
     sender   = getattr(settings, 'BREVO_WHATSAPP_SENDER', '')
+    debug    = getattr(settings, 'DEBUG', False)
+
+    if not phone_number or not phone_number.startswith('+'):
+        logger.warning("WhatsApp skipped — invalid/missing phone: %r", phone_number)
+        return False
+
+    # ── Local dev: print to terminal instead of hitting Brevo API ────────────
+    if debug and (not api_key or not sender):
+        _print_whatsapp_to_terminal(phone_number, template_id, params)
+        return True
 
     if not api_key or not sender:
         logger.warning(
             "WhatsApp not configured (missing BREVO_API_KEY or BREVO_WHATSAPP_SENDER). "
             "Skipping WhatsApp notification."
         )
-        return False
-
-    if not phone_number or not phone_number.startswith('+'):
-        logger.warning("WhatsApp skipped — invalid/missing phone: %r", phone_number)
         return False
 
     payload = {
@@ -176,6 +186,44 @@ def send_whatsapp(phone_number, template_id, params=None):
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
     return True
+
+
+def _print_whatsapp_to_terminal(phone_number, template_id, params=None):
+    """Print a WhatsApp message to the terminal for local development inspection."""
+    import threading
+    # Resolve template body from known templates
+    body_lines = []
+    if params:
+        # Credentials template (BREVO_WHATSAPP_TEMPLATE_CREDENTIALS)
+        if "1" in params and "2" in params and "3" in params:
+            body_lines = [
+                f"Hello {params.get('1', '')}!",
+                f"Your MKJ SUPA CUP portal account is ready.",
+                f"Email:    {params.get('2', '')}",
+                f"Password: {params.get('3', '')}",
+                f"Role:     {params.get('5', '')}",
+                f"Login:    {params.get('4', '')}",
+                f"Please change your password on first login.",
+            ]
+        else:
+            body_lines = [f"  param[{k}] = {v}" for k, v in params.items()]
+
+    sep = "─" * 60
+    lines = [
+        "",
+        sep,
+        "📱  WHATSAPP MESSAGE (local dev — not actually sent)",
+        sep,
+        f"  To:          {phone_number}",
+        f"  Template ID: {template_id}",
+        "",
+        "  Message body:",
+        *[f"    {line}" for line in body_lines],
+        sep,
+        "",
+    ]
+    print("\n".join(lines), flush=True)
+    logger.info("📱 WhatsApp (dev) template=%s → %s", template_id, phone_number)
 
 
 def notify_credentials_whatsapp(phone_number, first_name, email, temp_password, role_label="Team Manager"):

@@ -805,6 +805,9 @@ def home_view(request):
         for st, info in semis_by_sport.items()
     })
 
+    from teams.models import LigiSettings
+    _ligi = LigiSettings.get()
+
     return render(request, 'public/home.html', {
         'active_page': 'home',
         'stats': stats,
@@ -814,6 +817,9 @@ def home_view(request):
         'pictorial_albums': pictorial_albums,
         'semis_by_sport': semis_by_sport,
         'semis_json': semis_json,
+        'ligi_team_reg_open': _ligi.team_registration_open,
+        'ligi_reg_deadline': _ligi.registration_deadline,
+        'ligi_reg_closed_msg': _ligi.team_registration_closed_message,
     })
 
 
@@ -1599,6 +1605,8 @@ def dashboard_view(request):
         'chief_officer_sports': 'chief_officer_sports_dashboard',
         'governor': 'governor_dashboard',
         'waziri_sports': 'waziri_sports_dashboard',
+        # Ligi Mashinani: WSCC goes directly to their longlist review dashboard
+        'ward_sports_council_chair': 'wscc_dashboard',
     }
     redirect_name = role_redirects.get(user.role)
     if redirect_name:
@@ -12457,6 +12465,13 @@ def ward_tm_add_player_view(request):
         )
         return redirect('ward_tm_longlist')
 
+    # ── Gate: player registration window must be open ─────────────────────
+    from teams.models import LigiSettings
+    ligi_cfg = LigiSettings.get()
+    if not ligi_cfg.player_registration_open:
+        messages.error(request, ligi_cfg.player_registration_closed_message)
+        return redirect('ward_tm_longlist')
+
     if request.method == 'POST':
         form = WardLonglistPlayerForm(request.POST, request.FILES)
         if form.is_valid():
@@ -14389,3 +14404,134 @@ def ligi_registration_ward_verify_view(request, pk):
     else:
         messages.warning(request, f'Cannot mark as verified — current status is "{reg.status}".')
     return redirect('ligi_registration_detail', pk=pk)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI SETTINGS — Window Control Panel
+#  Authorised roles: chief_sports_officer, director_sports, admin
+#  URL prefix: /portal/ligi/settings/
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('chief_sports_officer', 'director_sports', 'admin')
+def ligi_settings_view(request):
+    """
+    Display and update the three Ligi Mashinani operational windows:
+      1. Team Registration (public homepage form)
+      2. Player Registration (Ward TM adding players to longlist)
+      3. Transfer Window (player transfers between ward teams)
+
+    GET:  Show current status with toggle buttons.
+    POST: Toggle one flag or save custom closed messages.
+    """
+    from teams.models import LigiSettings
+
+    settings_obj = LigiSettings.get()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+
+        if action == 'toggle_team_reg':
+            settings_obj.team_registration_open = not settings_obj.team_registration_open
+
+        elif action == 'toggle_player_reg':
+            settings_obj.player_registration_open = not settings_obj.player_registration_open
+
+        elif action == 'toggle_transfer':
+            settings_obj.transfer_window_open = not settings_obj.transfer_window_open
+
+        elif action == 'save_messages':
+            msg_team = request.POST.get('team_registration_closed_message', '').strip()
+            msg_player = request.POST.get('player_registration_closed_message', '').strip()
+            msg_transfer = request.POST.get('transfer_window_closed_message', '').strip()
+            if msg_team:
+                settings_obj.team_registration_closed_message = msg_team
+            if msg_player:
+                settings_obj.player_registration_closed_message = msg_player
+            if msg_transfer:
+                settings_obj.transfer_window_closed_message = msg_transfer
+            messages.success(request, 'Closed messages updated.')
+
+        elif action == 'set_deadline':
+            raw = request.POST.get('registration_deadline', '').strip()
+            if raw:
+                try:
+                    from django.utils.dateparse import parse_datetime
+                    import pytz
+                    nai = pytz.timezone('Africa/Nairobi')
+                    dt = parse_datetime(raw)
+                    if dt is None:
+                        raise ValueError("Could not parse datetime")
+                    # If naive, localise to Nairobi time
+                    if dt.tzinfo is None:
+                        dt = nai.localize(dt)
+                    settings_obj.registration_deadline = dt
+                    messages.success(request, f'Registration deadline set to {dt.strftime("%d %b %Y at %H:%M")} (Nairobi time).')
+                except Exception as exc:
+                    messages.error(request, f'Invalid date/time: {exc}')
+                    return redirect('ligi_settings')
+            else:
+                messages.error(request, 'Please enter a deadline date and time.')
+                return redirect('ligi_settings')
+
+        elif action == 'clear_deadline':
+            settings_obj.registration_deadline = None
+            messages.success(request, 'Registration countdown cleared.')
+
+        else:
+            messages.error(request, f'Unknown action: {action}')
+            return redirect('ligi_settings')
+
+        settings_obj.last_changed_by = request.user
+        settings_obj.last_changed_at = timezone.now()
+        settings_obj.save()
+
+        # Log to ActivityLog
+        try:
+            from admin_dashboard.activity_logger import log_activity
+            flag_labels = {
+                'toggle_team_reg':   'Team Registration',
+                'toggle_player_reg': 'Player Registration',
+                'toggle_transfer':   'Transfer Window',
+                'save_messages':     'Closed Messages',
+                'set_deadline':      'Registration Deadline',
+                'clear_deadline':    'Registration Deadline Cleared',
+            }
+            label = flag_labels.get(action, action)
+            log_activity(
+                user=request.user,
+                action='ADMIN_ACTION',
+                description=(
+                    f'Ligi Mashinani Settings: {label} changed by '
+                    f'{request.user.get_full_name()} ({request.user.role})'
+                ),
+                obj=settings_obj,
+            )
+        except Exception:
+            pass
+
+        if action != 'save_messages':
+            # Show which window was toggled
+            flag_map = {
+                'toggle_team_reg':   ('Team Registration', settings_obj.team_registration_open),
+                'toggle_player_reg': ('Player Registration', settings_obj.player_registration_open),
+                'toggle_transfer':   ('Transfer Window', settings_obj.transfer_window_open),
+            }
+            label, new_state = flag_map.get(action, ('Window', False))
+            state_word = '🟢 OPEN' if new_state else '🔴 CLOSED'
+            messages.success(request, f'{label} is now {state_word}.')
+
+        return redirect('ligi_settings')
+
+    # Recent changes log
+    try:
+        from admin_dashboard.models import ActivityLog
+        recent_logs = ActivityLog.objects.filter(
+            description__icontains='Ligi Mashinani Settings'
+        ).order_by('-timestamp')[:10]
+    except Exception:
+        recent_logs = []
+
+    return render(request, 'portal/admin/ligi_settings.html', {
+        'settings_obj': settings_obj,
+        'recent_logs': recent_logs,
+    })
