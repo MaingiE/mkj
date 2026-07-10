@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% block title %}Ligi Mashinani Player Register{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <span>Ligi Mashinani</span>
+    <span>Player Register</span>
+  </div>
+  <h1><i class="bi bi-people-fill"></i> Ligi Mashinani — Player Register</h1>
+  <p style="color:#666;font-size:.9rem">
+    Read-only view. Sorted by age category across all disciplines and wards.
+    {% if role_locked_sub_county %}<strong>Scoped to: {{ role_locked_sub_county|title }}</strong>{% endif %}
+  </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── AGE BAND SUMMARY CARDS ──────────────────────────────────────────── -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem">
+
+  <a href="?{% if f_sub_county %}sub_county={{ f_sub_county }}&{% endif %}{% if f_ward %}ward={{ f_ward }}&{% endif %}{% if f_sport %}sport_type={{ f_sport }}&{% endif %}{% if f_search %}q={{ f_search }}&{% endif %}"
+     style="text-decoration:none">
+    <div style="background:{% if not f_age_band %}#124491{% else %}#f0f4ff{% endif %};border:1px solid #b6d4fe;border-radius:8px;padding:1rem;text-align:center">
+      <div style="font-size:1.6rem;font-weight:800;color:{% if not f_age_band %}#fff{% else %}#124491{% endif %}">{{ total_count }}</div>
+      <div style="font-size:.75rem;color:{% if not f_age_band %}rgba(255,255,255,.8){% else %}#888{% endif %};text-transform:uppercase;letter-spacing:.05em">All Players</div>
+    </div>
+  </a>
+
+  <a href="?age_band=eligible{% if f_sub_county %}&sub_county={{ f_sub_county }}{% endif %}{% if f_ward %}&ward={{ f_ward }}{% endif %}{% if f_sport %}&sport_type={{ f_sport }}{% endif %}{% if f_search %}&q={{ f_search }}{% endif %}"
+     style="text-decoration:none">
+    <div style="background:{% if f_age_band == 'eligible' %}#198754{% else %}#d1e7dd{% endif %};border:1px solid #badbcc;border-radius:8px;padding:1rem;text-align:center">
+      <div style="font-size:1.6rem;font-weight:800;color:{% if f_age_band == 'eligible' %}#fff{% else %}#0a3622{% endif %}">{{ eligible_count }}</div>
+      <div style="font-size:.75rem;color:{% if f_age_band == 'eligible' %}rgba(255,255,255,.8){% else %}#0a3622{% endif %};text-transform:uppercase;letter-spacing:.05em">Age 18–23 ✅</div>
+    </div>
+  </a>
+
+  <a href="?age_band=under18{% if f_sub_county %}&sub_county={{ f_sub_county }}{% endif %}{% if f_ward %}&ward={{ f_ward }}{% endif %}{% if f_sport %}&sport_type={{ f_sport }}{% endif %}{% if f_search %}&q={{ f_search }}{% endif %}"
+     style="text-decoration:none">
+    <div style="background:{% if f_age_band == 'under18' %}#ffc107{% else %}#fff3cd{% endif %};border:1px solid #ffecb5;border-radius:8px;padding:1rem;text-align:center">
+      <div style="font-size:1.6rem;font-weight:800;color:{% if f_age_band == 'under18' %}#fff{% else %}#856404{% endif %}">{{ under18_count }}</div>
+      <div style="font-size:.75rem;color:{% if f_age_band == 'under18' %}rgba(0,0,0,.6){% else %}#856404{% endif %};text-transform:uppercase;letter-spacing:.05em">Under 18</div>
+    </div>
+  </a>
+
+  <a href="?age_band=over23{% if f_sub_county %}&sub_county={{ f_sub_county }}{% endif %}{% if f_ward %}&ward={{ f_ward }}{% endif %}{% if f_sport %}&sport_type={{ f_sport }}{% endif %}{% if f_search %}&q={{ f_search }}{% endif %}"
+     style="text-decoration:none">
+    <div style="background:{% if f_age_band == 'over23' %}#dc3545{% else %}#f8d7da{% endif %};border:1px solid #f5c2c7;border-radius:8px;padding:1rem;text-align:center">
+      <div style="font-size:1.6rem;font-weight:800;color:{% if f_age_band == 'over23' %}#fff{% else %}#842029{% endif %}">{{ over23_count }}</div>
+      <div style="font-size:.75rem;color:{% if f_age_band == 'over23' %}rgba(255,255,255,.8){% else %}#842029{% endif %};text-transform:uppercase;letter-spacing:.05em">Over 23 ❌</div>
+    </div>
+  </a>
+
+  <a href="?age_band=unknown{% if f_sub_county %}&sub_county={{ f_sub_county }}{% endif %}{% if f_ward %}&ward={{ f_ward }}{% endif %}{% if f_sport %}&sport_type={{ f_sport }}{% endif %}{% if f_search %}&q={{ f_search }}{% endif %}"
+     style="text-decoration:none">
+    <div style="background:{% if f_age_band == 'unknown' %}#6c757d{% else %}#e2e3e5{% endif %};border:1px solid #d3d6db;border-radius:8px;padding:1rem;text-align:center">
+      <div style="font-size:1.6rem;font-weight:800;color:{% if f_age_band == 'unknown' %}#fff{% else %}#41464b{% endif %}">{{ unknown_count }}</div>
+      <div style="font-size:.75rem;color:{% if f_age_band == 'unknown' %}rgba(255,255,255,.8){% else %}#41464b{% endif %};text-transform:uppercase;letter-spacing:.05em">Age Unknown</div>
+    </div>
+  </a>
+
+</div>
+
+<!-- ── FILTERS ───────────────────────────────────────────────────────────── -->
+<div class="card" style="padding:1.1rem 1.25rem;margin-bottom:1.5rem">
+  <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end">
+    <!-- Sub-county (hidden for role-scoped users) -->
+    {% if not role_locked_sub_county %}
+    <div style="flex:1;min-width:140px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:.25rem;font-weight:600">Sub-County</label>
+      <select name="sub_county" style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem" onchange="this.form.submit()">
+        <option value="">All Sub-Counties</option>
+        {% for sc in sub_county_choices %}
+        <option value="{{ sc }}" {% if f_sub_county == sc %}selected{% endif %}>{{ sc|title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% else %}
+    <input type="hidden" name="sub_county" value="{{ role_locked_sub_county }}">
+    {% endif %}
+
+    <!-- Ward -->
+    {% if ward_choices %}
+    <div style="flex:1;min-width:130px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:.25rem;font-weight:600">Ward</label>
+      <select name="ward" style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
+        <option value="">All Wards</option>
+        {% for w in ward_choices %}
+        <option value="{{ w }}" {% if f_ward == w %}selected{% endif %}>{{ w|title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% else %}
+    <input type="hidden" name="ward" value="{{ f_ward }}">
+    {% endif %}
+
+    <!-- Sport / Discipline -->
+    <div style="flex:1;min-width:170px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:.25rem;font-weight:600">Discipline</label>
+      <select name="sport_type" style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
+        <option value="">All Disciplines</option>
+        {% for val, label in sport_type_choices %}
+        <option value="{{ val }}" {% if f_sport == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Longlist status -->
+    <div style="flex:1;min-width:150px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:.25rem;font-weight:600">Longlist Status</label>
+      <select name="longlist_status" style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
+        <option value="">Any Status</option>
+        {% for val, label in longlist_status_choices %}
+        <option value="{{ val }}" {% if f_longlist_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Age band (hidden — controlled by cards above) -->
+    <input type="hidden" name="age_band" value="{{ f_age_band }}">
+
+    <!-- Search -->
+    <div style="flex:2;min-width:180px">
+      <label style="font-size:.75rem;color:#666;display:block;margin-bottom:.25rem;font-weight:600">Search</label>
+      <input type="text" name="q" value="{{ f_search }}" placeholder="Name or ID number…"
+        style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
+    </div>
+
+    <button type="submit" style="padding:.5rem 1.1rem;background:#124491;color:#fff;border:none;border-radius:5px;font-size:.85rem;font-weight:600;cursor:pointer">Filter</button>
+    <a href="{% url 'ligi_player_register' %}" style="padding:.5rem .9rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem;text-decoration:none">Clear</a>
+  </form>
+</div>
+
+<!-- ── DISCIPLINE SUMMARY TABLE ─────────────────────────────────────────── -->
+{% if not f_age_band and not f_ward and not f_sport and not f_search and not f_longlist_status %}
+<div class="card" style="padding:1.25rem;margin-bottom:1.5rem;overflow-x:auto">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-bar-chart-line"></i> Summary by Discipline & Ward</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:.84rem">
+    <thead>
+      <tr style="background:#f0f4ff;text-align:left">
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Sub-County</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Ward</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Discipline</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6;text-align:center;color:#0a3622">✅ Eligible (18–23)</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6;text-align:center;color:#856404">Under 18</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6;text-align:center;color:#842029">Over 23</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6;text-align:center;color:#41464b">Unknown</th>
+        <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6;text-align:center">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in discipline_summary %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.5rem .9rem">{{ row.sub_county|title }}</td>
+        <td style="padding:.5rem .9rem;font-weight:500">{{ row.ward|title }}</td>
+        <td style="padding:.5rem .9rem">{{ row.sport }}</td>
+        <td style="padding:.5rem .9rem;text-align:center">
+          <span style="background:#d1e7dd;color:#0a3622;padding:.15rem .55rem;border-radius:10px;font-weight:700;font-size:.82rem">{{ row.eligible }}</span>
+        </td>
+        <td style="padding:.5rem .9rem;text-align:center">
+          {% if row.under18 > 0 %}<span style="background:#fff3cd;color:#856404;padding:.15rem .55rem;border-radius:10px;font-size:.82rem">{{ row.under18 }}</span>{% else %}<span style="color:#ccc">—</span>{% endif %}
+        </td>
+        <td style="padding:.5rem .9rem;text-align:center">
+          {% if row.over23 > 0 %}<span style="background:#f8d7da;color:#842029;padding:.15rem .55rem;border-radius:10px;font-size:.82rem">{{ row.over23 }}</span>{% else %}<span style="color:#ccc">—</span>{% endif %}
+        </td>
+        <td style="padding:.5rem .9rem;text-align:center">
+          {% if row.unknown > 0 %}<span style="background:#e2e3e5;color:#41464b;padding:.15rem .55rem;border-radius:10px;font-size:.82rem">{{ row.unknown }}</span>{% else %}<span style="color:#ccc">—</span>{% endif %}
+        </td>
+        <td style="padding:.5rem .9rem;text-align:center;font-weight:700;color:#124491">{{ row.total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" style="padding:1.5rem;text-align:center;color:#888">No ward-level players registered yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- ── PLAYER TABLE ───────────────────────────────────────────────────── -->
+<div class="card" style="overflow-x:auto">
+  <div style="padding:.9rem 1.1rem;border-bottom:1px solid #dee2e6;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+    <h2 style="font-size:1rem;color:#333;margin:0">
+      <i class="bi bi-list-ol"></i>
+      {% if f_age_band == 'eligible' %}Eligible Players (18–23)
+      {% elif f_age_band == 'under18' %}Under-18 Players
+      {% elif f_age_band == 'over23' %}Over-23 Players
+      {% elif f_age_band == 'unknown' %}Players with Unknown Age
+      {% else %}All Players
+      {% endif %}
+      — <span style="color:#124491">{{ display_players|length }}</span>
+    </h2>
+    <span style="font-size:.78rem;color:#888;background:#f8f9fa;padding:.25rem .6rem;border-radius:4px">
+      <i class="bi bi-lock"></i> Read-only
+    </span>
+  </div>
+
+  {% if display_players %}
+  <table style="width:100%;border-collapse:collapse;font-size:.83rem">
+    <thead>
+      <tr style="background:#f8f9fa;text-align:left">
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">#</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Full Name</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">National ID</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Date of Birth</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6;text-align:center">Age</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6;text-align:center">Band</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Ward</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Sub-County</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Discipline</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Longlist</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">Photo</th>
+        <th style="padding:.55rem .8rem;border-bottom:2px solid #dee2e6">ID Doc</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in display_players %}
+      <tr style="border-bottom:1px solid #f5f5f5;
+        {% if player._computed_age is not None and player._computed_age < 18 %}background:#fffdf0;
+        {% elif player._computed_age is not None and player._computed_age > 23 %}background:#fff5f5;
+        {% endif %}">
+
+        <td style="padding:.5rem .8rem;color:#aaa;font-size:.78rem">{{ forloop.counter }}</td>
+
+        <td style="padding:.5rem .8rem;font-weight:600">{{ player.first_name }} {{ player.last_name }}</td>
+
+        <td style="padding:.5rem .8rem;font-family:monospace;font-size:.8rem">{{ player.national_id_number }}</td>
+
+        <td style="padding:.5rem .8rem;font-size:.82rem">
+          {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+        </td>
+
+        <td style="padding:.5rem .8rem;text-align:center;font-weight:700">
+          {% if player._computed_age is not None %}
+            {{ player._computed_age }}
+          {% else %}
+            <span style="color:#dc3545;font-size:.75rem">?</span>
+          {% endif %}
+        </td>
+
+        <!-- Age band badge -->
+        <td style="padding:.5rem .8rem;text-align:center">
+          {% if player._computed_age is None %}
+            <span style="background:#e2e3e5;color:#41464b;padding:.15rem .5rem;border-radius:10px;font-size:.72rem">Unknown</span>
+          {% elif player._computed_age < 18 %}
+            <span style="background:#fff3cd;color:#856404;padding:.15rem .5rem;border-radius:10px;font-size:.72rem;font-weight:700">U18</span>
+          {% elif player._computed_age <= 23 %}
+            <span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.72rem;font-weight:700">✓ 18–23</span>
+          {% else %}
+            <span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.72rem;font-weight:700">O23</span>
+          {% endif %}
+        </td>
+
+        <td style="padding:.5rem .8rem;font-size:.82rem">{{ player.discipline.ward|title }}</td>
+        <td style="padding:.5rem .8rem;font-size:.82rem">{{ player.discipline.sub_county|title }}</td>
+        <td style="padding:.5rem .8rem;font-size:.82rem">{{ player.discipline.get_sport_type_display }}</td>
+
+        <!-- Longlist status -->
+        <td style="padding:.5rem .8rem">
+          {% with ll=player.discipline.ward_longlist %}
+          {% if ll %}
+            {% if ll.status == 'wscc_approved' %}
+              <span style="background:#d1e7dd;color:#0a3622;padding:.1rem .45rem;border-radius:10px;font-size:.72rem">Approved</span>
+            {% elif ll.status == 'submitted' %}
+              <span style="background:#fff3cd;color:#856404;padding:.1rem .45rem;border-radius:10px;font-size:.72rem">Submitted</span>
+            {% elif ll.status == 'returned' %}
+              <span style="background:#f8d7da;color:#842029;padding:.1rem .45rem;border-radius:10px;font-size:.72rem">Returned</span>
+            {% else %}
+              <span style="background:#e2e3e5;color:#41464b;padding:.1rem .45rem;border-radius:10px;font-size:.72rem">Draft</span>
+            {% endif %}
+          {% else %}
+            <span style="color:#ccc;font-size:.75rem">—</span>
+          {% endif %}
+          {% endwith %}
+        </td>
+
+        <!-- Photo thumbnail -->
+        <td style="padding:.5rem .8rem">
+          {% if player.photo %}
+            <a href="{{ player.photo.url }}" target="_blank">
+              <img src="{{ player.photo.url }}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #dee2e6">
+            </a>
+          {% else %}
+            <span style="color:#dc3545;font-size:.75rem"><i class="bi bi-exclamation-circle"></i></span>
+          {% endif %}
+        </td>
+
+        <!-- ID document -->
+        <td style="padding:.5rem .8rem">
+          {% if player.id_document %}
+            <a href="{{ player.id_document.url }}" target="_blank"
+               style="font-size:.75rem;background:#e8edf5;color:#124491;padding:.15rem .45rem;border-radius:4px;text-decoration:none">View</a>
+          {% else %}
+            <span style="color:#dc3545;font-size:.75rem"><i class="bi bi-exclamation-circle"></i></span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:2.5rem;text-align:center;color:#888">
+    <i class="bi bi-person-x" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+    <p style="margin:0">No players match the current filters.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

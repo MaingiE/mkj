@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Request Player Transfer — Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'ward_tm_dashboard' %}">Dashboard</a>
+    <a href="{% url 'ward_tm_transfers' %}">Transfers</a>
+    <span>New Request</span>
+  </div>
+  <h1><i class="bi bi-arrow-left-right"></i> Request Player Transfer</h1>
+  <p style="color:#666;font-size:.9rem">{{ discipline.ward|title }} Ward — {{ discipline.get_sport_type_display }}</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+    {% endif %}">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="padding:1.5rem;max-width:600px">
+  <p style="font-size:.88rem;color:#666;margin-bottom:1.5rem;line-height:1.6">
+    Select a player from your current longlist, choose the destination ward team, and provide a reason. The request will be reviewed by your Ward Sports Council Chair, then the Sub-County Sports Officer.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Player -->
+    <div style="margin-bottom:1.2rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Player *</label>
+      <select name="player_pk" style="width:100%;padding:.65rem .8rem;border:1px solid {% if errors.player %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.9rem">
+        <option value="">— Select player —</option>
+        {% for player in players %}
+        <option value="{{ player.pk }}" {% if post.player_pk == player.pk|stringformat:"s" %}selected{% endif %}>
+          {{ player.first_name }} {{ player.last_name }} — {{ player.national_id_number }}
+        </option>
+        {% endfor %}
+      </select>
+      {% if errors.player %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ errors.player }}</p>{% endif %}
+      {% if not players %}
+      <p style="color:#888;font-size:.82rem;margin:.4rem 0 0">No players on your longlist yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Destination ward -->
+    <div style="margin-bottom:1.2rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Destination Ward *</label>
+      <select name="to_discipline_pk" style="width:100%;padding:.65rem .8rem;border:1px solid {% if errors.to_discipline %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.9rem">
+        <option value="">— Select destination ward —</option>
+        {% for disc in target_disciplines %}
+        <option value="{{ disc.pk }}" {% if post.to_discipline_pk == disc.pk|stringformat:"s" %}selected{% endif %}>
+          {{ disc.ward|title }} Ward
+        </option>
+        {% endfor %}
+      </select>
+      {% if errors.to_discipline %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ errors.to_discipline }}</p>{% endif %}
+      {% if not target_disciplines %}
+      <p style="color:#888;font-size:.82rem;margin:.4rem 0 0">No other ward teams available for this discipline in your sub-county.</p>
+      {% endif %}
+    </div>
+
+    <!-- Reason -->
+    <div style="margin-bottom:1.5rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Reason for Transfer *</label>
+      <textarea name="reason" rows="4" placeholder="Explain why this player should be transferred..." maxlength="1000"
+        style="width:100%;padding:.65rem .8rem;border:1px solid {% if errors.reason %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.9rem;resize:vertical">{{ post.reason }}</textarea>
+      {% if errors.reason %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ errors.reason }}</p>{% endif %}
+    </div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button type="submit" style="padding:.65rem 1.5rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem">
+        <i class="bi bi-send"></i> Submit Request
+      </button>
+      <a href="{% url 'ward_tm_transfers' %}" style="padding:.65rem 1.2rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:6px;text-decoration:none;font-size:.9rem">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

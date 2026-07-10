@@ -249,6 +249,16 @@ from .web_views import (
     ligi_registration_ward_verify_view,
     # Ligi Mashinani: Settings / Window Control
     ligi_settings_view,
+    # Ligi Mashinani: Transfer system
+    ward_tm_transfers_view,
+    ward_tm_request_transfer_view,
+    ward_tm_withdraw_transfer_view,
+    wscc_transfers_view,
+    wscc_transfer_action_view,
+    scso_transfers_view,
+    scso_transfer_action_view,
+    # Ligi Mashinani: Player Register (read-only, all roles)
+    ligi_player_register_view,
 )
 
 from teams.ligi_views import ligi_register_view
@@ -593,6 +603,18 @@ urlpatterns = [
 
     # ── LIGI MASHINANI: Settings / Window Control ─────────────────────────────
     path("portal/ligi/settings/",  ligi_settings_view, name="ligi_settings"),
+
+    # ── LIGI MASHINANI: Transfer System ──────────────────────────────────────
+    path("ligi/transfers/",                           ward_tm_transfers_view,       name="ward_tm_transfers"),
+    path("ligi/transfers/request/",                   ward_tm_request_transfer_view, name="ward_tm_request_transfer"),
+    path("ligi/transfers/<int:transfer_pk>/withdraw/", ward_tm_withdraw_transfer_view, name="ward_tm_withdraw_transfer"),
+    path("ligi/wscc/transfers/",                      wscc_transfers_view,          name="wscc_transfers"),
+    path("ligi/wscc/transfers/<int:transfer_pk>/action/", wscc_transfer_action_view, name="wscc_transfer_action"),
+    path("portal/subcounty/transfers/",               scso_transfers_view,          name="scso_transfers"),
+    path("portal/subcounty/transfers/<int:transfer_pk>/action/", scso_transfer_action_view, name="scso_transfer_action"),
+
+    # ── LIGI MASHINANI: Player Register (read-only, multi-role) ──────────────
+    path("ligi/player-register/", ligi_player_register_view, name="ligi_player_register"),
 
     # ── APPEALS & JURY ────────────────────────────────────────────────────────
     path("portal/appeals/", include("appeals.urls")),

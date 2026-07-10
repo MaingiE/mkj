@@ -1819,3 +1819,127 @@ class LigiSettings(models.Model):
         """Return the singleton instance, creating it with defaults if absent."""
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI TRANSFER REQUEST
+#  Ward TM requests player transfer → WSCC approves → SCSO final approval.
+#  Only active when LigiSettings.transfer_window_open = True.
+# ══════════════════════════════════════════════════════════════════════════════
+
+class LigiTransferStatus(models.TextChoices):
+    PENDING        = "pending",        "Pending WSCC Review"
+    WSCC_APPROVED  = "wscc_approved",  "WSCC Approved — Pending SCSO"
+    WSCC_REJECTED  = "wscc_rejected",  "Rejected by WSCC"
+    SCSO_APPROVED  = "scso_approved",  "Approved — Transfer Complete"
+    SCSO_REJECTED  = "scso_rejected",  "Rejected by Sub-County Officer"
+    WITHDRAWN      = "withdrawn",      "Withdrawn by Team Manager"
+
+
+class LigiTransferRequest(models.Model):
+    """
+    A Ward Team Manager requests to transfer a player to a different ward team
+    within the same sub-county and discipline.
+
+    Approval chain:
+        Ward TM submits → WSCC approves/rejects → SCSO final approve/reject
+
+    On SCSO approval:
+        - player.discipline is updated to the destination discipline
+        - player.ward is updated to the destination ward
+        - Original discipline's WardLonglist can no longer count the player
+    """
+    player = models.ForeignKey(
+        CountyPlayer,
+        on_delete=models.CASCADE,
+        related_name="transfer_requests",
+        help_text="The player being transferred",
+    )
+    from_discipline = models.ForeignKey(
+        CountyDiscipline,
+        on_delete=models.CASCADE,
+        related_name="outgoing_transfers",
+        help_text="Source ward discipline (where the player currently plays)",
+    )
+    to_discipline = models.ForeignKey(
+        CountyDiscipline,
+        on_delete=models.CASCADE,
+        related_name="incoming_transfers",
+        help_text="Destination ward discipline (where the player wants to go)",
+    )
+    reason = models.TextField(
+        help_text="Reason for transfer request (required)",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=LigiTransferStatus.choices,
+        default=LigiTransferStatus.PENDING,
+    )
+
+    # ── WSCC review ───────────────────────────────────────────────────────
+    wscc_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="wscc_transfer_reviews",
+        help_text="WSCC who reviewed this request",
+    )
+    wscc_reviewed_at = models.DateTimeField(null=True, blank=True)
+    wscc_notes = models.TextField(blank=True, default="",
+                                  help_text="WSCC approval/rejection notes")
+
+    # ── SCSO review ───────────────────────────────────────────────────────
+    scso_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="scso_transfer_reviews",
+        help_text="SCSO who gave final approval",
+    )
+    scso_reviewed_at = models.DateTimeField(null=True, blank=True)
+    scso_notes = models.TextField(blank=True, default="",
+                                  help_text="SCSO approval/rejection notes")
+
+    # ── Timestamps ────────────────────────────────────────────────────────
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="transfer_requests_made",
+        help_text="Ward TM who submitted this request",
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True,
+                                        help_text="When transfer was finalised")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-requested_at"]
+        verbose_name = "Ligi Transfer Request"
+        verbose_name_plural = "Ligi Transfer Requests"
+
+    def __str__(self):
+        return (
+            f"Transfer: {self.player.first_name} {self.player.last_name} "
+            f"from {self.from_discipline.ward} → {self.to_discipline.ward} "
+            f"[{self.get_status_display()}]"
+        )
+
+    @property
+    def is_pending_wscc(self):
+        return self.status == LigiTransferStatus.PENDING
+
+    @property
+    def is_pending_scso(self):
+        return self.status == LigiTransferStatus.WSCC_APPROVED
+
+    @property
+    def is_complete(self):
+        return self.status == LigiTransferStatus.SCSO_APPROVED
+
+    @property
+    def is_rejected(self):
+        return self.status in (
+            LigiTransferStatus.WSCC_REJECTED,
+            LigiTransferStatus.SCSO_REJECTED,
+        )

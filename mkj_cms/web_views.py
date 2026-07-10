@@ -14535,3 +14535,683 @@ def ligi_settings_view(request):
         'settings_obj': settings_obj,
         'recent_logs': recent_logs,
     })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI TRANSFER SYSTEM
+#  Ward TM → request → WSCC approval → SCSO final approval → player moves
+#  URL prefix: /ligi/transfers/  (TM)
+#             /ligi/wscc/transfers/  (WSCC)
+#             /portal/subcounty/transfers/  (SCSO)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def _transfer_window_guard(request):
+    """Return (settings_obj, error_redirect) — error_redirect is None if window is open."""
+    from teams.models import LigiSettings
+    cfg = LigiSettings.get()
+    if not cfg.transfer_window_open:
+        messages.error(request, cfg.transfer_window_closed_message)
+        return cfg, redirect('ward_tm_dashboard')
+    return cfg, None
+
+
+# ── Ward Team Manager ─────────────────────────────────────────────────────────
+
+@role_required('team_manager')
+def ward_tm_transfers_view(request):
+    """
+    Ward TM: list their own transfer requests + button to create new one.
+    URL: /ligi/transfers/
+    """
+    from teams.models import LigiTransferRequest, LigiSettings
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+    if discipline is None:
+        messages.warning(request, 'No ward team found for your account.')
+        return redirect('ward_tm_dashboard')
+
+    cfg = LigiSettings.get()
+    transfers = LigiTransferRequest.objects.filter(
+        from_discipline=discipline,
+    ).select_related('player', 'to_discipline', 'wscc_reviewed_by', 'scso_reviewed_by').order_by('-requested_at')
+
+    incoming = LigiTransferRequest.objects.filter(
+        to_discipline=discipline,
+        status='scso_approved',
+    ).select_related('player', 'from_discipline').order_by('-completed_at')
+
+    return render(request, 'ligi/ward_tm_transfers.html', {
+        'transfers': transfers,
+        'incoming': incoming,
+        'discipline': discipline,
+        'longlist': longlist,
+        'window_open': cfg.transfer_window_open,
+        'window_closed_msg': cfg.transfer_window_closed_message,
+        'ward': user.ward,
+        'sub_county': user.sub_county,
+    })
+
+
+@role_required('team_manager')
+def ward_tm_request_transfer_view(request):
+    """
+    Ward TM: submit a new transfer request for one of their players.
+    URL: /ligi/transfers/request/
+    """
+    from teams.models import (
+        LigiTransferRequest, LigiSettings,
+        CountyDiscipline, LigiTransferStatus,
+    )
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+    if discipline is None:
+        messages.warning(request, 'No ward team found for your account.')
+        return redirect('ward_tm_dashboard')
+
+    cfg, err = _transfer_window_guard(request)
+    if err:
+        return err
+
+    # Players on this ward's longlist only
+    players = CountyPlayer.objects.filter(discipline=discipline).order_by('last_name', 'first_name')
+
+    # Other wards in the same sub-county with same sport_type
+    target_disciplines = CountyDiscipline.objects.filter(
+        level='ward',
+        sub_county=user.sub_county,
+        sport_type=discipline.sport_type,
+    ).exclude(pk=discipline.pk)
+
+    if request.method == 'POST':
+        player_pk = request.POST.get('player_pk', '').strip()
+        to_disc_pk = request.POST.get('to_discipline_pk', '').strip()
+        reason = request.POST.get('reason', '').strip()
+
+        errors = {}
+        player_obj = None
+        to_disc = None
+
+        if not player_pk:
+            errors['player'] = 'Select a player.'
+        else:
+            try:
+                player_obj = players.get(pk=player_pk)
+            except CountyPlayer.DoesNotExist:
+                errors['player'] = 'Invalid player selection.'
+
+        if not to_disc_pk:
+            errors['to_discipline'] = 'Select the destination ward.'
+        else:
+            try:
+                to_disc = target_disciplines.get(pk=to_disc_pk)
+            except CountyDiscipline.DoesNotExist:
+                errors['to_discipline'] = 'Invalid destination ward.'
+
+        if not reason:
+            errors['reason'] = 'Please provide a reason for the transfer.'
+
+        # Check no active pending request exists for this player
+        if player_obj and not errors:
+            active = LigiTransferRequest.objects.filter(
+                player=player_obj,
+                status__in=['pending', 'wscc_approved'],
+            ).exists()
+            if active:
+                errors['player'] = 'This player already has a pending transfer request.'
+
+        if errors:
+            return render(request, 'ligi/ward_tm_request_transfer.html', {
+                'players': players,
+                'target_disciplines': target_disciplines,
+                'discipline': discipline,
+                'errors': errors,
+                'post': request.POST,
+            })
+
+        transfer = LigiTransferRequest.objects.create(
+            player=player_obj,
+            from_discipline=discipline,
+            to_discipline=to_disc,
+            reason=reason,
+            status=LigiTransferStatus.PENDING,
+            requested_by=user,
+        )
+
+        # Notify WSCC
+        try:
+            from accounts.models import User as _User
+            wscc = _User.objects.filter(
+                role='ward_sports_council_chair',
+                sub_county=user.sub_county,
+                is_active=True,
+            ).first()
+            if wscc and wscc.email:
+                from accounts.notifications import _send, _base_html
+                body = f"""
+<p>Dear <strong>{wscc.first_name}</strong>,</p>
+<p>A new player transfer request has been submitted and requires your review.</p>
+<dl class="info-box">
+ <dt>Player</dt><dd>{player_obj.first_name} {player_obj.last_name}</dd>
+ <dt>From Ward</dt><dd>{discipline.ward}</dd>
+ <dt>To Ward</dt><dd>{to_disc.ward}</dd>
+ <dt>Discipline</dt><dd>{discipline.get_sport_type_display()}</dd>
+ <dt>Reason</dt><dd>{reason}</dd>
+</dl>
+<a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', '')}/ligi/wscc/transfers/" class="btn">Review Transfer Request</a>"""
+                _send(
+                    f'Transfer Request — {player_obj.first_name} {player_obj.last_name} ({discipline.ward} → {to_disc.ward})',
+                    _base_html('Transfer Request Received', body),
+                    [wscc.email],
+                )
+        except Exception as _e:
+            logger.warning('Transfer notification to WSCC failed: %s', _e)
+
+        messages.success(
+            request,
+            f'Transfer request for {player_obj.first_name} {player_obj.last_name} submitted. '
+            f'Awaiting WSCC review.'
+        )
+        return redirect('ward_tm_transfers')
+
+    return render(request, 'ligi/ward_tm_request_transfer.html', {
+        'players': players,
+        'target_disciplines': target_disciplines,
+        'discipline': discipline,
+        'errors': {},
+        'post': {},
+    })
+
+
+@role_required('team_manager')
+def ward_tm_withdraw_transfer_view(request, transfer_pk):
+    """
+    Ward TM: withdraw a pending transfer request.
+    POST only. URL: /ligi/transfers/<pk>/withdraw/
+    """
+    from teams.models import LigiTransferRequest, LigiTransferStatus
+    user = request.user
+    discipline, _ = _get_ward_tm_context(user)
+    if discipline is None:
+        return redirect('ward_tm_dashboard')
+
+    transfer = get_object_or_404(
+        LigiTransferRequest,
+        pk=transfer_pk,
+        from_discipline=discipline,
+        status=LigiTransferStatus.PENDING,
+    )
+
+    if request.method == 'POST':
+        transfer.status = LigiTransferStatus.WITHDRAWN
+        transfer.save(update_fields=['status', 'updated_at'])
+        messages.success(request, 'Transfer request withdrawn.')
+
+    return redirect('ward_tm_transfers')
+
+
+# ── WSCC ──────────────────────────────────────────────────────────────────────
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_transfers_view(request):
+    """
+    WSCC: list all transfer requests for wards in their sub-county.
+    URL: /ligi/wscc/transfers/
+    """
+    from teams.models import LigiTransferRequest
+    user = request.user
+    sub_county = user.sub_county if not user.is_superuser else None
+
+    qs = LigiTransferRequest.objects.select_related(
+        'player', 'from_discipline', 'to_discipline',
+        'requested_by', 'wscc_reviewed_by',
+    ).order_by('-requested_at')
+
+    if sub_county:
+        qs = qs.filter(from_discipline__sub_county=sub_county)
+
+    pending = qs.filter(status='pending')
+    reviewed = qs.exclude(status='pending')
+
+    return render(request, 'ligi/wscc/transfers.html', {
+        'pending': pending,
+        'reviewed': reviewed,
+        'sub_county': sub_county or 'All',
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_transfer_action_view(request, transfer_pk):
+    """
+    WSCC: approve or reject a pending transfer request.
+    POST only. URL: /ligi/wscc/transfers/<pk>/action/
+    """
+    from teams.models import LigiTransferRequest, LigiTransferStatus
+    user = request.user
+    sub_county = user.sub_county if not user.is_superuser else None
+
+    qs = LigiTransferRequest.objects.filter(status=LigiTransferStatus.PENDING)
+    if sub_county:
+        qs = qs.filter(from_discipline__sub_county=sub_county)
+    transfer = get_object_or_404(qs, pk=transfer_pk)
+
+    if request.method != 'POST':
+        return redirect('wscc_transfers')
+
+    action = request.POST.get('action', '').strip()
+    notes = request.POST.get('notes', '').strip()
+
+    if action == 'approve':
+        transfer.status = LigiTransferStatus.WSCC_APPROVED
+        transfer.wscc_reviewed_by = user
+        transfer.wscc_reviewed_at = timezone.now()
+        transfer.wscc_notes = notes
+        transfer.save(update_fields=['status', 'wscc_reviewed_by', 'wscc_reviewed_at', 'wscc_notes', 'updated_at'])
+
+        # Notify SCSO
+        try:
+            from accounts.models import User as _User
+            from accounts.notifications import _send, _base_html
+            scso_list = _User.objects.filter(
+                role='subcounty_sports_officer',
+                sub_county=transfer.from_discipline.sub_county,
+                is_active=True,
+            ).values_list('email', flat=True)
+            if scso_list:
+                p = transfer.player
+                body = f"""
+<p>A transfer request has been approved by the Ward Sports Council Chair and requires your final decision.</p>
+<dl class="info-box">
+ <dt>Player</dt><dd>{p.first_name} {p.last_name}</dd>
+ <dt>From Ward</dt><dd>{transfer.from_discipline.ward}</dd>
+ <dt>To Ward</dt><dd>{transfer.to_discipline.ward}</dd>
+ <dt>Discipline</dt><dd>{transfer.from_discipline.get_sport_type_display()}</dd>
+ <dt>WSCC Notes</dt><dd>{notes or '—'}</dd>
+</dl>
+<a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', '')}/portal/subcounty/transfers/" class="btn">Review Transfer</a>"""
+                _send(
+                    f'Transfer Request — WSCC Approved, Awaiting Your Decision',
+                    _base_html('Transfer Requires SCSO Approval', body),
+                    list(scso_list),
+                )
+        except Exception as _e:
+            logger.warning('Transfer SCSO notification failed: %s', _e)
+
+        messages.success(request, f'Transfer approved and forwarded to Sub-County Sports Officer.')
+
+    elif action == 'reject':
+        if not notes:
+            messages.error(request, 'A rejection reason is required.')
+            return redirect('wscc_transfers')
+        transfer.status = LigiTransferStatus.WSCC_REJECTED
+        transfer.wscc_reviewed_by = user
+        transfer.wscc_reviewed_at = timezone.now()
+        transfer.wscc_notes = notes
+        transfer.save(update_fields=['status', 'wscc_reviewed_by', 'wscc_reviewed_at', 'wscc_notes', 'updated_at'])
+        _notify_ward_tm_transfer_decision(transfer, 'rejected', notes, rejected_by='WSCC')
+        messages.success(request, 'Transfer request rejected.')
+
+    return redirect('wscc_transfers')
+
+
+# ── SCSO ──────────────────────────────────────────────────────────────────────
+
+@role_required('subcounty_sports_officer', 'admin')
+def scso_transfers_view(request):
+    """
+    SCSO: list all transfer requests for their sub-county.
+    URL: /portal/subcounty/transfers/
+    """
+    from teams.models import LigiTransferRequest
+    user = request.user
+    sub_county = user.sub_county if not user.is_superuser else None
+
+    qs = LigiTransferRequest.objects.select_related(
+        'player', 'from_discipline', 'to_discipline',
+        'requested_by', 'wscc_reviewed_by', 'scso_reviewed_by',
+    ).order_by('-requested_at')
+
+    if sub_county:
+        qs = qs.filter(from_discipline__sub_county=sub_county)
+
+    pending_scso = qs.filter(status='wscc_approved')
+    completed = qs.filter(status__in=['scso_approved', 'scso_rejected'])
+    other = qs.filter(status__in=['pending', 'wscc_rejected', 'withdrawn'])
+
+    return render(request, 'portal/subcounty_officer/sc_transfers.html', {
+        'pending_scso': pending_scso,
+        'completed': completed,
+        'other': other,
+        'sub_county': sub_county or 'All',
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def scso_transfer_action_view(request, transfer_pk):
+    """
+    SCSO: final approve or reject a WSCC-approved transfer.
+    On approval: moves the player to the destination discipline.
+    POST only. URL: /portal/subcounty/transfers/<pk>/action/
+    """
+    from teams.models import LigiTransferRequest, LigiTransferStatus
+    user = request.user
+    sub_county = user.sub_county if not user.is_superuser else None
+
+    qs = LigiTransferRequest.objects.filter(status=LigiTransferStatus.WSCC_APPROVED)
+    if sub_county:
+        qs = qs.filter(from_discipline__sub_county=sub_county)
+    transfer = get_object_or_404(qs, pk=transfer_pk)
+
+    if request.method != 'POST':
+        return redirect('scso_transfers')
+
+    action = request.POST.get('action', '').strip()
+    notes = request.POST.get('notes', '').strip()
+
+    if action == 'approve':
+        with transaction.atomic():
+            # Move the player to the destination discipline
+            player = transfer.player
+            old_discipline = player.discipline
+            player.discipline = transfer.to_discipline
+            player.ward = transfer.to_discipline.ward
+            player.sub_county = transfer.to_discipline.sub_county
+            player.save(update_fields=['discipline', 'ward', 'sub_county'])
+
+            transfer.status = LigiTransferStatus.SCSO_APPROVED
+            transfer.scso_reviewed_by = user
+            transfer.scso_reviewed_at = timezone.now()
+            transfer.scso_notes = notes
+            transfer.completed_at = timezone.now()
+            transfer.save(update_fields=[
+                'status', 'scso_reviewed_by', 'scso_reviewed_at',
+                'scso_notes', 'completed_at', 'updated_at',
+            ])
+
+            # Log to ActivityLog
+            try:
+                from admin_dashboard.activity_logger import log_activity
+                log_activity(
+                    user=user,
+                    action='ADMIN_ACTION',
+                    description=(
+                        f'Transfer approved: {player.first_name} {player.last_name} '
+                        f'moved from {old_discipline.ward} to {transfer.to_discipline.ward} '
+                        f'({transfer.from_discipline.sub_county})'
+                    ),
+                    obj=transfer,
+                )
+            except Exception:
+                pass
+
+        _notify_ward_tm_transfer_decision(transfer, 'approved', notes, rejected_by=None)
+        messages.success(
+            request,
+            f'Transfer approved. {transfer.player.first_name} {transfer.player.last_name} '
+            f'has been moved to {transfer.to_discipline.ward} Ward.'
+        )
+
+    elif action == 'reject':
+        if not notes:
+            messages.error(request, 'A rejection reason is required.')
+            return redirect('scso_transfers')
+        transfer.status = LigiTransferStatus.SCSO_REJECTED
+        transfer.scso_reviewed_by = user
+        transfer.scso_reviewed_at = timezone.now()
+        transfer.scso_notes = notes
+        transfer.save(update_fields=[
+            'status', 'scso_reviewed_by', 'scso_reviewed_at', 'scso_notes', 'updated_at',
+        ])
+        _notify_ward_tm_transfer_decision(transfer, 'rejected', notes, rejected_by='Sub-County Sports Officer')
+        messages.success(request, 'Transfer request rejected.')
+
+    return redirect('scso_transfers')
+
+
+def _notify_ward_tm_transfer_decision(transfer, outcome, notes, rejected_by=None):
+    """Email the originating Ward TM about the transfer decision."""
+    try:
+        from accounts.models import User as _User
+        from accounts.notifications import _send, _base_html
+        from django.conf import settings as _s
+
+        tm = _User.objects.filter(
+            role='team_manager',
+            ward=transfer.from_discipline.ward,
+            sub_county=transfer.from_discipline.sub_county,
+            is_active=True,
+        ).first()
+        if not tm or not tm.email:
+            return
+
+        p = transfer.player
+        if outcome == 'approved':
+            subject = f'Transfer Approved — {p.first_name} {p.last_name}'
+            colour = '#198754'
+            icon = '✅'
+            detail = f'<p>The transfer has been <strong style="color:{colour}">approved</strong>. {p.first_name} has been moved to <strong>{transfer.to_discipline.ward} Ward</strong>.</p>'
+        else:
+            subject = f'Transfer Rejected — {p.first_name} {p.last_name}'
+            colour = '#dc3545'
+            icon = '❌'
+            detail = f'<p>The transfer was <strong style="color:{colour}">rejected</strong> by the {rejected_by}.</p><div class="alert">{notes}</div>'
+
+        body = f"""
+<p>Dear <strong>{tm.first_name} {tm.last_name}</strong>,</p>
+{detail}
+<dl class="info-box">
+ <dt>Player</dt><dd>{p.first_name} {p.last_name}</dd>
+ <dt>From Ward</dt><dd>{transfer.from_discipline.ward}</dd>
+ <dt>To Ward</dt><dd>{transfer.to_discipline.ward}</dd>
+ <dt>Discipline</dt><dd>{transfer.from_discipline.get_sport_type_display()}</dd>
+</dl>
+<a href="{getattr(_s, 'SITE_URL', '')}/ligi/transfers/" class="btn">View Transfers</a>"""
+
+        _send(subject, _base_html(f'Transfer {outcome.title()}', body), [tm.email])
+    except Exception as _e:
+        logger.warning('Transfer decision notification failed: %s', _e)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI — PLAYER REGISTER (read-only, all eligible roles)
+#  Shows all ward-level CountyPlayer records sorted into age bands:
+#    - Under 18    (age < 18)
+#    - Eligible    (18–23 inclusive)
+#    - Over 23     (age > 23)
+#
+#  Filters: sub-county, ward, discipline (sport_type), age band, name search
+#  Visible to: WSCC, SCSO, CSO, Director of Sports, Chief Officer Sports,
+#              Jury Chair, Secretary General, Admin, Governor, Waziri Sports
+#  URL: /ligi/player-register/
+# ══════════════════════════════════════════════════════════════════════════════
+
+_LIGI_REGISTER_ROLES = (
+    'ward_sports_council_chair',
+    'subcounty_sports_officer',
+    'chief_sports_officer',
+    'director_sports',
+    'chief_officer_sports',
+    'jury_chair',
+    'secretary_general',
+    'governor',
+    'waziri_sports',
+    'competition_manager',
+    'admin',
+)
+
+
+@role_required(*_LIGI_REGISTER_ROLES)
+def ligi_player_register_view(request):
+    """
+    Read-only master player register for all ward (Ligi Mashinani) longlists.
+
+    - Age bands: Under 18 / Eligible (18–23) / Over 23
+    - Filters: sub_county, ward, sport_type, age_band, search
+    - WSCC sees only their own sub-county; SCSO scoped to their sub-county;
+      CSO/Director/Admin see everything.
+    - No edit/delete actions — this is a viewer only.
+    """
+    from teams.models import CountyPlayer, CountyDiscipline
+    from accounts.models import MakueniSubCounty, MAKUENI_SUBCOUNTY_WARDS
+    from competitions.models import SportType
+
+    user = request.user
+
+    # ── Scope by role ─────────────────────────────────────────────────────
+    # WSCC and SCSO are limited to their own sub-county
+    role_locked_sub_county = None
+    if user.role in ('ward_sports_council_chair', 'subcounty_sports_officer') and not user.is_superuser:
+        role_locked_sub_county = user.sub_county
+
+    # ── Base queryset: only ward-level players ────────────────────────────
+    qs = CountyPlayer.objects.filter(
+        discipline__level='ward',
+    ).select_related('discipline').order_by(
+        'discipline__sub_county',
+        'discipline__ward',
+        'discipline__sport_type',
+        'last_name',
+        'first_name',
+    )
+
+    if role_locked_sub_county:
+        qs = qs.filter(discipline__sub_county=role_locked_sub_county)
+
+    # ── Filters from GET params ───────────────────────────────────────────
+    f_sub_county  = request.GET.get('sub_county', '').strip()
+    f_ward        = request.GET.get('ward', '').strip()
+    f_sport       = request.GET.get('sport_type', '').strip()
+    f_age_band    = request.GET.get('age_band', '').strip()   # under18 / eligible / over23
+    f_search      = request.GET.get('q', '').strip()
+    f_longlist_status = request.GET.get('longlist_status', '').strip()
+
+    if f_sub_county and not role_locked_sub_county:
+        qs = qs.filter(discipline__sub_county=f_sub_county)
+    if f_ward:
+        qs = qs.filter(discipline__ward=f_ward)
+    if f_sport:
+        qs = qs.filter(discipline__sport_type=f_sport)
+    if f_longlist_status:
+        qs = qs.filter(discipline__ward_longlist__status=f_longlist_status)
+    if f_search:
+        qs = qs.filter(
+            Q(first_name__icontains=f_search) |
+            Q(last_name__icontains=f_search) |
+            Q(national_id_number__icontains=f_search)
+        )
+
+    # ── Materialise and compute ages ─────────────────────────────────────
+    from django.utils import timezone as _tz
+    today = _tz.now().date()
+
+    def _calc_age(player):
+        if player.date_of_birth:
+            dob = player.date_of_birth
+            return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        return player.age_value  # may be None
+
+    all_players = list(qs)
+    for p in all_players:
+        p._computed_age = _calc_age(p)
+
+    # ── Age-band split ────────────────────────────────────────────────────
+    under18  = [p for p in all_players if p._computed_age is not None and p._computed_age < 18]
+    eligible = [p for p in all_players if p._computed_age is not None and 18 <= p._computed_age <= 23]
+    over23   = [p for p in all_players if p._computed_age is not None and p._computed_age > 23]
+    unknown  = [p for p in all_players if p._computed_age is None]
+
+    # ── Apply age_band filter AFTER computing bands ───────────────────────
+    if f_age_band == 'under18':
+        display_players = under18
+    elif f_age_band == 'eligible':
+        display_players = eligible
+    elif f_age_band == 'over23':
+        display_players = over23
+    elif f_age_band == 'unknown':
+        display_players = unknown
+    else:
+        display_players = all_players
+
+    # ── Discipline grouping for the "By Discipline" summary ──────────────
+    from collections import defaultdict
+    by_discipline = defaultdict(list)
+    for p in all_players:
+        key = (
+            p.discipline.sub_county,
+            p.discipline.ward,
+            p.discipline.get_sport_type_display(),
+            p.discipline.pk,
+        )
+        by_discipline[key].append(p)
+
+    discipline_summary = []
+    for (sc, ward, sport, disc_pk), players in sorted(by_discipline.items()):
+        u18 = [p for p in players if p._computed_age is not None and p._computed_age < 18]
+        elig = [p for p in players if p._computed_age is not None and 18 <= p._computed_age <= 23]
+        o23 = [p for p in players if p._computed_age is not None and p._computed_age > 23]
+        unk = [p for p in players if p._computed_age is None]
+        discipline_summary.append({
+            'sub_county': sc, 'ward': ward, 'sport': sport, 'disc_pk': disc_pk,
+            'total': len(players),
+            'under18': len(u18), 'eligible': len(elig),
+            'over23': len(o23), 'unknown': len(unk),
+        })
+
+    # ── Build filter options ──────────────────────────────────────────────
+    all_disciplines = CountyDiscipline.objects.filter(level='ward')
+    if role_locked_sub_county:
+        all_disciplines = all_disciplines.filter(sub_county=role_locked_sub_county)
+
+    available_sub_counties = (
+        [role_locked_sub_county]
+        if role_locked_sub_county
+        else sorted(all_disciplines.values_list('sub_county', flat=True).distinct())
+    )
+    available_wards = sorted(
+        all_disciplines.filter(
+            sub_county=f_sub_county or role_locked_sub_county or ''
+        ).values_list('ward', flat=True).distinct()
+    ) if (f_sub_county or role_locked_sub_county) else []
+
+    sport_type_choices = SportType.choices
+
+    context = {
+        'display_players': display_players,
+        'all_players': all_players,
+        'under18': under18,
+        'eligible': eligible,
+        'over23': over23,
+        'unknown': unknown,
+        'discipline_summary': discipline_summary,
+        # filters
+        'f_sub_county':  f_sub_county or role_locked_sub_county or '',
+        'f_ward':        f_ward,
+        'f_sport':       f_sport,
+        'f_age_band':    f_age_band,
+        'f_search':      f_search,
+        'f_longlist_status': f_longlist_status,
+        # choices for filter dropdowns
+        'sub_county_choices':   available_sub_counties,
+        'ward_choices':         available_wards,
+        'sport_type_choices':   sport_type_choices,
+        'longlist_status_choices': [
+            ('draft', 'Draft'), ('submitted', 'Submitted'),
+            ('wscc_approved', 'WSCC Approved'), ('returned', 'Returned'),
+        ],
+        'age_band_choices': [
+            ('under18', f'Under 18 ({len(under18)})'),
+            ('eligible', f'Eligible 18–23 ({len(eligible)})'),
+            ('over23', f'Over 23 ({len(over23)})'),
+            ('unknown', f'Age Unknown ({len(unknown)})'),
+        ],
+        # counts
+        'total_count':    len(all_players),
+        'under18_count':  len(under18),
+        'eligible_count': len(eligible),
+        'over23_count':   len(over23),
+        'unknown_count':  len(unknown),
+        # role scope
+        'role_locked_sub_county': role_locked_sub_county,
+        'user_role': user.role,
+    }
+    return render(request, 'ligi/player_register.html', context)
