@@ -1,219 +1,307 @@
 {% extends 'base.html' %}
-{% block title %}Select Match-Day Squad — Ligi Mashinani{% endblock %}
+{% block title %}Squad Selection — Ligi Mashinani{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <div class="breadcrumb">
-        <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
-        <a href="{% url 'ward_tm_fixtures' %}">Fixtures</a>
-        <span>Squad Selection</span>
-    </div>
-    <h1><i class="bi bi-clipboard2-check"></i> Match-Day Squad</h1>
-    <p style="color:#555;margin:.25rem 0 0">
-        <strong>{{ fixture.home_team }}</strong> vs <strong>{{ fixture.away_team }}</strong>
-        &mdash; {{ fixture.match_date|date:"d M Y" }}
-        {% if fixture.kickoff_time %} at {{ fixture.kickoff_time|time:"H:i" }}{% endif %}
-    </p>
+  <div class="breadcrumb">
+    <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
+    <a href="{% url 'ward_tm_fixtures' %}">Fixtures</a>
+    <span>Squad Selection</span>
+  </div>
+  <h1><i class="bi bi-clipboard2-check"></i> Match-Day Squad</h1>
+  <p style="color:#555;font-size:.9rem">
+    <strong>{{ fixture.home_team }}</strong> vs <strong>{{ fixture.away_team }}</strong>
+    &mdash; {{ fixture.match_date|date:"d M Y" }}{% if fixture.kickoff_time %} at {{ fixture.kickoff_time|time:"H:i" }}{% endif %}
+  </p>
 </div>
 
 {% if messages %}
 <div style="margin-bottom:1rem">
-    {% for msg in messages %}
-    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
-        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
-        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
-        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
-        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
-        {{ msg }}
-    </div>
-    {% endfor %}
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+    {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+    {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
 </div>
 {% endif %}
 
-<!-- Deadline / lock info strip -->
-<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem">
-    <div style="font-size:.88rem;color:#555">
-        <i class="bi bi-clock"></i>
-        Submission deadline:
-        <strong>{{ deadline|date:"d M Y H:i" }}</strong>
+<!-- Fixture info strip -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin-bottom:1.25rem">
+  <div class="card" style="padding:.9rem;text-align:center">
+    <div style="font-size:.75rem;color:#888">Match Date</div>
+    <div style="font-weight:700">{{ fixture.match_date|date:"d M Y" }}</div>
+  </div>
+  <div class="card" style="padding:.9rem;text-align:center">
+    <div style="font-size:.75rem;color:#888">Kick-off</div>
+    <div style="font-weight:700">{{ fixture.kickoff_time|time:"H:i"|default:"TBD" }}</div>
+  </div>
+  <div class="card" style="padding:.9rem;text-align:center">
+    <div style="font-size:.75rem;color:#888">Deadline</div>
+    <div style="font-weight:700;color:{% if deadline_passed %}#dc3545{% else %}#198754{% endif %}">
+      {{ deadline|date:"d M Y H:i" }}
     </div>
-
-    {% if squad_locked %}
-    <span style="background:#f8d7da;color:#842029;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
-        <i class="bi bi-lock"></i> Squad Locked — Deadline Passed
-    </span>
-    {% elif deadline_passed %}
-    <span style="background:#fff3cd;color:#856404;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
-        <i class="bi bi-exclamation-triangle"></i> Past Deadline
-    </span>
-    {% else %}
-    <span style="background:#d1e7dd;color:#0a3622;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600">
-        <i class="bi bi-check-circle"></i> Open for Selection
-    </span>
-    {% endif %}
-
-    <span style="margin-left:auto;font-size:.85rem;color:#555">
-        Squad limit: <strong>{{ squad_limit }} players</strong>
-    </span>
+  </div>
+  <div class="card" style="padding:.9rem;text-align:center">
+    <div style="font-size:.75rem;color:#888">Venue</div>
+    <div style="font-weight:700">{{ fixture.venue|default:"TBD" }}</div>
+  </div>
 </div>
-
-{% if existing and existing.status == 'submitted' %}
-<div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:6px;padding:.9rem 1rem;margin-bottom:1.25rem;font-size:.88rem">
-    <i class="bi bi-check-circle-fill" style="color:#198754"></i>
-    <strong>Squad submitted</strong> on {{ existing.submitted_at|date:"d M Y H:i" }}.
-    {% if not squad_locked %}You may update your selection before the deadline.{% endif %}
-</div>
-{% endif %}
 
 {% if squad_locked %}
-<!-- Read-only view when locked -->
+<!-- ── LOCKED READ-ONLY VIEW ──────────────────────────────────────── -->
+<div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:.9rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem">
+  <i class="bi bi-lock-fill" style="color:#198754;font-size:1.2rem"></i>
+  <div>
+    <strong>Squad Locked</strong> — submitted on {{ existing.submitted_at|date:"d M Y H:i" }}.
+    The kick-off deadline has passed.
+  </div>
+  {% if existing %}
+  <a href="{% url 'ward_tm_substitution' fixture.pk %}" style="margin-left:auto;padding:.4rem .9rem;background:#124491;color:#fff;border-radius:6px;text-decoration:none;font-size:.85rem;white-space:nowrap">
+    <i class="bi bi-arrow-left-right"></i> Substitutions
+  </a>
+  {% endif %}
+</div>
 <div class="card" style="overflow-x:auto">
-    <div style="padding:1rem 1.25rem;border-bottom:1px solid #dee2e6;font-weight:600;font-size:.95rem">
-        <i class="bi bi-people"></i> Submitted Squad ({{ selected_pks|length }} player{{ selected_pks|length|pluralize }})
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:.9rem">
-        <thead>
-            <tr style="background:#f0f4ff;text-align:left">
-                <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">#</th>
-                <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Full Name</th>
-                <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">National ID</th>
-                <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Position</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in existing.squad_players.all %}
-            {% if entry.county_player %}
-            <tr style="border-bottom:1px solid #dee2e6">
-                <td style="padding:.6rem 1rem;color:#888">{{ forloop.counter }}</td>
-                <td style="padding:.6rem 1rem;font-weight:500">{{ entry.county_player.first_name }} {{ entry.county_player.last_name }}</td>
-                <td style="padding:.6rem 1rem;font-family:monospace">{{ entry.county_player.national_id_number }}</td>
-                <td style="padding:.6rem 1rem">{{ entry.county_player.position|default:"—" }}</td>
-            </tr>
-            {% endif %}
-            {% empty %}
-            <tr><td colspan="4" style="padding:1rem;text-align:center;color:#888">No players recorded.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <div style="padding:.9rem 1.1rem;border-bottom:1px solid #dee2e6;font-weight:600">Submitted Squad</div>
+  <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+    <thead><tr style="background:#f0f4ff;text-align:left">
+      <th style="padding:.6rem .9rem;border-bottom:2px solid #dee2e6">#</th>
+      <th style="padding:.6rem .9rem;border-bottom:2px solid #dee2e6">Name</th>
+      <th style="padding:.6rem .9rem;border-bottom:2px solid #dee2e6">National ID</th>
+      <th style="padding:.6rem .9rem;border-bottom:2px solid #dee2e6">Role</th>
+    </tr></thead>
+    <tbody>
+      {% for entry in existing.squad_players.all %}{% if entry.county_player %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.55rem .9rem;color:#aaa">{{ forloop.counter }}</td>
+        <td style="padding:.55rem .9rem;font-weight:500">{{ entry.county_player.first_name }} {{ entry.county_player.last_name }}</td>
+        <td style="padding:.55rem .9rem;font-family:monospace;font-size:.82rem">{{ entry.county_player.national_id_number }}</td>
+        <td style="padding:.55rem .9rem">
+          {% if entry.is_starter %}<span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.75rem;font-weight:600">Starter</span>
+          {% else %}<span style="background:#e2e3e5;color:#41464b;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Sub</span>{% endif %}
+        </td>
+      </tr>
+      {% endif %}{% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {% else %}
-<!-- Selection form -->
+<!-- ── SELECTION FORM ──────────────────────────────────────────────── -->
+{% if deadline_passed %}
+<div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#842029">
+  <i class="bi bi-exclamation-triangle"></i> Deadline has passed. Contact the coordinator if you need an extension.
+</div>
+{% endif %}
+
+{% if existing %}
+<div style="background:#cfe2ff;border:1px solid #b6d4fe;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#084298">
+  <i class="bi bi-info-circle"></i> You submitted a squad on {{ existing.submitted_at|date:"d M Y H:i" }}. You can update it until the deadline.
+</div>
+{% endif %}
+
+<!-- Squad rules summary -->
+<div class="card" style="padding:1rem 1.25rem;margin-bottom:1.25rem">
+  <h3 style="font-size:.95rem;color:#333;margin-bottom:.75rem"><i class="bi bi-clipboard2-data"></i> Squad Rules — {{ fixture.competition.get_sport_type_display }}</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:1rem;font-size:.85rem">
+    <span><strong>Required starters:</strong> {{ required_starters }}</span>
+    <span><strong>Max substitutes:</strong> {{ squad_rules.max_subs }}</span>
+    <span><strong>Max squad:</strong> {{ squad_rules.max_squad }}</span>
+    {% if is_football_or_handball %}<span style="color:#842029"><strong>GK required</strong> in starters & subs</span>{% endif %}
+    {% if is_football_or_handball %}<span><strong>Formation</strong> required</span>{% endif %}
+  </div>
+</div>
+
 {% if approved_players %}
-<form method="post" id="squad-form">
-    {% csrf_token %}
+<form method="post" id="squadForm">
+  {% csrf_token %}
 
-    <div style="margin-bottom:.75rem;font-size:.88rem;color:#555">
-        Select up to <strong>{{ squad_limit }}</strong> players from your WSCC-approved longlist.
-        <span id="selected-count" style="margin-left:.5rem;font-weight:600;color:#124491">
-            0 selected
-        </span>
-    </div>
+  <!-- Live counters -->
+  <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem;padding:.75rem 1rem;background:#f8f9fa;border-radius:6px;font-size:.88rem">
+    <span>Starters: <strong id="starterCount" style="color:#124491">0</strong>/{{ required_starters }}</span>
+    <span>Subs: <strong id="subCount" style="color:#124491">0</strong>/{{ squad_rules.max_subs }}</span>
+    {% if is_football_or_handball %}<span id="gkStatus" style="color:#856404">GK: checking…</span>{% endif %}
+    <span id="validMsg" style="margin-left:auto;font-size:.82rem;color:#dc3545"></span>
+  </div>
 
-    <div class="card" style="overflow-x:auto;margin-bottom:1.25rem">
-        <table style="width:100%;border-collapse:collapse;font-size:.9rem">
-            <thead>
-                <tr style="background:#f0f4ff;text-align:left">
-                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6;width:40px">
-                        <input type="checkbox" id="select-all" title="Select all">
-                    </th>
-                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Full Name</th>
-                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">National ID</th>
-                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Age</th>
-                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Position</th>
-                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Jersey #</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in approved_players %}
-                <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer" onclick="togglePlayer(this)">
-                    <td style="padding:.6rem 1rem">
-                        <input
-                            type="checkbox"
-                            name="players"
-                            value="{{ player.pk }}"
-                            class="player-checkbox"
-                            {% if player.pk in selected_pks %}checked{% endif %}
-                            onclick="event.stopPropagation()"
-                        >
-                    </td>
-                    <td style="padding:.6rem 1rem;font-weight:500">{{ player.first_name }} {{ player.last_name }}</td>
-                    <td style="padding:.6rem 1rem;font-family:monospace;font-size:.85rem">{{ player.national_id_number }}</td>
-                    <td style="padding:.6rem 1rem">
-                        {% if player.date_of_birth %}{{ player.date_of_birth|timesince|truncatewords:2 }}{% else %}{{ player.age_value|default:"—" }}{% endif %}
-                    </td>
-                    <td style="padding:.6rem 1rem">{{ player.position|default:"—" }}</td>
-                    <td style="padding:.6rem 1rem">{{ player.jersey_number|default:"—" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <!-- Formation (football & handball only) -->
+  {% if is_football_or_handball %}
+  <div style="margin-bottom:1rem">
+    <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">
+      Playing Formation / Units <span style="color:#dc3545">*</span> <span style="font-weight:400;color:#888">(e.g. 4-3-3, 4-4-2, 3-5-2)</span>
+    </label>
+    <input type="text" name="formation" id="formation" value="{{ saved_formation }}"
+      placeholder="e.g. 4-3-3"
+      style="width:100%;max-width:260px;padding:.6rem .8rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem"
+      {% if deadline_passed %}disabled{% endif %} required>
+  </div>
+  {% endif %}
 
-    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-        <button type="submit" class="btn btn--primary" id="submit-btn">
-            <i class="bi bi-send"></i> Submit Squad
-        </button>
-        <a href="{% url 'ward_tm_fixtures' %}" style="font-size:.88rem;color:#555">
-            <i class="bi bi-arrow-left"></i> Back to Fixtures
-        </a>
-        <span style="margin-left:auto;font-size:.82rem;color:#888">
-            Maximum {{ squad_limit }} players
-        </span>
-    </div>
+  <!-- Player table: starter / sub checkboxes -->
+  <div class="card" style="overflow-x:auto;margin-bottom:1.25rem">
+    <table style="width:100%;border-collapse:collapse;font-size:.86rem">
+      <thead>
+        <tr style="background:#f0f4ff;text-align:left">
+          <th style="padding:.6rem .8rem;border-bottom:2px solid #dee2e6;width:70px;text-align:center">Starter</th>
+          <th style="padding:.6rem .8rem;border-bottom:2px solid #dee2e6;width:70px;text-align:center">Sub</th>
+          <th style="padding:.6rem .8rem;border-bottom:2px solid #dee2e6">Name</th>
+          <th style="padding:.6rem .8rem;border-bottom:2px solid #dee2e6">Pos</th>
+          <th style="padding:.6rem .8rem;border-bottom:2px solid #dee2e6">Age</th>
+          <th style="padding:.6rem .8rem;border-bottom:2px solid #dee2e6">Nat. ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for player in approved_players %}
+        <tr style="border-bottom:1px solid #f5f5f5{% if player.position == 'GK' %};background:#f0fff4{% endif %}">
+          <td style="padding:.55rem .8rem;text-align:center">
+            <input type="checkbox" name="starters" value="{{ player.pk }}"
+              class="starter-cb" data-pk="{{ player.pk }}" data-pos="{{ player.position }}"
+              {% if player.pk in starter_pks %}checked{% endif %}
+              {% if deadline_passed %}disabled{% endif %}>
+          </td>
+          <td style="padding:.55rem .8rem;text-align:center">
+            <input type="checkbox" name="subs" value="{{ player.pk }}"
+              class="sub-cb" data-pk="{{ player.pk }}" data-pos="{{ player.position }}"
+              {% if player.pk in sub_pks %}checked{% endif %}
+              {% if deadline_passed %}disabled{% endif %}>
+          </td>
+          <td style="padding:.55rem .8rem;font-weight:500">
+            {{ player.first_name }} {{ player.last_name }}
+            {% if player.position == 'GK' %}<span style="background:#124491;color:#fff;font-size:.68rem;padding:1px 5px;border-radius:8px;margin-left:4px">GK</span>{% endif %}
+          </td>
+          <td style="padding:.55rem .8rem;color:#888">{{ player.position|default:"—" }}</td>
+          <td style="padding:.55rem .8rem">{{ player.age|default:"?" }}</td>
+          <td style="padding:.55rem .8rem;font-family:monospace;font-size:.8rem">{{ player.national_id_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if not deadline_passed %}
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+    <button type="submit" id="submitBtn"
+      style="padding:.65rem 1.5rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem;opacity:.5"
+      disabled>
+      <i class="bi bi-send"></i> Submit Squad
+    </button>
+    <a href="{% url 'ward_tm_fixtures' %}" style="font-size:.88rem;color:#555">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+  {% endif %}
 </form>
-
-<script>
-(function () {
-    var checkboxes = document.querySelectorAll('.player-checkbox');
-    var countEl    = document.getElementById('selected-count');
-    var selectAll  = document.getElementById('select-all');
-    var limit      = {{ squad_limit }};
-
-    function updateCount() {
-        var n = document.querySelectorAll('.player-checkbox:checked').length;
-        countEl.textContent = n + ' selected';
-        countEl.style.color = n > limit ? '#dc3545' : '#124491';
-    }
-
-    checkboxes.forEach(function (cb) {
-        cb.addEventListener('change', updateCount);
-    });
-
-    if (selectAll) {
-        selectAll.addEventListener('change', function () {
-            checkboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
-            updateCount();
-        });
-    }
-
-    // Initialise count
-    updateCount();
-})();
-
-function togglePlayer(row) {
-    var cb = row.querySelector('.player-checkbox');
-    if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
-}
-</script>
 
 {% else %}
 <div class="card" style="padding:2rem;text-align:center;color:#888">
-    <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
-    <p style="margin:0">
-        No WSCC-approved players available.
-        Your longlist must reach <strong>wscc_approved</strong> status before you can select a match-day squad.
-    </p>
-    <a href="{% url 'ward_tm_longlist' %}" class="btn btn--secondary" style="margin-top:1rem;display:inline-block">
-        <i class="bi bi-people"></i> View Longlist
-    </a>
+  <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+  <p>No WSCC-approved players available. Your longlist must be approved before selecting a squad.</p>
+  <a href="{% url 'ward_tm_longlist' %}" style="color:#124491">View Longlist →</a>
 </div>
 {% endif %}
 {% endif %}
 
-<div style="margin-top:1.5rem">
-    <a href="{% url 'ward_tm_fixtures' %}" style="font-size:.88rem;color:#124491">
-        <i class="bi bi-arrow-left"></i> Back to Fixtures
-    </a>
+<!-- Substitution history -->
+{% if subs_history %}
+<div class="card" style="padding:1.25rem;margin-top:1.5rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.75rem"><i class="bi bi-arrow-left-right"></i> Substitution History</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+    <thead><tr style="background:#f8f9fa">
+      <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Min</th>
+      <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Off</th>
+      <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">On</th>
+      <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Status</th>
+    </tr></thead>
+    <tbody>
+    {% for sub in subs_history %}
+    <tr style="border-bottom:1px solid #f0f0f0">
+      <td style="padding:.5rem .8rem">{{ sub.minute }}'</td>
+      <td style="padding:.5rem .8rem">{{ sub.player_off.first_name }} {{ sub.player_off.last_name }}</td>
+      <td style="padding:.5rem .8rem">{{ sub.player_on.first_name }} {{ sub.player_on.last_name }}</td>
+      <td style="padding:.5rem .8rem">
+        {% if sub.status == 'executed' %}<span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Executed</span>
+        {% elif sub.status == 'approved' %}<span style="background:#cfe2ff;color:#084298;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Approved</span>
+        {% elif sub.status == 'denied' %}<span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Denied</span>
+        {% else %}<span style="background:#fff3cd;color:#856404;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Pending</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if existing %}
+  <a href="{% url 'ward_tm_substitution' fixture.pk %}" style="font-size:.85rem;color:#124491;display:inline-block;margin-top:.75rem">
+    <i class="bi bi-plus-circle"></i> Request Substitution
+  </a>
+  {% endif %}
 </div>
+{% endif %}
+
+<script>
+(function() {
+  var minS = {{ required_starters }};
+  var maxS = {{ required_starters }};
+  var maxSubs = {{ squad_rules.max_subs }};
+  var needGk = {{ is_football_or_handball|yesno:"true,false" }};
+  var needFormation = {{ is_football_or_handball|yesno:"true,false" }};
+
+  function update() {
+    var starters = document.querySelectorAll('.starter-cb:checked');
+    var subs = document.querySelectorAll('.sub-cb:checked');
+    var sc = starters.length, subc = subs.length;
+
+    document.getElementById('starterCount').textContent = sc;
+    document.getElementById('subCount').textContent = subc;
+
+    var errors = [];
+    if (sc < minS) errors.push('Need ' + minS + ' starters (have ' + sc + ')');
+    if (sc > maxS) errors.push('Max ' + maxS + ' starters');
+    if (subc > maxSubs) errors.push('Max ' + maxSubs + ' subs');
+
+    if (needGk) {
+      var starterGK = 0, subGK = 0;
+      starters.forEach(function(cb) { if (cb.dataset.pos === 'GK') starterGK++; });
+      subs.forEach(function(cb) { if (cb.dataset.pos === 'GK') subGK++; });
+      document.getElementById('gkStatus').textContent = 'GK: ' + starterGK + ' starter, ' + subGK + ' sub';
+      document.getElementById('gkStatus').style.color = (starterGK >= 1 && (subc === 0 || subGK >= 1)) ? '#198754' : '#dc3545';
+      if (starterGK < 1) errors.push('GK required in starters');
+      if (subc > 0 && subGK < 1) errors.push('GK required in subs');
+    }
+
+    if (needFormation) {
+      var f = document.getElementById('formation');
+      if (f && !f.value.trim()) errors.push('Formation required');
+    }
+
+    document.getElementById('validMsg').textContent = errors.length ? errors[0] : '';
+    var btn = document.getElementById('submitBtn');
+    if (btn) { btn.disabled = errors.length > 0; btn.style.opacity = errors.length ? '.5' : '1'; }
+  }
+
+  document.querySelectorAll('.starter-cb').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      if (this.checked) {
+        var sb = document.querySelector('.sub-cb[data-pk="' + this.dataset.pk + '"]');
+        if (sb) sb.checked = false;
+      }
+      update();
+    });
+  });
+  document.querySelectorAll('.sub-cb').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      if (this.checked) {
+        var st = document.querySelector('.starter-cb[data-pk="' + this.dataset.pk + '"]');
+        if (st) st.checked = false;
+      }
+      update();
+    });
+  });
+  var fInput = document.getElementById('formation');
+  if (fInput) fInput.addEventListener('input', update);
+  update();
+})();
+</script>
 {% endblock %}

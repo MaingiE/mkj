@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Substitutions — Ligi Mashinani{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'ward_tm_dashboard' %}">Dashboard</a>
+    <a href="{% url 'ward_tm_fixtures' %}">Fixtures</a>
+    <a href="{% url 'ward_tm_ward_squad' fixture.pk %}">Squad</a>
+    <span>Substitutions</span>
+  </div>
+  <h1><i class="bi bi-arrow-left-right"></i> Substitution Requests</h1>
+  <p style="color:#555;font-size:.9rem">
+    <strong>{{ fixture.home_team }}</strong> vs <strong>{{ fixture.away_team }}</strong>
+    &mdash; {{ fixture.match_date|date:"d M Y" }}
+  </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Sub stats strip -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem;margin-bottom:1.5rem">
+  <div style="background:#cfe2ff;border:1px solid #b6d4fe;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.6rem;font-weight:800;color:#084298">{{ normal_used }}</div>
+    <div style="font-size:.72rem;color:#084298;text-transform:uppercase">Subs Used{% if normal_limit %} / {{ normal_limit }}{% endif %}</div>
+  </div>
+  <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.6rem;font-weight:800;color:#0a3622">{{ on_pitch_players|length }}</div>
+    <div style="font-size:.72rem;color:#0a3622;text-transform:uppercase">On Pitch</div>
+  </div>
+  <div style="background:#fff3cd;border:1px solid #ffecb5;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.6rem;font-weight:800;color:#856404">{{ bench_players|length }}</div>
+    <div style="font-size:.72rem;color:#856404;text-transform:uppercase">Bench Available</div>
+  </div>
+</div>
+
+<!-- Pending requests -->
+{% if pending %}
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.75rem"><i class="bi bi-hourglass-split" style="color:#856404"></i> Pending ({{ pending.count }})</h2>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.86rem">
+      <thead><tr style="background:#fff3cd">
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Min</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Off</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">On</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Status</th>
+      </tr></thead>
+      <tbody>
+      {% for sub in pending %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.5rem .8rem;font-weight:600">{{ sub.minute }}'</td>
+        <td style="padding:.5rem .8rem">{{ sub.player_off.first_name }} {{ sub.player_off.last_name }}</td>
+        <td style="padding:.5rem .8rem">{{ sub.player_on.first_name }} {{ sub.player_on.last_name }}</td>
+        <td style="padding:.5rem .8rem">
+          <span style="background:#fff3cd;color:#856404;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">{{ sub.get_status_display }}</span>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- New substitution request form -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.5rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-plus-circle"></i> New Substitution Request</h2>
+
+  {% if bench_players %}
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Player Off (currently on pitch) *</label>
+        <select name="player_off" style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem" required>
+          <option value="">— Select player coming off —</option>
+          {% for p in on_pitch_players %}
+          <option value="{{ p.pk }}">{{ p.first_name }} {{ p.last_name }}{% if p.position %} ({{ p.position }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Player On (from bench) *</label>
+        <select name="player_on" style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem" required>
+          <option value="">— Select replacement from bench —</option>
+          {% for p in bench_players %}
+          <option value="{{ p.pk }}">{{ p.first_name }} {{ p.last_name }}{% if p.position %} ({{ p.position }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Minute *</label>
+        <input type="number" name="minute" min="0" max="150" placeholder="e.g. 65"
+          style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem" required>
+      </div>
+
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Reason (optional)</label>
+        <input type="text" name="reason" placeholder="Tactical / injury / fatigue…"
+          style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+      </div>
+    </div>
+
+    {% if normal_limit and normal_used >= normal_limit %}
+    <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:6px;padding:.65rem .9rem;margin-bottom:1rem;font-size:.85rem;color:#842029">
+      <i class="bi bi-exclamation-circle"></i> All {{ normal_limit }} substitutions have been used.
+    </div>
+    {% else %}
+    <button type="submit" style="padding:.6rem 1.4rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem">
+      <i class="bi bi-send"></i> Submit Request
+    </button>
+    {% endif %}
+  </form>
+  {% else %}
+  <p style="color:#888;font-size:.9rem;text-align:center;padding:1rem 0">
+    No bench players available. All substitutions have been made.
+  </p>
+  {% endif %}
+</div>
+
+<!-- Full substitution history -->
+{% if all_subs %}
+<div class="card" style="padding:1.25rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.75rem"><i class="bi bi-clock-history"></i> Full History</h2>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="background:#f8f9fa">
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Min</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Player Off</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Player On</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Status</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Official</th>
+      </tr></thead>
+      <tbody>
+      {% for sub in all_subs %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.5rem .8rem;font-weight:600">{{ sub.minute }}'</td>
+        <td style="padding:.5rem .8rem">{{ sub.player_off.first_name }} {{ sub.player_off.last_name }}</td>
+        <td style="padding:.5rem .8rem">{{ sub.player_on.first_name }} {{ sub.player_on.last_name }}</td>
+        <td style="padding:.5rem .8rem">
+          {% if sub.status == 'executed' %}<span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.75rem;font-weight:600">✅ Executed</span>
+          {% elif sub.status == 'approved' %}<span style="background:#cfe2ff;color:#084298;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Approved</span>
+          {% elif sub.status == 'denied' %}<span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Denied</span>
+          {% else %}<span style="background:#fff3cd;color:#856404;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">⏳ Pending</span>{% endif %}
+        </td>
+        <td style="padding:.5rem .8rem;font-size:.82rem;color:#888">{{ sub.approved_by.get_full_name|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem">
+  <a href="{% url 'ward_tm_ward_squad' fixture.pk %}" style="font-size:.88rem;color:#124491">
+    <i class="bi bi-arrow-left"></i> Back to Squad
+  </a>
+</div>
+{% endblock %}

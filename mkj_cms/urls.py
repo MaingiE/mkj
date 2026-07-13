@@ -259,6 +259,9 @@ from .web_views import (
     scso_transfer_action_view,
     # Ligi Mashinani: Player Register (read-only, all roles)
     ligi_player_register_view,
+    # Ligi Mashinani: Ward substitution system
+    ward_tm_substitution_view,
+    ward_sub_approve_view,
 )
 
 from teams.ligi_views import ligi_register_view
@@ -615,6 +618,10 @@ urlpatterns = [
 
     # ── LIGI MASHINANI: Player Register (read-only, multi-role) ──────────────
     path("ligi/player-register/", ligi_player_register_view, name="ligi_player_register"),
+
+    # ── LIGI MASHINANI: Ward Squad Substitutions ──────────────────────────────
+    path("ligi/fixtures/<int:fixture_pk>/substitutions/", ward_tm_substitution_view, name="ward_tm_substitution"),
+    path("ligi/substitutions/<int:sub_pk>/action/", ward_sub_approve_view, name="ward_sub_approve"),
 
     # ── APPEALS & JURY ────────────────────────────────────────────────────────
     path("portal/appeals/", include("appeals.urls")),

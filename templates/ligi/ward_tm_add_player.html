@@ -3,183 +3,173 @@
 
 {% block content %}
 <div class="page-header">
-    <div class="breadcrumb">
-        <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
-        <a href="{% url 'ward_tm_longlist' %}">Player Longlist</a>
-        <span>Add Player</span>
-    </div>
-    <h1><i class="bi bi-person-plus"></i> Add Player to Longlist</h1>
-    <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward &mdash; {{ discipline.get_sport_type_display }}</p>
+  <div class="breadcrumb">
+    <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
+    <a href="{% url 'ward_tm_longlist' %}">Player Longlist</a>
+    <span>Add Player</span>
+  </div>
+  <h1><i class="bi bi-person-plus"></i> Add Player to Longlist</h1>
+  <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward &mdash; {{ discipline.get_sport_type_display }}</p>
 </div>
 
 {% if messages %}
 <div style="margin-bottom:1rem">
-    {% for msg in messages %}
-    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
-        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
-        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
-        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
-        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
-        {{ msg }}
-    </div>
-    {% endfor %}
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+    {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+    {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
 </div>
 {% endif %}
 
-<div class="card" style="padding:1.75rem;max-width:700px">
-    <p style="font-size:.85rem;color:#666;margin-bottom:1.25rem">
-        Fields marked <strong>*</strong> are required.
-        The player must have a National ID number, date of birth, passport photo,
-        and at least one identity document (National ID copy or Birth Certificate copy).
-    </p>
+<div class="card" style="padding:1.75rem;max-width:720px">
 
-    <form method="post" enctype="multipart/form-data" novalidate>
-        {% csrf_token %}
+  <!-- Required fields notice -->
+  <div style="background:#f0f4ff;border-left:4px solid #124491;border-radius:4px;padding:.75rem 1rem;margin-bottom:1.5rem;font-size:.85rem;color:#333">
+    <strong>Required for every player:</strong> Full name, National ID, Date of Birth,
+    <strong style="color:#dc3545">Passport-size photo</strong>, and at least one identity document (National ID copy or Birth Certificate).
+  </div>
 
-        <!-- Non-field errors -->
-        {% if form.non_field_errors %}
-        <div style="background:#f8d7da;color:#842029;border:1px solid #f5c2c7;border-radius:6px;padding:.8rem 1rem;margin-bottom:1rem">
-            {% for error in form.non_field_errors %}
-            <p style="margin:0">{{ error }}</p>
-            {% endfor %}
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div style="background:#f8d7da;color:#842029;border:1px solid #f5c2c7;border-radius:6px;padding:.8rem 1rem;margin-bottom:1rem">
+      {% for error in form.non_field_errors %}<p style="margin:0">{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── PASSPORT PHOTO (top, most prominent) ────────────────── -->
+    <div style="margin-bottom:1.5rem;padding:1.1rem;background:#fff8f8;border:2px solid {% if form.photo.errors %}#dc3545{% else %}#f5c2c7{% endif %};border-radius:8px">
+      <label style="font-size:.9rem;font-weight:700;display:block;margin-bottom:.6rem;color:#842029">
+        <i class="bi bi-camera"></i> Passport-Size Photo <span style="color:#dc3545">*</span>
+        <span style="font-weight:400;font-size:.78rem;color:#666"> — Clear face photo, white/plain background</span>
+      </label>
+
+      <!-- Live preview -->
+      <div id="photoPreviewWrap" style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <div id="photoPreview" style="width:100px;height:120px;border-radius:8px;border:2px dashed #f5c2c7;background:#f8f9fa;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+          <span id="photoPlaceholder" style="font-size:.72rem;color:#999;text-align:center;padding:.3rem">No photo<br>selected</span>
+          <img id="photoImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover">
         </div>
-        {% endif %}
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <!-- First Name -->
-            <div>
-                <label for="{{ form.first_name.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.first_name.label }}
-                </label>
-                {{ form.first_name }}
-                {% if form.first_name.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.first_name.errors.0 }}</p>
-                {% endif %}
-            </div>
-            <!-- Last Name -->
-            <div>
-                <label for="{{ form.last_name.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.last_name.label }}
-                </label>
-                {{ form.last_name }}
-                {% if form.last_name.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.last_name.errors.0 }}</p>
-                {% endif %}
-            </div>
+        <div style="flex:1;min-width:200px">
+          {{ form.photo }}
+          {% if form.photo.errors %}
+          <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.photo.errors.0 }}</p>
+          {% endif %}
+          <p style="font-size:.75rem;color:#888;margin:.4rem 0 0">JPG or PNG, max 5 MB. The photo will be displayed in the WSCC review.</p>
         </div>
+      </div>
+    </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <!-- National ID -->
-            <div>
-                <label for="{{ form.national_id_number.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.national_id_number.label }}
-                </label>
-                {{ form.national_id_number }}
-                {% if form.national_id_number.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.national_id_number.errors.0 }}</p>
-                {% endif %}
-            </div>
-            <!-- Date of Birth -->
-            <div>
-                <label for="{{ form.date_of_birth.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.date_of_birth.label }}
-                </label>
-                {{ form.date_of_birth }}
-                {% if form.date_of_birth.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.date_of_birth.errors.0 }}</p>
-                {% endif %}
-            </div>
+    <!-- ── PERSONAL DETAILS ────────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div>
+        <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.first_name.label }}</label>
+        {{ form.first_name }}
+        {% if form.first_name.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.first_name.errors.0 }}</p>{% endif %}
+      </div>
+      <div>
+        <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.last_name.label }}</label>
+        {{ form.last_name }}
+        {% if form.last_name.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.last_name.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div>
+        <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.national_id_number.label }}</label>
+        {{ form.national_id_number }}
+        {% if form.national_id_number.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.national_id_number.errors.0 }}</p>{% endif %}
+      </div>
+      <div>
+        <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.date_of_birth.label }}</label>
+        {{ form.date_of_birth }}
+        {% if form.date_of_birth.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.date_of_birth.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div>
+        <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.huduma_number.label }}</label>
+        {{ form.huduma_number }}
+        {% if form.huduma_number.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.huduma_number.errors.0 }}</p>{% endif %}
+      </div>
+      <div>
+        <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.phone.label }}</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.phone.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.25rem">
+      <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.position.label }}</label>
+      {{ form.position }}
+      {% if form.position.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.position.errors.0 }}</p>{% endif %}
+    </div>
+
+    <!-- ── IDENTITY DOCUMENTS ───────────────────────────────────── -->
+    <div style="border-top:1px solid #dee2e6;padding-top:1.1rem;margin-top:1rem">
+      <p style="font-size:.88rem;font-weight:700;color:#333;margin-bottom:1rem">
+        <i class="bi bi-file-earmark-text"></i> Identity Documents
+        <span style="font-weight:400;font-size:.8rem;color:#666"> — Upload at least one</span>
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div>
+          <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.id_document.label }}</label>
+          {{ form.id_document }}
+          {% if form.id_document.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.id_document.errors.0 }}</p>{% endif %}
+          <p style="font-size:.75rem;color:#888;margin:.3rem 0 0">Scan or clear photo of National ID</p>
         </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <!-- Huduma Number -->
-            <div>
-                <label for="{{ form.huduma_number.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.huduma_number.label }}
-                </label>
-                {{ form.huduma_number }}
-                {% if form.huduma_number.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.huduma_number.errors.0 }}</p>
-                {% endif %}
-            </div>
-            <!-- Phone -->
-            <div>
-                <label for="{{ form.phone.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.phone.label }}
-                </label>
-                {{ form.phone }}
-                {% if form.phone.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.phone.errors.0 }}</p>
-                {% endif %}
-            </div>
+        <div>
+          <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.birth_certificate.label }}</label>
+          {{ form.birth_certificate }}
+          {% if form.birth_certificate.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.birth_certificate.errors.0 }}</p>{% endif %}
+          <p style="font-size:.75rem;color:#888;margin:.3rem 0 0">Required if no National ID copy uploaded</p>
         </div>
+      </div>
+    </div>
 
-        <!-- Position -->
-        <div style="margin-bottom:1rem">
-            <label for="{{ form.position.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                {{ form.position.label }}
-            </label>
-            {{ form.position }}
-            {% if form.position.errors %}
-            <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.position.errors.0 }}</p>
-            {% endif %}
-        </div>
-
-        <hr style="margin:1.25rem 0;border:none;border-top:1px solid #dee2e6">
-        <p style="font-size:.84rem;color:#555;font-weight:600;margin-bottom:1rem">
-            <i class="bi bi-image"></i> Documents &amp; Photos
-        </p>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <!-- Passport Photo -->
-            <div>
-                <label for="{{ form.photo.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.photo.label }}
-                </label>
-                {{ form.photo }}
-                {% if form.photo.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.photo.errors.0 }}</p>
-                {% endif %}
-                <p style="font-size:.78rem;color:#888;margin:.3rem 0 0">Passport-size photo of the player</p>
-            </div>
-            <!-- National ID copy -->
-            <div>
-                <label for="{{ form.id_document.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                    {{ form.id_document.label }}
-                </label>
-                {{ form.id_document }}
-                {% if form.id_document.errors %}
-                <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.id_document.errors.0 }}</p>
-                {% endif %}
-                <p style="font-size:.78rem;color:#888;margin:.3rem 0 0">Scan or photo of National ID card</p>
-            </div>
-        </div>
-
-        <!-- Birth Certificate -->
-        <div style="margin-bottom:1.5rem">
-            <label for="{{ form.birth_certificate.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">
-                {{ form.birth_certificate.label }}
-            </label>
-            {{ form.birth_certificate }}
-            {% if form.birth_certificate.errors %}
-            <p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.birth_certificate.errors.0 }}</p>
-            {% endif %}
-            <p style="font-size:.78rem;color:#888;margin:.3rem 0 0">
-                Required only if no National ID copy is uploaded. At least one identity document is required.
-            </p>
-        </div>
-
-        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-            <button type="submit" name="action" value="add_more" class="btn btn--primary">
-                <i class="bi bi-person-plus"></i> Save &amp; Add Another
-            </button>
-            <button type="submit" name="action" value="finish" class="btn btn--secondary">
-                <i class="bi bi-check"></i> Save &amp; Finish
-            </button>
-            <a href="{% url 'ward_tm_longlist' %}" style="padding:.5rem 1rem;font-size:.88rem;color:#666;text-decoration:none;border:1px solid #dee2e6;border-radius:6px">
-                Cancel
-            </a>
-        </div>
-    </form>
+    <!-- ── ACTION BUTTONS ──────────────────────────────────────── -->
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;padding-top:.75rem;border-top:1px solid #dee2e6;margin-top:.5rem">
+      <button type="submit" name="action" value="add_more" class="btn btn--primary">
+        <i class="bi bi-person-plus"></i> Save &amp; Add Another
+      </button>
+      <button type="submit" name="action" value="finish" class="btn btn--secondary">
+        <i class="bi bi-check"></i> Save &amp; Finish
+      </button>
+      <a href="{% url 'ward_tm_longlist' %}"
+         style="padding:.5rem 1rem;font-size:.88rem;color:#666;text-decoration:none;border:1px solid #dee2e6;border-radius:6px">
+        Cancel
+      </a>
+    </div>
+  </form>
 </div>
+
+<script>
+/* Live passport photo preview */
+(function() {
+  var input = document.getElementById('{{ form.photo.id_for_label }}');
+  var img   = document.getElementById('photoImg');
+  var ph    = document.getElementById('photoPlaceholder');
+  var wrap  = document.getElementById('photoPreview');
+  if (!input) return;
+  input.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+        ph.style.display  = 'none';
+        wrap.style.border = '2px solid #198754';
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
+  });
+})();
+</script>
 {% endblock %}

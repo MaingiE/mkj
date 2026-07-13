@@ -1943,3 +1943,78 @@ class LigiTransferRequest(models.Model):
             LigiTransferStatus.WSCC_REJECTED,
             LigiTransferStatus.SCSO_REJECTED,
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WARD SUBSTITUTION REQUEST (Ligi Mashinani)
+#  Mirrors SubstitutionRequest but uses CountyPlayer FK.
+#  Ward TM requests → WSCC/4th official approves → executed.
+# ══════════════════════════════════════════════════════════════════════════════
+
+class WardSubstitutionStatus(models.TextChoices):
+    REQUESTED = "requested", "Requested"
+    APPROVED  = "approved",  "Approved"
+    EXECUTED  = "executed",  "Executed"
+    DENIED    = "denied",    "Denied"
+
+
+class WardSubstitutionRequest(models.Model):
+    """
+    Substitution request for Ligi Mashinani ward-level fixtures.
+    Uses CountyPlayer (not Player) because ward players are stored as CountyPlayer records.
+    """
+    fixture    = models.ForeignKey(
+        "competitions.Fixture",
+        on_delete=models.CASCADE,
+        related_name="ward_substitution_requests",
+    )
+    team = models.ForeignKey(
+        "teams.Team",
+        on_delete=models.CASCADE,
+        related_name="ward_substitution_requests",
+    )
+    player_off = models.ForeignKey(
+        "teams.CountyPlayer",
+        on_delete=models.CASCADE,
+        related_name="ward_subbed_off",
+        help_text="Ward player coming off",
+    )
+    player_on = models.ForeignKey(
+        "teams.CountyPlayer",
+        on_delete=models.CASCADE,
+        related_name="ward_subbed_on",
+        help_text="Ward player coming on",
+    )
+    minute = models.PositiveIntegerField(help_text="Match minute")
+    status = models.CharField(
+        max_length=12,
+        choices=WardSubstitutionStatus.choices,
+        default=WardSubstitutionStatus.REQUESTED,
+    )
+    reason = models.TextField(blank=True, default="")
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="ward_sub_requests_made",
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="ward_sub_requests_approved",
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    decided_at   = models.DateTimeField(null=True, blank=True)
+    denial_reason = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ["fixture", "minute"]
+        verbose_name = "Ward Substitution Request"
+        verbose_name_plural = "Ward Substitution Requests"
+
+    def __str__(self):
+        return (
+            f"Ward Sub: {self.player_off.first_name} → {self.player_on.first_name} "
+            f"min {self.minute} [{self.get_status_display()}]"
+        )

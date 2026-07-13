@@ -12402,8 +12402,8 @@ def _get_ward_tm_context(user):
 @role_required('team_manager')
 def ward_tm_longlist_view(request):
     """
-    Display all CountyPlayer objects for the Ward Team Manager's ward discipline
-    (level=ward, sub_county/ward matching the logged-in user).
+    Display all CountyPlayer objects for the Ward Team Manager's ward discipline.
+    Supports ?sort= (name|age|position|docs) and ?view= (table|cards).
 
     Requirements: 3.1, 12.1
     URL: /ligi/longlist/
@@ -12419,15 +12419,39 @@ def ward_tm_longlist_view(request):
         )
         return redirect('ward_tm_dashboard')
 
-    players = CountyPlayer.objects.filter(
-        discipline=discipline,
-    ).order_by('last_name', 'first_name')
+    sort = request.GET.get('sort', 'name').strip()
+    qs = CountyPlayer.objects.filter(discipline=discipline)
+
+    if sort == 'age':
+        # Annotate with age for sorting: players with DOB first, then by age desc
+        from django.db.models import F
+        qs = qs.order_by(F('date_of_birth').asc(nulls_last=True))
+    elif sort == 'position':
+        qs = qs.order_by('position', 'last_name', 'first_name')
+    elif sort == 'docs':
+        # Missing docs first (photo or id_document is null)
+        from django.db.models import Case, When, Value, IntegerField
+        qs = qs.annotate(
+            docs_ok=Case(
+                When(photo='', then=Value(0)),
+                When(photo__isnull=True, then=Value(0)),
+                When(id_document='', then=Value(0)),
+                When(id_document__isnull=True, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        ).order_by('docs_ok', 'last_name', 'first_name')
+    else:
+        # default: name
+        qs = qs.order_by('last_name', 'first_name')
+
+    players = list(qs)
 
     context = {
         'discipline': discipline,
         'longlist': longlist,
         'players': players,
-        'player_count': players.count(),
+        'player_count': len(players),
         'ward': user.ward,
         'sub_county': user.sub_county,
     }
@@ -12842,138 +12866,156 @@ def ward_tm_fixtures_view(request):
 @role_required('team_manager')
 def ward_tm_ward_squad_view(request, fixture_pk):
     """
-    Ward Team Manager selects a match-day squad for a ward fixture.
+    Upgraded Ward Team Manager squad selection — full parity with MKJ Supa Cup.
+
+    - Starter / substitute split per sport (matches squad_select_view logic)
+    - Sport-specific rules from SPORT_SQUAD_RULES (min starters, max subs, GK rule)
+    - Formation required for football & handball
+    - Only WSCC-approved CountyPlayers shown (Higher League flagged players excluded)
+    - Deadline lock from SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF (default 2 hours)
+    - Re-submission resets squad to SUBMITTED (referee must re-approve)
 
     Requirements: 5.1, 5.2, 5.3, 5.5
-
-    - Only CountyPlayer objects whose WardLonglist.status = wscc_approved are shown.
-    - SQUAD_LIMITS per sport type are enforced; over-limit submissions are rejected.
-    - On submit: SquadSubmission.submitted_at is recorded and the squad is locked
-      once within SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF of kick-off.
+    URL: /ligi/fixtures/<pk>/squad/
     """
     from django.conf import settings as conf
-
-    SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF = getattr(
-        conf, 'SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF', 2
+    from matches.models import (
+        get_squad_rules, get_starters_for_sport, get_sport_family,
+        SquadSubmission, SquadPlayer, SquadStatus,
     )
+    from teams.models import WardSubstitutionRequest
 
+    SQUAD_SUBMISSION_HOURS = getattr(conf, 'SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF', 2)
     user = request.user
 
-    # ── Resolve the TM's ward discipline & longlist ───────────────────────
     discipline, longlist = _get_ward_tm_context(user)
     if discipline is None or longlist is None:
-        messages.error(
-            request,
-            'You do not have a ward discipline linked to your account. '
-            'Please contact the administrator.',
-        )
+        messages.error(request, 'No ward team found for your account.')
         return redirect('ward_tm_dashboard')
 
-    # ── Resolve the fixture (must belong to the same competition level/ward) ─
     fixture = get_object_or_404(Fixture, pk=fixture_pk)
+    sport_type   = fixture.competition.sport_type
+    sport_family = get_sport_family(sport_type)
+    squad_rules  = get_squad_rules(sport_type)
+    required_starters = get_starters_for_sport(sport_type)
+    is_football_or_handball = sport_family in ('football', 'handball')
 
-    sport_type = fixture.competition.sport_type
-    squad_limit = SQUAD_LIMITS.get(sport_type, 30)
-
-    # ── Determine which team this TM manages in the fixture ───────────────
-    # Ward teams are linked to a CountyDiscipline via Team.source_discipline
+    # Resolve team
     try:
         team = discipline.linked_team
     except Exception:
         team = None
-
     if team is None or (fixture.home_team != team and fixture.away_team != team):
-        messages.error(
-            request,
-            'Your team is not participating in this fixture.',
-        )
+        messages.error(request, 'Your team is not participating in this fixture.')
         return redirect('ward_tm_fixtures')
 
-    # ── Deadline enforcement ──────────────────────────────────────────────
+    # Deadline
     from datetime import timedelta
-    kickoff_dt = fixture.kickoff_datetime  # naive datetime from Fixture.kickoff_datetime
+    kickoff_dt = fixture.kickoff_datetime
     if timezone.is_naive(kickoff_dt):
         kickoff_dt = timezone.make_aware(kickoff_dt, timezone.get_current_timezone())
-
-    deadline = kickoff_dt - timedelta(hours=SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF)
+    deadline = kickoff_dt - timedelta(hours=SQUAD_SUBMISSION_HOURS)
     now = timezone.now()
     deadline_passed = now >= deadline
 
-    # ── Existing squad submission ──────────────────────────────────────────
+    # Existing squad
     existing = SquadSubmission.objects.filter(fixture=fixture, team=team).first()
-
-    # Squad is locked once submitted and within the deadline window
     squad_locked = (
         existing is not None
         and existing.status == SquadStatus.SUBMITTED
         and deadline_passed
     )
 
-    # ── WSCC-approved players only (Req 5.1, 7.5, 7.7) ──────────────────
-    # Exclude players flagged in the Higher League Check (Req 7.7) and
-    # exclude players whose verification_status is not 'verified' at
-    # sub-county level (Req 7.5 — applied here as a ward-level guard too).
+    # Pool: WSCC-approved, no higher-league flags
     approved_players = CountyPlayer.objects.filter(
         discipline=discipline,
         discipline__ward_longlist__status=WardLonglistStatus.WSCC_APPROVED,
-    ).exclude(
-        higher_league_status='flagged'
-    ).order_by('last_name', 'first_name')
+    ).exclude(higher_league_status='flagged').order_by('last_name', 'first_name')
 
-    # Current selected player PKs
-    selected_pks = []
+    # Currently selected starters / subs
+    starter_pks = []
+    sub_pks = []
+    saved_formation = ''
     if existing:
-        selected_pks = list(
+        starter_pks = list(
             existing.squad_players
-            .filter(county_player__isnull=False)
+            .filter(county_player__isnull=False, is_starter=True)
             .values_list('county_player_id', flat=True)
         )
+        sub_pks = list(
+            existing.squad_players
+            .filter(county_player__isnull=False, is_starter=False)
+            .values_list('county_player_id', flat=True)
+        )
+        saved_formation = existing.formation or ''
 
     if request.method == 'POST':
-        # ── Lock guard ────────────────────────────────────────────────────
         if squad_locked:
-            messages.error(
-                request,
-                f'Squad submission is locked — the kick-off deadline has passed '
-                f'({deadline.strftime("%d %b %Y %H:%M")}).',
-            )
+            messages.error(request, f'Squad locked — deadline passed ({deadline.strftime("%d %b %Y %H:%M")}).')
             return redirect('ward_tm_fixtures')
 
-        selected_ids = request.POST.getlist('players')
-        selected_ids = [int(pk) for pk in selected_ids if pk]
+        selected_starters = [int(x) for x in request.POST.getlist('starters') if x]
+        selected_subs     = [int(x) for x in request.POST.getlist('subs') if x]
+        formation = request.POST.get('formation', '').strip()
 
-        # ── Enforce squad size limit (Req 5.2, 5.5) ──────────────────────
-        if len(selected_ids) > squad_limit:
-            messages.error(
-                request,
-                f'Squad exceeds the maximum allowed size for this discipline. '
-                f'Maximum allowed: {squad_limit} players. '
-                f'You selected: {len(selected_ids)} players.',
-            )
-            # Re-render with selections intact
+        min_starters = squad_rules.get('min_starters', 1)
+        max_subs     = squad_rules.get('max_subs', 99)
+        max_squad    = squad_rules.get('max_squad', SQUAD_LIMITS.get(sport_type, 30))
+
+        errors = []
+
+        # Overlap check
+        if set(selected_starters) & set(selected_subs):
+            errors.append('A player cannot be both a starter and a substitute.')
+
+        # Count checks
+        if len(selected_starters) < min_starters:
+            errors.append(f'Minimum {min_starters} starters required (you selected {len(selected_starters)}).')
+        if len(selected_starters) > required_starters:
+            errors.append(f'Maximum {required_starters} starters for this sport (you selected {len(selected_starters)}).')
+        if len(selected_subs) > max_subs:
+            errors.append(f'Maximum {max_subs} substitutes allowed (you selected {len(selected_subs)}).')
+        if (len(selected_starters) + len(selected_subs)) > max_squad:
+            errors.append(f'Total squad cannot exceed {max_squad} players.')
+
+        # GK rule for football & handball
+        if is_football_or_handball:
+            valid_pks_set = set(approved_players.values_list('pk', flat=True))
+            starter_objs = approved_players.filter(pk__in=selected_starters)
+            sub_objs     = approved_players.filter(pk__in=selected_subs)
+            starter_gk = starter_objs.filter(position='GK').count()
+            sub_gk     = sub_objs.filter(position='GK').count()
+            if starter_gk < 1:
+                errors.append('Starting lineup must include at least one Goalkeeper (GK).')
+            if selected_subs and sub_gk < 1:
+                errors.append('Substitute list must include at least one Goalkeeper (GK).')
+            # Formation required
+            if not formation:
+                errors.append('Playing formation is required (e.g. 4-3-3, 4-4-2).')
+
+        # Validate all PKs are in approved pool
+        valid_pks_set = set(approved_players.values_list('pk', flat=True))
+        bad = [pk for pk in selected_starters + selected_subs if pk not in valid_pks_set]
+        if bad:
+            errors.append('One or more players are not in your WSCC-approved longlist.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
             return render(request, 'ligi/ward_tm_ward_squad.html', {
-                'fixture': fixture,
-                'team': team,
+                'fixture': fixture, 'team': team,
                 'approved_players': approved_players,
-                'selected_pks': selected_ids,
-                'squad_limit': squad_limit,
-                'sport_type': sport_type,
-                'existing': existing,
-                'deadline': deadline,
-                'deadline_passed': deadline_passed,
-                'squad_locked': squad_locked,
+                'starter_pks': selected_starters, 'sub_pks': selected_subs,
+                'saved_formation': formation,
+                'squad_rules': squad_rules, 'required_starters': required_starters,
+                'is_football_or_handball': is_football_or_handball,
+                'sport_type': sport_type, 'sport_family': sport_family,
+                'existing': existing, 'deadline': deadline,
+                'deadline_passed': deadline_passed, 'squad_locked': squad_locked,
+                'squad_limit': SQUAD_LIMITS.get(sport_type, 30),
             })
 
-        # Validate all submitted PKs belong to approved_players
-        valid_pks = set(approved_players.values_list('pk', flat=True))
-        invalid = [pk for pk in selected_ids if pk not in valid_pks]
-        if invalid:
-            messages.error(request, 'One or more selected players are not on your WSCC-approved longlist.')
-            return redirect('ward_tm_ward_squad', fixture_pk=fixture_pk)
-
-        selected_players = list(approved_players.filter(pk__in=selected_ids))
-
-        # ── Save / update SquadSubmission (Req 5.3) ───────────────────────
+        # Save squad
         if existing:
             existing.squad_players.all().delete()
             submission = existing
@@ -12983,35 +13025,182 @@ def ward_tm_ward_squad_view(request, fixture_pk):
         submission.status = SquadStatus.SUBMITTED
         submission.submitted_at = timezone.now()
         submission.rejection_reason = ''
+        submission.reviewed_by = None
+        submission.reviewed_at = None
+        if is_football_or_handball:
+            submission.formation = formation
         submission.save()
 
-        for cp in selected_players:
+        starter_objs = approved_players.filter(pk__in=selected_starters)
+        sub_objs     = approved_players.filter(pk__in=selected_subs)
+
+        for cp in starter_objs:
             SquadPlayer.objects.create(
                 submission=submission,
                 county_player=cp,
                 is_starter=True,
                 shirt_number=cp.jersey_number or 0,
             )
+        for cp in sub_objs:
+            SquadPlayer.objects.create(
+                submission=submission,
+                county_player=cp,
+                is_starter=False,
+                shirt_number=cp.jersey_number or 0,
+            )
 
         messages.success(
             request,
-            f'✅ Match-day squad submitted for {fixture.home_team} vs {fixture.away_team}. '
-            f'{len(selected_players)} player(s) selected.',
+            f'✅ Squad submitted — {len(selected_starters)} starters, {len(selected_subs)} subs.'
         )
         return redirect('ward_tm_fixtures')
 
+    # Substitution history for this fixture
+    subs_history = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team,
+    ).select_related('player_off', 'player_on').order_by('minute')
+
     return render(request, 'ligi/ward_tm_ward_squad.html', {
-        'fixture': fixture,
-        'team': team,
+        'fixture': fixture, 'team': team,
         'approved_players': approved_players,
-        'selected_pks': selected_pks,
-        'squad_limit': squad_limit,
-        'sport_type': sport_type,
-        'existing': existing,
-        'deadline': deadline,
-        'deadline_passed': deadline_passed,
-        'squad_locked': squad_locked,
+        'starter_pks': starter_pks, 'sub_pks': sub_pks,
+        'saved_formation': saved_formation,
+        'squad_rules': squad_rules, 'required_starters': required_starters,
+        'is_football_or_handball': is_football_or_handball,
+        'sport_type': sport_type, 'sport_family': sport_family,
+        'existing': existing, 'deadline': deadline,
+        'deadline_passed': deadline_passed, 'squad_locked': squad_locked,
+        'squad_limit': SQUAD_LIMITS.get(sport_type, 30),
+        'subs_history': subs_history,
     })
+
+    # Must have a submitted squad
+    squad_sub = SquadSubmission.objects.filter(fixture=fixture, team=team).first()
+    if not squad_sub:
+        messages.error(request, 'Submit your match-day squad before requesting substitutions.')
+        return redirect('ward_tm_ward_squad', fixture_pk=fixture_pk)
+
+    # Build on-pitch / bench sets from SquadPlayer
+    starters = set(
+        squad_sub.squad_players.filter(county_player__isnull=False, is_starter=True)
+        .values_list('county_player_id', flat=True)
+    )
+    bench = set(
+        squad_sub.squad_players.filter(county_player__isnull=False, is_starter=False)
+        .values_list('county_player_id', flat=True)
+    )
+
+    executed_subs = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team, status=WardSubstitutionStatus.EXECUTED,
+    )
+    on_pitch = set(starters)
+    used_from_bench = set()
+    for sub in executed_subs:
+        on_pitch.discard(sub.player_off_id)
+        on_pitch.add(sub.player_on_id)
+        used_from_bench.add(sub.player_on_id)
+    available_bench = bench - used_from_bench
+
+    # Sub limits from sport rules
+    normal_limit = rules.get('normal_sub_limit')  # None = unlimited
+    normal_used = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team, status=WardSubstitutionStatus.EXECUTED,
+    ).count()
+
+    on_pitch_players = CountyPlayer.objects.filter(pk__in=on_pitch).order_by('last_name')
+    bench_players = CountyPlayer.objects.filter(pk__in=available_bench).order_by('last_name')
+    all_subs = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team,
+    ).select_related('player_off', 'player_on', 'approved_by').order_by('minute')
+    pending = all_subs.filter(status__in=[WardSubstitutionStatus.REQUESTED, WardSubstitutionStatus.APPROVED])
+
+    if request.method == 'POST':
+        try:
+            player_off_id = int(request.POST.get('player_off', 0))
+            player_on_id = int(request.POST.get('player_on', 0))
+            minute = int(request.POST.get('minute', 0))
+        except (ValueError, TypeError):
+            messages.error(request, 'Invalid input.')
+            return redirect('ward_tm_substitution', fixture_pk=fixture_pk)
+
+        errors = []
+        if player_off_id == player_on_id:
+            errors.append('Player on and player off cannot be the same.')
+        if player_off_id not in on_pitch:
+            errors.append('The player being replaced is not on the pitch.')
+        if player_on_id not in available_bench:
+            errors.append('The replacement is not available on the bench.')
+        if normal_limit is not None and normal_used >= normal_limit:
+            errors.append(f'All {normal_limit} substitutions have been used.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            player_off = get_object_or_404(CountyPlayer, pk=player_off_id)
+            player_on  = get_object_or_404(CountyPlayer, pk=player_on_id)
+            WardSubstitutionRequest.objects.create(
+                fixture=fixture, team=team,
+                player_off=player_off, player_on=player_on,
+                minute=minute,
+                status=WardSubstitutionStatus.REQUESTED,
+                requested_by=user,
+            )
+            messages.success(
+                request,
+                f'Substitution requested: {player_off.first_name} {player_off.last_name} '
+                f'→ {player_on.first_name} {player_on.last_name} (min {minute})'
+            )
+        return redirect('ward_tm_substitution', fixture_pk=fixture_pk)
+
+    return render(request, 'ligi/ward_tm_substitution.html', {
+        'fixture': fixture, 'team': team,
+        'on_pitch_players': on_pitch_players,
+        'bench_players': bench_players,
+        'all_subs': all_subs,
+        'pending': pending,
+        'normal_used': normal_used,
+        'normal_limit': normal_limit,
+        'sport_family': sport_family,
+        'rules': rules,
+    })
+
+
+@role_required('ward_sports_council_chair', 'subcounty_sports_officer', 'admin', 'referee')
+def ward_sub_approve_view(request, sub_pk):
+    """
+    WSCC / SCSO / referee approves, executes, or denies a ward substitution request.
+    URL: /ligi/substitutions/<pk>/action/
+    """
+    from teams.models import WardSubstitutionRequest, WardSubstitutionStatus
+    sub = get_object_or_404(WardSubstitutionRequest, pk=sub_pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        now = timezone.now()
+        if action == 'approve':
+            sub.status = WardSubstitutionStatus.APPROVED
+            sub.approved_by = request.user
+            sub.decided_at = now
+            sub.save(update_fields=['status', 'approved_by', 'decided_at'])
+            messages.success(request, 'Substitution approved.')
+        elif action == 'execute':
+            sub.status = WardSubstitutionStatus.EXECUTED
+            sub.decided_at = now
+            sub.save(update_fields=['status', 'decided_at'])
+            messages.success(request, 'Substitution executed.')
+        elif action == 'deny':
+            reason = request.POST.get('denial_reason', '').strip()
+            sub.status = WardSubstitutionStatus.DENIED
+            sub.denial_reason = reason
+            sub.decided_at = now
+            sub.save(update_fields=['status', 'denial_reason', 'decided_at'])
+            messages.warning(request, 'Substitution denied.')
+
+    # Redirect back to appropriate dashboard
+    if request.user.role == 'ward_sports_council_chair':
+        return redirect('wscc_dashboard')
+    return redirect('subcounty_officer_dashboard')
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -15112,13 +15301,13 @@ def ligi_player_register_view(request):
 
     all_players = list(qs)
     for p in all_players:
-        p._computed_age = _calc_age(p)
+        p.age_computed = _calc_age(p)
 
     # ── Age-band split ────────────────────────────────────────────────────
-    under18  = [p for p in all_players if p._computed_age is not None and p._computed_age < 18]
-    eligible = [p for p in all_players if p._computed_age is not None and 18 <= p._computed_age <= 23]
-    over23   = [p for p in all_players if p._computed_age is not None and p._computed_age > 23]
-    unknown  = [p for p in all_players if p._computed_age is None]
+    under18  = [p for p in all_players if p.age_computed is not None and p.age_computed < 18]
+    eligible = [p for p in all_players if p.age_computed is not None and 18 <= p.age_computed <= 23]
+    over23   = [p for p in all_players if p.age_computed is not None and p.age_computed > 23]
+    unknown  = [p for p in all_players if p.age_computed is None]
 
     # ── Apply age_band filter AFTER computing bands ───────────────────────
     if f_age_band == 'under18':
@@ -15146,10 +15335,10 @@ def ligi_player_register_view(request):
 
     discipline_summary = []
     for (sc, ward, sport, disc_pk), players in sorted(by_discipline.items()):
-        u18 = [p for p in players if p._computed_age is not None and p._computed_age < 18]
-        elig = [p for p in players if p._computed_age is not None and 18 <= p._computed_age <= 23]
-        o23 = [p for p in players if p._computed_age is not None and p._computed_age > 23]
-        unk = [p for p in players if p._computed_age is None]
+        u18 = [p for p in players if p.age_computed is not None and p.age_computed < 18]
+        elig = [p for p in players if p.age_computed is not None and 18 <= p.age_computed <= 23]
+        o23 = [p for p in players if p.age_computed is not None and p.age_computed > 23]
+        unk = [p for p in players if p.age_computed is None]
         discipline_summary.append({
             'sub_county': sc, 'ward': ward, 'sport': sport, 'disc_pk': disc_pk,
             'total': len(players),
@@ -15215,3 +15404,170 @@ def ligi_player_register_view(request):
         'user_role': user.role,
     }
     return render(request, 'ligi/player_register.html', context)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI — WARD SUBSTITUTION SYSTEM
+#  Ward TM requests a substitution → WSCC / SCSO / referee action
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('team_manager')
+def ward_tm_substitution_view(request, fixture_pk):
+    """
+    Ward TM requests a substitution during a ward-level match.
+    Uses WardSubstitutionRequest (CountyPlayer FK, not Player FK).
+    Mirrors the logic of substitution_request_view but for ward fixtures.
+    URL: /ligi/fixtures/<pk>/substitutions/
+    """
+    from teams.models import WardSubstitutionRequest, WardSubstitutionStatus
+    from matches.models import get_squad_rules, get_sport_family
+    from matches.models import SquadSubmission, SquadStatus
+
+    user = request.user
+    discipline, longlist = _get_ward_tm_context(user)
+    if discipline is None:
+        return redirect('ward_tm_dashboard')
+
+    fixture = get_object_or_404(Fixture, pk=fixture_pk)
+    sport_type   = fixture.competition.sport_type
+    sport_family = get_sport_family(sport_type)
+    rules        = get_squad_rules(sport_type)
+
+    try:
+        team = discipline.linked_team
+    except Exception:
+        team = None
+    if team is None or (fixture.home_team != team and fixture.away_team != team):
+        messages.error(request, 'Your team is not in this fixture.')
+        return redirect('ward_tm_fixtures')
+
+    # Require a submitted squad
+    squad_sub = SquadSubmission.objects.filter(fixture=fixture, team=team).first()
+    if not squad_sub:
+        messages.error(request, 'Submit your match-day squad before requesting substitutions.')
+        return redirect('ward_tm_ward_squad', fixture_pk=fixture_pk)
+
+    # Build on-pitch / bench from SquadPlayer entries
+    starters = set(
+        squad_sub.squad_players.filter(county_player__isnull=False, is_starter=True)
+        .values_list('county_player_id', flat=True)
+    )
+    bench = set(
+        squad_sub.squad_players.filter(county_player__isnull=False, is_starter=False)
+        .values_list('county_player_id', flat=True)
+    )
+
+    executed_subs = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team, status=WardSubstitutionStatus.EXECUTED,
+    )
+    on_pitch = set(starters)
+    used_from_bench = set()
+    for sub in executed_subs:
+        on_pitch.discard(sub.player_off_id)
+        on_pitch.add(sub.player_on_id)
+        used_from_bench.add(sub.player_on_id)
+    available_bench = bench - used_from_bench
+
+    # Limits
+    normal_limit = rules.get('normal_sub_limit')  # None = unlimited
+    normal_used  = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team, status=WardSubstitutionStatus.EXECUTED,
+    ).count()
+
+    on_pitch_players = CountyPlayer.objects.filter(pk__in=on_pitch).order_by('last_name')
+    bench_players    = CountyPlayer.objects.filter(pk__in=available_bench).order_by('last_name')
+    all_subs = WardSubstitutionRequest.objects.filter(
+        fixture=fixture, team=team,
+    ).select_related('player_off', 'player_on', 'approved_by').order_by('minute')
+    pending = all_subs.filter(
+        status__in=[WardSubstitutionStatus.REQUESTED, WardSubstitutionStatus.APPROVED]
+    )
+
+    if request.method == 'POST':
+        try:
+            player_off_id = int(request.POST.get('player_off', 0))
+            player_on_id  = int(request.POST.get('player_on',  0))
+            minute        = int(request.POST.get('minute', 0))
+        except (ValueError, TypeError):
+            messages.error(request, 'Invalid input.')
+            return redirect('ward_tm_substitution', fixture_pk=fixture_pk)
+
+        reason = request.POST.get('reason', '').strip()
+        errors = []
+
+        if player_off_id == player_on_id:
+            errors.append('Player on and player off cannot be the same.')
+        if player_off_id not in on_pitch:
+            errors.append('That player is not currently on the pitch.')
+        if player_on_id not in available_bench:
+            errors.append('That replacement is not available on the bench.')
+        if normal_limit is not None and normal_used >= normal_limit:
+            errors.append(f'All {normal_limit} substitutions have been used.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            player_off = get_object_or_404(CountyPlayer, pk=player_off_id)
+            player_on  = get_object_or_404(CountyPlayer, pk=player_on_id)
+            WardSubstitutionRequest.objects.create(
+                fixture=fixture, team=team,
+                player_off=player_off, player_on=player_on,
+                minute=minute, reason=reason,
+                status=WardSubstitutionStatus.REQUESTED,
+                requested_by=user,
+            )
+            messages.success(
+                request,
+                f'Substitution requested: {player_off.first_name} {player_off.last_name} '
+                f'→ {player_on.first_name} {player_on.last_name} (min {minute})'
+            )
+        return redirect('ward_tm_substitution', fixture_pk=fixture_pk)
+
+    return render(request, 'ligi/ward_tm_substitution.html', {
+        'fixture': fixture, 'team': team,
+        'on_pitch_players': on_pitch_players,
+        'bench_players': bench_players,
+        'all_subs': all_subs,
+        'pending': pending,
+        'normal_used': normal_used,
+        'normal_limit': normal_limit,
+        'sport_family': sport_family,
+        'rules': rules,
+    })
+
+
+@role_required('ward_sports_council_chair', 'subcounty_sports_officer', 'admin', 'referee')
+def ward_sub_approve_view(request, sub_pk):
+    """
+    WSCC / SCSO / referee approves, executes, or denies a ward substitution request.
+    URL: /ligi/substitutions/<pk>/action/
+    """
+    from teams.models import WardSubstitutionRequest, WardSubstitutionStatus
+    sub = get_object_or_404(WardSubstitutionRequest, pk=sub_pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        now = timezone.now()
+        if action == 'approve':
+            sub.status = WardSubstitutionStatus.APPROVED
+            sub.approved_by = request.user
+            sub.decided_at = now
+            sub.save(update_fields=['status', 'approved_by', 'decided_at'])
+            messages.success(request, 'Substitution approved.')
+        elif action == 'execute':
+            sub.status = WardSubstitutionStatus.EXECUTED
+            sub.decided_at = now
+            sub.save(update_fields=['status', 'decided_at'])
+            messages.success(request, 'Substitution executed — player swap recorded.')
+        elif action == 'deny':
+            reason = request.POST.get('denial_reason', '').strip()
+            sub.status = WardSubstitutionStatus.DENIED
+            sub.denial_reason = reason
+            sub.decided_at = now
+            sub.save(update_fields=['status', 'denial_reason', 'decided_at'])
+            messages.warning(request, 'Substitution denied.')
+
+    if request.user.role == 'ward_sports_council_chair':
+        return redirect('wscc_dashboard')
+    return redirect('subcounty_officer_dashboard')
