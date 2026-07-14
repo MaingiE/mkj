@@ -157,6 +157,7 @@
             <tr style="background:#f8f9fa;text-align:left">
                 <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">#</th>
                 <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Full Name</th>
+                <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Reg. Code</th>
                 <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">National ID</th>
                 <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Date of Birth</th>
                 <th style="padding:.65rem .9rem;border-bottom:2px solid #dee2e6">Age</th>
@@ -172,6 +173,11 @@
 
                 <!-- Full Name (Req 4.5) -->
                 <td style="padding:.6rem .9rem;font-weight:600">{{ player.first_name }} {{ player.last_name }}</td>
+
+                <!-- Registration Code -->
+                <td style="padding:.6rem .9rem;font-family:monospace;font-size:.82rem;color:#124491;font-weight:600">
+                  {{ player.registration_code|default:"<span style='color:#dc3545'>Not assigned</span>" }}
+                </td>
 
                 <!-- National ID -->
                 <td style="padding:.6rem .9rem;font-family:monospace">{{ player.national_id_number }}</td>

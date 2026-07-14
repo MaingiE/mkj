@@ -133,6 +133,7 @@
         <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">#</th>
         <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Photo</th>
         <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Full Name</th>
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Reg. Code</th>
         <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">National ID</th>
         <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Date of Birth</th>
         <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6;text-align:center">Age</th>
@@ -164,6 +165,9 @@
         </td>
 
         <td style="padding:.6rem 1rem;font-weight:600">{{ player.first_name }} {{ player.last_name }}</td>
+        <td style="padding:.6rem 1rem;font-family:monospace;font-size:.78rem;color:#124491;background:#f0f4ff;border-radius:4px;white-space:nowrap">
+          {{ player.registration_code|default:"—" }}
+        </td>
         <td style="padding:.6rem 1rem;font-family:monospace;font-size:.82rem">{{ player.national_id_number }}</td>
         <td style="padding:.6rem 1rem;font-size:.85rem">
           {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#aaa">—</span>{% endif %}

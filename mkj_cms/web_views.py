@@ -15571,3 +15571,402 @@ def ward_sub_approve_view(request, sub_pk):
     if request.user.role == 'ward_sports_council_chair':
         return redirect('wscc_dashboard')
     return redirect('subcounty_officer_dashboard')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI — WARD COMPETITION ENGINE (WSCC manages ward fixtures)
+#  WSCC selects format (Knockout / League / Pool+Knockout) per ward per discipline,
+#  then manages pools, fixtures, and match results online.
+#  URL prefix: /ligi/wscc/ward-competition/
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_ward_competition_setup_view(request):
+    """
+    WSCC: choose the competition format for their ward.
+    Lists all ward disciplines and their linked competitions.
+    Allows creating/selecting a ward-level Competition with a chosen format.
+    URL: /ligi/wscc/ward-competition/
+    """
+    from teams.models import CountyDiscipline
+    from competitions.models import Competition, CompetitionLevel, CompetitionFormat
+
+    user = request.user
+    sub_county = user.sub_county if not user.is_superuser else None
+
+    # All ward disciplines in this WSCC's sub-county
+    disciplines_qs = CountyDiscipline.objects.filter(level='ward')
+    if sub_county:
+        disciplines_qs = disciplines_qs.filter(sub_county=sub_county)
+
+    # Attach existing ward Competition if any
+    discipline_data = []
+    for disc in disciplines_qs.order_by('ward', 'sport_type'):
+        comp = Competition.objects.filter(
+            level=CompetitionLevel.WARD,
+            ward=disc.ward,
+            sport_type=disc.sport_type,
+        ).first()
+        discipline_data.append({'discipline': disc, 'competition': comp})
+
+    if request.method == 'POST':
+        disc_pk     = request.POST.get('discipline_pk')
+        format_type = request.POST.get('format_type', '').strip()
+        season      = request.POST.get('season', '2026').strip()
+        name        = request.POST.get('name', '').strip()
+
+        disc = get_object_or_404(CountyDiscipline, pk=disc_pk)
+
+        if not name:
+            name = f"{disc.ward} Ward — {disc.get_sport_type_display()} {season}"
+
+        # Prevent duplicate
+        comp, created = Competition.objects.get_or_create(
+            level=CompetitionLevel.WARD,
+            ward=disc.ward,
+            sport_type=disc.sport_type,
+            season=season,
+            defaults={
+                'name': name,
+                'format_type': format_type or CompetitionFormat.GROUP_AND_KNOCKOUT,
+                'sub_county': disc.sub_county,
+                'status': 'upcoming',
+                'start_date': timezone.now().date(),
+                'end_date': timezone.now().date(),
+                'created_by': user,
+                'age_group': 'Open',
+            }
+        )
+        if not created and format_type:
+            comp.format_type = format_type
+            comp.save(update_fields=['format_type', 'updated_at'])
+
+        messages.success(request, f'Competition "{comp.name}" ({comp.get_format_type_display()}) ready.')
+
+        # Route to format-specific management page
+        return redirect('wscc_ward_comp_manage', comp_pk=comp.pk)
+
+    return render(request, 'ligi/wscc/ward_competition_setup.html', {
+        'discipline_data': discipline_data,
+        'format_choices': [
+            ('group_stage',         '🔵 League / Round-Robin (everyone plays everyone)'),
+            ('knockout',            '⚡ Knockout (elimination from first match)'),
+            ('group_and_knockout',  '🏆 Pool Stage + Knockout (group stage then KO rounds)'),
+        ],
+        'sub_county': sub_county or 'All',
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_ward_comp_manage_view(request, comp_pk):
+    """
+    WSCC: main management hub for a ward competition.
+    Shows teams, pools, fixtures, and match results.
+    Routes to pool management, fixture generation, and match sheets.
+    URL: /ligi/wscc/ward-competition/<comp_pk>/
+    """
+    from competitions.models import Competition, Pool, PoolTeam, Fixture as _Fixture
+
+    user = request.user
+    comp = get_object_or_404(Competition, pk=comp_pk, level='ward')
+
+    # WSCC scoping guard
+    if not user.is_superuser and user.role != 'admin':
+        if comp.sub_county != user.sub_county:
+            messages.error(request, 'Access denied.')
+            return redirect('wscc_dashboard')
+
+    pools    = comp.pools.prefetch_related('pool_teams__team').all()
+    fixtures = comp.fixtures.select_related('home_team', 'away_team', 'venue', 'pool').order_by('match_date', 'kickoff_time')
+
+    # Teams registered in this ward (discipline-linked)
+    from teams.models import CountyDiscipline, Team
+    disc = CountyDiscipline.objects.filter(
+        level='ward', ward=comp.ward, sport_type=comp.sport_type
+    ).first()
+    ward_teams = []
+    if disc:
+        ward_teams = Team.objects.filter(source_discipline=disc)
+
+    return render(request, 'ligi/wscc/ward_comp_manage.html', {
+        'comp': comp,
+        'pools': pools,
+        'fixtures': fixtures,
+        'ward_teams': ward_teams,
+        'disc': disc,
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_ward_comp_pools_view(request, comp_pk):
+    """
+    WSCC: manage pools for a ward competition (add teams to pools).
+    URL: /ligi/wscc/ward-competition/<comp_pk>/pools/
+    """
+    from competitions.models import Competition, Pool, PoolTeam
+
+    comp = get_object_or_404(Competition, pk=comp_pk, level='ward')
+    if not request.user.is_superuser and request.user.role != 'admin':
+        if comp.sub_county != request.user.sub_county:
+            return redirect('wscc_dashboard')
+
+    pools = comp.pools.prefetch_related('pool_teams__team').all()
+
+    from teams.models import CountyDiscipline, Team
+    disc = CountyDiscipline.objects.filter(
+        level='ward', ward=comp.ward, sport_type=comp.sport_type
+    ).first()
+    available_teams = list(Team.objects.filter(source_discipline=disc)) if disc else []
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'create_pool':
+            pool_name = request.POST.get('pool_name', '').strip()
+            if pool_name:
+                Pool.objects.get_or_create(competition=comp, name=pool_name)
+                messages.success(request, f'Pool "{pool_name}" created.')
+
+        elif action == 'add_team':
+            pool_pk = request.POST.get('pool_pk')
+            team_pk = request.POST.get('team_pk')
+            pool = get_object_or_404(Pool, pk=pool_pk, competition=comp)
+            team = get_object_or_404(Team, pk=team_pk)
+            _, created = PoolTeam.objects.get_or_create(pool=pool, team=team)
+            if created:
+                messages.success(request, f'{team.name} added to {pool.name}.')
+            else:
+                messages.warning(request, f'{team.name} is already in {pool.name}.')
+
+        elif action == 'remove_team':
+            pool_team_pk = request.POST.get('pool_team_pk')
+            PoolTeam.objects.filter(pk=pool_team_pk, pool__competition=comp).delete()
+            messages.success(request, 'Team removed from pool.')
+
+        elif action == 'delete_pool':
+            pool_pk = request.POST.get('pool_pk')
+            Pool.objects.filter(pk=pool_pk, competition=comp).delete()
+            messages.success(request, 'Pool deleted.')
+
+        return redirect('wscc_ward_comp_pools', comp_pk=comp_pk)
+
+    return render(request, 'ligi/wscc/ward_comp_pools.html', {
+        'comp': comp, 'pools': pools, 'available_teams': available_teams,
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_ward_comp_generate_fixtures_view(request, comp_pk):
+    """
+    WSCC: auto-generate fixtures for the ward competition based on pools.
+    For league: each team plays every other team once (or twice if home/away).
+    For knockout: bracket-based generation.
+    URL: /ligi/wscc/ward-competition/<comp_pk>/generate-fixtures/
+    """
+    from competitions.models import Competition, Pool, Fixture as _Fixture
+    from itertools import combinations
+    from datetime import timedelta, date as _date
+
+    comp = get_object_or_404(Competition, pk=comp_pk, level='ward')
+    if not request.user.is_superuser and request.user.role != 'admin':
+        if comp.sub_county != request.user.sub_county:
+            return redirect('wscc_dashboard')
+
+    if request.method == 'POST':
+        start_date_str = request.POST.get('start_date', str(timezone.now().date()))
+        kickoff_str    = request.POST.get('kickoff_time', '10:00')
+        days_between   = int(request.POST.get('days_between', '3'))
+
+        try:
+            start_date = _date.fromisoformat(start_date_str)
+            from datetime import time as _time
+            h, m = kickoff_str.split(':')
+            kickoff = _time(int(h), int(m))
+        except Exception:
+            messages.error(request, 'Invalid date or time format.')
+            return redirect('wscc_ward_comp_manage', comp_pk=comp_pk)
+
+        pools = comp.pools.prefetch_related('pool_teams__team').all()
+        match_date = start_date
+        fixtures_created = 0
+
+        for pool in pools:
+            teams = [pt.team for pt in pool.pool_teams.select_related('team')]
+            if len(teams) < 2:
+                continue
+            # Round-robin: every pair plays once
+            for home, away in combinations(teams, 2):
+                _, created = _Fixture.objects.get_or_create(
+                    competition=comp,
+                    pool=pool,
+                    home_team=home,
+                    away_team=away,
+                    defaults={
+                        'match_date': match_date,
+                        'kickoff_time': kickoff,
+                        'status': 'pending',
+                    }
+                )
+                if created:
+                    fixtures_created += 1
+                    match_date = match_date + timedelta(days=days_between)
+
+        messages.success(request, f'✅ {fixtures_created} fixtures generated.')
+        return redirect('wscc_ward_comp_manage', comp_pk=comp_pk)
+
+    return render(request, 'ligi/wscc/ward_comp_generate_fixtures.html', {'comp': comp})
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_ward_match_sheet_view(request, fixture_pk):
+    """
+    WSCC: view and enter match results for a ward fixture (online match sheet).
+    URL: /ligi/wscc/match-sheet/<fixture_pk>/
+    """
+    from competitions.models import Fixture as _Fixture, PoolTeam
+
+    user = request.user
+    fixture = get_object_or_404(_Fixture, pk=fixture_pk, competition__level='ward')
+
+    if not user.is_superuser and user.role != 'admin':
+        if fixture.competition.sub_county != user.sub_county:
+            messages.error(request, 'Access denied.')
+            return redirect('wscc_dashboard')
+
+    # Get squad submissions for both teams
+    from matches.models import SquadSubmission
+    home_squad = SquadSubmission.objects.filter(fixture=fixture, team=fixture.home_team).first()
+    away_squad = SquadSubmission.objects.filter(fixture=fixture, team=fixture.away_team).first()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'enter_result':
+            try:
+                home_score = int(request.POST.get('home_score', ''))
+                away_score = int(request.POST.get('away_score', ''))
+            except ValueError:
+                messages.error(request, 'Invalid score values.')
+                return redirect('wscc_ward_match_sheet', fixture_pk=fixture_pk)
+
+            fixture.home_score = home_score
+            fixture.away_score = away_score
+            fixture.status = 'completed'
+
+            # Set winner for knockout matches
+            if fixture.is_knockout:
+                if home_score > away_score:
+                    fixture.winner = fixture.home_team
+                elif away_score > home_score:
+                    fixture.winner = fixture.away_team
+                # else: draw — penalties might apply
+
+            fixture.save()
+
+            # Update pool standings if this is a pool match
+            if fixture.pool_id:
+                _update_pool_standings(fixture)
+
+            messages.success(
+                request,
+                f'✅ Result recorded: {fixture.home_team} {home_score} – {away_score} {fixture.away_team}'
+            )
+
+        elif action == 'confirm_fixture':
+            fixture.status = 'confirmed'
+            fixture.save(update_fields=['status'])
+            messages.success(request, 'Fixture confirmed.')
+
+        elif action == 'reschedule':
+            new_date = request.POST.get('new_date')
+            new_time = request.POST.get('new_time')
+            if new_date:
+                from datetime import date as _d, time as _t
+                fixture.match_date = _d.fromisoformat(new_date)
+            if new_time:
+                h, m = new_time.split(':')
+                from datetime import time as _t
+                fixture.kickoff_time = _t(int(h), int(m))
+            fixture.status = 'confirmed'
+            fixture.save()
+            messages.success(request, 'Fixture rescheduled.')
+
+        return redirect('wscc_ward_match_sheet', fixture_pk=fixture_pk)
+
+    # Registration codes for both squads
+    home_players = []
+    away_players = []
+    if home_squad:
+        home_players = home_squad.squad_players.select_related('county_player').filter(county_player__isnull=False)
+    if away_squad:
+        away_players = away_squad.squad_players.select_related('county_player').filter(county_player__isnull=False)
+
+    return render(request, 'ligi/wscc/ward_match_sheet.html', {
+        'fixture': fixture,
+        'home_squad': home_squad,
+        'away_squad': away_squad,
+        'home_players': home_players,
+        'away_players': away_players,
+        'comp': fixture.competition,
+    })
+
+
+def _update_pool_standings(fixture):
+    """Update PoolTeam standings after a completed fixture."""
+    from competitions.models import PoolTeam
+    from matches.models import get_sport_family
+
+    if not fixture.pool_id:
+        return
+    sport = fixture.competition.sport_type
+    family = get_sport_family(sport)
+
+    home_score = fixture.home_score or 0
+    away_score = fixture.away_score or 0
+
+    try:
+        home_pt = PoolTeam.objects.get(pool=fixture.pool, team=fixture.home_team)
+        away_pt = PoolTeam.objects.get(pool=fixture.pool, team=fixture.away_team)
+    except PoolTeam.DoesNotExist:
+        return
+
+    # Update played count
+    home_pt.played += 1
+    away_pt.played += 1
+    home_pt.goals_for += home_score
+    home_pt.goals_against += away_score
+    away_pt.goals_for += away_score
+    away_pt.goals_against += home_score
+
+    if home_score > away_score:
+        home_pt.won += 1
+        away_pt.lost += 1
+        if family == 'football':
+            home_pt.bonus_points += 3
+        elif family == 'handball':
+            home_pt.bonus_points += 2
+        elif family in ('basketball_5x5', 'basketball_3x3'):
+            home_pt.bonus_points += 2
+            away_pt.bonus_points += 1
+    elif away_score > home_score:
+        away_pt.won += 1
+        home_pt.lost += 1
+        if family == 'football':
+            away_pt.bonus_points += 3
+        elif family == 'handball':
+            away_pt.bonus_points += 2
+        elif family in ('basketball_5x5', 'basketball_3x3'):
+            away_pt.bonus_points += 2
+            home_pt.bonus_points += 1
+    else:
+        home_pt.drawn += 1
+        away_pt.drawn += 1
+        if family == 'football':
+            home_pt.bonus_points += 1
+            away_pt.bonus_points += 1
+        elif family == 'handball':
+            home_pt.bonus_points += 1
+            away_pt.bonus_points += 1
+
+    home_pt.save()
+    away_pt.save()

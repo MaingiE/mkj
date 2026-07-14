@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Manage Pools — {{ comp.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'wscc_dashboard' %}">Dashboard</a>
+    <a href="{% url 'wscc_ward_comp_manage' comp.pk %}">{{ comp.name }}</a>
+    <span>Pools</span>
+  </div>
+  <h1><i class="bi bi-diagram-3"></i> Manage Pools</h1>
+  <p style="color:#666;font-size:.9rem">{{ comp.name }} — {{ comp.get_sport_type_display }}</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">{% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.4rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+{% endfor %}</div>
+{% endif %}
+
+<!-- Create new pool -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.75rem"><i class="bi bi-plus-circle"></i> Create Pool</h2>
+  <form method="post" style="display:flex;gap:.75rem;align-items:flex-end">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create_pool">
+    <div style="flex:1">
+      <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.25rem">Pool Name</label>
+      <input type="text" name="pool_name" placeholder="e.g. Group A, Pool 1"
+             style="width:100%;padding:.55rem .7rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem" required>
+    </div>
+    <button type="submit" style="padding:.55rem 1.1rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.88rem">
+      Create
+    </button>
+  </form>
+</div>
+
+<!-- Existing pools -->
+{% for pool in pools %}
+<div class="card" style="padding:1.25rem;margin-bottom:1rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+    <h3 style="font-size:.95rem;color:#124491;margin:0">{{ pool.name }}</h3>
+    <form method="post" onsubmit="return confirm('Delete {{ pool.name }}?')">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete_pool">
+      <input type="hidden" name="pool_pk" value="{{ pool.pk }}">
+      <button type="submit" style="padding:.2rem .6rem;background:#f8d7da;color:#842029;border:none;border-radius:4px;font-size:.78rem;cursor:pointer">
+        Delete Pool
+      </button>
+    </form>
+  </div>
+
+  <!-- Teams in this pool -->
+  <div style="margin-bottom:.75rem">
+    {% for pt in pool.pool_teams.all %}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem .65rem;background:#f8f9fa;border-radius:4px;margin-bottom:.3rem">
+      <span style="font-size:.88rem;font-weight:500">{{ pt.team.name }}</span>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove_team">
+        <input type="hidden" name="pool_team_pk" value="{{ pt.pk }}">
+        <button type="submit" style="padding:.15rem .45rem;background:#f8d7da;color:#842029;border:none;border-radius:3px;font-size:.75rem;cursor:pointer">✕</button>
+      </form>
+    </div>
+    {% empty %}
+    <p style="color:#888;font-size:.84rem;margin:0">No teams added yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Add team to pool -->
+  {% if available_teams %}
+  <form method="post" style="display:flex;gap:.5rem">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_team">
+    <input type="hidden" name="pool_pk" value="{{ pool.pk }}">
+    <select name="team_pk" style="flex:1;padding:.45rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
+      <option value="">— Add team to {{ pool.name }} —</option>
+      {% for team in available_teams %}
+      <option value="{{ team.pk }}">{{ team.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" style="padding:.45rem .9rem;background:#198754;color:#fff;border:none;border-radius:5px;font-size:.85rem;cursor:pointer">Add</button>
+  </form>
+  {% endif %}
+</div>
+{% empty %}
+<div class="card" style="padding:2rem;text-align:center;color:#888">
+  <p>No pools yet. Create your first pool above.</p>
+</div>
+{% endfor %}
+
+<div style="margin-top:1rem">
+  <a href="{% url 'wscc_ward_comp_manage' comp.pk %}" style="font-size:.88rem;color:#124491">
+    <i class="bi bi-arrow-left"></i> Back to Competition
+  </a>
+</div>
+{% endblock %}

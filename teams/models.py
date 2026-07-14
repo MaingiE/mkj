@@ -262,6 +262,12 @@ class CountyPlayer(models.Model):
         max_length=20, unique=True, validators=[national_id_validator],
         help_text="National ID - unique across all counties and disciplines",
     )
+    registration_code = models.CharField(
+        max_length=20, blank=True, default="",
+        unique=True,
+        help_text="System-generated unique registration code (auto-assigned on save for ward players)",
+        db_index=True,
+    )
     huduma_number = models.CharField(
         max_length=30, blank=True, default="",
         help_text="Huduma Namba / Huduma Kenya number",
@@ -481,10 +487,49 @@ class CountyPlayer(models.Model):
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    def _generate_registration_code(self):
+        """
+        Auto-generate a unique ward-level registration code.
+        Format: LM-{WARD_ABBREV}-{SPORT_ABBREV}-{6-DIGIT-SEQUENCE}
+        e.g. LM-MKA-FM-000012
+        Only generated for ward-level (level='ward') CountyPlayer records.
+        """
+        discipline = self.discipline
+        ward_abbrev = (discipline.ward or 'WRD')[:3].upper()
+        sport_map = {
+            'football_men': 'FM', 'football_women': 'FW',
+            'volleyball_men': 'VM', 'volleyball_women': 'VW',
+            'basketball_men': 'BM', 'basketball_women': 'BW',
+            'basketball_3x3_men': 'B3M', 'basketball_3x3_women': 'B3W',
+            'handball_men': 'HM', 'handball_women': 'HW',
+        }
+        sport_abbrev = sport_map.get(discipline.sport_type, 'XX')
+        prefix = f"LM-{ward_abbrev}-{sport_abbrev}-"
+        existing_codes = CountyPlayer.objects.filter(
+            registration_code__startswith=prefix
+        ).values_list('registration_code', flat=True)
+        used_nums = set()
+        for code in existing_codes:
+            try:
+                used_nums.add(int(code.replace(prefix, '')))
+            except ValueError:
+                pass
+        seq = 1
+        while seq in used_nums:
+            seq += 1
+        return f"{prefix}{seq:06d}"
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  WARD LONGLIST (Ligi Mashinani ward-level player rosters)
-# ══════════════════════════════════════════════════════════════════════════════
+    def save(self, *args, **kwargs):
+        # Auto-generate registration code for ward-level players on first save
+        if not self.registration_code and self.discipline_id:
+            try:
+                disc = self.discipline if hasattr(self, '_discipline_cache') else \
+                    CountyDiscipline.objects.filter(pk=self.discipline_id).first()
+                if disc and disc.level == 'ward':
+                    self.registration_code = self._generate_registration_code()
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
 
 class WardLonglistStatus(models.TextChoices):
     DRAFT          = "draft",          "Draft"

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}{{ comp.name }} — Ward Competition{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'wscc_dashboard' %}">Dashboard</a>
+    <a href="{% url 'wscc_ward_competition_setup' %}">Ward Competition</a>
+    <span>{{ comp.ward|title }}</span>
+  </div>
+  <h1><i class="bi bi-trophy"></i> {{ comp.name }}</h1>
+  <p style="color:#666;font-size:.9rem">
+    {{ comp.get_format_type_display }} &bull; {{ comp.get_sport_type_display }} &bull;
+    <span style="background:#e2e3e5;padding:.15rem .5rem;border-radius:10px;font-size:.78rem">{{ comp.get_status_display }}</span>
+  </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.4rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Quick actions -->
+<div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+  <a href="{% url 'wscc_ward_comp_pools' comp.pk %}" class="btn btn--primary">
+    <i class="bi bi-diagram-3"></i> Manage Pools & Teams
+  </a>
+  <a href="{% url 'wscc_ward_comp_generate' comp.pk %}" class="btn btn--secondary">
+    <i class="bi bi-calendar-plus"></i> Generate Fixtures
+  </a>
+</div>
+
+<!-- Pools & Standings -->
+{% if pools %}
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-diagram-3"></i> Pools & Standings</h2>
+  {% for pool in pools %}
+  <div style="margin-bottom:1.25rem">
+    <h3 style="font-size:.9rem;color:#124491;margin-bottom:.5rem;background:#f0f4ff;padding:.4rem .8rem;border-radius:4px">{{ pool.name }}</h3>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.84rem">
+        <thead><tr style="background:#f8f9fa;text-align:center">
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6;text-align:left">Team</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">P</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">W</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">D</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">L</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">GF</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">GA</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6">GD</th>
+          <th style="padding:.45rem .7rem;border-bottom:1px solid #dee2e6;font-weight:700">Pts</th>
+        </tr></thead>
+        <tbody>
+          {% for pt in pool.pool_teams.all %}
+          <tr style="border-bottom:1px solid #f0f0f0;text-align:center">
+            <td style="padding:.45rem .7rem;font-weight:500;text-align:left">{{ pt.team.name }}</td>
+            <td style="padding:.45rem .7rem">{{ pt.played }}</td>
+            <td style="padding:.45rem .7rem;color:#198754">{{ pt.won }}</td>
+            <td style="padding:.45rem .7rem">{{ pt.drawn }}</td>
+            <td style="padding:.45rem .7rem;color:#dc3545">{{ pt.lost }}</td>
+            <td style="padding:.45rem .7rem">{{ pt.goals_for }}</td>
+            <td style="padding:.45rem .7rem">{{ pt.goals_against }}</td>
+            <td style="padding:.45rem .7rem">{{ pt.goal_difference }}</td>
+            <td style="padding:.45rem .7rem;font-weight:800;color:#124491">{{ pt.points }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" style="padding:.75rem;text-align:center;color:#888">No teams in this pool yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Fixtures & Match Sheets -->
+<div class="card" style="overflow-x:auto">
+  <div style="padding:.9rem 1.1rem;border-bottom:1px solid #dee2e6;display:flex;align-items:center;justify-content:space-between">
+    <h2 style="font-size:1rem;color:#333;margin:0"><i class="bi bi-calendar-event"></i> Fixtures</h2>
+    <span style="font-size:.82rem;color:#888">{{ fixtures|length }} fixture{{ fixtures|length|pluralize }}</span>
+  </div>
+  {% if fixtures %}
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+    <thead><tr style="background:#f0f4ff;text-align:left">
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Date</th>
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Pool</th>
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Home</th>
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6;text-align:center">Score</th>
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Away</th>
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Status</th>
+      <th style="padding:.55rem .9rem;border-bottom:2px solid #dee2e6">Match Sheet</th>
+    </tr></thead>
+    <tbody>
+      {% for f in fixtures %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.5rem .9rem;font-size:.82rem">{{ f.match_date|date:"d M" }} {{ f.kickoff_time|time:"H:i" }}</td>
+        <td style="padding:.5rem .9rem;font-size:.8rem;color:#888">{{ f.pool.name|default:"—" }}</td>
+        <td style="padding:.5rem .9rem;font-weight:500">{{ f.home_team.name }}</td>
+        <td style="padding:.5rem .9rem;text-align:center;font-weight:700">
+          {% if f.home_score is not None %}{{ f.home_score }} – {{ f.away_score }}{% else %}<span style="color:#ccc">vs</span>{% endif %}
+        </td>
+        <td style="padding:.5rem .9rem;font-weight:500">{{ f.away_team.name }}</td>
+        <td style="padding:.5rem .9rem">
+          {% if f.status == 'completed' %}<span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">✅ Done</span>
+          {% elif f.status == 'confirmed' %}<span style="background:#cfe2ff;color:#084298;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Confirmed</span>
+          {% elif f.status == 'live' %}<span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">🔴 Live</span>
+          {% else %}<span style="background:#e2e3e5;color:#41464b;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Pending</span>{% endif %}
+        </td>
+        <td style="padding:.5rem .9rem">
+          <a href="{% url 'wscc_ward_match_sheet' f.pk %}"
+             style="padding:.25rem .6rem;background:#124491;color:#fff;border-radius:4px;font-size:.78rem;text-decoration:none">
+            <i class="bi bi-clipboard2-check"></i> Sheet
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:2rem;text-align:center;color:#888">
+    <i class="bi bi-calendar-x" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+    <p>No fixtures yet. <a href="{% url 'wscc_ward_comp_generate' comp.pk %}" style="color:#124491">Generate fixtures →</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

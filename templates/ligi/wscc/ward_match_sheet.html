@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Match Sheet — {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'wscc_ward_comp_manage' comp.pk %}">{{ comp.name }}</a>
+    <span>Match Sheet</span>
+  </div>
+  <h1><i class="bi bi-clipboard2-check"></i> Match Sheet</h1>
+  <p style="color:#555;font-size:.9rem">
+    <strong>{{ fixture.home_team }}</strong> vs <strong>{{ fixture.away_team }}</strong>
+    &mdash; {{ fixture.match_date|date:"d M Y" }} at {{ fixture.kickoff_time|time:"H:i" }}
+    {% if fixture.pool %}&bull; {{ fixture.pool.name }}{% endif %}
+  </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">{% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.4rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+{% endfor %}</div>
+{% endif %}
+
+<!-- Match status -->
+<div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem">
+  <span style="font-size:.9rem;color:#555">Status:</span>
+  {% if fixture.status == 'completed' %}
+    <span style="background:#d1e7dd;color:#0a3622;padding:.3rem .8rem;border-radius:20px;font-size:.88rem;font-weight:600">✅ Completed</span>
+    <span style="font-size:1.4rem;font-weight:800;color:#124491">
+      {{ fixture.home_score }} – {{ fixture.away_score }}
+    </span>
+  {% elif fixture.status == 'confirmed' %}
+    <span style="background:#cfe2ff;color:#084298;padding:.3rem .8rem;border-radius:20px;font-size:.88rem;font-weight:600">Confirmed</span>
+  {% else %}
+    <span style="background:#e2e3e5;color:#41464b;padding:.3rem .8rem;border-radius:20px;font-size:.88rem">Pending</span>
+  {% endif %}
+</div>
+
+<!-- Action forms -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem">
+
+  <!-- Enter result -->
+  {% if fixture.status != 'completed' %}
+  <div class="card" style="padding:1.25rem;border-top:3px solid #198754">
+    <h3 style="font-size:.95rem;color:#0a3622;margin-bottom:.75rem"><i class="bi bi-pencil-square"></i> Enter Result</h3>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="enter_result">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:.5rem;align-items:center;margin-bottom:.75rem">
+        <div style="text-align:center">
+          <div style="font-size:.78rem;color:#888;margin-bottom:.25rem">{{ fixture.home_team.name }}</div>
+          <input type="number" name="home_score" min="0" max="99" placeholder="0"
+                 style="width:100%;padding:.55rem;border:2px solid #dee2e6;border-radius:6px;font-size:1.2rem;font-weight:700;text-align:center" required>
+        </div>
+        <span style="font-size:1.2rem;color:#888;font-weight:700">–</span>
+        <div style="text-align:center">
+          <div style="font-size:.78rem;color:#888;margin-bottom:.25rem">{{ fixture.away_team.name }}</div>
+          <input type="number" name="away_score" min="0" max="99" placeholder="0"
+                 style="width:100%;padding:.55rem;border:2px solid #dee2e6;border-radius:6px;font-size:1.2rem;font-weight:700;text-align:center" required>
+        </div>
+      </div>
+      <button type="submit" style="width:100%;padding:.6rem;background:#198754;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+        ✅ Record Result
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- Reschedule -->
+  <div class="card" style="padding:1.25rem;border-top:3px solid #ffc107">
+    <h3 style="font-size:.95rem;color:#856404;margin-bottom:.75rem"><i class="bi bi-calendar-event"></i> Reschedule</h3>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reschedule">
+      <div style="margin-bottom:.5rem">
+        <label style="font-size:.78rem;font-weight:600;color:#555;display:block;margin-bottom:.2rem">New Date</label>
+        <input type="date" name="new_date" value="{{ fixture.match_date|date:'Y-m-d' }}"
+               style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:5px;font-size:.88rem">
+      </div>
+      <div style="margin-bottom:.75rem">
+        <label style="font-size:.78rem;font-weight:600;color:#555;display:block;margin-bottom:.2rem">New Time</label>
+        <input type="time" name="new_time" value="{{ fixture.kickoff_time|time:'H:i' }}"
+               style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:5px;font-size:.88rem">
+      </div>
+      <button type="submit" style="width:100%;padding:.55rem;background:#ffc107;color:#000;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+        Update Schedule
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<!-- Squad lists with registration codes -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+
+  <!-- Home team squad -->
+  <div class="card" style="padding:1.1rem">
+    <h3 style="font-size:.9rem;color:#124491;margin-bottom:.75rem">
+      <i class="bi bi-people"></i> {{ fixture.home_team.name }}
+      {% if not home_squad %}<span style="font-size:.75rem;color:#dc3545;font-weight:400"> — No squad submitted</span>{% endif %}
+    </h3>
+    {% if home_players %}
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead><tr style="background:#f0f4ff">
+        <th style="padding:.4rem .6rem;text-align:left">Name</th>
+        <th style="padding:.4rem .6rem;text-align:center">Code</th>
+        <th style="padding:.4rem .6rem;text-align:center">Role</th>
+      </tr></thead>
+      <tbody>
+        {% for sp in home_players %}
+        <tr style="border-bottom:1px solid #f5f5f5">
+          <td style="padding:.4rem .6rem;font-weight:500">{{ sp.county_player.first_name }} {{ sp.county_player.last_name }}</td>
+          <td style="padding:.4rem .6rem;text-align:center;font-family:monospace;font-size:.75rem;color:#124491">
+            {{ sp.county_player.registration_code|default:"—" }}
+          </td>
+          <td style="padding:.4rem .6rem;text-align:center">
+            {% if sp.is_starter %}<span style="background:#d1e7dd;color:#0a3622;padding:.1rem .4rem;border-radius:8px;font-size:.72rem">Starter</span>
+            {% else %}<span style="background:#e2e3e5;color:#41464b;padding:.1rem .4rem;border-radius:8px;font-size:.72rem">Sub</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#888;font-size:.84rem;margin:0">Squad not submitted.</p>
+    {% endif %}
+  </div>
+
+  <!-- Away team squad -->
+  <div class="card" style="padding:1.1rem">
+    <h3 style="font-size:.9rem;color:#124491;margin-bottom:.75rem">
+      <i class="bi bi-people"></i> {{ fixture.away_team.name }}
+      {% if not away_squad %}<span style="font-size:.75rem;color:#dc3545;font-weight:400"> — No squad submitted</span>{% endif %}
+    </h3>
+    {% if away_players %}
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead><tr style="background:#f0f4ff">
+        <th style="padding:.4rem .6rem;text-align:left">Name</th>
+        <th style="padding:.4rem .6rem;text-align:center">Code</th>
+        <th style="padding:.4rem .6rem;text-align:center">Role</th>
+      </tr></thead>
+      <tbody>
+        {% for sp in away_players %}
+        <tr style="border-bottom:1px solid #f5f5f5">
+          <td style="padding:.4rem .6rem;font-weight:500">{{ sp.county_player.first_name }} {{ sp.county_player.last_name }}</td>
+          <td style="padding:.4rem .6rem;text-align:center;font-family:monospace;font-size:.75rem;color:#124491">
+            {{ sp.county_player.registration_code|default:"—" }}
+          </td>
+          <td style="padding:.4rem .6rem;text-align:center">
+            {% if sp.is_starter %}<span style="background:#d1e7dd;color:#0a3622;padding:.1rem .4rem;border-radius:8px;font-size:.72rem">Starter</span>
+            {% else %}<span style="background:#e2e3e5;color:#41464b;padding:.1rem .4rem;border-radius:8px;font-size:.72rem">Sub</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#888;font-size:.84rem;margin:0">Squad not submitted.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<div>
+  <a href="{% url 'wscc_ward_comp_manage' comp.pk %}" style="font-size:.88rem;color:#124491">
+    <i class="bi bi-arrow-left"></i> Back to Competition
+  </a>
+</div>
+{% endblock %}

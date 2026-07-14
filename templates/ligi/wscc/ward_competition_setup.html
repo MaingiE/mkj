@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Ward Competition Setup — WSCC{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'wscc_dashboard' %}">Dashboard</a>
+    <span>Ward Competition</span>
+  </div>
+  <h1><i class="bi bi-trophy"></i> Ward Competition Setup</h1>
+  <p style="color:#666;font-size:.9rem">{{ sub_county|title }} Sub-County — Select format per discipline</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.4rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% for item in discipline_data %}
+<div class="card" style="padding:1.25rem;margin-bottom:1rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+    <div>
+      <h2 style="font-size:1.05rem;margin:0;color:#333">
+        {{ item.discipline.ward|title }} Ward — {{ item.discipline.get_sport_type_display }}
+      </h2>
+      <span style="font-size:.8rem;color:#888">{{ item.discipline.sub_county|title }}</span>
+    </div>
+    {% if item.competition %}
+    <div>
+      <span style="background:#d1e7dd;color:#0a3622;padding:.25rem .65rem;border-radius:12px;font-size:.8rem;font-weight:600">
+        ✅ {{ item.competition.get_format_type_display }} — {{ item.competition.get_status_display }}
+      </span>
+      <a href="{% url 'wscc_ward_comp_manage' item.competition.pk %}"
+         style="margin-left:.5rem;padding:.25rem .65rem;background:#124491;color:#fff;border-radius:6px;font-size:.8rem;text-decoration:none">
+        Manage →
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not item.competition %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="discipline_pk" value="{{ item.discipline.pk }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end;flex-wrap:wrap">
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.25rem">Competition Format *</label>
+        <select name="format_type" required style="width:100%;padding:.55rem .7rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+          <option value="">— Choose format —</option>
+          {% for val, label in format_choices %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.25rem">Season</label>
+        <input type="text" name="season" value="2026" style="width:100%;padding:.55rem .7rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+      </div>
+      <button type="submit" style="padding:.55rem 1.2rem;background:#198754;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.88rem;white-space:nowrap">
+        <i class="bi bi-play-circle"></i> Create Competition
+      </button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% empty %}
+<div class="card" style="padding:2rem;text-align:center;color:#888">
+  <p>No ward disciplines found for your sub-county.</p>
+</div>
+{% endfor %}
+{% endblock %}

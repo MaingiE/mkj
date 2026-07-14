@@ -262,6 +262,12 @@ from .web_views import (
     # Ligi Mashinani: Ward substitution system
     ward_tm_substitution_view,
     ward_sub_approve_view,
+    # Ligi Mashinani: WSCC Ward Competition Engine
+    wscc_ward_competition_setup_view,
+    wscc_ward_comp_manage_view,
+    wscc_ward_comp_pools_view,
+    wscc_ward_comp_generate_fixtures_view,
+    wscc_ward_match_sheet_view,
 )
 
 from teams.ligi_views import ligi_register_view
@@ -619,6 +625,12 @@ urlpatterns = [
     # ── LIGI MASHINANI: Player Register (read-only, multi-role) ──────────────
     path("ligi/player-register/", ligi_player_register_view, name="ligi_player_register"),
 
+    # ── LIGI MASHINANI: Ward Competition Engine (WSCC) ───────────────────────
+    path("ligi/wscc/ward-competition/",                              wscc_ward_competition_setup_view,      name="wscc_ward_competition_setup"),
+    path("ligi/wscc/ward-competition/<int:comp_pk>/",               wscc_ward_comp_manage_view,             name="wscc_ward_comp_manage"),
+    path("ligi/wscc/ward-competition/<int:comp_pk>/pools/",         wscc_ward_comp_pools_view,              name="wscc_ward_comp_pools"),
+    path("ligi/wscc/ward-competition/<int:comp_pk>/generate/",      wscc_ward_comp_generate_fixtures_view,  name="wscc_ward_comp_generate"),
+    path("ligi/wscc/match-sheet/<int:fixture_pk>/",                 wscc_ward_match_sheet_view,             name="wscc_ward_match_sheet"),
     # ── LIGI MASHINANI: Ward Squad Substitutions ──────────────────────────────
     path("ligi/fixtures/<int:fixture_pk>/substitutions/", ward_tm_substitution_view, name="ward_tm_substitution"),
     path("ligi/substitutions/<int:sub_pk>/action/", ward_sub_approve_view, name="ward_sub_approve"),

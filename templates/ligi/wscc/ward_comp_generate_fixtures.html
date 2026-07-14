@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Generate Fixtures — {{ comp.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'wscc_ward_comp_manage' comp.pk %}">{{ comp.name }}</a>
+    <span>Generate Fixtures</span>
+  </div>
+  <h1><i class="bi bi-calendar-plus"></i> Generate Fixtures</h1>
+  <p style="color:#666;font-size:.9rem">{{ comp.name }} — Round-robin per pool</p>
+</div>
+
+<div class="card" style="padding:1.5rem;max-width:500px">
+  <p style="font-size:.88rem;color:#666;margin-bottom:1.25rem;line-height:1.6">
+    This will generate one fixture for every pair of teams in each pool (round-robin).
+    Existing fixtures are not duplicated. Set the start date and kick-off time below.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <div style="margin-bottom:1rem">
+      <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Start Date *</label>
+      <input type="date" name="start_date" required
+             style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Default Kick-off Time</label>
+      <input type="time" name="kickoff_time" value="10:00"
+             style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+    </div>
+    <div style="margin-bottom:1.5rem">
+      <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Days Between Matches</label>
+      <input type="number" name="days_between" value="3" min="1" max="14"
+             style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+    </div>
+    <div style="display:flex;gap:.75rem">
+      <button type="submit" style="padding:.65rem 1.5rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem">
+        <i class="bi bi-calendar-plus"></i> Generate Fixtures
+      </button>
+      <a href="{% url 'wscc_ward_comp_manage' comp.pk %}" style="padding:.65rem 1rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:6px;text-decoration:none;font-size:.9rem">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}
