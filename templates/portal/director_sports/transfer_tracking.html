@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block title %}Transfer Tracking Dashboard — Director of Sports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'director_sports_dashboard' %}">Director of Sports</a>
+    <span>Transfer Tracking</span>
+  </div>
+  <h1><i class="bi bi-arrow-left-right"></i> Ligi Mashinani — Transfer Tracking</h1>
+  <p style="color:#666;font-size:.9rem">Full audit of all player transfers across all wards, disciplines and sub-counties.</p>
+</div>
+
+<!-- ── SUMMARY CARDS ──────────────────────────────────────────────── -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.75rem;margin-bottom:1.5rem">
+
+  <div style="background:#f0f4ff;border:1px solid #b6d4fe;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.5rem;font-weight:800;color:#124491">{{ summary.total }}</div>
+    <div style="font-size:.7rem;text-transform:uppercase;color:#888;letter-spacing:.05em">Total</div>
+  </div>
+  <div style="background:#fff3cd;border:1px solid #ffecb5;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.5rem;font-weight:800;color:#856404">{{ summary.pending }}</div>
+    <div style="font-size:.7rem;text-transform:uppercase;color:#856404;letter-spacing:.05em">Pending</div>
+  </div>
+  <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.5rem;font-weight:800;color:#0a3622">{{ summary.scso_approved|add:summary.senior_approved }}</div>
+    <div style="font-size:.7rem;text-transform:uppercase;color:#0a3622;letter-spacing:.05em">Approved</div>
+  </div>
+  <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.5rem;font-weight:800;color:#842029">{{ summary.wscc_rejected|add:summary.scso_rejected|add:summary.senior_rejected }}</div>
+    <div style="font-size:.7rem;text-transform:uppercase;color:#842029;letter-spacing:.05em">Rejected</div>
+  </div>
+  <div style="background:#e2e3e5;border:1px solid #d3d6db;border-radius:8px;padding:.9rem;text-align:center">
+    <div style="font-size:1.5rem;font-weight:800;color:#41464b">{{ summary.withdrawn }}</div>
+    <div style="font-size:.7rem;text-transform:uppercase;color:#41464b;letter-spacing:.05em">Withdrawn</div>
+  </div>
+
+</div>
+
+<!-- Transfer type breakdown -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem">
+  <div style="background:#d1e7dd;border-radius:6px;padding:.75rem;text-align:center">
+    <div style="font-size:1.2rem;font-weight:700;color:#0a3622">{{ summary.within_ward }}</div>
+    <div style="font-size:.75rem;color:#0a3622">✅ Within-Ward</div>
+  </div>
+  <div style="background:#fff3cd;border-radius:6px;padding:.75rem;text-align:center">
+    <div style="font-size:1.2rem;font-weight:700;color:#856404">{{ summary.inter_ward }}</div>
+    <div style="font-size:.75rem;color:#856404">🔄 Inter-Ward</div>
+  </div>
+  <div style="background:#f8d7da;border-radius:6px;padding:.75rem;text-align:center">
+    <div style="font-size:1.2rem;font-weight:700;color:#842029">{{ summary.inter_subcounty }}</div>
+    <div style="font-size:.75rem;color:#842029">⚠️ Inter-Sub-County</div>
+  </div>
+</div>
+
+<!-- ── FILTERS ───────────────────────────────────────────────────────── -->
+<div class="card" style="padding:1rem 1.1rem;margin-bottom:1.25rem">
+  <form method="get" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+
+    <div style="flex:1;min-width:130px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">Status</label>
+      <select name="status" style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+        <option value="">All Statuses</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if f_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="flex:1;min-width:130px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">Type</label>
+      <select name="transfer_type" style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+        <option value="">All Types</option>
+        {% for val, label in type_choices %}
+        <option value="{{ val }}" {% if f_type == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="flex:1;min-width:130px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">Sub-County</label>
+      <select name="sub_county" style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+        <option value="">All Sub-Counties</option>
+        {% for val, label in sc_choices %}
+        <option value="{{ val }}" {% if f_sc == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="flex:1;min-width:140px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">Discipline</label>
+      <select name="sport" style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+        <option value="">All Disciplines</option>
+        {% for val, label in sport_choices %}
+        <option value="{{ val }}" {% if f_sport == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="min-width:120px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">From Date</label>
+      <input type="date" name="date_from" value="{{ f_date_from }}"
+             style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+    </div>
+
+    <div style="min-width:120px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">To Date</label>
+      <input type="date" name="date_to" value="{{ f_date_to }}"
+             style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+    </div>
+
+    <div style="flex:2;min-width:160px">
+      <label style="font-size:.72rem;font-weight:600;color:#666;display:block;margin-bottom:.2rem">Search</label>
+      <input type="text" name="q" value="{{ f_search }}" placeholder="Name, ID or reg code..."
+             style="width:100%;padding:.45rem .6rem;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem">
+    </div>
+
+    <button type="submit" style="padding:.48rem 1rem;background:#124491;color:#fff;border:none;border-radius:5px;font-size:.83rem;font-weight:600;cursor:pointer">Filter</button>
+    <a href="{% url 'transfer_tracking' %}" style="padding:.48rem .8rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:5px;font-size:.83rem;text-decoration:none">Clear</a>
+  </form>
+</div>
+
+<!-- ── TRANSFER TABLE ─────────────────────────────────────────────── -->
+<div class="card" style="overflow-x:auto">
+  <div style="padding:.85rem 1rem;border-bottom:1px solid #dee2e6;display:flex;align-items:center;justify-content:space-between">
+    <h2 style="font-size:.95rem;color:#333;margin:0"><i class="bi bi-list-ul"></i> Transfer Records</h2>
+    <span style="font-size:.8rem;color:#888">{{ transfer_count }} record{{ transfer_count|pluralize }}</span>
+  </div>
+
+  {% if transfers %}
+  <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+    <thead>
+      <tr style="background:#f0f4ff;text-align:left">
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Player</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Reg. Code</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Type</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">From</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">To</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Sport</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Status</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Requested</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">WSCC</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">SCSO / Senior</th>
+        <th style="padding:.5rem .8rem;border-bottom:2px solid #dee2e6">Completed</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in transfers %}
+      <tr style="border-bottom:1px solid #f5f5f5">
+
+        <!-- Player -->
+        <td style="padding:.5rem .8rem;font-weight:500;white-space:nowrap">
+          {{ t.player.first_name }} {{ t.player.last_name }}<br>
+          <span style="font-size:.75rem;color:#888;font-family:monospace">{{ t.player.national_id_number }}</span>
+        </td>
+
+        <!-- Registration code -->
+        <td style="padding:.5rem .8rem;font-family:monospace;font-size:.78rem;color:#124491">
+          {{ t.player.registration_code|default:"—" }}
+        </td>
+
+        <!-- Type badge -->
+        <td style="padding:.5rem .8rem;white-space:nowrap">
+          {% if t.transfer_type == 'within_ward' %}
+            <span style="background:#d1e7dd;color:#0a3622;padding:.15rem .45rem;border-radius:10px;font-size:.72rem;font-weight:600">✅ Within Ward</span>
+          {% elif t.transfer_type == 'inter_ward' %}
+            <span style="background:#fff3cd;color:#856404;padding:.15rem .45rem;border-radius:10px;font-size:.72rem;font-weight:600">🔄 Inter-Ward</span>
+          {% else %}
+            <span style="background:#f8d7da;color:#842029;padding:.15rem .45rem;border-radius:10px;font-size:.72rem;font-weight:600">⚠️ Inter-SC</span>
+          {% endif %}
+        </td>
+
+        <!-- From / To -->
+        <td style="padding:.5rem .8rem;font-size:.8rem">
+          {{ t.from_discipline.ward|title }}<br>
+          <span style="color:#888">{{ t.from_discipline.sub_county|title }}</span>
+        </td>
+        <td style="padding:.5rem .8rem;font-size:.8rem">
+          {{ t.to_discipline.ward|title }}<br>
+          <span style="color:#888">{{ t.to_discipline.sub_county|title }}</span>
+        </td>
+
+        <!-- Sport -->
+        <td style="padding:.5rem .8rem;font-size:.8rem">{{ t.from_discipline.get_sport_type_display }}</td>
+
+        <!-- Status -->
+        <td style="padding:.5rem .8rem;white-space:nowrap">
+          {% if t.status == 'pending' %}
+            <span style="background:#fff3cd;color:#856404;padding:.15rem .45rem;border-radius:10px;font-size:.72rem">⏳ Pending</span>
+          {% elif t.status == 'wscc_approved' %}
+            <span style="background:#cfe2ff;color:#084298;padding:.15rem .45rem;border-radius:10px;font-size:.72rem">WSCC ✓</span>
+          {% elif t.status == 'wscc_rejected' %}
+            <span style="background:#f8d7da;color:#842029;padding:.15rem .45rem;border-radius:10px;font-size:.72rem">WSCC ✗</span>
+          {% elif t.status == 'scso_approved' or t.status == 'senior_approved' %}
+            <span style="background:#d1e7dd;color:#0a3622;padding:.15rem .45rem;border-radius:10px;font-size:.72rem;font-weight:600">✅ Done</span>
+          {% elif t.status == 'scso_rejected' or t.status == 'senior_rejected' %}
+            <span style="background:#f8d7da;color:#842029;padding:.15rem .45rem;border-radius:10px;font-size:.72rem">❌ Rejected</span>
+          {% elif t.status == 'withdrawn' %}
+            <span style="background:#e2e3e5;color:#41464b;padding:.15rem .45rem;border-radius:10px;font-size:.72rem">Withdrawn</span>
+          {% else %}
+            <span style="background:#e2e3e5;color:#41464b;padding:.15rem .45rem;border-radius:10px;font-size:.72rem">{{ t.status }}</span>
+          {% endif %}
+        </td>
+
+        <!-- Requested at -->
+        <td style="padding:.5rem .8rem;font-size:.78rem;color:#888;white-space:nowrap">
+          {{ t.requested_at|date:"d M Y" }}<br>
+          <span style="font-size:.72rem">by {{ t.requested_by.get_full_name|default:"TM" }}</span>
+        </td>
+
+        <!-- WSCC action -->
+        <td style="padding:.5rem .8rem;font-size:.78rem;white-space:nowrap">
+          {% if t.wscc_reviewed_by %}
+            <span style="color:{% if 'rejected' in t.status %}#dc3545{% else %}#198754{% endif %}">
+              {{ t.wscc_reviewed_by.get_full_name }}<br>{{ t.wscc_reviewed_at|date:"d M Y" }}
+            </span>
+            {% if t.wscc_notes %}<br><span style="color:#888;font-size:.72rem" title="{{ t.wscc_notes }}">📝</span>{% endif %}
+          {% else %}<span style="color:#ccc">—</span>{% endif %}
+        </td>
+
+        <!-- SCSO / Senior action -->
+        <td style="padding:.5rem .8rem;font-size:.78rem;white-space:nowrap">
+          {% if t.scso_reviewed_by %}
+            <span>{{ t.scso_reviewed_by.get_full_name }}<br>{{ t.scso_reviewed_at|date:"d M Y" }}</span>
+            {% if t.scso_notes %}<span style="color:#888;font-size:.72rem" title="{{ t.scso_notes }}"> 📝</span>{% endif %}
+          {% elif t.senior_reviewed_by %}
+            <span>{{ t.senior_reviewed_by.get_full_name }}<br>{{ t.senior_reviewed_at|date:"d M Y" }}</span>
+            {% if t.senior_notes %}<span style="color:#888;font-size:.72rem" title="{{ t.senior_notes }}"> 📝</span>{% endif %}
+          {% else %}<span style="color:#ccc">—</span>{% endif %}
+        </td>
+
+        <!-- Completed -->
+        <td style="padding:.5rem .8rem;font-size:.78rem;color:#888">
+          {{ t.completed_at|date:"d M Y"|default:"—" }}
+        </td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div style="padding:2.5rem;text-align:center;color:#888">
+    <i class="bi bi-arrow-left-right" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+    <p>No transfers match the current filters.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

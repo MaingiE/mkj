@@ -356,11 +356,11 @@ def notify_account_created(user, temporary_password, role_label=None):
         [user.email],
     )
 
-    # Also send via WhatsApp if the user has a phone number
+    # WhatsApp credentials (covers both email + WA from one call)
     phone = getattr(user, 'phone', None)
     if phone:
-        notify_credentials_whatsapp(
-            phone_number=phone,
+        notify_wa_credentials(
+            phone=phone,
             first_name=user.first_name,
             email=user.email,
             temp_password=temporary_password,
@@ -680,7 +680,7 @@ def notify_team_status(team, action='registered'):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def notify_password_reset(user, new_password):
-    """Send password reset email with new credentials."""
+    """Send password reset email + WhatsApp with new credentials."""
     body = f"""
 <p>Dear <strong>{user.first_name} {user.last_name}</strong>,</p>
 <p>Your password has been reset by an administrator.</p>
@@ -696,6 +696,11 @@ def notify_password_reset(user, new_password):
         _base_html("Password Reset", body),
         [user.email],
     )
+
+    # WhatsApp notification
+    phone = getattr(user, 'phone', None)
+    if phone:
+        notify_wa_password_reset(phone, user.first_name, new_password)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -717,3 +722,182 @@ def notify_action_needed(recipients, title, message, action_url=None):
         _base_html(title, body),
         recipients if isinstance(recipients, list) else [recipients],
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WHATSAPP NOTIFICATION FUNCTIONS  (Brevo template-based)
+#
+#  Each function maps to a Brevo WhatsApp template.
+#  Template variables {{1}}, {{2}} ... are passed as params dict.
+#
+#  TEMPLATE SETUP IN BREVO (WhatsApp → Templates):
+#  ─────────────────────────────────────────────────
+#  1. CREDENTIALS (BREVO_WHATSAPP_TEMPLATE_CREDENTIALS)
+#     "Hello {{1}}! Your MKJ SUPA CUP account is ready.\nEmail: {{2}}\nPassword: {{3}}\nRole: {{4}}\nLogin: {{5}}\nChange password on first login."
+#
+#  2. PASSWORD_RESET (BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET)
+#     "Hello {{1}}! Your MKJ SUPA CUP password has been reset.\nNew password: {{2}}\nLogin: {{3}}\nChange it immediately after login."
+#
+#  3. DEADLINE (BREVO_WHATSAPP_TEMPLATE_DEADLINE)
+#     "⏰ MKJ SUPA CUP Reminder — {{1}}.\nDeadline: {{2}}.\n{{3}}"
+#
+#  4. TRANSFER (BREVO_WHATSAPP_TEMPLATE_TRANSFER)
+#     "🔄 Transfer Update — {{1}} {{2}}.\nStatus: {{3}}\nFrom: {{4}} → To: {{5}}\n{{6}}"
+#
+#  5. LONGLIST_STATUS (BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS)
+#     "📋 Longlist Update — {{1}} Ward ({{2}}).\nStatus: {{3}}\n{{4}}"
+#
+#  6. SQUAD_RESULT (BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT)
+#     "⚽ Match Result — {{1}} vs {{2}}.\nScore: {{3}} – {{4}}\n{{5}}"
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _get_template_id(setting_name):
+    """Return template ID integer from settings, or None if not configured."""
+    val = getattr(settings, setting_name, '')
+    if not val:
+        return None
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return None
+
+
+def _wa(phone, setting_name, params, label='notification'):
+    """
+    Generic WhatsApp send helper.
+    Resolves template ID from settings, calls send_whatsapp on a background thread.
+    Returns True if dispatched, False if skipped.
+    """
+    template_id = _get_template_id(setting_name)
+    if not template_id:
+        logger.info('WhatsApp %s skipped — %s not set in settings.', label, setting_name)
+        return False
+    return send_whatsapp(phone_number=phone, template_id=template_id, params=params)
+
+
+# ── 1. Credentials (new account) ─────────────────────────────────────────────
+
+def notify_wa_credentials(phone, first_name, email, temp_password, role_label):
+    """
+    Send new account credentials via WhatsApp.
+    Template variables: {{1}}=first_name {{2}}=email {{3}}=password {{4}}=role {{5}}=login_url
+    """
+    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_CREDENTIALS', {
+        '1': first_name,
+        '2': email,
+        '3': temp_password,
+        '4': role_label,
+        '5': f"{SITE_URL}/portal/login/",
+    }, label='credentials')
+
+
+# ── 2. Password reset ────────────────────────────────────────────────────────
+
+def notify_wa_password_reset(phone, first_name, new_password):
+    """
+    Send password reset notification via WhatsApp.
+    Template variables: {{1}}=first_name {{2}}=new_password {{3}}=login_url
+    """
+    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET', {
+        '1': first_name,
+        '2': new_password,
+        '3': f"{SITE_URL}/portal/login/",
+    }, label='password_reset')
+
+
+# ── 3. Deadline reminder ─────────────────────────────────────────────────────
+
+def notify_wa_deadline(phone, event_label, deadline_str, action_text=''):
+    """
+    Send a deadline reminder via WhatsApp.
+    Template variables: {{1}}=event {{2}}=deadline {{3}}=action_text
+    Examples:
+        notify_wa_deadline(phone, 'Longlist Submission', '15 Jul 2026 at 17:00', 'Submit your longlist before the deadline.')
+        notify_wa_deadline(phone, 'Squad Selection', '16 Jul 2026 at 10:00', 'Select your match-day squad.')
+    """
+    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_DEADLINE', {
+        '1': event_label,
+        '2': deadline_str,
+        '3': action_text or f"Visit {SITE_URL}/portal/login/ to action.",
+    }, label='deadline')
+
+
+# ── 4. Transfer status update ────────────────────────────────────────────────
+
+def notify_wa_transfer_update(phone, first_name, last_name, status_label,
+                               from_ward, to_ward, notes=''):
+    """
+    Notify Ward TM of a transfer decision via WhatsApp.
+    Template variables: {{1}}=first_name {{2}}=last_name {{3}}=status {{4}}=from_ward {{5}}=to_ward {{6}}=notes
+    """
+    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_TRANSFER', {
+        '1': first_name,
+        '2': last_name,
+        '3': status_label,
+        '4': from_ward,
+        '5': to_ward,
+        '6': notes or 'No additional notes.',
+    }, label='transfer_update')
+
+
+# ── 5. Longlist status update ────────────────────────────────────────────────
+
+def notify_wa_longlist_status(phone, ward, sport_label, status_label, message=''):
+    """
+    Notify Ward TM of their longlist status change via WhatsApp.
+    Template variables: {{1}}=ward {{2}}=sport {{3}}=status {{4}}=message
+    Examples: approved, returned for corrections, etc.
+    """
+    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS', {
+        '1': ward,
+        '2': sport_label,
+        '3': status_label,
+        '4': message or f"Log in at {SITE_URL}/ligi/longlist/ to view.",
+    }, label='longlist_status')
+
+
+# ── 6. Match result / squad outcome ─────────────────────────────────────────
+
+def notify_wa_match_result(phone, home_team, away_team, home_score, away_score, note=''):
+    """
+    Send match result via WhatsApp to team manager.
+    Template variables: {{1}}=home_team {{2}}=away_team {{3}}=home_score {{4}}=away_score {{5}}=note
+    """
+    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT', {
+        '1': home_team,
+        '2': away_team,
+        '3': str(home_score),
+        '4': str(away_score),
+        '5': note or 'Match completed.',
+    }, label='match_result')
+
+
+# ── Bulk deadline broadcast ───────────────────────────────────────────────────
+
+def broadcast_wa_deadline(role_or_phones, event_label, deadline_str, action_text=''):
+    """
+    Send deadline reminder to all users with a given role (or a list of phone numbers).
+    
+    Usage:
+        broadcast_wa_deadline('team_manager', 'Squad Submission', '16 Jul 2026 17:00')
+        broadcast_wa_deadline(['+254712345678', '+254723456789'], 'Longlist Deadline', '15 Jul 2026')
+    """
+    from accounts.models import User
+
+    if isinstance(role_or_phones, str):
+        # It's a role — get all phones for that role
+        phones = list(
+            User.objects.filter(role=role_or_phones, is_active=True, phone__isnull=False)
+            .exclude(phone='')
+            .values_list('phone', flat=True)
+        )
+    else:
+        phones = role_or_phones
+
+    sent = 0
+    for phone in phones:
+        if notify_wa_deadline(phone, event_label, deadline_str, action_text):
+            sent += 1
+
+    logger.info('📱 Deadline broadcast "%s" → sent to %d/%d recipients', event_label, sent, len(phones))
+    return sent

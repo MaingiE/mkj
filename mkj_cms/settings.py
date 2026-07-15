@@ -327,9 +327,14 @@ SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
 
 # ── WHATSAPP (Brevo WhatsApp API) ─────────────────────────────────────────────
 # Set BREVO_WHATSAPP_SENDER to your WhatsApp Business number (+254XXXXXXXXX)
-# Set BREVO_WHATSAPP_TEMPLATE_CREDENTIALS to the numeric template ID from Brevo
-BREVO_WHATSAPP_SENDER                 = env("BREVO_WHATSAPP_SENDER", default="")
-BREVO_WHATSAPP_TEMPLATE_CREDENTIALS  = env("BREVO_WHATSAPP_TEMPLATE_CREDENTIALS", default="")
+# Template IDs from your Brevo account (WhatsApp → Templates):
+BREVO_WHATSAPP_SENDER                    = env("BREVO_WHATSAPP_SENDER", default="")
+BREVO_WHATSAPP_TEMPLATE_CREDENTIALS      = env("BREVO_WHATSAPP_TEMPLATE_CREDENTIALS", default="")
+BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET   = env("BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET", default="")
+BREVO_WHATSAPP_TEMPLATE_DEADLINE         = env("BREVO_WHATSAPP_TEMPLATE_DEADLINE", default="")
+BREVO_WHATSAPP_TEMPLATE_TRANSFER         = env("BREVO_WHATSAPP_TEMPLATE_TRANSFER", default="")
+BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS  = env("BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS", default="")
+BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT     = env("BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT", default="")
 
 # ── SEO CONFIGURATION ──────────────────────────────────────────────────────────
 SITE_NAME = "MKJ SUPA CUP"

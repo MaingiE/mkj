@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Inter-Sub-County Transfers — Senior Review{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <span>Senior Transfer Review</span>
+  </div>
+  <h1><i class="bi bi-arrow-left-right"></i> Inter-Sub-County Transfers</h1>
+  <p style="color:#666;font-size:.9rem">Transfers between different sub-counties require your approval.</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">{% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.4rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% else %}background:#cfe2ff;color:#084298;{% endif %}">
+    {{ msg }}
+  </div>
+{% endfor %}</div>
+{% endif %}
+
+<!-- Pending -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+  <h2 style="font-size:1.05rem;color:#333;margin-bottom:1rem">
+    <i class="bi bi-hourglass-split" style="color:#084298"></i> Awaiting Your Decision ({{ pending.count }})
+  </h2>
+  {% if pending %}
+  {% for t in pending %}
+  <div style="border:1px solid #b6d4fe;border-radius:8px;padding:1.1rem;margin-bottom:1rem;background:#f0f7ff">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem">
+      <div>
+        <strong>{{ t.player.first_name }} {{ t.player.last_name }}</strong>
+        <span style="font-family:monospace;font-size:.78rem;color:#888;margin-left:.5rem">{{ t.player.national_id_number }}</span>
+        {% if t.player.registration_code %}<span style="font-family:monospace;font-size:.75rem;color:#124491;background:#e8edf5;padding:.1rem .4rem;border-radius:4px;margin-left:.3rem">{{ t.player.registration_code }}</span>{% endif %}
+      </div>
+      <span style="background:#f8d7da;color:#842029;padding:.2rem .6rem;border-radius:12px;font-size:.78rem;font-weight:600">⚠️ Inter-Sub-County</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.5rem;font-size:.85rem;margin-bottom:.75rem">
+      <div><span style="color:#888">From:</span> <strong>{{ t.from_discipline.ward|title }}, {{ t.from_discipline.sub_county|title }}</strong></div>
+      <div><span style="color:#888">To:</span> <strong>{{ t.to_discipline.ward|title }}, {{ t.to_discipline.sub_county|title }}</strong></div>
+      <div><span style="color:#888">Sport:</span> {{ t.from_discipline.get_sport_type_display }}</div>
+      <div><span style="color:#888">Submitted:</span> {{ t.requested_at|date:"d M Y" }}</div>
+    </div>
+    <div style="background:#fff;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:#555;margin-bottom:1rem;border:1px solid #e0e0e0">
+      <strong>Reason:</strong> {{ t.reason }}
+    </div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <form method="post" action="{% url 'senior_transfer_action' t.pk %}" style="flex:1;min-width:200px"
+            onsubmit="return confirm('Approve this inter-sub-county transfer?')">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <input type="text" name="notes" placeholder="Optional approval notes..."
+               style="width:100%;padding:.45rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.82rem;margin-bottom:.4rem">
+        <button type="submit" style="width:100%;padding:.5rem;background:#198754;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.88rem">
+          ✅ Approve Transfer
+        </button>
+      </form>
+      <form method="post" action="{% url 'senior_transfer_action' t.pk %}" style="flex:1;min-width:200px">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <input type="text" name="notes" placeholder="Rejection reason (required)..." required
+               style="width:100%;padding:.45rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.82rem;margin-bottom:.4rem">
+        <button type="submit" style="width:100%;padding:.5rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.88rem">
+          ❌ Reject Transfer
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p style="color:#888;text-align:center;padding:1.5rem 0">No inter-sub-county transfers awaiting review.</p>
+  {% endif %}
+</div>
+
+<!-- Reviewed history -->
+{% if reviewed %}
+<div class="card" style="padding:1.25rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.75rem"><i class="bi bi-clock-history"></i> Previous Decisions</h2>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="background:#f8f9fa">
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Player</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Movement</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Decision</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">By</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Date</th>
+      </tr></thead>
+      <tbody>
+        {% for t in reviewed %}
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:.5rem .8rem;font-weight:500">{{ t.player.first_name }} {{ t.player.last_name }}</td>
+          <td style="padding:.5rem .8rem;font-size:.82rem">{{ t.from_discipline.sub_county|title }} → {{ t.to_discipline.sub_county|title }}</td>
+          <td style="padding:.5rem .8rem">
+            {% if t.status == 'senior_approved' %}<span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.75rem;font-weight:600">✅ Approved</span>
+            {% else %}<span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.75rem;font-weight:600">❌ Rejected</span>{% endif %}
+          </td>
+          <td style="padding:.5rem .8rem;font-size:.82rem">{{ t.senior_reviewed_by.get_full_name|default:"—" }}</td>
+          <td style="padding:.5rem .8rem;font-size:.82rem;color:#888">{{ t.senior_reviewed_at|date:"d M Y"|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1873,8 +1873,20 @@ class LigiSettings(models.Model):
 # ══════════════════════════════════════════════════════════════════════════════
 
 class LigiTransferStatus(models.TextChoices):
-    PENDING        = "pending",        "Pending WSCC Review"
+    PENDING        = "pending",        "Pending Review"
     WSCC_APPROVED  = "wscc_approved",  "WSCC Approved — Pending SCSO"
+    WSCC_REJECTED  = "wscc_rejected",  "Rejected by WSCC"
+    SCSO_APPROVED  = "scso_approved",  "Approved — Transfer Complete"
+    SCSO_REJECTED  = "scso_rejected",  "Rejected by Sub-County Officer"
+    SENIOR_APPROVED = "senior_approved", "Approved by Senior Official"
+    SENIOR_REJECTED = "senior_rejected", "Rejected by Senior Official"
+    WITHDRAWN      = "withdrawn",      "Withdrawn by Team Manager"
+
+
+class LigiTransferType(models.TextChoices):
+    WITHIN_WARD    = "within_ward",    "Within Same Ward (Team to Team)"
+    INTER_WARD     = "inter_ward",     "Inter-Ward (Same Sub-County)"
+    INTER_SUBCOUNTY = "inter_subcounty", "Inter-Sub-County"
     WSCC_REJECTED  = "wscc_rejected",  "Rejected by WSCC"
     SCSO_APPROVED  = "scso_approved",  "Approved — Transfer Complete"
     SCSO_REJECTED  = "scso_rejected",  "Rejected by Sub-County Officer"
@@ -1915,6 +1927,12 @@ class LigiTransferRequest(models.Model):
     reason = models.TextField(
         help_text="Reason for transfer request (required)",
     )
+    transfer_type = models.CharField(
+        max_length=20,
+        choices=LigiTransferType.choices,
+        default=LigiTransferType.INTER_WARD,
+        help_text="Auto-computed: within_ward / inter_ward / inter_subcounty",
+    )
     status = models.CharField(
         max_length=20,
         choices=LigiTransferStatus.choices,
@@ -1944,6 +1962,17 @@ class LigiTransferRequest(models.Model):
     scso_reviewed_at = models.DateTimeField(null=True, blank=True)
     scso_notes = models.TextField(blank=True, default="",
                                   help_text="SCSO approval/rejection notes")
+
+    # ── Senior official review (for inter-sub-county transfers) ─────────
+    senior_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="senior_transfer_reviews",
+        help_text="CSO/Director/Admin who reviewed inter-sub-county transfers",
+    )
+    senior_reviewed_at = models.DateTimeField(null=True, blank=True)
+    senior_notes = models.TextField(blank=True, default="")
 
     # ── Timestamps ────────────────────────────────────────────────────────
     requested_by = models.ForeignKey(

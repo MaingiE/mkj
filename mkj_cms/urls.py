@@ -268,6 +268,11 @@ from .web_views import (
     wscc_ward_comp_pools_view,
     wscc_ward_comp_generate_fixtures_view,
     wscc_ward_match_sheet_view,
+    # Ligi Mashinani: Senior transfers (CSO/Director/Admin)
+    senior_transfers_view,
+    senior_transfer_action_view,
+    # Ligi Mashinani: Transfer tracking (Director of Sports)
+    transfer_tracking_dashboard_view,
 )
 
 from teams.ligi_views import ligi_register_view
@@ -631,6 +636,13 @@ urlpatterns = [
     path("ligi/wscc/ward-competition/<int:comp_pk>/pools/",         wscc_ward_comp_pools_view,              name="wscc_ward_comp_pools"),
     path("ligi/wscc/ward-competition/<int:comp_pk>/generate/",      wscc_ward_comp_generate_fixtures_view,  name="wscc_ward_comp_generate"),
     path("ligi/wscc/match-sheet/<int:fixture_pk>/",                 wscc_ward_match_sheet_view,             name="wscc_ward_match_sheet"),
+
+    # ── LIGI MASHINANI: Senior Transfer Portal (CSO / Director / Admin) ──────
+    path("portal/ligi/transfers/senior/",                          senior_transfers_view,          name="senior_transfers"),
+    path("portal/ligi/transfers/senior/<int:transfer_pk>/action/", senior_transfer_action_view,    name="senior_transfer_action"),
+
+    # ── LIGI MASHINANI: Transfer Tracking Dashboard (Director of Sports) ──────
+    path("portal/ligi/transfers/tracking/", transfer_tracking_dashboard_view, name="transfer_tracking"),
     # ── LIGI MASHINANI: Ward Squad Substitutions ──────────────────────────────
     path("ligi/fixtures/<int:fixture_pk>/substitutions/", ward_tm_substitution_view, name="ward_tm_substitution"),
     path("ligi/substitutions/<int:sub_pk>/action/", ward_sub_approve_view, name="ward_sub_approve"),

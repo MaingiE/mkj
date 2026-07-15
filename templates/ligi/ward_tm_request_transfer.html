@@ -13,63 +13,156 @@
 </div>
 
 {% if messages %}
-<div style="margin-bottom:1rem">
-  {% for msg in messages %}
+<div style="margin-bottom:1rem">{% for msg in messages %}
   <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
-    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
-    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
-    {% endif %}">{{ msg }}</div>
-  {% endfor %}
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;{% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;{% else %}background:#fff3cd;color:#856404;{% endif %}">
+    {{ msg }}
+  </div>
+{% endfor %}</div>
+{% endif %}
+
+<!-- ── STEP 1: Player Search ──────────────────────────────────────── -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.75rem"><i class="bi bi-search"></i> Step 1 — Find Player by Name or National ID</h2>
+  <form method="get" style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap">
+    <div style="flex:2;min-width:220px">
+      <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Player Name or National ID</label>
+      <input type="text" name="q" value="{{ search_q }}" placeholder="e.g. John Mutua or 12345678"
+             style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+    </div>
+    <button type="submit" style="padding:.6rem 1.2rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.88rem">
+      <i class="bi bi-search"></i> Search
+    </button>
+  </form>
+
+  {% if search_error %}
+  <div style="margin-top:.75rem;background:#f8d7da;color:#842029;border:1px solid #f5c2c7;border-radius:6px;padding:.65rem .9rem;font-size:.88rem">
+    {{ search_error }}
+  </div>
+  {% endif %}
+
+  <!-- Multiple search results -->
+  {% if search_results %}
+  <div style="margin-top:1rem">
+    <p style="font-size:.85rem;color:#555;margin-bottom:.5rem">Multiple players found. Select one:</p>
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="background:#f0f4ff">
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6;text-align:left">Name</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">National ID</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Current Ward</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Reg. Code</th>
+        <th style="padding:.5rem .8rem;border-bottom:1px solid #dee2e6">Action</th>
+      </tr></thead>
+      <tbody>
+        {% for p in search_results %}
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:.5rem .8rem;font-weight:500">{{ p.first_name }} {{ p.last_name }}</td>
+          <td style="padding:.5rem .8rem;font-family:monospace;font-size:.8rem">{{ p.national_id_number }}</td>
+          <td style="padding:.5rem .8rem">{{ p.discipline.ward|title }}, {{ p.discipline.sub_county|title }}</td>
+          <td style="padding:.5rem .8rem;font-family:monospace;font-size:.78rem;color:#124491">{{ p.registration_code|default:"—" }}</td>
+          <td style="padding:.5rem .8rem">
+            <a href="?q={{ search_q }}&player_pk={{ p.pk }}"
+               style="padding:.25rem .6rem;background:#124491;color:#fff;border-radius:4px;font-size:.78rem;text-decoration:none">Select</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Single found player -->
+  {% if found_player %}
+  <div style="margin-top:.75rem;background:#f0f4ff;border:1px solid #b6d4fe;border-radius:8px;padding:.9rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    {% if found_player.photo %}
+    <img src="{{ found_player.photo.url }}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:2px solid #dee2e6">
+    {% endif %}
+    <div style="flex:1">
+      <strong>{{ found_player.first_name }} {{ found_player.last_name }}</strong>
+      <span style="font-family:monospace;font-size:.8rem;color:#888;margin-left:.5rem">{{ found_player.national_id_number }}</span><br>
+      <span style="font-size:.82rem;color:#555">{{ found_player.discipline.ward|title }} Ward, {{ found_player.discipline.sub_county|title }}</span>
+      {% if found_player.registration_code %}<span style="margin-left:.5rem;font-family:monospace;font-size:.78rem;color:#124491;background:#e8edf5;padding:.1rem .4rem;border-radius:4px">{{ found_player.registration_code }}</span>{% endif %}
+    </div>
+    <a href="#transfer-form" style="padding:.4rem .9rem;background:#198754;color:#fff;border-radius:6px;font-size:.85rem;text-decoration:none">
+      Use this player ↓
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── STEP 2: Transfer type alert ───────────────────────────────────── -->
+{% if transfer_type_info %}
+<div style="background:{{ transfer_type_info.alert_colour }};border-radius:8px;padding:1rem 1.1rem;margin-bottom:1.25rem;font-size:.9rem;line-height:1.6">
+  {{ transfer_type_info.alert_text|safe }}
 </div>
 {% endif %}
 
-<div class="card" style="padding:1.5rem;max-width:600px">
-  <p style="font-size:.88rem;color:#666;margin-bottom:1.5rem;line-height:1.6">
-    Select a player from your current longlist, choose the destination ward team, and provide a reason. The request will be reviewed by your Ward Sports Council Chair, then the Sub-County Sports Officer.
-  </p>
+<!-- ── STEP 3: Submit form ─────────────────────────────────────────── -->
+<div class="card" style="padding:1.5rem;max-width:650px" id="transfer-form">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-send"></i> Step 2 — Submit Transfer Request</h2>
 
   <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="action" value="submit_transfer">
 
-    <!-- Player -->
-    <div style="margin-bottom:1.2rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Player *</label>
-      <select name="player_pk" style="width:100%;padding:.65rem .8rem;border:1px solid {% if errors.player %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.9rem">
-        <option value="">— Select player —</option>
-        {% for player in players %}
+    <!-- Player selection -->
+    <div style="margin-bottom:1.1rem">
+      <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.35rem">Player *</label>
+
+      {% if found_player %}
+      <!-- Use the found player -->
+      <input type="hidden" name="player_pk" value="{{ found_player.pk }}">
+      <div style="padding:.6rem .8rem;background:#f0f4ff;border:1px solid #b6d4fe;border-radius:6px;font-size:.88rem">
+        <strong>{{ found_player.first_name }} {{ found_player.last_name }}</strong>
+        <span style="color:#888;margin-left:.5rem">{{ found_player.national_id_number }}</span>
+        — {{ found_player.discipline.ward|title }} Ward
+      </div>
+      {% else %}
+      <!-- Dropdown from own longlist -->
+      <select name="player_pk" id="player_pk_select"
+              style="width:100%;padding:.6rem .75rem;border:1px solid {% if errors.player %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.88rem"
+              onchange="updateTransferType()">
+        <option value="">— Select player from your longlist —</option>
+        {% for player in my_players %}
         <option value="{{ player.pk }}" {% if post.player_pk == player.pk|stringformat:"s" %}selected{% endif %}>
           {{ player.first_name }} {{ player.last_name }} — {{ player.national_id_number }}
+          {% if player.registration_code %}[{{ player.registration_code }}]{% endif %}
         </option>
         {% endfor %}
       </select>
       {% if errors.player %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ errors.player }}</p>{% endif %}
-      {% if not players %}
-      <p style="color:#888;font-size:.82rem;margin:.4rem 0 0">No players on your longlist yet.</p>
+      <p style="font-size:.75rem;color:#888;margin:.3rem 0 0">Or search above to request transfer of a player from another team.</p>
       {% endif %}
     </div>
 
-    <!-- Destination ward -->
-    <div style="margin-bottom:1.2rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Destination Ward *</label>
-      <select name="to_discipline_pk" style="width:100%;padding:.65rem .8rem;border:1px solid {% if errors.to_discipline %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.9rem">
-        <option value="">— Select destination ward —</option>
+    <!-- Destination ward/team -->
+    <div style="margin-bottom:1.1rem">
+      <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.35rem">Destination Ward / Team *</label>
+      <select name="to_discipline_pk" id="to_discipline_select"
+              style="width:100%;padding:.6rem .75rem;border:1px solid {% if errors.to_discipline %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.88rem"
+              onchange="updateTransferType()">
+        <option value="">— Select destination —</option>
         {% for disc in target_disciplines %}
-        <option value="{{ disc.pk }}" {% if post.to_discipline_pk == disc.pk|stringformat:"s" %}selected{% endif %}>
-          {{ disc.ward|title }} Ward
-        </option>
+        <optgroup label="{{ disc.sub_county|title }}">
+          <option value="{{ disc.pk }}"
+                  data-ward="{{ disc.ward }}" data-sc="{{ disc.sub_county }}"
+                  {% if post.to_discipline_pk == disc.pk|stringformat:"s" %}selected{% endif %}>
+            {{ disc.ward|title }} Ward ({{ disc.sub_county|title }})
+          </option>
+        </optgroup>
         {% endfor %}
       </select>
       {% if errors.to_discipline %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ errors.to_discipline }}</p>{% endif %}
-      {% if not target_disciplines %}
-      <p style="color:#888;font-size:.82rem;margin:.4rem 0 0">No other ward teams available for this discipline in your sub-county.</p>
-      {% endif %}
     </div>
+
+    <!-- Live transfer type alert -->
+    <div id="liveTransferAlert" style="display:none;border-radius:8px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.88rem;line-height:1.5"></div>
 
     <!-- Reason -->
     <div style="margin-bottom:1.5rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Reason for Transfer *</label>
-      <textarea name="reason" rows="4" placeholder="Explain why this player should be transferred..." maxlength="1000"
-        style="width:100%;padding:.65rem .8rem;border:1px solid {% if errors.reason %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.9rem;resize:vertical">{{ post.reason }}</textarea>
+      <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:.35rem">Reason for Transfer *</label>
+      <textarea name="reason" rows="4" placeholder="Explain why this player should be transferred..."
+                style="width:100%;padding:.6rem .75rem;border:1px solid {% if errors.reason %}#dc3545{% else %}#dee2e6{% endif %};border-radius:6px;font-size:.88rem;resize:vertical">{{ post.reason }}</textarea>
       {% if errors.reason %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ errors.reason }}</p>{% endif %}
     </div>
 
@@ -77,10 +170,49 @@
       <button type="submit" style="padding:.65rem 1.5rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem">
         <i class="bi bi-send"></i> Submit Request
       </button>
-      <a href="{% url 'ward_tm_transfers' %}" style="padding:.65rem 1.2rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:6px;text-decoration:none;font-size:.9rem">
-        Cancel
-      </a>
+      <a href="{% url 'ward_tm_transfers' %}" style="padding:.65rem 1.1rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:6px;text-decoration:none;font-size:.9rem">Cancel</a>
     </div>
   </form>
 </div>
+
+<script>
+/* Live transfer type detection */
+(function() {
+  var fromWard = '{{ discipline.ward|escapejs }}';
+  var fromSC   = '{{ discipline.sub_county|escapejs }}';
+
+  function updateTransferType() {
+    var sel  = document.getElementById('to_discipline_select');
+    var alert = document.getElementById('liveTransferAlert');
+    if (!sel || !alert) return;
+    var opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) { alert.style.display='none'; return; }
+    var toWard = opt.dataset.ward || '';
+    var toSC   = opt.dataset.sc || '';
+    var msg, bg;
+    if (toSC && toSC !== fromSC) {
+      bg  = '#f8d7da';
+      msg = '⚠️ <strong>Inter-Sub-County Transfer</strong> — ' + fromSC + ' → ' + toSC + '. Requires Chief Sports Officer or Director of Sports approval.';
+    } else if (toWard && toWard !== fromWard) {
+      bg  = '#fff3cd';
+      msg = '🔄 <strong>Inter-Ward Transfer</strong> — ' + fromWard + ' → ' + toWard + '. Requires WSCC approval, then SCSO final approval.';
+    } else {
+      bg  = '#d1e7dd';
+      msg = '✅ <strong>Within-Ward Transfer</strong> — same ward (' + fromWard + '). Ward Sports Council Chair approval only.';
+    }
+    alert.style.background = bg;
+    alert.innerHTML = msg;
+    alert.style.display = 'block';
+  }
+
+  window.updateTransferType = updateTransferType;
+
+  var toSel = document.getElementById('to_discipline_select');
+  if (toSel) toSel.addEventListener('change', updateTransferType);
+  var fromSel = document.getElementById('player_pk_select');
+  if (fromSel) fromSel.addEventListener('change', updateTransferType);
+
+  updateTransferType();
+})();
+</script>
 {% endblock %}
