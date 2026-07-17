@@ -25,24 +25,27 @@ from django.utils.html import strip_tags
 logger = logging.getLogger(__name__)
 
 SITE_URL = getattr(settings, 'SITE_URL', 'https://mkjsupacup.com')
-FROM_EMAIL = getattr(settings, 'DEFAULT_FROM_EMAIL', 'MKJ SUPA CUP <info@mkjsupacup.com>')
+FROM_EMAIL = getattr(settings, 'DEFAULT_FROM_EMAIL', 'MKJ SUPA CUP <admin@mkjsupacup.com>')
+LIGI_FROM_EMAIL = getattr(settings, 'LIGI_FROM_EMAIL', 'Ligi Mashinani <ligimashinani@mkjsupacup.com>')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  HELPERS
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _send(subject, html_body, recipients, fail_silently=True):
+def _send(subject, html_body, recipients, fail_silently=True, from_email=None):
     """
     Send an HTML email on a background daemon thread.
     Returns immediately - never blocks the web request.
     Filters out blank addresses.  Retries up to 3 times on transient errors.
+    Use from_email to override the sender (e.g. LIGI_FROM_EMAIL for ward TM mails).
     """
     recipients = [r for r in (recipients or []) if r]
     if not recipients:
         logger.warning("No valid recipients for: %s", subject)
         return False
 
+    sender = from_email or FROM_EMAIL
     plain = strip_tags(html_body)
 
     def _worker():
@@ -50,15 +53,15 @@ def _send(subject, html_body, recipients, fail_silently=True):
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             try:
-                msg = EmailMultiAlternatives(subject, plain, FROM_EMAIL, recipients,
-                                              reply_to=['info@mkjsupacup.com'])
+                msg = EmailMultiAlternatives(subject, plain, sender, recipients,
+                                              reply_to=[sender])
                 msg.attach_alternative(html_body, "text/html")
                 msg.send(fail_silently=False)
                 logger.info("✉ Sent '%s' → %s", subject, recipients)
                 return
             except Exception as exc:
                 if attempt < max_attempts:
-                    wait = attempt * 5  # 5s, 10s
+                    wait = attempt * 5
                     logger.warning("✉ Attempt %d/%d failed '%s' → %s: %s - retrying in %ds",
                                    attempt, max_attempts, subject, recipients, exc, wait)
                     time.sleep(wait)
@@ -68,7 +71,7 @@ def _send(subject, html_body, recipients, fail_silently=True):
 
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
-    return True  # fired - delivery result logged asynchronously
+    return True
 
 
 def _get_subcounty_officers(sub_county):

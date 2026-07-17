@@ -336,6 +336,12 @@ BREVO_WHATSAPP_TEMPLATE_TRANSFER         = env("BREVO_WHATSAPP_TEMPLATE_TRANSFER
 BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS  = env("BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS", default="")
 BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT     = env("BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT", default="")
 
+# ── DUAL EMAIL SENDERS ────────────────────────────────────────────────────────
+# admin@mkjsupacup.com    — general admin, system, and leadership notifications
+# ligimashinani@mkjsupacup.com — Ligi Mashinani team manager notifications
+DEFAULT_FROM_EMAIL      = env("DEFAULT_FROM_EMAIL",      default="MKJ SUPA CUP <admin@mkjsupacup.com>")
+LIGI_FROM_EMAIL         = env("LIGI_FROM_EMAIL",         default="Ligi Mashinani <ligimashinani@mkjsupacup.com>")
+
 # ── SEO CONFIGURATION ──────────────────────────────────────────────────────────
 SITE_NAME = "MKJ SUPA CUP"
 SITE_DESCRIPTION = (
