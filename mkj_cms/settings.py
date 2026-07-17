@@ -304,13 +304,12 @@ _email_host_user = env("EMAIL_HOST_USER", default="")
 EMAIL_BACKEND    = env(
     "EMAIL_BACKEND",
     default=(
-        "admin_dashboard.email_backend.LoggingSMTPBackend"
+        "accounts.brevo_backend.BrevoEmailBackend"
         if _email_host_user
         else (
-            # Local dev: print emails to the terminal so you can see them without SMTP
             "django.core.mail.backends.console.EmailBackend"
             if DEBUG
-            else "django.core.mail.backends.dummy.EmailBackend"
+            else "accounts.brevo_backend.BrevoEmailBackend"
         )
     ),
 )
