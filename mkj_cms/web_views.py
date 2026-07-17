@@ -14486,7 +14486,9 @@ def ligi_registration_approve_view(request, pk):
             reg.account_created = True
             reg.save(update_fields=['status', 'account_created', 'updated_at'])
 
-        # Always print credentials to terminal so they're visible during local dev
+        # Print credentials to terminal (visible in Railway deploy logs)
+        from django.conf import settings as _conf
+        site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
         print("\n" + "="*60)
         print("  LIGI MASHINANI — NEW ACCOUNT CREATED")
         print("="*60)
@@ -14494,7 +14496,7 @@ def ligi_registration_approve_view(request, pk):
         print(f"  Ward:      {reg.ward}, {reg.sub_county}")
         print(f"  Email:     {user.email}")
         print(f"  Password:  {temp_password}")
-        print(f"  Login URL: http://127.0.0.1:8000/portal/login/")
+        print(f"  Login URL: {site_url}/portal/login/")
         print("="*60 + "\n")
 
         # Send credentials email outside the transaction
