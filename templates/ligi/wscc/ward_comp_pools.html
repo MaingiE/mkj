@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Manage Pools — {{ comp.name }}{% endblock %}
+{% block title %}Manage Pools  -  {{ comp.name }}{% endblock %}
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb">
@@ -8,7 +8,7 @@
     <span>Pools</span>
   </div>
   <h1><i class="bi bi-diagram-3"></i> Manage Pools</h1>
-  <p style="color:#666;font-size:.9rem">{{ comp.name }} — {{ comp.get_sport_type_display }}</p>
+  <p style="color:#666;font-size:.9rem">{{ comp.name }}  -  {{ comp.get_sport_type_display }}</p>
 </div>
 
 {% if messages %}
@@ -76,7 +76,7 @@
     <input type="hidden" name="action" value="add_team">
     <input type="hidden" name="pool_pk" value="{{ pool.pk }}">
     <select name="team_pk" style="flex:1;padding:.45rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
-      <option value="">— Add team to {{ pool.name }} —</option>
+      <option value=""> -  Add team to {{ pool.name }}  - </option>
       {% for team in available_teams %}
       <option value="{{ team.pk }}">{{ team.name }}</option>
       {% endfor %}

@@ -6,7 +6,7 @@ from competitions.models import Fixture, Competition
 
 @staff_member_required
 def reschedule_fixtures_admin(request):
-    """Reschedule fixtures — lists all pending/postponed fixtures grouped by competition."""
+    """Reschedule fixtures  -  lists all pending/postponed fixtures grouped by competition."""
     sport_filter = request.GET.get('sport', '')
     fixtures = Fixture.objects.filter(
         status__in=['pending', 'postponed', 'confirmed']

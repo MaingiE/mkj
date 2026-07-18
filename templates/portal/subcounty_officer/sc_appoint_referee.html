@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Appoint Referees – {{ fixture }} – MKJ Portal{% endblock %}
+{% block title %}Appoint Referees - {{ fixture }} - MKJ Portal{% endblock %}
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <div>
@@ -43,12 +43,12 @@
                     {{ rd.role_label }}
                     {% if rd.is_mandatory %}<span class="badge bg-danger ms-1">Required</span>{% endif %}
                 </td>
-                <td>{{ rd.referee_name|default:"— Not assigned —" }}</td>
+                <td>{{ rd.referee_name|default:" -  Not assigned  - " }}</td>
                 <td>
                     {% if rd.appointment %}
                     <span class="badge bg-{{ rd.status|yesno:'success,secondary,warning' }}">{{ rd.status_display }}</span>
                     {% else %}
-                    <span class="text-muted">—</span>
+                    <span class="text-muted"> - </span>
                     {% endif %}
                 </td>
                 <td class="text-end">
@@ -84,7 +84,7 @@
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Role</label>
                     <select name="role" class="form-select" required>
-                        <option value="">— Select role —</option>
+                        <option value=""> -  Select role  - </option>
                         {% for rd in roles_data %}
                         <option value="{{ rd.role_key }}">
                             {{ rd.role_label }}{% if rd.is_mandatory %} *{% endif %}
@@ -95,14 +95,14 @@
                 <div class="col-md-5">
                     <label class="form-label fw-semibold">Referee</label>
                     <select name="referee_id" class="form-select" required>
-                        <option value="">— Select referee —</option>
+                        <option value=""> -  Select referee  - </option>
                         {% for ref in referees_list %}
                         <option value="{{ ref.profile.pk }}"
                             {% if ref.is_appointed_here %}disabled{% endif %}>
                             {{ ref.full_name }} ({{ ref.level }})
                             {% if ref.is_busy %}⚠ Busy{% endif %}
                             {% if ref.is_appointed_here %}✓ Appointed{% endif %}
-                            — {{ ref.availability_label }}
+                             -  {{ ref.availability_label }}
                         </option>
                         {% endfor %}
                     </select>

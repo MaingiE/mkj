@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Player Longlist — Ligi Mashinani{% endblock %}
+{% block title %}Player Longlist  -  Ligi Mashinani{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -99,7 +99,7 @@
     {% endif %}
     <div style="padding:.8rem">
       <div style="font-weight:700;font-size:.9rem;margin-bottom:.2rem">{{ player.first_name }} {{ player.last_name }}</div>
-      <div style="font-size:.78rem;color:#888">{{ player.position|default:"—" }} &bull; Age {{ player.age|default:"?" }}</div>
+      <div style="font-size:.78rem;color:#888">{{ player.position|default:" - " }} &bull; Age {{ player.age|default:"?" }}</div>
       <div style="margin-top:.5rem;font-size:.75rem">
         {% if player.id_document or player.birth_certificate %}
           <span style="color:#198754"><i class="bi bi-check-circle"></i> Docs OK</span>
@@ -166,16 +166,16 @@
 
         <td style="padding:.6rem 1rem;font-weight:600">{{ player.first_name }} {{ player.last_name }}</td>
         <td style="padding:.6rem 1rem;font-family:monospace;font-size:.78rem;color:#124491;background:#f0f4ff;border-radius:4px;white-space:nowrap">
-          {{ player.registration_code|default:"—" }}
+          {{ player.registration_code|default:" - " }}
         </td>
         <td style="padding:.6rem 1rem;font-family:monospace;font-size:.82rem">{{ player.national_id_number }}</td>
         <td style="padding:.6rem 1rem;font-size:.85rem">
-          {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#aaa">—</span>{% endif %}
+          {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#aaa"> - </span>{% endif %}
         </td>
         <td style="padding:.6rem 1rem;text-align:center;font-weight:700">
-          {% if player.age %}{{ player.age }}{% else %}<span style="color:#aaa">—</span>{% endif %}
+          {% if player.age %}{{ player.age }}{% else %}<span style="color:#aaa"> - </span>{% endif %}
         </td>
-        <td style="padding:.6rem 1rem">{{ player.position|default:"—" }}</td>
+        <td style="padding:.6rem 1rem">{{ player.position|default:" - " }}</td>
         <td style="padding:.6rem 1rem;text-align:center">
           {% if player.id_document and player.photo %}
             <span style="color:#198754" title="Photo + ID doc present"><i class="bi bi-check-circle-fill"></i></span>

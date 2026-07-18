@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Live: {{ fixture }} – MKJ Portal{% endblock %}
+{% block title %}Live: {{ fixture }} - MKJ Portal{% endblock %}
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <div>
@@ -26,7 +26,7 @@
             <div class="col-5"><h3 class="fw-bold mb-0">{{ fixture.home_team.name }}</h3></div>
             <div class="col-2">
                 <div style="font-size: 2.5rem; font-weight: 900;">
-                    {{ fixture.home_score|default:"0" }} – {{ fixture.away_score|default:"0" }}
+                    {{ fixture.home_score|default:"0" }} - {{ fixture.away_score|default:"0" }}
                 </div>
                 <div class="small opacity-75">Period {{ fixture.live_half|default:1 }}</div>
             </div>
@@ -92,7 +92,7 @@
                 <input type="number" name="home_score" class="form-control form-control-sm"
                     value="{{ fixture.home_score|default:0 }}" min="0" style="width:80px">
             </div>
-            <div class="col-auto align-self-end pb-1 fw-bold">–</div>
+            <div class="col-auto align-self-end pb-1 fw-bold">-</div>
             <div class="col-auto">
                 <label class="form-label small">{{ fixture.away_team.name }}</label>
                 <input type="number" name="away_score" class="form-control form-control-sm"
@@ -155,7 +155,7 @@
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <span>
                     <strong>{{ g.scorer_name }}</strong> ({{ g.team.name }})
-                    — {{ g.minute }}&prime; | {{ g.get_goal_type_display }}
+                     -  {{ g.minute }}&prime; | {{ g.get_goal_type_display }}
                 </span>
                 <form method="post" class="mb-0">{% csrf_token %}
                     <input type="hidden" name="action" value="delete_goal">

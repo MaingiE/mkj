@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Inter-Sub-County Transfers — Senior Review{% endblock %}
+{% block title %}Inter-Sub-County Transfers  -  Senior Review{% endblock %}
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb">
@@ -94,8 +94,8 @@
             {% if t.status == 'senior_approved' %}<span style="background:#d1e7dd;color:#0a3622;padding:.15rem .5rem;border-radius:10px;font-size:.75rem;font-weight:600">✅ Approved</span>
             {% else %}<span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.75rem;font-weight:600">❌ Rejected</span>{% endif %}
           </td>
-          <td style="padding:.5rem .8rem;font-size:.82rem">{{ t.senior_reviewed_by.get_full_name|default:"—" }}</td>
-          <td style="padding:.5rem .8rem;font-size:.82rem;color:#888">{{ t.senior_reviewed_at|date:"d M Y"|default:"—" }}</td>
+          <td style="padding:.5rem .8rem;font-size:.82rem">{{ t.senior_reviewed_by.get_full_name|default:" - " }}</td>
+          <td style="padding:.5rem .8rem;font-size:.82rem;color:#888">{{ t.senior_reviewed_at|date:"d M Y"|default:" - " }}</td>
         </tr>
         {% endfor %}
       </tbody>

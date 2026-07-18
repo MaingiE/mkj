@@ -1758,7 +1758,7 @@ class LigiMashinaniRegistration(models.Model):
         return self.discipline
 
     def clean(self):
-        """Full model validation — enforces discipline choices constraint.
+        """Full model validation  -  enforces discipline choices constraint.
         Requirements: 9.1, 9.2
         """
         from django.core.exceptions import ValidationError as _VE
@@ -1867,16 +1867,96 @@ class LigiSettings(models.Model):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI TRANSFER REQUEST
+#  PLAYER REGISTRATION WINDOW REQUEST
+#  SCSO requests to open/close the player registration window.
+#  Director of Sports or Chief Sports Officer approves or rejects.
+# ══════════════════════════════════════════════════════════════════════════════
+
+class PlayerRegRequestStatus(models.TextChoices):
+    PENDING  = "pending",  "Pending Approval"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
+
+
+class PlayerRegRequestAction(models.TextChoices):
+    OPEN  = "open",  "Open Player Registration"
+    CLOSE = "close", "Close Player Registration"
+
+
+class PlayerRegRequest(models.Model):
+    """
+    A Sub-County Sports Officer requests to open or close the player
+    registration window for their sub-county.
+
+    The request must be approved by a Director of Sports or Chief Sports
+    Officer before the LigiSettings flag is actually toggled.
+
+    This creates a full audit trail for every window change.
+    """
+    sub_county = models.CharField(
+        max_length=100,
+        help_text="Sub-county this request applies to.",
+    )
+    action = models.CharField(
+        max_length=10,
+        choices=PlayerRegRequestAction.choices,
+        help_text="Whether to open or close player registration.",
+    )
+    reason = models.TextField(
+        help_text="Reason for the request (required).",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="player_reg_requests",
+        help_text="SCSO who raised the request.",
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=PlayerRegRequestStatus.choices,
+        default=PlayerRegRequestStatus.PENDING,
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="player_reg_requests_reviewed",
+        help_text="DS/CSO who approved or rejected.",
+    )
+    review_note = models.TextField(
+        blank=True, default="",
+        help_text="Optional note from the approver.",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Player Registration Request"
+        verbose_name_plural = "Player Registration Requests"
+
+    def __str__(self):
+        return (
+            f"{self.get_action_display()}  -  {self.sub_county} "
+            f"[{self.get_status_display()}]"
+        )
+
+    @property
+    def is_pending(self):
+        return self.status == PlayerRegRequestStatus.PENDING
+
+
 #  Ward TM requests player transfer → WSCC approves → SCSO final approval.
 #  Only active when LigiSettings.transfer_window_open = True.
 # ══════════════════════════════════════════════════════════════════════════════
 
 class LigiTransferStatus(models.TextChoices):
     PENDING        = "pending",        "Pending Review"
-    WSCC_APPROVED  = "wscc_approved",  "WSCC Approved — Pending SCSO"
+    WSCC_APPROVED  = "wscc_approved",  "WSCC Approved  -  Pending SCSO"
     WSCC_REJECTED  = "wscc_rejected",  "Rejected by WSCC"
-    SCSO_APPROVED  = "scso_approved",  "Approved — Transfer Complete"
+    SCSO_APPROVED  = "scso_approved",  "Approved  -  Transfer Complete"
     SCSO_REJECTED  = "scso_rejected",  "Rejected by Sub-County Officer"
     SENIOR_APPROVED = "senior_approved", "Approved by Senior Official"
     SENIOR_REJECTED = "senior_rejected", "Rejected by Senior Official"
@@ -1888,7 +1968,7 @@ class LigiTransferType(models.TextChoices):
     INTER_WARD     = "inter_ward",     "Inter-Ward (Same Sub-County)"
     INTER_SUBCOUNTY = "inter_subcounty", "Inter-Sub-County"
     WSCC_REJECTED  = "wscc_rejected",  "Rejected by WSCC"
-    SCSO_APPROVED  = "scso_approved",  "Approved — Transfer Complete"
+    SCSO_APPROVED  = "scso_approved",  "Approved  -  Transfer Complete"
     SCSO_REJECTED  = "scso_rejected",  "Rejected by Sub-County Officer"
     WITHDRAWN      = "withdrawn",      "Withdrawn by Team Manager"
 

@@ -27,10 +27,10 @@ def report(label, ok, detail="", warn=False):
         print(f"  {PASS} {label}")
         results["pass"] += 1
     elif warn:
-        print(f"  {WARN} {label} — {detail}")
+        print(f"  {WARN} {label}  -  {detail}")
         results["warn"] += 1
     else:
-        print(f"  {FAIL} {label} — {detail}")
+        print(f"  {FAIL} {label}  -  {detail}")
         results["fail"] += 1
 
 
@@ -67,7 +67,7 @@ for name in existing_urls:
         reverse(name)
         report(f"existing URL '{name}' still resolves", True)
     except NoReverseMatch:
-        report(f"existing URL '{name}'", False, "BROKEN — regression!")
+        report(f"existing URL '{name}'", False, "BROKEN  -  regression!")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -195,13 +195,13 @@ report("SESSION_EXPIRE_AT_BROWSER_CLOSE is True",
 middleware = settings.MIDDLEWARE
 auto_logout_mw = any('AutoLogout' in m for m in middleware)
 report("AutoLogoutMiddleware in MIDDLEWARE", auto_logout_mw,
-       "middleware not found — timeout won't work!" if not auto_logout_mw else "")
+       "middleware not found  -  timeout won't work!" if not auto_logout_mw else "")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 6. COORDINATOR FIXTURE EDIT — HOME/AWAY SWAP LOGIC
+# 6. COORDINATOR FIXTURE EDIT  -  HOME/AWAY SWAP LOGIC
 # ═══════════════════════════════════════════════════════════════════════════════
-print("\n══ 6. Coordinator Fixture Edit — Home/Away Logic ══")
+print("\n══ 6. Coordinator Fixture Edit  -  Home/Away Logic ══")
 
 # Verify the view code does NOT have the is_knockout restriction
 import mkj_cms.web_views as wv
@@ -365,7 +365,7 @@ try:
     wb2.close()
 
 except ImportError:
-    report("openpyxl installed", False, "openpyxl not available — bulk upload will fail!")
+    report("openpyxl installed", False, "openpyxl not available  -  bulk upload will fail!")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -448,8 +448,8 @@ print(f"  {WARN}: {results['warn']}")
 print("═" * 60)
 
 if results["fail"] == 0:
-    print(f"\n  \033[92m✓ ALL TESTS PASSED — safe to deploy!\033[0m\n")
+    print(f"\n  \033[92m✓ ALL TESTS PASSED  -  safe to deploy!\033[0m\n")
 else:
-    print(f"\n  \033[91m✗ {results['fail']} FAILURE(S) — fix before deploying!\033[0m\n")
+    print(f"\n  \033[91m✗ {results['fail']} FAILURE(S)  -  fix before deploying!\033[0m\n")
 
 sys.exit(results["fail"])

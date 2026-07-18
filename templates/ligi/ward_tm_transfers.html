@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Transfer Requests — Ligi Mashinani{% endblock %}
+{% block title %}My Transfer Requests  -  Ligi Mashinani{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,7 +8,7 @@
     <span>Transfers</span>
   </div>
   <h1><i class="bi bi-arrow-left-right"></i> Player Transfers</h1>
-  <p style="color:#666;font-size:.9rem">{{ sub_county|title }} Sub-County — {{ ward|title }} Ward</p>
+  <p style="color:#666;font-size:.9rem">{{ sub_county|title }} Sub-County  -  {{ ward|title }} Ward</p>
 </div>
 
 {% if messages %}
@@ -96,7 +96,7 @@
             <span style="font-size:.78rem;color:#888" title="{{ t.wscc_notes }}{{ t.scso_notes }}">
               <i class="bi bi-chat-left-text"></i> See notes
             </span>
-            {% else %}—{% endif %}
+            {% else %} - {% endif %}
           </td>
         </tr>
         {% if t.wscc_notes or t.scso_notes %}
@@ -134,7 +134,7 @@
         <tr style="border-bottom:1px solid #dee2e6">
           <td style="padding:.6rem 1rem;font-weight:500">{{ t.player.first_name }} {{ t.player.last_name }}</td>
           <td style="padding:.6rem 1rem">{{ t.from_discipline.ward|title }}</td>
-          <td style="padding:.6rem 1rem;color:#888;font-size:.82rem">{{ t.completed_at|date:"d M Y"|default:"—" }}</td>
+          <td style="padding:.6rem 1rem;color:#888;font-size:.82rem">{{ t.completed_at|date:"d M Y"|default:" - " }}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -505,7 +505,7 @@ class WardLonglistPlayerForm(forms.ModelForm):
     - photo (passport photo) is required
     - At least one identity document (id_document or birth_certificate) is required
     - phone is optional at ward level (not all ward players have phones)
-    - sub_county and ward are NOT shown — they are set automatically from the discipline
+    - sub_county and ward are NOT shown  -  they are set automatically from the discipline
     """
 
     def __init__(self, *args, **kwargs):
@@ -517,7 +517,7 @@ class WardLonglistPlayerForm(forms.ModelForm):
         self.fields['huduma_number'].required = False
         # Photo is required
         self.fields['photo'].required = True
-        # id_document not individually required — validated together with birth_certificate in clean()
+        # id_document not individually required  -  validated together with birth_certificate in clean()
         self.fields['id_document'].required = False
         # birth_certificate is optional on its own
         self.fields['birth_certificate'].required = False
@@ -598,7 +598,7 @@ class WardLonglistPlayerForm(forms.ModelForm):
             existing = qs.first()
             raise ValidationError(
                 f'A player with National ID {nid} is already registered '
-                f'({existing.first_name} {existing.last_name} — '
+                f'({existing.first_name} {existing.last_name}  -  '
                 f'{existing.discipline.get_sport_type_display()}).'
             )
         return nid
@@ -624,7 +624,7 @@ class WardLonglistPlayerForm(forms.ModelForm):
         # Require at least one identity document (national ID copy OR birth certificate)
         id_doc = cleaned.get('id_document')
         birth_cert = cleaned.get('birth_certificate')
-        # When editing, existing values count — check the instance too
+        # When editing, existing values count  -  check the instance too
         has_id_doc = bool(id_doc) or bool(getattr(self.instance, 'id_document', None))
         has_birth_cert = bool(birth_cert) or bool(getattr(self.instance, 'birth_certificate', None))
         if not has_id_doc and not has_birth_cert:

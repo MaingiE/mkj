@@ -8,9 +8,9 @@
 
 This feature extends the MKJ SUPA CUP Django application to support a three-level grassroots competition pipeline for Makueni County:
 
-1. **Level 1 — Ligi Mashinani (Ward Level):** Ward teams register and manage player longlists, with Ward Sports Council Chairpersons (WSCCs) approving those longlists before match-day squads can be selected.
-2. **Level 2 — Sub-County MKJ Finals:** Sub-County Sports Officers manage fixtures, pools, standings, and player verification using the same competition engine as county finals, scoped to one of Makueni's six sub-counties.
-3. **Level 3 — MKJ Supa Cup County Finals:** Existing county pipeline, seeded by qualifiers from sub-county finals.
+1. **Level 1  -  Ligi Mashinani (Ward Level):** Ward teams register and manage player longlists, with Ward Sports Council Chairpersons (WSCCs) approving those longlists before match-day squads can be selected.
+2. **Level 2  -  Sub-County MKJ Finals:** Sub-County Sports Officers manage fixtures, pools, standings, and player verification using the same competition engine as county finals, scoped to one of Makueni's six sub-counties.
+3. **Level 3  -  MKJ Supa Cup County Finals:** Existing county pipeline, seeded by qualifiers from sub-county finals.
 
 The design philosophy is **additive, not parallel**: a `level` field (`ward` / `subcounty` / `county`) is added to `Competition`, `CountyRegistration`, and `CountyDiscipline` to scope all related objects without duplicating model families. All new views live in `mkj_cms/web_views.py` following existing patterns. No new Django apps are introduced.
 
@@ -50,7 +50,7 @@ flowchart TD
 
 ### 1. Model Layer Changes
 
-#### 1.1 `accounts/models.py` — UserRole Extension
+#### 1.1 `accounts/models.py`  -  UserRole Extension
 
 Add one new choice to the `UserRole` enum:
 
@@ -69,7 +69,7 @@ ward = models.CharField(
 
 Add a `is_ward_sports_council_chair` property following the existing role helper pattern.
 
-#### 1.2 `competitions/models.py` — Competition Level
+#### 1.2 `competitions/models.py`  -  Competition Level
 
 Add `CompetitionLevel` TextChoices and `level` field to `Competition`:
 
@@ -100,7 +100,7 @@ Override `clean()` to enforce:
 - `level=ward` → both `sub_county` and `ward` must not be blank
 - `level=county` → no additional requirements (preserves existing behaviour)
 
-#### 1.3 `teams/models.py` — Level Fields
+#### 1.3 `teams/models.py`  -  Level Fields
 
 Add `level` field with `CompetitionLevel` choices to `CountyRegistration` and `CountyDiscipline`, both defaulting to `county`.
 
@@ -118,7 +118,7 @@ ward = models.CharField(max_length=100, blank=True, default="",
     help_text="Ward for ward-level disciplines")
 ```
 
-#### 1.4 `teams/models.py` — WardLonglist Model (new)
+#### 1.4 `teams/models.py`  -  WardLonglist Model (new)
 
 ```python
 class WardLonglistStatus(models.TextChoices):
@@ -159,7 +159,7 @@ class WardLonglist(models.Model):
         return f"Longlist: {self.discipline} [{self.get_status_display()}]"
 ```
 
-#### 1.5 `teams/models.py` — Team Qualification Flag
+#### 1.5 `teams/models.py`  -  Team Qualification Flag
 
 Add to the `Team` model:
 
@@ -352,13 +352,13 @@ source_subcounty_player = models.ForeignKey(
 
 Promotion copies: `first_name`, `last_name`, `date_of_birth`, `national_id_number`, `phone`, `photo`, `id_document`, `birth_certificate`, `huduma_number`. It does **not** copy step verification statuses from ward to subcounty (fresh verification at subcounty). It **does** copy subcounty step statuses upward to county, setting them as pre-filled on the county verification form.
 
-**Uniqueness invariant:** `national_id_number` is unique per `(level, discipline__registration__county, season)`. Implemented via a model `unique_together` on `(national_id_number, discipline__level)` within the same competition season — enforced at the form/service level because `discipline` is a FK and season is on the competition.
+**Uniqueness invariant:** `national_id_number` is unique per `(level, discipline__registration__county, season)`. Implemented via a model `unique_together` on `(national_id_number, discipline__level)` within the same competition season  -  enforced at the form/service level because `discipline` is a FK and season is on the competition.
 
 ---
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system  -  essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Competition level field default preserves existing data
 
@@ -572,7 +572,7 @@ Promotion copies: `first_name`, `last_name`, `date_of_birth`, `national_id_numbe
 
 ### Validation Errors
 
-- All model-level validation (level+sub_county+ward requirements, WSCC uniqueness, squad limits, longlist state machine) is enforced in `clean()` and surfaced as `ValidationError` objects. View functions catch `ValidationError` and convert them to form/`messages.error` responses — consistent with the existing `add_player_view` pattern.
+- All model-level validation (level+sub_county+ward requirements, WSCC uniqueness, squad limits, longlist state machine) is enforced in `clean()` and surfaced as `ValidationError` objects. View functions catch `ValidationError` and convert them to form/`messages.error` responses  -  consistent with the existing `add_player_view` pattern.
 - Duplicate national ID errors on `CountyPlayer` are caught from `IntegrityError` on save and surfaced with a field-level error message.
 - Cross-sub-county access attempts return HTTP 403, logged via the existing `ActivityLog` mechanism.
 
@@ -593,7 +593,7 @@ except Exception as e:
         description=f"Notification failed: {e}",
         ...
     )
-    messages.warning(request, "Notification could not be sent — will retry on next task run.")
+    messages.warning(request, "Notification could not be sent  -  will retry on next task run.")
 ```
 
 The primary request processing continues normally after the failure is logged.
@@ -637,32 +637,32 @@ def test_competition_level_roundtrip(level):
 
 **Properties to implement as Hypothesis tests:**
 
-- Property 1 — Competition level round-trip: generate random level values, save and reload, verify field matches.
-- Property 2 — Level validation gates: generate Competition objects with level=subcounty/ward and random sub_county/ward values (including blank); verify ValidationError is raised exactly when required.
-- Property 3 — Approval transaction atomicity: inject failures at each step using mocked functions; verify all-or-nothing behaviour.
-- Property 4 — Account setup invariants: generate LigiMashinaniRegistration objects, approve them, verify User fields.
-- Property 5 — Longlist scoping: generate multiple managers across different wards; verify each sees only their own players.
-- Property 6 — Player field validation: generate player records with various missing fields; verify all are rejected.
-- Property 7 — Age calculation: generate random dates of birth; verify age formula is correct.
-- Property 8 — National ID uniqueness: generate two CountyPlayer objects with the same national_id_number; verify rejection.
-- Property 9 — Longlist state machine: generate longlists in submitted/wscc_approved states; verify mutation operations are rejected.
-- Property 10 — WSCC return reason required: generate return actions with empty/whitespace reasons; verify rejection.
-- Property 11 — Squad selection scoping: generate players with mixed longlist statuses; verify only wscc_approved appear.
-- Property 12 — Squad size limits: generate squads at and over the limit for each discipline; verify enforcement.
-- Property 13 — SCSO competition scoping: generate competitions for multiple sub-counties; verify SCSO only sees their own.
-- Property 14 — SCSO competition auto-inheritance: create competitions via SCSO view; verify level and sub_county.
-- Property 15 — Cross-sub-county team block: generate teams from different sub-counties; verify rejection.
-- Property 16 — Verification state machine: generate players with failed steps; verify squad inclusion is blocked.
-- Property 17 — Verification dashboard scoping: generate players at multiple levels; verify SCSO sees only subcounty.
-- Property 18 — Promotion identity preservation: generate ward players, promote, verify identity fields are identical.
-- Property 19 — Verification carry-forward: generate verified subcounty players, promote to county, verify step statuses.
-- Property 20 — WSCC dashboard scoping: generate longlists for multiple wards across multiple sub-counties; verify WSCC only sees their sub-county's wards.
-- Property 21 — One active WSCC per ward: generate duplicate WSCC creation attempts; verify rejection.
-- Property 22 — Team qualification uniqueness: generate duplicate qualification attempts; verify rejection.
-- Property 23 — Points calculation consistency: generate PoolTeam statistics; verify same result at subcounty and county level.
-- Property 24 — ActivityLog on SCSO writes: mock SCSO actions; verify ActivityLog entry created.
-- Property 25 — Email failure graceful degradation: mock email backend to raise; verify primary operation completes and ActivityLog entry is created.
-- Property 26 — Discipline validation: generate random discipline strings; verify only valid ones are accepted.
+- Property 1  -  Competition level round-trip: generate random level values, save and reload, verify field matches.
+- Property 2  -  Level validation gates: generate Competition objects with level=subcounty/ward and random sub_county/ward values (including blank); verify ValidationError is raised exactly when required.
+- Property 3  -  Approval transaction atomicity: inject failures at each step using mocked functions; verify all-or-nothing behaviour.
+- Property 4  -  Account setup invariants: generate LigiMashinaniRegistration objects, approve them, verify User fields.
+- Property 5  -  Longlist scoping: generate multiple managers across different wards; verify each sees only their own players.
+- Property 6  -  Player field validation: generate player records with various missing fields; verify all are rejected.
+- Property 7  -  Age calculation: generate random dates of birth; verify age formula is correct.
+- Property 8  -  National ID uniqueness: generate two CountyPlayer objects with the same national_id_number; verify rejection.
+- Property 9  -  Longlist state machine: generate longlists in submitted/wscc_approved states; verify mutation operations are rejected.
+- Property 10  -  WSCC return reason required: generate return actions with empty/whitespace reasons; verify rejection.
+- Property 11  -  Squad selection scoping: generate players with mixed longlist statuses; verify only wscc_approved appear.
+- Property 12  -  Squad size limits: generate squads at and over the limit for each discipline; verify enforcement.
+- Property 13  -  SCSO competition scoping: generate competitions for multiple sub-counties; verify SCSO only sees their own.
+- Property 14  -  SCSO competition auto-inheritance: create competitions via SCSO view; verify level and sub_county.
+- Property 15  -  Cross-sub-county team block: generate teams from different sub-counties; verify rejection.
+- Property 16  -  Verification state machine: generate players with failed steps; verify squad inclusion is blocked.
+- Property 17  -  Verification dashboard scoping: generate players at multiple levels; verify SCSO sees only subcounty.
+- Property 18  -  Promotion identity preservation: generate ward players, promote, verify identity fields are identical.
+- Property 19  -  Verification carry-forward: generate verified subcounty players, promote to county, verify step statuses.
+- Property 20  -  WSCC dashboard scoping: generate longlists for multiple wards across multiple sub-counties; verify WSCC only sees their sub-county's wards.
+- Property 21  -  One active WSCC per ward: generate duplicate WSCC creation attempts; verify rejection.
+- Property 22  -  Team qualification uniqueness: generate duplicate qualification attempts; verify rejection.
+- Property 23  -  Points calculation consistency: generate PoolTeam statistics; verify same result at subcounty and county level.
+- Property 24  -  ActivityLog on SCSO writes: mock SCSO actions; verify ActivityLog entry created.
+- Property 25  -  Email failure graceful degradation: mock email backend to raise; verify primary operation completes and ActivityLog entry is created.
+- Property 26  -  Discipline validation: generate random discipline strings; verify only valid ones are accepted.
 
 ### Integration Tests
 

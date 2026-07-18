@@ -14,7 +14,7 @@ def promote_to_subcounty(ward_player, target_sub_county, created_by=None):
     """
     from teams.models import CountyPlayer, CountyDiscipline
 
-    # Uniqueness check — Req 8.3
+    # Uniqueness check  -  Req 8.3
     if CountyPlayer.objects.filter(
         national_id_number=ward_player.national_id_number,
         discipline__level='subcounty',
@@ -36,7 +36,7 @@ def promote_to_subcounty(ward_player, target_sub_county, created_by=None):
         },
     )
 
-    # Create new CountyPlayer at subcounty level — copy identity fields only
+    # Create new CountyPlayer at subcounty level  -  copy identity fields only
     subcounty_player = CountyPlayer.objects.create(
         discipline=discipline,
         first_name=ward_player.first_name,
@@ -52,7 +52,7 @@ def promote_to_subcounty(ward_player, target_sub_county, created_by=None):
         birth_certificate=ward_player.birth_certificate or None,
         huduma_number=ward_player.huduma_number or '',
         source_ward_player=ward_player,
-        # Fresh verification required at sub-county level — do NOT copy step statuses
+        # Fresh verification required at sub-county level  -  do NOT copy step statuses
         doc_status='not_checked',
         iprs_age_status='not_checked',
         huduma_status='not_checked',
@@ -74,7 +74,7 @@ def promote_to_county(subcounty_player, created_by=None):
     """
     from teams.models import CountyPlayer, CountyDiscipline
 
-    # Uniqueness check — Req 8.3
+    # Uniqueness check  -  Req 8.3
     if CountyPlayer.objects.filter(
         national_id_number=subcounty_player.national_id_number,
         discipline__level='county',
@@ -94,7 +94,7 @@ def promote_to_county(subcounty_player, created_by=None):
             f'No county-level discipline found for {subcounty_player.discipline.sport_type}.'
         )
 
-    # Create county player — copy identity + pre-fill verification steps (Req 7.3, 8.5)
+    # Create county player  -  copy identity + pre-fill verification steps (Req 7.3, 8.5)
     county_player = CountyPlayer.objects.create(
         discipline=county_discipline,
         first_name=subcounty_player.first_name,

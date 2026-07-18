@@ -28,9 +28,9 @@
                 <div style="font-size:.65rem;color:rgba(255,255,255,.4);">HOME</div>
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <span id="lmHomeScore" style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#FFD54F;min-width:38px;text-align:center;">{{ fixture.home_score|default:"–" }}</span>
+                <span id="lmHomeScore" style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#FFD54F;min-width:38px;text-align:center;">{{ fixture.home_score|default:"-" }}</span>
                 <span style="font-size:1.2rem;color:rgba(255,255,255,.3);font-weight:300;">:</span>
-                <span id="lmAwayScore" style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#FFD54F;min-width:38px;text-align:center;">{{ fixture.away_score|default:"–" }}</span>
+                <span id="lmAwayScore" style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#FFD54F;min-width:38px;text-align:center;">{{ fixture.away_score|default:"-" }}</span>
             </div>
             <div style="flex:1;text-align:left;">
                 <div style="font-size:1.1rem;font-weight:800;">{{ fixture.away_team.name }}</div>

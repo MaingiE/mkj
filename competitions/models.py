@@ -441,7 +441,7 @@ class Fixture(models.Model):
         if self.status != 'live':
             return None
         if self.live_half == 99:
-            return None  # penalties — no clock
+            return None  # penalties  -  no clock
         if self.live_paused:
             return self.live_paused_minute  # frozen minute
         if not self.live_started_at:

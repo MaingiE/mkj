@@ -204,7 +204,7 @@
                         {% if fx.status == 'completed' or fx.status == 'live' %}
                             {{ fx.home_score|default:"0" }} - {{ fx.away_score|default:"0" }}
                         {% else %}
-                            <span style="color:#ccc;">—</span>
+                            <span style="color:#ccc;"> - </span>
                         {% endif %}
                     </td>
                     <td class="date-cell">{{ fx.match_date|date:"d M Y" }}</td>

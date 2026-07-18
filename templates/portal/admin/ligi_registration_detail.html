@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ reg.team_name }} — Ligi Mashinani Registration{% endblock %}
+{% block title %}{{ reg.team_name }}  -  Ligi Mashinani Registration{% endblock %}
 
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
@@ -34,7 +34,7 @@
         {% else %}bi-hourglass-split{% endif %} fs-5"></i>
     <div>
         <strong>Status: {{ reg.get_status_display|default:reg.status|title }}</strong>
-        {% if reg.account_created %} — Portal account has been created.{% endif %}
+        {% if reg.account_created %}  -  Portal account has been created.{% endif %}
         {% if reg.status == 'rejected' and reg.rejection_reason %}
         <br><span class="small">Reason: {{ reg.rejection_reason }}</span>
         {% endif %}
@@ -61,10 +61,10 @@
                     <dd class="col-7">{{ reg.sub_county }}</dd>
 
                     <dt class="col-5 text-muted">Submitted</dt>
-                    <dd class="col-7">{{ reg.submitted_at|date:"d M Y, H:i"|default:"—" }}</dd>
+                    <dd class="col-7">{{ reg.submitted_at|date:"d M Y, H:i"|default:" - " }}</dd>
 
                     <dt class="col-5 text-muted">Last Updated</dt>
-                    <dd class="col-7">{{ reg.updated_at|date:"d M Y, H:i"|default:"—" }}</dd>
+                    <dd class="col-7">{{ reg.updated_at|date:"d M Y, H:i"|default:" - " }}</dd>
 
                     {% if reg.notes %}
                     <dt class="col-5 text-muted">Notes</dt>
@@ -87,7 +87,7 @@
                     </dd>
 
                     <dt class="col-5 text-muted">Phone</dt>
-                    <dd class="col-7">{{ reg.manager_phone|default:"—" }}</dd>
+                    <dd class="col-7">{{ reg.manager_phone|default:" - " }}</dd>
 
                     <dt class="col-5 text-muted">Account Created</dt>
                     <dd class="col-7">
@@ -135,7 +135,7 @@
             </div>
             <div class="card-body">
                 <p class="small text-muted mb-3">
-                    Mark this registration as verified by the ward council — an intermediate step before final approval.
+                    Mark this registration as verified by the ward council  -  an intermediate step before final approval.
                 </p>
                 <form method="post" action="{% url 'ligi_registration_ward_verify' reg.pk %}">
                     {% csrf_token %}

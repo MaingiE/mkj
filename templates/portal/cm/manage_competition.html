@@ -228,7 +228,7 @@
     </div>
 </div>
 
-<!-- Pending Team Registrations — qualified sub-county teams awaiting acceptance -->
+<!-- Pending Team Registrations  -  qualified sub-county teams awaiting acceptance -->
 {% with qualified_pending=eligible_teams|dictsortreversed:"qualified_to_county" %}
 {% if eligible_teams %}
 <div class="card" style="margin-bottom:1.5rem;">
@@ -251,7 +251,7 @@
                 <tr style="border-bottom:1px solid #f5f5f5;">
                     <td style="padding:.55rem 1rem;font-weight:600;">{{ team.name }}</td>
                     <td style="padding:.55rem .75rem;color:#555;">
-                        {% if team.sub_county %}{{ team.sub_county }}{% else %}<span style="color:#bbb;">—</span>{% endif %}
+                        {% if team.sub_county %}{{ team.sub_county }}{% else %}<span style="color:#bbb;"> - </span>{% endif %}
                     </td>
                     <td style="padding:.55rem .75rem;">
                         {% if team.qualified_to_county %}
@@ -261,7 +261,7 @@
                         {% endif %}
                     </td>
                     <td style="padding:.55rem .75rem;">
-                        <a href="{% url 'cm_manage_pools' pk=competition.pk %}" class="btn btn-success btn-sm" style="font-size:.72rem;padding:.15rem .5rem;" title="Accept — add to a pool">
+                        <a href="{% url 'cm_manage_pools' pk=competition.pk %}" class="btn btn-success btn-sm" style="font-size:.72rem;padding:.15rem .5rem;" title="Accept  -  add to a pool">
                             <i class="bi bi-check-lg"></i> Accept
                         </a>
                         <span style="font-size:.7rem;color:#999;margin-left:.3rem;">or defer by not adding to any pool</span>

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Substitutions — Ligi Mashinani{% endblock %}
+{% block title %}Substitutions  -  Ligi Mashinani{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -84,7 +84,7 @@
       <div>
         <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Player Off (currently on pitch) *</label>
         <select name="player_off" style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem" required>
-          <option value="">— Select player coming off —</option>
+          <option value=""> -  Select player coming off  - </option>
           {% for p in on_pitch_players %}
           <option value="{{ p.pk }}">{{ p.first_name }} {{ p.last_name }}{% if p.position %} ({{ p.position }}){% endif %}</option>
           {% endfor %}
@@ -94,7 +94,7 @@
       <div>
         <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem">Player On (from bench) *</label>
         <select name="player_on" style="width:100%;padding:.6rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem" required>
-          <option value="">— Select replacement from bench —</option>
+          <option value=""> -  Select replacement from bench  - </option>
           {% for p in bench_players %}
           <option value="{{ p.pk }}">{{ p.first_name }} {{ p.last_name }}{% if p.position %} ({{ p.position }}){% endif %}</option>
           {% endfor %}
@@ -156,7 +156,7 @@
           {% elif sub.status == 'denied' %}<span style="background:#f8d7da;color:#842029;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">Denied</span>
           {% else %}<span style="background:#fff3cd;color:#856404;padding:.15rem .5rem;border-radius:10px;font-size:.75rem">⏳ Pending</span>{% endif %}
         </td>
-        <td style="padding:.5rem .8rem;font-size:.82rem;color:#888">{{ sub.approved_by.get_full_name|default:"—" }}</td>
+        <td style="padding:.5rem .8rem;font-size:.82rem;color:#888">{{ sub.approved_by.get_full_name|default:" - " }}</td>
       </tr>
       {% endfor %}
       </tbody>

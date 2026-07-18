@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Squad Selection — Ligi Mashinani{% endblock %}
+{% block title %}Squad Selection  -  Ligi Mashinani{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -56,7 +56,7 @@
 <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:.9rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem">
   <i class="bi bi-lock-fill" style="color:#198754;font-size:1.2rem"></i>
   <div>
-    <strong>Squad Locked</strong> — submitted on {{ existing.submitted_at|date:"d M Y H:i" }}.
+    <strong>Squad Locked</strong>  -  submitted on {{ existing.submitted_at|date:"d M Y H:i" }}.
     The kick-off deadline has passed.
   </div>
   {% if existing %}
@@ -106,7 +106,7 @@
 
 <!-- Squad rules summary -->
 <div class="card" style="padding:1rem 1.25rem;margin-bottom:1.25rem">
-  <h3 style="font-size:.95rem;color:#333;margin-bottom:.75rem"><i class="bi bi-clipboard2-data"></i> Squad Rules — {{ fixture.competition.get_sport_type_display }}</h3>
+  <h3 style="font-size:.95rem;color:#333;margin-bottom:.75rem"><i class="bi bi-clipboard2-data"></i> Squad Rules  -  {{ fixture.competition.get_sport_type_display }}</h3>
   <div style="display:flex;flex-wrap:wrap;gap:1rem;font-size:.85rem">
     <span><strong>Required starters:</strong> {{ required_starters }}</span>
     <span><strong>Max substitutes:</strong> {{ squad_rules.max_subs }}</span>
@@ -173,7 +173,7 @@
             {{ player.first_name }} {{ player.last_name }}
             {% if player.position == 'GK' %}<span style="background:#124491;color:#fff;font-size:.68rem;padding:1px 5px;border-radius:8px;margin-left:4px">GK</span>{% endif %}
           </td>
-          <td style="padding:.55rem .8rem;color:#888">{{ player.position|default:"—" }}</td>
+          <td style="padding:.55rem .8rem;color:#888">{{ player.position|default:" - " }}</td>
           <td style="padding:.55rem .8rem">{{ player.age|default:"?" }}</td>
           <td style="padding:.55rem .8rem;font-family:monospace;font-size:.8rem">{{ player.national_id_number }}</td>
         </tr>

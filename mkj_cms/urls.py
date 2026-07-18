@@ -278,7 +278,7 @@ from .web_views import (
 from teams.ligi_views import ligi_register_view
 
 urlpatterns = [
-    # ── HEALTHCHECK (Railway internal probe — must return 200, no redirects) ──
+    # ── HEALTHCHECK (Railway internal probe  -  must return 200, no redirects) ──
     path("health/", lambda request: __import__('django.http', fromlist=['HttpResponse']).HttpResponse("ok"), name="healthcheck"),
 
     # ── PUBLIC WEBSITE ────────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ urlpatterns = [
     path("ligi/longlist/<int:player_pk>/edit/",   ward_tm_edit_player_view,   name="ward_tm_edit_player"),
     path("ligi/longlist/<int:player_pk>/delete/", ward_tm_delete_player_view, name="ward_tm_delete_player"),
     path("ligi/longlist/submit/",                 ward_tm_submit_longlist_view, name="ward_tm_submit_longlist"),
-    # ── LIGI MASHINANI: Ward Team Manager — fixtures & squad selection ──────
+    # ── LIGI MASHINANI: Ward Team Manager  -  fixtures & squad selection ──────
     path("ligi/fixtures/",                                  ward_tm_fixtures_view,        name="ward_tm_fixtures"),
     path("ligi/fixtures/<int:fixture_pk>/squad/",           ward_tm_ward_squad_view,      name="ward_tm_ward_squad"),
     # ── LIGI MASHINANI: Ward Sports Council Chair (WSCC) portal ─────────────

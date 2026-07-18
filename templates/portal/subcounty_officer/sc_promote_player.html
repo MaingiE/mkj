@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Promote Player – {{ player.first_name }} {{ player.last_name }} – MKJ Portal{% endblock %}
+{% block title %}Promote Player - {{ player.first_name }} {{ player.last_name }} - MKJ Portal{% endblock %}
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <div>
@@ -57,28 +57,28 @@
                     <dd class="col-sm-8">{{ player.first_name }} {{ player.last_name }}</dd>
 
                     <dt class="col-sm-4">National ID</dt>
-                    <dd class="col-sm-8">{{ player.national_id_number|default:"—" }}</dd>
+                    <dd class="col-sm-8">{{ player.national_id_number|default:" - " }}</dd>
 
                     <dt class="col-sm-4">Date of Birth</dt>
                     <dd class="col-sm-8">
-                        {{ player.date_of_birth|default:"—" }}
+                        {{ player.date_of_birth|default:" - " }}
                         {% if player.age %}<span class="text-muted">(age {{ player.age }})</span>{% endif %}
                     </dd>
 
                     <dt class="col-sm-4">Discipline</dt>
-                    <dd class="col-sm-8">{{ player.discipline.get_sport_type_display|default:"—" }}</dd>
+                    <dd class="col-sm-8">{{ player.discipline.get_sport_type_display|default:" - " }}</dd>
 
                     <dt class="col-sm-4">Ward</dt>
-                    <dd class="col-sm-8">{{ player.ward|default:"—" }}</dd>
+                    <dd class="col-sm-8">{{ player.ward|default:" - " }}</dd>
 
                     <dt class="col-sm-4">Phone</dt>
-                    <dd class="col-sm-8">{{ player.phone|default:"—" }}</dd>
+                    <dd class="col-sm-8">{{ player.phone|default:" - " }}</dd>
 
                     <dt class="col-sm-4">Position</dt>
-                    <dd class="col-sm-8">{{ player.position|default:"—" }}</dd>
+                    <dd class="col-sm-8">{{ player.position|default:" - " }}</dd>
 
                     <dt class="col-sm-4">Huduma No.</dt>
-                    <dd class="col-sm-8">{{ player.huduma_number|default:"—" }}</dd>
+                    <dd class="col-sm-8">{{ player.huduma_number|default:" - " }}</dd>
 
                     <dt class="col-sm-4">Ward Verification</dt>
                     <dd class="col-sm-8">
@@ -133,7 +133,7 @@
     <ul class="mb-0">
         <li>A <strong>new linked player record</strong> is created at sub-county level for <strong>{{ target_sub_county }}</strong>.</li>
         <li>All identity fields and document images are copied from the ward record.</li>
-        <li><strong>Fresh verification is required</strong> — the 4-step verification process must be completed at sub-county level.</li>
+        <li><strong>Fresh verification is required</strong>  -  the 4-step verification process must be completed at sub-county level.</li>
         <li>The ward-level record is not modified and remains independently managed.</li>
     </ul>
 </div>

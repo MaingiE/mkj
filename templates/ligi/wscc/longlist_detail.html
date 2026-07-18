@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Longlist Detail — WSCC Portal{% endblock %}
+{% block title %}Longlist Detail  -  WSCC Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
         <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
         <a href="{% url 'wscc_longlists' %}">All Longlists</a>
-        <span>{{ discipline.ward|title }} — {{ discipline.get_sport_type_display }}</span>
+        <span>{{ discipline.ward|title }}  -  {{ discipline.get_sport_type_display }}</span>
     </div>
     <h1><i class="bi bi-person-lines-fill"></i> Longlist Review</h1>
     <p>{{ discipline.ward|title }} Ward &mdash; {{ discipline.sub_county|title }} Sub-County &mdash; {{ discipline.get_sport_type_display }}</p>
@@ -77,7 +77,7 @@
     {% endif %}
 </div>
 
-<!-- Approve / Return action forms — only show for submitted longlists -->
+<!-- Approve / Return action forms  -  only show for submitted longlists -->
 {% if longlist.status == 'submitted' %}
 <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
 
@@ -112,7 +112,7 @@
                 <textarea id="return_reason" name="return_reason" rows="4" required
                           placeholder="Describe the corrections needed (e.g. missing ID documents for players 3, 7; incorrect date of birth for player 2)…"
                           style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.87rem;resize:vertical;box-sizing:border-box"></textarea>
-                <p style="font-size:.78rem;color:#888;margin:.25rem 0 0">Required — cannot be blank or whitespace only.</p>
+                <p style="font-size:.78rem;color:#888;margin:.25rem 0 0">Required  -  cannot be blank or whitespace only.</p>
             </div>
             <button type="submit"
                     style="background:#dc3545;color:#fff;border:none;padding:.55rem 1.25rem;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:600">
@@ -127,7 +127,7 @@
     <i class="bi bi-check-circle-fill"></i> <strong>This longlist has been approved.</strong>
     The Ward Team Manager can now select match-day squads from these players.
     <br><br>
-    <em>You can still return an approved longlist if corrections are needed — use the form below.</em>
+    <em>You can still return an approved longlist if corrections are needed  -  use the form below.</em>
     <form method="post" action="{% url 'wscc_return_longlist' longlist.pk %}" style="margin-top:1rem">
         {% csrf_token %}
         <div style="margin-bottom:.75rem">
@@ -184,7 +184,7 @@
 
                 <!-- Date of Birth -->
                 <td style="padding:.6rem .9rem">
-                    {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+                    {% if player.date_of_birth %}{{ player.date_of_birth|date:"d M Y" }}{% else %}<span style="color:#ccc"> - </span>{% endif %}
                 </td>
 
                 <!-- Calculated Age (Req 4.5) -->
@@ -228,7 +228,7 @@
                             <i class="bi bi-file-earmark-image"></i> View
                         </a>
                     {% else %}
-                        <span style="color:#888;font-size:.8rem">—</span>
+                        <span style="color:#888;font-size:.8rem"> - </span>
                     {% endif %}
                 </td>
             </tr>

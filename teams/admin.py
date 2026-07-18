@@ -126,7 +126,7 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
             if User.objects.filter(email__iexact=reg.manager_email).exists():
                 self.message_user(
                     request,
-                    f"⚠️ {reg.manager_email} already has an account — skipped.",
+                    f"⚠️ {reg.manager_email} already has an account  -  skipped.",
                     messages.WARNING,
                 )
                 skipped_count += 1
@@ -208,7 +208,7 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
                     reg.account_created = True
                     reg.save(update_fields=["status", "account_created", "updated_at"])
 
-                # Step 7: Send credentials email (outside transaction — failure never rolls back)
+                # Step 7: Send credentials email (outside transaction  -  failure never rolls back)
                 try:
                     notify_account_created(user, temp_password, "Team Manager (Ligi Mashinani)")
                 except Exception as email_exc:
@@ -222,7 +222,7 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
                             action="ADMIN_ACTION",
                             description=(
                                 f"Credentials email failed for {user.email} "
-                                f"(Ligi Mashinani reg #{reg.pk} — {reg.team_name}): {email_exc}"
+                                f"(Ligi Mashinani reg #{reg.pk}  -  {reg.team_name}): {email_exc}"
                             ),
                             obj=reg,
                         )
@@ -241,7 +241,7 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
                         action="ADMIN_ACTION",
                         description=(
                             f"Approved Ligi Mashinani registration for {reg.team_name} "
-                            f"({reg.ward}, {reg.sub_county}) — account created for {user.email}"
+                            f"({reg.ward}, {reg.sub_county})  -  account created for {user.email}"
                         ),
                         obj=reg,
                     )
@@ -341,7 +341,7 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
 
             try:
                 _send(
-                    "Ligi Mashinani Registration — Update",
+                    "Ligi Mashinani Registration  -  Update",
                     _base_html("Registration Status Update", body),
                     [reg.manager_email],
                 )
@@ -349,14 +349,14 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
                 logger.error(
                     "Rejection email failed for %s: %s", reg.manager_email, email_exc
                 )
-                # Log email failure to ActivityLog and continue — never abort the rejection
+                # Log email failure to ActivityLog and continue  -  never abort the rejection
                 try:
                     log_activity(
                         user=request.user,
                         action="ADMIN_ACTION",
                         description=(
                             f"Rejection email failed for {reg.manager_email} "
-                            f"(Ligi Mashinani reg #{reg.pk} — {reg.team_name}): {email_exc}"
+                            f"(Ligi Mashinani reg #{reg.pk}  -  {reg.team_name}): {email_exc}"
                         ),
                         obj=reg,
                     )
@@ -375,7 +375,7 @@ class LigiMashinaniRegistrationAdmin(admin.ModelAdmin):
                     action="ADMIN_ACTION",
                     description=(
                         f"Rejected Ligi Mashinani registration for {reg.team_name} "
-                        f"({reg.ward}, {reg.sub_county}) — notified {reg.manager_email}. "
+                        f"({reg.ward}, {reg.sub_county})  -  notified {reg.manager_email}. "
                         f"Reason: {reason_text}"
                     ),
                     obj=reg,

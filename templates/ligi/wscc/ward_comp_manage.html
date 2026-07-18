@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ comp.name }} — Ward Competition{% endblock %}
+{% block title %}{{ comp.name }}  -  Ward Competition{% endblock %}
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb">
@@ -100,10 +100,10 @@
       {% for f in fixtures %}
       <tr style="border-bottom:1px solid #f0f0f0">
         <td style="padding:.5rem .9rem;font-size:.82rem">{{ f.match_date|date:"d M" }} {{ f.kickoff_time|time:"H:i" }}</td>
-        <td style="padding:.5rem .9rem;font-size:.8rem;color:#888">{{ f.pool.name|default:"—" }}</td>
+        <td style="padding:.5rem .9rem;font-size:.8rem;color:#888">{{ f.pool.name|default:" - " }}</td>
         <td style="padding:.5rem .9rem;font-weight:500">{{ f.home_team.name }}</td>
         <td style="padding:.5rem .9rem;text-align:center;font-weight:700">
-          {% if f.home_score is not None %}{{ f.home_score }} – {{ f.away_score }}{% else %}<span style="color:#ccc">vs</span>{% endif %}
+          {% if f.home_score is not None %}{{ f.home_score }} - {{ f.away_score }}{% else %}<span style="color:#ccc">vs</span>{% endif %}
         </td>
         <td style="padding:.5rem .9rem;font-weight:500">{{ f.away_team.name }}</td>
         <td style="padding:.5rem .9rem">

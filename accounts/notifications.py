@@ -14,7 +14,7 @@ WhatsApp notifications (via Brevo WhatsApp API):
   - Account credentials to new users on approval
 
 All notifications are dispatched on background daemon threads so they
-never block the web request — timeouts / API errors only appear in logs.
+never block the web request  -  timeouts / API errors only appear in logs.
 """
 import logging
 import threading
@@ -124,9 +124,9 @@ def send_whatsapp(phone_number, template_id, params=None):
     would be delivered without needing real credentials.
 
     Requirements (configure in .env / settings):
-      BREVO_API_KEY           — existing Brevo API key
-      BREVO_WHATSAPP_SENDER   — your WhatsApp Business sender number (e.g. +254XXXXXXXXX)
-      BREVO_WHATSAPP_TEMPLATE_CREDENTIALS — template ID for credentials message
+      BREVO_API_KEY            -  existing Brevo API key
+      BREVO_WHATSAPP_SENDER    -  your WhatsApp Business sender number (e.g. +254XXXXXXXXX)
+      BREVO_WHATSAPP_TEMPLATE_CREDENTIALS  -  template ID for credentials message
 
     The phone number must be in international format (+254XXXXXXXXX).
     Returns True if dispatched (delivery is async), False if skipped/failed.
@@ -138,7 +138,7 @@ def send_whatsapp(phone_number, template_id, params=None):
     debug    = getattr(settings, 'DEBUG', False)
 
     if not phone_number or not phone_number.startswith('+'):
-        logger.warning("WhatsApp skipped — invalid/missing phone: %r", phone_number)
+        logger.warning("WhatsApp skipped  -  invalid/missing phone: %r", phone_number)
         return False
 
     # ── Local dev: print to terminal instead of hitting Brevo API ────────────
@@ -215,7 +215,7 @@ def _print_whatsapp_to_terminal(phone_number, template_id, params=None):
     lines = [
         "",
         sep,
-        "📱  WHATSAPP MESSAGE (local dev — not actually sent)",
+        "📱  WHATSAPP MESSAGE (local dev  -  not actually sent)",
         sep,
         f"  To:          {phone_number}",
         f"  Template ID: {template_id}",
@@ -252,7 +252,7 @@ def notify_credentials_whatsapp(phone_number, first_name, email, temp_password, 
     template_id = getattr(settings, 'BREVO_WHATSAPP_TEMPLATE_CREDENTIALS', None)
     if not template_id:
         logger.warning(
-            "BREVO_WHATSAPP_TEMPLATE_CREDENTIALS not set — skipping WhatsApp credentials message."
+            "BREVO_WHATSAPP_TEMPLATE_CREDENTIALS not set  -  skipping WhatsApp credentials message."
         )
         return False
 
@@ -468,7 +468,7 @@ def notify_fixture_update(fixture, action='updated'):
 <a href="{SITE_URL}/portal/dashboard/" class="btn">View in Portal</a>"""
 
     recipients = []
-    # Team managers — includes ward-level TMs (Req 13.4)
+    # Team managers  -  includes ward-level TMs (Req 13.4)
     recipients += _get_ward_team_managers_for_team(home)
     recipients += _get_ward_team_managers_for_team(away)
     # Subcounty officers for both teams
@@ -742,16 +742,16 @@ def notify_action_needed(recipients, title, message, action_url=None):
 #     "Hello {{1}}! Your MKJ SUPA CUP password has been reset.\nNew password: {{2}}\nLogin: {{3}}\nChange it immediately after login."
 #
 #  3. DEADLINE (BREVO_WHATSAPP_TEMPLATE_DEADLINE)
-#     "⏰ MKJ SUPA CUP Reminder — {{1}}.\nDeadline: {{2}}.\n{{3}}"
+#     "⏰ MKJ SUPA CUP Reminder  -  {{1}}.\nDeadline: {{2}}.\n{{3}}"
 #
 #  4. TRANSFER (BREVO_WHATSAPP_TEMPLATE_TRANSFER)
-#     "🔄 Transfer Update — {{1}} {{2}}.\nStatus: {{3}}\nFrom: {{4}} → To: {{5}}\n{{6}}"
+#     "🔄 Transfer Update  -  {{1}} {{2}}.\nStatus: {{3}}\nFrom: {{4}} → To: {{5}}\n{{6}}"
 #
 #  5. LONGLIST_STATUS (BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS)
-#     "📋 Longlist Update — {{1}} Ward ({{2}}).\nStatus: {{3}}\n{{4}}"
+#     "📋 Longlist Update  -  {{1}} Ward ({{2}}).\nStatus: {{3}}\n{{4}}"
 #
 #  6. SQUAD_RESULT (BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT)
-#     "⚽ Match Result — {{1}} vs {{2}}.\nScore: {{3}} – {{4}}\n{{5}}"
+#     "⚽ Match Result  -  {{1}} vs {{2}}.\nScore: {{3}} - {{4}}\n{{5}}"
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _get_template_id(setting_name):
@@ -773,7 +773,7 @@ def _wa(phone, setting_name, params, label='notification'):
     """
     template_id = _get_template_id(setting_name)
     if not template_id:
-        logger.info('WhatsApp %s skipped — %s not set in settings.', label, setting_name)
+        logger.info('WhatsApp %s skipped  -  %s not set in settings.', label, setting_name)
         return False
     return send_whatsapp(phone_number=phone, template_id=template_id, params=params)
 
@@ -888,7 +888,7 @@ def broadcast_wa_deadline(role_or_phones, event_label, deadline_str, action_text
     from accounts.models import User
 
     if isinstance(role_or_phones, str):
-        # It's a role — get all phones for that role
+        # It's a role  -  get all phones for that role
         phones = list(
             User.objects.filter(role=role_or_phones, is_active=True, phone__isnull=False)
             .exclude(phone='')

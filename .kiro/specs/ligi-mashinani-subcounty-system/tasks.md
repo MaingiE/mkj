@@ -8,7 +8,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
 
 ## Tasks
 
-- [x] 1. Model layer — extend existing models with level fields and migrations
+- [x] 1. Model layer  -  extend existing models with level fields and migrations
   - [x] 1.1 Add `CompetitionLevel` TextChoices and `level`, `sub_county`, `ward` fields to `competitions/models.py` `Competition` model
     - Add `CompetitionLevel` TextChoices enum (`ward`, `subcounty`, `county`) to `competitions/models.py`
     - Add `level` CharField(20) with default `county`, `sub_county` CharField(100) blank/default `""`, `ward` CharField(100) blank/default `""` to `Competition`
@@ -52,12 +52,12 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - Create migration for `competitions` app: `CompetitionLevel`, `level`, `sub_county`, `ward` on `Competition`
     - Create migration for `accounts` app: `ward` field and new `UserRole` value
     - Create migration for `teams` app: `level`/`ward` on `CountyRegistration` and `CountyDiscipline`, updated `unique_together`, `WardLonglist`, team qualification fields, `CountyPlayer` source FKs
-    - _Requirements: 1.1–1.5_
+    - _Requirements: 1.1-1.5_
 
-- [x] 2. Checkpoint — Verify migrations and model layer
+- [x] 2. Checkpoint  -  Verify migrations and model layer
   - Run `python manage.py migrate --check` and `python manage.py test` (smoke tests) to confirm all migrations apply cleanly and existing tests pass. Ask the user if questions arise.
 
-- [x] 3. Ward Team Manager onboarding — approval signal and account creation
+- [x] 3. Ward Team Manager onboarding  -  approval signal and account creation
   - [x] 3.1 Implement atomic `approve_registrations` admin action in `teams/admin.py`
     - Wrap the entire creation sequence in `transaction.atomic()`
     - Create `User` (`role=TEAM_MANAGER`, `must_change_password=True`, `sub_county`/`ward` from registration)
@@ -80,7 +80,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - When registration is set to `rejected`, send rejection email with reason to the manager's registered email
     - _Requirements: 2.6_
 
-- [x] 4. Player longlist management — Ward Team Manager views (`/ligi/`)
+- [x] 4. Player longlist management  -  Ward Team Manager views (`/ligi/`)
   - [x] 4.1 Implement scoping helpers in `mkj_cms/web_views.py`
     - Extend `_discipline_queryset_for_user(user, level=None)` to filter by `level` and optionally `ward`
     - Extend `_competition_queryset_for_user(user, level=None)` to filter by `level` and `sub_county`
@@ -122,12 +122,12 @@ This plan implements the three-level grassroots competition pipeline by extendin
 
   - [x] 4.7 Register all `/ligi/` URL patterns in project URL conf
     - Add routes: `/ligi/dashboard/`, `/ligi/longlist/`, `/ligi/longlist/add-player/`, `/ligi/longlist/<int:player_pk>/edit/`, `/ligi/longlist/<int:player_pk>/delete/`, `/ligi/longlist/submit/`, `/ligi/fixtures/`, `/ligi/fixtures/<int:fixture_pk>/squad/`
-    - _Requirements: 2.5, 3.1–3.7_
+    - _Requirements: 2.5, 3.1-3.7_
 
-- [x] 5. Checkpoint — Ward Team Manager portal
+- [x] 5. Checkpoint  -  Ward Team Manager portal
   - Run unit tests covering the `/ligi/` views. Ensure all tests pass. Ask the user if questions arise.
 
-- [x] 6. WSCC role — portal views and approval/return workflow (`/ligi/wscc/`)
+- [x] 6. WSCC role  -  portal views and approval/return workflow (`/ligi/wscc/`)
   - [x] 6.1 Implement WSCC dashboard and longlist list views (`wscc_dashboard_view`, `wscc_longlists_view`)
     - Gate with `@role_required('ward_sports_council_chair', 'admin')`
     - Filter all querysets by `sub_county = request.user.sub_county`
@@ -157,7 +157,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
 
   - [x] 6.6 Register all `/ligi/wscc/` URL patterns
     - Add routes: `/ligi/wscc/dashboard/`, `/ligi/wscc/longlists/`, `/ligi/wscc/longlists/<int:longlist_pk>/`, `/ligi/wscc/longlists/<int:longlist_pk>/approve/`, `/ligi/wscc/longlists/<int:longlist_pk>/return/`
-    - _Requirements: 4.1–4.7_
+    - _Requirements: 4.1-4.7_
 
 - [x] 7. WSCC admin management (one-per-ward enforcement)
   - [x] 7.1 Add WSCC uniqueness validation to `User` model or form in `accounts/`
@@ -189,7 +189,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - **Property 12: Squad size limits are enforced per discipline at all levels**
     - **Validates: Requirements 5.2, 5.5, 9.3**
 
-- [x] 9. Checkpoint — WSCC portal and match-day squad
+- [x] 9. Checkpoint  -  WSCC portal and match-day squad
   - Run unit and integration tests for WSCC views and squad selection. Ensure all tests pass. Ask the user if questions arise.
 
 - [x] 10. Sub-County Competition portal (`/portal/subcounty/`)
@@ -252,7 +252,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
 
   - [x] 10.12 Register all `/portal/subcounty/` URL patterns
     - Add routes for dashboard, competitions CRUD, pools, fixtures, standings, live match, qualify teams, verification, promote player
-    - _Requirements: 6.1–6.8, 12.1–12.5_
+    - _Requirements: 6.1-6.8, 12.1-12.5_
 
 - [x] 11. Sub-County Player Verification
   - [x] 11.1 Wire existing 4-step verification workflow to `/portal/subcounty/verification/` URLs
@@ -276,7 +276,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - In squad submission logic, reject any player where `verification_status != verified` at sub-county level
     - _Requirements: 7.5_
 
-- [x] 12. Player promotion — ward → sub-county → county data flow
+- [x] 12. Player promotion  -  ward → sub-county → county data flow
   - [x] 12.1 Implement `sc_promote_player_view` and `promote_to_subcounty()` service function
     - Create a new `CountyPlayer` at `level=subcounty` linked to the same `national_id_number`
     - Copy identity fields: `first_name`, `last_name`, `date_of_birth`, `national_id_number`, `phone`, `photo`, `id_document`, `birth_certificate`, `huduma_number`
@@ -304,7 +304,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - Validate at the form/service layer that `national_id_number` is unique per `(level, competition_season)` before saving
     - _Requirements: 8.3_
 
-- [x] 13. Checkpoint — Sub-County portal and player promotion
+- [x] 13. Checkpoint  -  Sub-County portal and player promotion
   - Run unit and integration tests for SCSO views, verification, and promotion. Ensure all tests pass. Ask the user if questions arise.
 
 - [x] 14. Notifications and email resilience
@@ -317,7 +317,7 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - **Property 25: Email backend failure does not abort user-facing request processing**
     - **Validates: Requirements 13.6**
 
-- [x] 15. County qualification — county Competition Manager view
+- [x] 15. County qualification  -  county Competition Manager view
   - [x] 15.1 Extend county competition team registrations view to show originating sub-county for qualified teams
     - When a county Competition Manager views pending team registrations, display the originating `sub_county` for each qualified team
     - Allow manager to accept or defer the team's entry
@@ -336,14 +336,14 @@ This plan implements the three-level grassroots competition pipeline by extendin
     - Ensure `SQUAD_LIMITS` dict maps `sport_type` → max squad size and is the single source of truth for both ward and sub-county enforcement
     - _Requirements: 9.3_
 
-- [x] 17. Final checkpoint — full pipeline integration
+- [x] 17. Final checkpoint  -  full pipeline integration
   - Run the full test suite (unit, property-based, integration). Ensure all migrations apply, all tests pass, no regressions in county-level functionality. Ask the user if questions arise.
 
 ---
 
 ## Notes
 
-- Tasks marked with `*` are optional property/unit tests — they can be skipped for a faster MVP but are strongly recommended to validate correctness invariants.
+- Tasks marked with `*` are optional property/unit tests  -  they can be skipped for a faster MVP but are strongly recommended to validate correctness invariants.
 - All new view functions go into `mkj_cms/web_views.py` with clear section comments. No new Django apps are introduced.
 - `CompetitionLevel` is defined in `competitions/models.py` and imported wherever needed across apps.
 - Email notifications follow the existing try/except pattern: failure logs to `ActivityLog` and shows a `messages.warning` to the user; the primary request always completes.

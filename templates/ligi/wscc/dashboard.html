@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}WSCC Dashboard — Ligi Mashinani{% endblock %}
+{% block title %}WSCC Dashboard  -  Ligi Mashinani{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -7,7 +7,7 @@
         <span>Ligi Mashinani</span>
         <span>WSCC Dashboard</span>
     </div>
-    <h1><i class="bi bi-shield-check"></i> Ward Sports Council Chair — Dashboard</h1>
+    <h1><i class="bi bi-shield-check"></i> Ward Sports Council Chair  -  Dashboard</h1>
     <p>{{ sub_county|title }} Sub-County</p>
 </div>
 
@@ -79,7 +79,7 @@
                     <td style="padding:.65rem 1rem">{{ ll.discipline.get_sport_type_display }}</td>
                     <td style="padding:.65rem 1rem">{{ ll.discipline.players.count }}</td>
                     <td style="padding:.65rem 1rem;color:#888;font-size:.85rem">
-                        {% if ll.submitted_at %}{{ ll.submitted_at|date:"d M Y, H:i" }}{% else %}—{% endif %}
+                        {% if ll.submitted_at %}{{ ll.submitted_at|date:"d M Y, H:i" }}{% else %} - {% endif %}
                     </td>
                     <td style="padding:.65rem 1rem">
                         <a href="{% url 'wscc_longlist_detail' ll.pk %}"

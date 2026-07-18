@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 ))
             else:
                 self.stdout.write(self.style.WARNING(
-                    f"⚠ send_mail returned 0 — email may not have been delivered. "
+                    f"⚠ send_mail returned 0  -  email may not have been delivered. "
                     f"Check BREVO_API_KEY and sender verification."
                 ))
         except Exception as exc:

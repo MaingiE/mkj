@@ -38,7 +38,7 @@ def _clear_public_fixture_cache():
         if hasattr(_django_cache, 'delete_pattern'):
             _django_cache.delete_pattern('*views.decorators.cache*')
         else:
-            # Fallback for LocMemCache in dev — clear is safe here
+            # Fallback for LocMemCache in dev  -  clear is safe here
             _django_cache.clear()
     except Exception:
         pass
@@ -325,7 +325,7 @@ def _get_scout_shortlist_submission(user):
 
 
 def _get_primary_registration_for_user(user, auto_create=False):
-    # Superuser / admin can access everything — return the first available registration
+    # Superuser / admin can access everything  -  return the first available registration
     if user.is_superuser or user.role == 'admin':
         reg = CountyRegistration.objects.order_by("created_at").first()
         if reg:
@@ -347,7 +347,7 @@ def _get_primary_registration_for_user(user, auto_create=False):
 
     county = (getattr(user, "county", "") or "").strip()
     if not county:
-        county = "Makueni"  # Default — platform is Makueni-only
+        county = "Makueni"  # Default  -  platform is Makueni-only
 
     registration = CountyRegistration.objects.filter(county__iexact=county).order_by("created_at").first()
     if registration or not auto_create:
@@ -475,7 +475,7 @@ def _competition_queryset_for_user(user, level=None):
 def subcounty_scope_required(get_object_fn):
     """Decorator factory: raises HTTP 403 if retrieved object.sub_county != request.user.sub_county.
 
-    This is a decorator factory — it takes a callable that returns the object to scope-check,
+    This is a decorator factory  -  it takes a callable that returns the object to scope-check,
     then returns a view decorator that performs the check before executing the view.
 
     Usage (wrapping an object-detail view)::
@@ -652,7 +652,7 @@ def sitemap_xml_view(request):
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
     today = date.today().isoformat()
 
-    # Static public pages — (loc, changefreq, priority, lastmod)
+    # Static public pages  -  (loc, changefreq, priority, lastmod)
     urls = [
         (f"{site_url}/",                         "daily",   "1.0", today),
         (f"{site_url}/about/",                   "monthly", "0.8", today),
@@ -713,7 +713,7 @@ def sitemap_xml_view(request):
                 lastmod,
             ))
     except Exception:
-        pass  # PhotoAlbum model may differ — skip gracefully
+        pass  # PhotoAlbum model may differ  -  skip gracefully
 
     xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
@@ -1630,7 +1630,7 @@ def dashboard_view(request):
     """Role-based dashboard with stats and recent fixtures."""
     user = request.user
 
-    # For most roles, redirect immediately — skip expensive queries
+    # For most roles, redirect immediately  -  skip expensive queries
     role_redirects = {
         'treasurer': 'treasurer_dashboard',
         'referee': 'referee_portal',
@@ -1671,7 +1671,7 @@ def dashboard_view(request):
             return redirect('ward_tm_dashboard')
         return redirect('team_manager_dashboard')
 
-    # Only admin/generic roles reach here — compute stats
+    # Only admin/generic roles reach here  -  compute stats
     stats = {
         'competitions': Competition.objects.count(),
         'teams': Team.objects.count(),
@@ -4347,7 +4347,7 @@ def coordinator_delete_fixture_view(request, pk, fixture_pk):
 
 @role_required('coordinator', 'admin')
 def coordinator_live_match_view(request, pk, fixture_pk):
-    """Coordinator: Live match control — start match, update scores in real-time, end match."""
+    """Coordinator: Live match control  -  start match, update scores in real-time, end match."""
     from competitions.models import Competition, Fixture, FixtureStatus, LiveGoal
     from matches.models import get_sport_family, SPORT_CONFIG
     from matches.stats_engine import recalculate_pool_standings
@@ -4968,7 +4968,7 @@ def coordinator_generate_semis_view(request, pk):
 
 @role_required('coordinator', 'admin')
 def coordinator_reschedule_fixture_view(request, pk, fixture_pk):
-    """Coordinator: Reschedule a fixture — change date, time, and/or venue."""
+    """Coordinator: Reschedule a fixture  -  change date, time, and/or venue."""
     from competitions.models import Competition, Fixture, Venue, FixtureStatus
 
     competition = get_object_or_404(Competition, pk=pk)
@@ -5977,7 +5977,7 @@ def cso_approve_coordinator_upload_view(request, pk):
             bulk.cso_approved_by = request.user
             bulk.cso_approved_at = timezone.now()
             bulk.save(update_fields=['cso_approved', 'cso_approved_by', 'cso_approved_at'])
-            # Check if DS also approved — if so, finalize
+            # Check if DS also approved  -  if so, finalize
             if bulk.ds_approved:
                 _finalize_coordinator_upload(bulk, request.user)
                 messages.success(request, f'Upload #{bulk.pk} fully approved. Players created.')
@@ -6017,7 +6017,7 @@ def ds_approve_coordinator_upload_view(request, pk):
             bulk.ds_approved_by = request.user
             bulk.ds_approved_at = timezone.now()
             bulk.save(update_fields=['ds_approved', 'ds_approved_by', 'ds_approved_at'])
-            # Check if CSO also approved — if so, finalize
+            # Check if CSO also approved  -  if so, finalize
             if bulk.cso_approved:
                 _finalize_coordinator_upload(bulk, request.user)
                 messages.success(request, f'Upload #{bulk.pk} fully approved. Players created.')
@@ -7167,7 +7167,7 @@ def cm_edit_standings_view(request, pk):
 
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 def cm_edit_fixture_view(request, pk, fixture_pk):
-    """Redirect to coordinator edit — fixture CRUD is coordinator-managed."""
+    """Redirect to coordinator edit  -  fixture CRUD is coordinator-managed."""
     messages.info(request, 'Fixture edits are managed by the Discipline Coordinator.')
     return redirect('cm_competition_manage', pk=pk)
 
@@ -7175,7 +7175,7 @@ def cm_edit_fixture_view(request, pk, fixture_pk):
 @role_required('competition_manager', 'chief_sports_officer', 'admin')
 @require_POST
 def cm_delete_fixture_view(request, pk, fixture_pk):
-    """Redirect to coordinator — fixture CRUD is coordinator-managed."""
+    """Redirect to coordinator  -  fixture CRUD is coordinator-managed."""
     messages.info(request, 'Fixture deletions are managed by the Discipline Coordinator.')
     return redirect('cm_competition_manage', pk=pk)
 
@@ -9550,11 +9550,11 @@ def subcounty_officer_referees_view(request):
 
 # ══════════════════════════════════════════════════════════════════════════════
 #   SUB-COUNTY COMPETITION PORTAL  (Tasks 10.1, 10.3, 10.5)
-#   Requirements: 6.1–6.8, 9.4, 9.5, 12.1, 12.2
+#   Requirements: 6.1-6.8, 9.4, 9.5, 12.1, 12.2
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _get_sc_competition(request, pk, **kwargs):
-    """Helper: fetch competition by pk — used by subcounty_scope_required."""
+    """Helper: fetch competition by pk  -  used by subcounty_scope_required."""
     return get_object_or_404(Competition, pk=pk)
 
 
@@ -9630,7 +9630,7 @@ def sc_create_competition_view(request):
                     start_date=start_date,
                     end_date=end_date,
                     status=CompetitionStatus.UPCOMING,
-                    # Force level and sub_county from profile — ignore any form values
+                    # Force level and sub_county from profile  -  ignore any form values
                     level=CompetitionLevel.SUBCOUNTY,
                     sub_county=user.sub_county,
                     created_by=user,
@@ -11029,7 +11029,7 @@ def vo_dashboard_view(request):
     )
     discipline_choices = [(st, dict(SportType.choices).get(st, st)) for st in disciplines]
 
-    # Sub-county choices for filter dropdown – always show all Makueni sub-counties
+    # Sub-county choices for filter dropdown - always show all Makueni sub-counties
     from accounts.models import MakueniSubCounty as _MSC
     subcounty_choices = [sc.value for sc in _MSC]
 
@@ -12407,24 +12407,50 @@ def ward_tm_dashboard_view(request):
     # Count players registered in this ward discipline
     player_count = CountyPlayer.objects.filter(discipline=discipline).count()
 
+    # Check if the ward's team has qualified to sub-county finals
+    team = getattr(discipline, 'linked_team', None)
+    qualified_to_subcounty = (
+        team is not None and
+        getattr(team, 'qualified_to_county', False)
+    )
+
+    # Age-eligible players (18-23) available for sub-county squad selection
+    eligible_for_subcounty = []
+    if qualified_to_subcounty and longlist.status == WardLonglistStatus.WSCC_APPROVED:
+        from django.utils import timezone as tz
+        today = tz.now().date()
+        all_players = CountyPlayer.objects.filter(discipline=discipline)
+        for p in all_players:
+            if p.date_of_birth:
+                age = (
+                    today.year - p.date_of_birth.year
+                    - ((today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day))
+                )
+                if 18 <= age <= 23:
+                    eligible_for_subcounty.append(p)
+
     context = {
         'discipline': discipline,
         'longlist': longlist,
         'ward': user.ward,
         'sub_county': user.sub_county,
         'player_count': player_count,
+        'team': team,
+        'qualified_to_subcounty': qualified_to_subcounty,
+        'eligible_for_subcounty': eligible_for_subcounty,
+        'eligible_count': len(eligible_for_subcounty),
     }
     return render(request, 'ligi/ward_tm_dashboard.html', context)
 
 
-# ── LIGI MASHINANI: Ward Team Manager — Longlist CRUD ─────────────────────────
+# ── LIGI MASHINANI: Ward Team Manager  -  Longlist CRUD ─────────────────────────
 
 def _get_ward_tm_context(user):
     """
     Helper shared by all ward TM longlist views.
 
     Returns (discipline, longlist) for the requesting user, or None/None if the
-    user has no linked ward discipline / longlist — caller should guard and
+    user has no linked ward discipline / longlist  -  caller should guard and
     redirect in that case.
     """
     discipline = CountyDiscipline.objects.filter(
@@ -12550,7 +12576,7 @@ def ward_tm_add_player_view(request):
             player.sub_county = user.sub_county
             player.ward = user.ward
             # Normalise empty phone to default '0000000000' if model requires a value;
-            # the model allows blank but has a validator — store empty string directly.
+            # the model allows blank but has a validator  -  store empty string directly.
             if not player.phone:
                 player.phone = ''
             # Calculate and store age from DOB (Req 3.3)
@@ -12711,7 +12737,7 @@ def ward_tm_submit_longlist_view(request):
     - Saves the longlist (prevents further edits until WSCC returns it).
     - Sends an email notification to the assigned WSCC for this ward (Req 13.1);
       if the email backend fails, logs to ActivityLog and shows messages.warning
-      — the primary request completes normally (Req 13.6).
+       -  the primary request completes normally (Req 13.6).
 
     Requirements: 3.5, 3.6, 3.7, 13.1
     URL: /ligi/longlist/submit/
@@ -12802,7 +12828,7 @@ def ward_tm_submit_longlist_view(request):
 <a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', 'https://mkjsupacup.com')}/ligi/wscc/longlists/" class="btn">Review Longlist</a>"""
 
             _send(
-                f'Ward Longlist Awaiting Review — {user.ward} ({sport_label})',
+                f'Ward Longlist Awaiting Review  -  {user.ward} ({sport_label})',
                 _base_html('Longlist Submitted for Review', body),
                 [wscc.email],
             )
@@ -12815,7 +12841,7 @@ def ward_tm_submit_longlist_view(request):
                 'Longlist submission email failed for ward=%s WSCC=%s: %s',
                 user.ward, wscc.email if wscc else 'none', email_exc,
             )
-            # Log failure to ActivityLog; do NOT re-raise — primary request has already succeeded
+            # Log failure to ActivityLog; do NOT re-raise  -  primary request has already succeeded
             try:
                 from admin_dashboard.activity_logger import log_activity, get_client_ip
                 log_activity(
@@ -12846,7 +12872,7 @@ def ward_tm_submit_longlist_view(request):
             )
     elif wscc is None:
         logger.warning(
-            'No active WSCC found for ward=%s sub_county=%s — skipping notification.',
+            'No active WSCC found for ward=%s sub_county=%s  -  skipping notification.',
             user.ward, user.sub_county,
         )
 
@@ -12854,7 +12880,7 @@ def ward_tm_submit_longlist_view(request):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Ligi Mashinani — Ward-Level Match Day Squad Selection
+# Ligi Mashinani  -  Ward-Level Match Day Squad Selection
 # ═════════════════════════════════════════════════════════════════════════════
 
 @role_required('team_manager')
@@ -12911,7 +12937,7 @@ def ward_tm_fixtures_view(request):
 @role_required('team_manager')
 def ward_tm_ward_squad_view(request, fixture_pk):
     """
-    Upgraded Ward Team Manager squad selection — full parity with MKJ Supa Cup.
+    Upgraded Ward Team Manager squad selection  -  full parity with MKJ Supa Cup.
 
     - Starter / substitute split per sport (matches squad_select_view logic)
     - Sport-specific rules from SPORT_SQUAD_RULES (min starters, max subs, GK rule)
@@ -12996,7 +13022,7 @@ def ward_tm_ward_squad_view(request, fixture_pk):
 
     if request.method == 'POST':
         if squad_locked:
-            messages.error(request, f'Squad locked — deadline passed ({deadline.strftime("%d %b %Y %H:%M")}).')
+            messages.error(request, f'Squad locked  -  deadline passed ({deadline.strftime("%d %b %Y %H:%M")}).')
             return redirect('ward_tm_fixtures')
 
         selected_starters = [int(x) for x in request.POST.getlist('starters') if x]
@@ -13096,7 +13122,7 @@ def ward_tm_ward_squad_view(request, fixture_pk):
 
         messages.success(
             request,
-            f'✅ Squad submitted — {len(selected_starters)} starters, {len(selected_subs)} subs.'
+            f'✅ Squad submitted  -  {len(selected_starters)} starters, {len(selected_subs)} subs.'
         )
         return redirect('ward_tm_fixtures')
 
@@ -13249,7 +13275,7 @@ def ward_sub_approve_view(request, sub_pk):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Ligi Mashinani — Ward Sports Council Chair (WSCC) Portal
+# Ligi Mashinani  -  Ward Sports Council Chair (WSCC) Portal
 # ═════════════════════════════════════════════════════════════════════════════
 
 def _get_wscc_sub_county(user):
@@ -13436,7 +13462,7 @@ def wscc_approve_longlist_view(request, longlist_pk):
 <a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', 'https://mkjsupacup.com')}/ligi/longlist/" class="btn">View Your Longlist</a>"""
 
             _send(
-                f'Your Longlist Has Been Approved — {discipline.ward} Ward ({sport_label})',
+                f'Your Longlist Has Been Approved  -  {discipline.ward} Ward ({sport_label})',
                 _base_html('Longlist Approved by WSCC', body),
                 [ward_tm.email],
             )
@@ -13518,7 +13544,7 @@ def wscc_return_longlist_view(request, longlist_pk):
     longlist = get_object_or_404(_wscc_longlist_queryset(user), pk=longlist_pk)
     discipline = longlist.discipline
 
-    # Validate written reason — must be non-empty and not whitespace-only (Req 4.4)
+    # Validate written reason  -  must be non-empty and not whitespace-only (Req 4.4)
     return_reason = request.POST.get('return_reason', '').strip()
     if not return_reason:
         messages.error(
@@ -13537,7 +13563,7 @@ def wscc_return_longlist_view(request, longlist_pk):
         )
         return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
 
-    # Return the longlist — set status to 'returned' and store reason (Req 3.8)
+    # Return the longlist  -  set status to 'returned' and store reason (Req 3.8)
     longlist.status = WardLonglistStatus.RETURNED
     longlist.return_reason = return_reason
     longlist.reviewed_by = user
@@ -13581,7 +13607,7 @@ def wscc_return_longlist_view(request, longlist_pk):
 <a href="{getattr(__import__('django.conf', fromlist=['settings']).settings, 'SITE_URL', 'https://mkjsupacup.com')}/ligi/longlist/" class="btn">View &amp; Correct Your Longlist</a>"""
 
             _send(
-                f'Your Longlist Has Been Returned — {discipline.ward} Ward ({sport_label})',
+                f'Your Longlist Has Been Returned  -  {discipline.ward} Ward ({sport_label})',
                 _base_html('Longlist Returned for Corrections', body),
                 [ward_tm.email],
             )
@@ -13627,7 +13653,7 @@ def wscc_return_longlist_view(request, longlist_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SUB-COUNTY COMPETITION — REFEREE APPOINTMENT  (Task 10.7)
+#   SUB-COUNTY COMPETITION  -  REFEREE APPOINTMENT  (Task 10.7)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('subcounty_sports_officer', 'admin')
@@ -13703,7 +13729,7 @@ def sc_appoint_referee_view(request, pk, fixture_pk):
                         request,
                         f'⚠️ {referee_profile.user.get_full_name()} already has an appointment '
                         f'on {fixture.match_date.strftime("%d %b %Y")} '
-                        f'({conflict.fixture}). Appointment created anyway — please verify.',
+                        f'({conflict.fixture}). Appointment created anyway  -  please verify.',
                     )
 
                 appointment = RefereeAppointment.objects.create(
@@ -13838,7 +13864,7 @@ def sc_appoint_referee_view(request, pk, fixture_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   SUB-COUNTY COMPETITION — TEAM QUALIFICATION  (Task 10.8)
+#   SUB-COUNTY COMPETITION  -  TEAM QUALIFICATION  (Task 10.8)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @role_required('subcounty_sports_officer', 'admin')
@@ -13921,7 +13947,7 @@ def sc_qualify_teams_view(request, pk):
         if skipped_count:
             messages.info(
                 request,
-                f'{skipped_count} team(s) skipped — already qualified to the same county competition.',
+                f'{skipped_count} team(s) skipped  -  already qualified to the same county competition.',
             )
 
         return redirect('sc_qualify_teams', pk=pk)
@@ -14007,7 +14033,7 @@ def sc_verify_player_view(request, player_pk):
 
     player = get_object_or_404(CountyPlayer, pk=player_pk)
 
-    # Scope check — player must belong to this officer's sub-county at subcounty level
+    # Scope check  -  player must belong to this officer's sub-county at subcounty level
     user = request.user
     if not user.is_superuser and user.role != 'admin':
         if (player.discipline.sub_county != (user.sub_county or '')
@@ -14039,7 +14065,7 @@ def sc_verify_player_view(request, player_pk):
             player.save()
             messages.success(
                 request,
-                f'📄 Step 1 – Documents verified for {player.get_full_name}.',
+                f'📄 Step 1 - Documents verified for {player.get_full_name}.',
             )
 
         elif action == 'doc_reject' and step == 1:
@@ -14048,14 +14074,14 @@ def sc_verify_player_view(request, player_pk):
             player.doc_rejection_reason = reason or 'Documents not acceptable'
             player.update_overall_status()
             player.rejection_reason = (
-                f'Step 1 – Documents: {player.doc_rejection_reason}'
+                f'Step 1 - Documents: {player.doc_rejection_reason}'
             )
             player.save()
             messages.warning(
                 request,
-                f'❌ Step 1 – Documents rejected for {player.get_full_name}.',
+                f'❌ Step 1 - Documents rejected for {player.get_full_name}.',
             )
-            # Req 13.5 — notify ward TM of rejection
+            # Req 13.5  -  notify ward TM of rejection
             try:
                 from accounts.notifications import notify_ward_tm_verification_status
                 notify_ward_tm_verification_status(
@@ -14094,7 +14120,7 @@ def sc_verify_player_view(request, player_pk):
             player.save()
             messages.success(
                 request,
-                f'🪪 Step 2 – Age verified for {player.get_full_name}.',
+                f'🪪 Step 2 - Age verified for {player.get_full_name}.',
             )
 
         elif action == 'iprs_fail' and step == 2:
@@ -14104,14 +14130,14 @@ def sc_verify_player_view(request, player_pk):
             player.iprs_age_verified_at = now
             player.update_overall_status()
             player.rejection_reason = (
-                f'Step 2 – Age Verification: {player.iprs_age_notes}'
+                f'Step 2 - Age Verification: {player.iprs_age_notes}'
             )
             player.save()
             messages.warning(
                 request,
-                f'❌ Step 2 – Age verification failed for {player.get_full_name}.',
+                f'❌ Step 2 - Age verification failed for {player.get_full_name}.',
             )
-            # Req 13.5 — notify ward TM of rejection
+            # Req 13.5  -  notify ward TM of rejection
             try:
                 from accounts.notifications import notify_ward_tm_verification_status
                 notify_ward_tm_verification_status(
@@ -14151,7 +14177,7 @@ def sc_verify_player_view(request, player_pk):
                     request,
                     f'🎉 All steps complete! {player.get_full_name} is FULLY VERIFIED.',
                 )
-                # Req 13.5 — notify ward TM that player is fully verified
+                # Req 13.5  -  notify ward TM that player is fully verified
                 try:
                     from accounts.notifications import notify_ward_tm_verification_status
                     notify_ward_tm_verification_status(player, 'verified')
@@ -14177,7 +14203,7 @@ def sc_verify_player_view(request, player_pk):
             else:
                 messages.success(
                     request,
-                    f'🏆 Step 3 – Higher Leagues check clear for {player.get_full_name}.',
+                    f'🏆 Step 3 - Higher Leagues check clear for {player.get_full_name}.',
                 )
 
         elif action == 'league_flag' and step == 3:
@@ -14190,14 +14216,14 @@ def sc_verify_player_view(request, player_pk):
             player.higher_league_checked_at = now
             player.update_overall_status()
             player.rejection_reason = (
-                f'Step 3 – Higher Leagues: {player.higher_league_details}'
+                f'Step 3 - Higher Leagues: {player.higher_league_details}'
             )
             player.save()
             messages.warning(
                 request,
-                f'🚩 Step 3 – Player flagged in higher league for {player.get_full_name}.',
+                f'🚩 Step 3 - Player flagged in higher league for {player.get_full_name}.',
             )
-            # Req 13.5 — notify ward TM of rejection (higher league flag)
+            # Req 13.5  -  notify ward TM of rejection (higher league flag)
             try:
                 from accounts.notifications import notify_ward_tm_verification_status
                 notify_ward_tm_verification_status(
@@ -14319,7 +14345,7 @@ def sc_promote_player_view(request, player_pk):
     from teams.models import CountyPlayer
     from teams.services import promote_to_subcounty
 
-    # Fetch the ward player — must be ward-level and belong to the officer's sub-county
+    # Fetch the ward player  -  must be ward-level and belong to the officer's sub-county
     player = get_object_or_404(
         CountyPlayer,
         pk=player_pk,
@@ -14351,7 +14377,7 @@ def sc_promote_player_view(request, player_pk):
                 'An unexpected error occurred during promotion. Please try again.',
             )
 
-    # For GET (or POST with errors) — check if already promoted
+    # For GET (or POST with errors)  -  check if already promoted
     already_promoted = player.subcounty_instances.filter(
         discipline__sub_county=request.user.sub_county,
     ).first()
@@ -14364,7 +14390,7 @@ def sc_promote_player_view(request, player_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   LIGI MASHINANI REGISTRATIONS — Frontend Portal (Admin / System Admin)
+#   LIGI MASHINANI REGISTRATIONS  -  Frontend Portal (Admin / System Admin)
 #   URL prefix: /portal/ligi-registrations/
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -14535,7 +14561,7 @@ def ligi_registration_approve_view(request, pk):
         from django.conf import settings as _conf
         site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
         print("\n" + "="*60)
-        print("  LIGI MASHINANI — NEW ACCOUNT CREATED")
+        print("  LIGI MASHINANI  -  NEW ACCOUNT CREATED")
         print("="*60)
         print(f"  Team:      {reg.team_name}")
         print(f"  Ward:      {reg.ward}, {reg.sub_county}")
@@ -14557,7 +14583,7 @@ def ligi_registration_approve_view(request, pk):
                 action='ADMIN_ACTION',
                 description=(
                     f'Portal: Approved Ligi Mashinani registration for {reg.team_name} '
-                    f'({reg.ward}, {reg.sub_county}) — account created for {user.email}'
+                    f'({reg.ward}, {reg.sub_county})  -  account created for {user.email}'
                 ),
                 obj=reg,
             )
@@ -14613,7 +14639,7 @@ def ligi_registration_reject_view(request, pk):
 <p>If you believe this is an error, please contact the MKJ SUPA CUP administration.</p>
 <a href="mailto:info@mkjsupacup.com" class="btn">Contact Administration</a>"""
         _send(
-            'Ligi Mashinani Registration — Declined',
+            'Ligi Mashinani Registration  -  Declined',
             _base_html('Registration Status Update', body),
             [reg.manager_email],
         )
@@ -14651,15 +14677,126 @@ def ligi_registration_ward_verify_view(request, pk):
         reg.save(update_fields=['status', 'updated_at'])
         messages.success(request, f'"{reg.team_name}" marked as Ward Council Verified.')
     else:
-        messages.warning(request, f'Cannot mark as verified — current status is "{reg.status}".')
+        messages.warning(request, f'Cannot mark as verified  -  current status is "{reg.status}".')
     return redirect('ligi_registration_detail', pk=pk)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI SETTINGS — Window Control Panel
+#  LIGI MASHINANI SETTINGS  -  Window Control Panel
 #  Authorised roles: chief_sports_officer, director_sports, admin
 #  URL prefix: /portal/ligi/settings/
 # ══════════════════════════════════════════════════════════════════════════════
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def scso_player_reg_request_view(request):
+    """
+    Sub-County Sports Officer requests to open or close the player
+    registration window for their sub-county.
+
+    The request goes to Director of Sports / Chief Sports Officer for approval
+    before LigiSettings.player_registration_open is actually toggled.
+
+    GET:  Show current window state and any pending request.
+    POST: Submit a new open/close request with a mandatory reason.
+    URL:  /portal/subcounty/player-reg-request/
+    """
+    from teams.models import LigiSettings, PlayerRegRequest, PlayerRegRequestStatus, PlayerRegRequestAction
+
+    user = request.user
+    settings_obj = LigiSettings.get()
+    sub_county = user.sub_county if not user.is_superuser else 'All'
+
+    # Check for an existing pending request from this SCSO
+    pending = PlayerRegRequest.objects.filter(
+        requested_by=user,
+        status=PlayerRegRequestStatus.PENDING,
+    ).first()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+        reason = request.POST.get('reason', '').strip()
+
+        if action not in ('open', 'close'):
+            messages.error(request, 'Invalid action.')
+            return redirect('scso_player_reg_request')
+
+        if not reason:
+            messages.error(request, 'A reason is required to submit this request.')
+            return redirect('scso_player_reg_request')
+
+        if pending:
+            messages.warning(
+                request,
+                'You already have a pending request. '
+                'Wait for it to be reviewed before submitting a new one.',
+            )
+            return redirect('scso_player_reg_request')
+
+        # Check it actually makes sense to request the change
+        if action == 'open' and settings_obj.player_registration_open:
+            messages.info(request, 'Player registration is already open.')
+            return redirect('scso_player_reg_request')
+        if action == 'close' and not settings_obj.player_registration_open:
+            messages.info(request, 'Player registration is already closed.')
+            return redirect('scso_player_reg_request')
+
+        PlayerRegRequest.objects.create(
+            sub_county=sub_county,
+            action=action,
+            reason=reason,
+            requested_by=user,
+            status=PlayerRegRequestStatus.PENDING,
+        )
+
+        # Notify DS/CSO by email
+        from accounts.models import UserRole
+        approvers = User.objects.filter(
+            role__in=[UserRole.DIRECTOR_SPORTS, UserRole.CHIEF_SPORTS_OFFICER],
+            is_active=True,
+        )
+        action_label = 'OPEN' if action == 'open' else 'CLOSE'
+        try:
+            from accounts.notifications import _send, _base_html
+            from django.conf import settings as _conf
+            site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
+            body = f"""
+<p>Dear Sports Leadership,</p>
+<p><strong>{user.get_full_name()}</strong> (Sub-County Sports Officer - {sub_county}) has requested to
+<strong>{action_label}</strong> the Ligi Mashinani player registration window.</p>
+<dl class="info-box">
+  <dt>Sub-County</dt><dd>{sub_county}</dd>
+  <dt>Requested Action</dt><dd>{action_label} player registration</dd>
+  <dt>Reason</dt><dd>{reason}</dd>
+</dl>
+<p>Please review and approve or reject this request in the Ligi Settings panel.</p>
+<a href="{site_url}/portal/ligi/settings/" class="btn">Review Request</a>"""
+            for approver in approvers:
+                _send(
+                    f'Ligi Mashinani - Player Reg Window Request: {action_label} ({sub_county})',
+                    _base_html('Player Registration Window Request', body),
+                    [approver.email],
+                )
+        except Exception as exc:
+            logger.warning('Failed to notify approvers of player reg request: %s', exc)
+
+        messages.success(
+            request,
+            f'Your request to {action_label} player registration has been submitted. '
+            'The Director of Sports or Chief Sports Officer will review it shortly.',
+        )
+        return redirect('scso_player_reg_request')
+
+    # Recent history for this SCSO
+    recent = PlayerRegRequest.objects.filter(requested_by=user).order_by('-created_at')[:5]
+
+    return render(request, 'portal/subcounty_officer/scso_player_reg_request.html', {
+        'settings_obj': settings_obj,
+        'pending': pending,
+        'recent': recent,
+        'sub_county': sub_county,
+    })
+
 
 @role_required('chief_sports_officer', 'director_sports', 'admin')
 def ligi_settings_view(request):
@@ -14669,6 +14806,7 @@ def ligi_settings_view(request):
       2. Player Registration (Ward TM adding players to longlist)
       3. Transfer Window (player transfers between ward teams)
 
+    DS/CSO also reviews and approves/rejects SCSO player registration requests here.
     GET:  Show current status with toggle buttons.
     POST: Toggle one flag or save custom closed messages.
     """
@@ -14687,6 +14825,91 @@ def ligi_settings_view(request):
 
         elif action == 'toggle_transfer':
             settings_obj.transfer_window_open = not settings_obj.transfer_window_open
+
+        elif action == 'approve_player_reg_request':
+            from teams.models import PlayerRegRequest, PlayerRegRequestStatus
+            req_pk = request.POST.get('request_pk', '')
+            note = request.POST.get('review_note', '').strip()
+            try:
+                req = PlayerRegRequest.objects.get(pk=req_pk, status=PlayerRegRequestStatus.PENDING)
+                req.status = PlayerRegRequestStatus.APPROVED
+                req.reviewed_by = request.user
+                req.review_note = note
+                req.reviewed_at = timezone.now()
+                req.save()
+                # Actually apply the change to LigiSettings
+                if req.action == 'open':
+                    settings_obj.player_registration_open = True
+                else:
+                    settings_obj.player_registration_open = False
+                settings_obj.last_changed_by = request.user
+                settings_obj.last_changed_at = timezone.now()
+                settings_obj.save()
+                # Notify the SCSO
+                try:
+                    from accounts.notifications import _send, _base_html
+                    from django.conf import settings as _conf
+                    site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
+                    state = 'OPEN' if req.action == 'open' else 'CLOSED'
+                    body = f"""
+<p>Dear <strong>{req.requested_by.get_full_name()}</strong>,</p>
+<p>Your request to <strong>{state}</strong> the Ligi Mashinani player registration window
+for <strong>{req.sub_county}</strong> has been <strong style="color:#198754">APPROVED</strong>.</p>
+<dl class="info-box">
+  <dt>Approved by</dt><dd>{request.user.get_full_name()}</dd>
+  <dt>Result</dt><dd>Player registration is now {state}</dd>
+  {'<dt>Note</dt><dd>' + note + '</dd>' if note else ''}
+</dl>
+<a href="{site_url}/portal/subcounty/player-reg-request/" class="btn">View Status</a>"""
+                    _send(
+                        f'Player Registration Request Approved - {state}',
+                        _base_html('Player Registration Request Approved', body),
+                        [req.requested_by.email],
+                    )
+                except Exception as exc:
+                    logger.warning('Failed to notify SCSO of reg request approval: %s', exc)
+                messages.success(request, f'Request approved. Player registration is now {"OPEN" if req.action == "open" else "CLOSED"}.')
+            except PlayerRegRequest.DoesNotExist:
+                messages.error(request, 'Request not found or already reviewed.')
+            return redirect('ligi_settings')
+
+        elif action == 'reject_player_reg_request':
+            from teams.models import PlayerRegRequest, PlayerRegRequestStatus
+            req_pk = request.POST.get('request_pk', '')
+            note = request.POST.get('review_note', '').strip()
+            if not note:
+                messages.error(request, 'A rejection reason is required.')
+                return redirect('ligi_settings')
+            try:
+                req = PlayerRegRequest.objects.get(pk=req_pk, status=PlayerRegRequestStatus.PENDING)
+                req.status = PlayerRegRequestStatus.REJECTED
+                req.reviewed_by = request.user
+                req.review_note = note
+                req.reviewed_at = timezone.now()
+                req.save()
+                try:
+                    from accounts.notifications import _send, _base_html
+                    from django.conf import settings as _conf
+                    site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
+                    body = f"""
+<p>Dear <strong>{req.requested_by.get_full_name()}</strong>,</p>
+<p>Your request to <strong>{"OPEN" if req.action == "open" else "CLOSE"}</strong> the player
+registration window for <strong>{req.sub_county}</strong> has been <strong style="color:#dc3545">REJECTED</strong>.</p>
+<dl class="info-box">
+  <dt>Rejected by</dt><dd>{request.user.get_full_name()}</dd>
+  <dt>Reason</dt><dd>{note}</dd>
+</dl>"""
+                    _send(
+                        'Player Registration Request Rejected',
+                        _base_html('Player Registration Request Rejected', body),
+                        [req.requested_by.email],
+                    )
+                except Exception as exc:
+                    logger.warning('Failed to notify SCSO of reg request rejection: %s', exc)
+                messages.warning(request, f'Request rejected. Player registration window unchanged.')
+            except PlayerRegRequest.DoesNotExist:
+                messages.error(request, 'Request not found or already reviewed.')
+            return redirect('ligi_settings')
 
         elif action == 'save_messages':
             msg_team = request.POST.get('team_registration_closed_message', '').strip()
@@ -14780,9 +15003,15 @@ def ligi_settings_view(request):
     except Exception:
         recent_logs = []
 
+    from teams.models import PlayerRegRequest, PlayerRegRequestStatus
+    pending_requests = PlayerRegRequest.objects.filter(
+        status=PlayerRegRequestStatus.PENDING,
+    ).select_related('requested_by').order_by('-created_at')
+
     return render(request, 'portal/admin/ligi_settings.html', {
         'settings_obj': settings_obj,
         'recent_logs': recent_logs,
+        'pending_requests': pending_requests,
     })
 
 
@@ -14796,7 +15025,7 @@ def ligi_settings_view(request):
 
 
 def _transfer_window_guard(request):
-    """Return (settings_obj, error_redirect) — error_redirect is None if window is open."""
+    """Return (settings_obj, error_redirect)  -  error_redirect is None if window is open."""
     from teams.models import LigiSettings
     cfg = LigiSettings.get()
     if not cfg.transfer_window_open:
@@ -14889,7 +15118,7 @@ def ward_tm_request_transfer_view(request):
         elif found_qs.count() == 1:
             found_player = found_qs.first()
         else:
-            # Multiple matches — show list to choose from
+            # Multiple matches  -  show list to choose from
             return render(request, 'ligi/ward_tm_request_transfer.html', {
                 'my_players': my_players,
                 'discipline': discipline,
@@ -14918,7 +15147,7 @@ def ward_tm_request_transfer_view(request):
                 t_type = LigiTransferType.INTER_SUBCOUNTY
                 alert_colour = '#f8d7da'
                 alert_text = (
-                    f'⚠️ <strong>Inter-Sub-County Transfer</strong> — '
+                    f'⚠️ <strong>Inter-Sub-County Transfer</strong>  -  '
                     f'{from_sub_county} → {to_sub_county}. '
                     f'This requires approval from the Chief Sports Officer or Director of Sports.'
                 )
@@ -14926,7 +15155,7 @@ def ward_tm_request_transfer_view(request):
                 t_type = LigiTransferType.INTER_WARD
                 alert_colour = '#fff3cd'
                 alert_text = (
-                    f'🔄 <strong>Inter-Ward Transfer</strong> — '
+                    f'🔄 <strong>Inter-Ward Transfer</strong>  -  '
                     f'{from_ward} → {to_ward} (within {from_sub_county}). '
                     f'Requires WSCC approval, then Sub-County Sports Officer final approval.'
                 )
@@ -14934,7 +15163,7 @@ def ward_tm_request_transfer_view(request):
                 t_type = LigiTransferType.WITHIN_WARD
                 alert_colour = '#d1e7dd'
                 alert_text = (
-                    f'✅ <strong>Within-Ward Transfer</strong> — '
+                    f'✅ <strong>Within-Ward Transfer</strong>  -  '
                     f'Moving between teams in {from_ward} Ward. '
                     f'Requires Ward Sports Council Chair approval only.'
                 )
@@ -15060,7 +15289,7 @@ def _notify_transfer_reviewer(transfer, requested_by, _conf):
     from accounts.notifications import _send, _base_html
     site_url = getattr(_conf, 'SITE_URL', '')
     p = transfer.player
-    subject = f'Transfer Request — {p.first_name} {p.last_name}'
+    subject = f'Transfer Request  -  {p.first_name} {p.last_name}'
 
     try:
         if transfer.transfer_type == LigiTransferType.WITHIN_WARD:
@@ -15103,7 +15332,7 @@ def _notify_transfer_reviewer(transfer, requested_by, _conf):
 <p>Dear {reviewer_label},</p>
 <p>A new <strong>{type_label}</strong> transfer request requires your review.</p>
 <dl class="info-box">
- <dt>Player</dt><dd>{p.first_name} {p.last_name} — <code>{p.registration_code or p.national_id_number}</code></dd>
+ <dt>Player</dt><dd>{p.first_name} {p.last_name}  -  <code>{p.registration_code or p.national_id_number}</code></dd>
  <dt>From</dt><dd>{transfer.from_discipline.ward}, {transfer.from_discipline.sub_county}</dd>
  <dt>To</dt><dd>{transfer.to_discipline.ward}, {transfer.to_discipline.sub_county}</dd>
  <dt>Discipline</dt><dd>{transfer.from_discipline.get_sport_type_display()}</dd>
@@ -15189,7 +15418,7 @@ def wscc_transfer_action_view(request, transfer_pk):
     qs = LigiTransferRequest.objects.filter(status=LigiTransferStatus.PENDING)
     if sub_county:
         qs = qs.filter(from_discipline__sub_county=sub_county)
-    # WSCC only handles within_ward and inter_ward — not inter_subcounty
+    # WSCC only handles within_ward and inter_ward  -  not inter_subcounty
     qs = qs.exclude(transfer_type=LigiTransferType.INTER_SUBCOUNTY)
     transfer = get_object_or_404(qs, pk=transfer_pk)
 
@@ -15236,18 +15465,18 @@ def wscc_transfer_action_view(request, transfer_pk):
                     body = f"""
 <p>An inter-ward transfer has been approved by the WSCC and requires your final decision.</p>
 <dl class="info-box">
- <dt>Player</dt><dd>{p.first_name} {p.last_name} — <code>{p.registration_code or p.national_id_number}</code></dd>
+ <dt>Player</dt><dd>{p.first_name} {p.last_name}  -  <code>{p.registration_code or p.national_id_number}</code></dd>
  <dt>From Ward</dt><dd>{transfer.from_discipline.ward}</dd>
  <dt>To Ward</dt><dd>{transfer.to_discipline.ward}</dd>
  <dt>Discipline</dt><dd>{transfer.from_discipline.get_sport_type_display()}</dd>
- <dt>WSCC Notes</dt><dd>{notes or '—'}</dd>
+ <dt>WSCC Notes</dt><dd>{notes or ' - '}</dd>
 </dl>
 <a href="{site_url}/portal/subcounty/transfers/" class="btn">Review Transfer</a>"""
-                    _send('Inter-Ward Transfer — Awaiting Your Decision',
+                    _send('Inter-Ward Transfer  -  Awaiting Your Decision',
                           _base_html('Transfer Requires SCSO Approval', body), scso_list)
             except Exception as _e:
                 logger.warning('Transfer SCSO notification failed: %s', _e)
-            messages.success(request, 'Inter-ward transfer approved — forwarded to Sub-County Sports Officer.')
+            messages.success(request, 'Inter-ward transfer approved  -  forwarded to Sub-County Sports Officer.')
 
     elif action == 'reject':
         if not notes:
@@ -15396,12 +15625,12 @@ def _notify_ward_tm_transfer_decision(transfer, outcome, notes, rejected_by=None
 
         p = transfer.player
         if outcome == 'approved':
-            subject = f'Transfer Approved — {p.first_name} {p.last_name}'
+            subject = f'Transfer Approved  -  {p.first_name} {p.last_name}'
             colour = '#198754'
             detail = f'<p>The transfer has been <strong style="color:{colour}">approved</strong>. {p.first_name} has been moved to <strong>{transfer.to_discipline.ward} Ward</strong>.</p>'
             wa_status = '✅ Transfer Approved'
         else:
-            subject = f'Transfer Rejected — {p.first_name} {p.last_name}'
+            subject = f'Transfer Rejected  -  {p.first_name} {p.last_name}'
             colour = '#dc3545'
             detail = f'<p>The transfer was <strong style="color:{colour}">rejected</strong> by the {rejected_by}.</p><div class="alert">{notes}</div>'
             wa_status = f'❌ Rejected by {rejected_by}'
@@ -15439,10 +15668,10 @@ def _notify_ward_tm_transfer_decision(transfer, outcome, notes, rejected_by=None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI — PLAYER REGISTER (read-only, all eligible roles)
+#  LIGI MASHINANI  -  PLAYER REGISTER (read-only, all eligible roles)
 #  Shows all ward-level CountyPlayer records sorted into age bands:
 #    - Under 18    (age < 18)
-#    - Eligible    (18–23 inclusive)
+#    - Eligible    (18-23 inclusive)
 #    - Over 23     (age > 23)
 #
 #  Filters: sub-county, ward, discipline (sport_type), age band, name search
@@ -15471,11 +15700,11 @@ def ligi_player_register_view(request):
     """
     Read-only master player register for all ward (Ligi Mashinani) longlists.
 
-    - Age bands: Under 18 / Eligible (18–23) / Over 23
+    - Age bands: Under 18 / Eligible (18-23) / Over 23
     - Filters: sub_county, ward, sport_type, age_band, search
     - WSCC sees only their own sub-county; SCSO scoped to their sub-county;
       CSO/Director/Admin see everything.
-    - No edit/delete actions — this is a viewer only.
+    - No edit/delete actions  -  this is a viewer only.
     """
     from teams.models import CountyPlayer, CountyDiscipline
     from accounts.models import MakueniSubCounty, MAKUENI_SUBCOUNTY_WARDS
@@ -15626,7 +15855,7 @@ def ligi_player_register_view(request):
         ],
         'age_band_choices': [
             ('under18', f'Under 18 ({len(under18)})'),
-            ('eligible', f'Eligible 18–23 ({len(eligible)})'),
+            ('eligible', f'Eligible 18-23 ({len(eligible)})'),
             ('over23', f'Over 23 ({len(over23)})'),
             ('unknown', f'Age Unknown ({len(unknown)})'),
         ],
@@ -15644,7 +15873,7 @@ def ligi_player_register_view(request):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI — WARD SUBSTITUTION SYSTEM
+#  LIGI MASHINANI  -  WARD SUBSTITUTION SYSTEM
 #  Ward TM requests a substitution → WSCC / SCSO / referee action
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -15796,7 +16025,7 @@ def ward_sub_approve_view(request, sub_pk):
             sub.status = WardSubstitutionStatus.EXECUTED
             sub.decided_at = now
             sub.save(update_fields=['status', 'decided_at'])
-            messages.success(request, 'Substitution executed — player swap recorded.')
+            messages.success(request, 'Substitution executed  -  player swap recorded.')
         elif action == 'deny':
             reason = request.POST.get('denial_reason', '').strip()
             sub.status = WardSubstitutionStatus.DENIED
@@ -15811,7 +16040,7 @@ def ward_sub_approve_view(request, sub_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI — WARD COMPETITION ENGINE (WSCC manages ward fixtures)
+#  LIGI MASHINANI  -  WARD COMPETITION ENGINE (WSCC manages ward fixtures)
 #  WSCC selects format (Knockout / League / Pool+Knockout) per ward per discipline,
 #  then manages pools, fixtures, and match results online.
 #  URL prefix: /ligi/wscc/ward-competition/
@@ -15855,7 +16084,7 @@ def wscc_ward_competition_setup_view(request):
         disc = get_object_or_404(CountyDiscipline, pk=disc_pk)
 
         if not name:
-            name = f"{disc.ward} Ward — {disc.get_sport_type_display()} {season}"
+            name = f"{disc.ward} Ward  -  {disc.get_sport_type_display()} {season}"
 
         # Prevent duplicate
         comp, created = Competition.objects.get_or_create(
@@ -16096,7 +16325,7 @@ def wscc_ward_match_sheet_view(request, fixture_pk):
                     fixture.winner = fixture.home_team
                 elif away_score > home_score:
                     fixture.winner = fixture.away_team
-                # else: draw — penalties might apply
+                # else: draw  -  penalties might apply
 
             fixture.save()
 
@@ -16106,7 +16335,7 @@ def wscc_ward_match_sheet_view(request, fixture_pk):
 
             messages.success(
                 request,
-                f'✅ Result recorded: {fixture.home_team} {home_score} – {away_score} {fixture.away_team}'
+                f'✅ Result recorded: {fixture.home_team} {home_score} - {away_score} {fixture.away_team}'
             )
 
         elif action == 'confirm_fixture':
@@ -16210,7 +16439,7 @@ def _update_pool_standings(fixture):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI — SENIOR OFFICIAL TRANSFER PORTAL
+#  LIGI MASHINANI  -  SENIOR OFFICIAL TRANSFER PORTAL
 #  CSO / Director of Sports / Admin reviews inter-sub-county transfers
 #  URL: /portal/ligi/transfers/senior/
 # ══════════════════════════════════════════════════════════════════════════════
@@ -16299,8 +16528,8 @@ def senior_transfer_action_view(request, transfer_pk):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIGI MASHINANI — TRANSFER TRACKING DASHBOARD
-#  Director of Sports only — full audit trail of all transfers
+#  LIGI MASHINANI  -  TRANSFER TRACKING DASHBOARD
+#  Director of Sports only  -  full audit trail of all transfers
 #  URL: /portal/ligi/transfers/tracking/
 # ══════════════════════════════════════════════════════════════════════════════
 

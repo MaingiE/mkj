@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Ward Longlists — WSCC Portal{% endblock %}
+{% block title %}Ward Longlists  -  WSCC Portal{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -86,14 +86,14 @@
                 </td>
                 <td style="padding:.65rem 1rem;text-align:center">{{ ll.discipline.players.count }}</td>
                 <td style="padding:.65rem 1rem;color:#888;font-size:.83rem">
-                    {% if ll.submitted_at %}{{ ll.submitted_at|date:"d M Y" }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+                    {% if ll.submitted_at %}{{ ll.submitted_at|date:"d M Y" }}{% else %}<span style="color:#ccc"> - </span>{% endif %}
                 </td>
                 <td style="padding:.65rem 1rem;font-size:.83rem">
                     {% if ll.reviewed_by %}
                         {{ ll.reviewed_by.get_full_name|default:ll.reviewed_by.email }}
                         {% if ll.reviewed_at %}<br><span style="color:#aaa">{{ ll.reviewed_at|date:"d M Y" }}</span>{% endif %}
                     {% else %}
-                        <span style="color:#ccc">—</span>
+                        <span style="color:#ccc"> - </span>
                     {% endif %}
                 </td>
                 <td style="padding:.65rem 1rem">

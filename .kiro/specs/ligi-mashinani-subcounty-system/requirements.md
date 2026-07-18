@@ -6,11 +6,11 @@ This document defines requirements for the **Ligi Mashinani → Sub-County MKJ F
 
 The pipeline has three levels:
 
-- **Level 1 — Ligi Mashinani (Ward Level):** Ward team managers register their teams and players. A Ward Sports Council Chairperson approves longlists. The team manager/coach selects match-day squads per discipline and gender.
-- **Level 2 — Sub-County MKJ Finals:** Ward teams that qualify compete within one of Makueni's six sub-counties (Makueni, Kibwezi West, Kibwezi East, Kaiti, Kilome, Mbooni). A Sub-County Sports Officer manages fixtures, pools, knockout stages, and player verification using the same competition engine as the county finals.
-- **Level 3 — MKJ Supa Cup County Finals:** The best teams from sub-county finals qualify for the existing county finals (already built).
+- **Level 1  -  Ligi Mashinani (Ward Level):** Ward team managers register their teams and players. A Ward Sports Council Chairperson approves longlists. The team manager/coach selects match-day squads per discipline and gender.
+- **Level 2  -  Sub-County MKJ Finals:** Ward teams that qualify compete within one of Makueni's six sub-counties (Makueni, Kibwezi West, Kibwezi East, Kaiti, Kilome, Mbooni). A Sub-County Sports Officer manages fixtures, pools, knockout stages, and player verification using the same competition engine as the county finals.
+- **Level 3  -  MKJ Supa Cup County Finals:** The best teams from sub-county finals qualify for the existing county finals (already built).
 
-The system reuses existing models — `Competition`, `Fixture`, `Pool`, `PoolTeam`, `Team`, `Player`, `CountyPlayer`, `CountyDiscipline`, and `CountyRegistration` — by introducing a `level` field (`ward` / `subcounty` / `county`) rather than building parallel model families.
+The system reuses existing models  -  `Competition`, `Fixture`, `Pool`, `PoolTeam`, `Team`, `Player`, `CountyPlayer`, `CountyDiscipline`, and `CountyRegistration`  -  by introducing a `level` field (`ward` / `subcounty` / `county`) rather than building parallel model families.
 
 ---
 
@@ -27,8 +27,8 @@ The system reuses existing models — `Competition`, `Fixture`, `Pool`, `PoolTea
 - **LigiMashinaniRegistration:** Existing model capturing a ward team manager's pre-registration from the public homepage.
 - **CountyPlayer:** Existing model storing a player in a `CountyDiscipline`; reused at all three levels.
 - **CountyDiscipline:** Existing model scoping players and bench members to a sport type; reused at all three levels.
-- **IPRS:** Integrated Population Registration System — used for age and identity verification.
-- **Huduma:** Huduma Kenya — identity cross-check step in the 4-step verification workflow.
+- **IPRS:** Integrated Population Registration System  -  used for age and identity verification.
+- **Huduma:** Huduma Kenya  -  identity cross-check step in the 4-step verification workflow.
 - **Sub-county:** One of the six Makueni sub-counties: Makueni, Kibwezi West, Kibwezi East, Kaiti, Kilome, Mbooni.
 - **Ward:** An IEBC-defined administrative division within a sub-county (sourced from `MAKUENI_SUBCOUNTY_WARDS`).
 - **Discipline:** One of the ten competitive sport types: Football Men, Football Women, Volleyball Men, Volleyball Women, Basketball 5×5 Men, Basketball 5×5 Women, Basketball 3×3 Men, Basketball 3×3 Women, Handball Men, Handball Women.
@@ -148,7 +148,7 @@ The system reuses existing models — `Competition`, `Fixture`, `Pool`, `PoolTea
 
 ---
 
-### Requirement 8: Data Flow — Ward → Sub-County → County
+### Requirement 8: Data Flow  -  Ward → Sub-County → County
 
 **User Story:** As a Sub_County_Sports_Officer and as a county Competition_Manager, I want player records and verification statuses to carry upward through the pipeline, so that players do not need to re-register or repeat completed verification steps at each level.
 

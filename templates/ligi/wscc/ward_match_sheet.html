@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Match Sheet — {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+{% block title %}Match Sheet  -  {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb">
@@ -29,7 +29,7 @@
   {% if fixture.status == 'completed' %}
     <span style="background:#d1e7dd;color:#0a3622;padding:.3rem .8rem;border-radius:20px;font-size:.88rem;font-weight:600">✅ Completed</span>
     <span style="font-size:1.4rem;font-weight:800;color:#124491">
-      {{ fixture.home_score }} – {{ fixture.away_score }}
+      {{ fixture.home_score }} - {{ fixture.away_score }}
     </span>
   {% elif fixture.status == 'confirmed' %}
     <span style="background:#cfe2ff;color:#084298;padding:.3rem .8rem;border-radius:20px;font-size:.88rem;font-weight:600">Confirmed</span>
@@ -54,7 +54,7 @@
           <input type="number" name="home_score" min="0" max="99" placeholder="0"
                  style="width:100%;padding:.55rem;border:2px solid #dee2e6;border-radius:6px;font-size:1.2rem;font-weight:700;text-align:center" required>
         </div>
-        <span style="font-size:1.2rem;color:#888;font-weight:700">–</span>
+        <span style="font-size:1.2rem;color:#888;font-weight:700">-</span>
         <div style="text-align:center">
           <div style="font-size:.78rem;color:#888;margin-bottom:.25rem">{{ fixture.away_team.name }}</div>
           <input type="number" name="away_score" min="0" max="99" placeholder="0"
@@ -99,7 +99,7 @@
   <div class="card" style="padding:1.1rem">
     <h3 style="font-size:.9rem;color:#124491;margin-bottom:.75rem">
       <i class="bi bi-people"></i> {{ fixture.home_team.name }}
-      {% if not home_squad %}<span style="font-size:.75rem;color:#dc3545;font-weight:400"> — No squad submitted</span>{% endif %}
+      {% if not home_squad %}<span style="font-size:.75rem;color:#dc3545;font-weight:400">  -  No squad submitted</span>{% endif %}
     </h3>
     {% if home_players %}
     <table style="width:100%;border-collapse:collapse;font-size:.8rem">
@@ -113,7 +113,7 @@
         <tr style="border-bottom:1px solid #f5f5f5">
           <td style="padding:.4rem .6rem;font-weight:500">{{ sp.county_player.first_name }} {{ sp.county_player.last_name }}</td>
           <td style="padding:.4rem .6rem;text-align:center;font-family:monospace;font-size:.75rem;color:#124491">
-            {{ sp.county_player.registration_code|default:"—" }}
+            {{ sp.county_player.registration_code|default:" - " }}
           </td>
           <td style="padding:.4rem .6rem;text-align:center">
             {% if sp.is_starter %}<span style="background:#d1e7dd;color:#0a3622;padding:.1rem .4rem;border-radius:8px;font-size:.72rem">Starter</span>
@@ -132,7 +132,7 @@
   <div class="card" style="padding:1.1rem">
     <h3 style="font-size:.9rem;color:#124491;margin-bottom:.75rem">
       <i class="bi bi-people"></i> {{ fixture.away_team.name }}
-      {% if not away_squad %}<span style="font-size:.75rem;color:#dc3545;font-weight:400"> — No squad submitted</span>{% endif %}
+      {% if not away_squad %}<span style="font-size:.75rem;color:#dc3545;font-weight:400">  -  No squad submitted</span>{% endif %}
     </h3>
     {% if away_players %}
     <table style="width:100%;border-collapse:collapse;font-size:.8rem">
@@ -146,7 +146,7 @@
         <tr style="border-bottom:1px solid #f5f5f5">
           <td style="padding:.4rem .6rem;font-weight:500">{{ sp.county_player.first_name }} {{ sp.county_player.last_name }}</td>
           <td style="padding:.4rem .6rem;text-align:center;font-family:monospace;font-size:.75rem;color:#124491">
-            {{ sp.county_player.registration_code|default:"—" }}
+            {{ sp.county_player.registration_code|default:" - " }}
           </td>
           <td style="padding:.4rem .6rem;text-align:center">
             {% if sp.is_starter %}<span style="background:#d1e7dd;color:#0a3622;padding:.1rem .4rem;border-radius:8px;font-size:.72rem">Starter</span>

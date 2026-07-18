@@ -1,7 +1,7 @@
 {% extends "public/base.html" %}
 {% load static %}
 
-{% block title %}Live Matches — MKJ SUPA CUP 2026{% endblock %}
+{% block title %}Live Matches  -  MKJ SUPA CUP 2026{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -206,7 +206,7 @@
     <div class="lm-hero">
         <div class="lm-hero__badge"><span class="pulse-dot"></span> LIVE</div>
         <h1>Live Matches</h1>
-        <p>{{ today|date:"l, d F Y" }} — County Finals 2026</p>
+        <p>{{ today|date:"l, d F Y" }}  -  County Finals 2026</p>
     </div>
 
     <!-- Live Matches Section -->
@@ -219,7 +219,7 @@
         {% for sport, matches in live_by_sport.items %}
         {% for match in matches %}
         <div class="lm-card lm-card--live">
-            <div class="lm-card__sport">{{ sport }} — {{ match.competition.name }}</div>
+            <div class="lm-card__sport">{{ sport }}  -  {{ match.competition.name }}</div>
             <div class="lm-card__live-badge">
                 <span class="dot"></span>
                 {% if match.is_in_penalties %}
@@ -292,7 +292,7 @@
         {% for sport, matches in today_by_sport.items %}
         {% for match in matches %}
         <div class="lm-card {% if match.status == 'completed' %}lm-card--completed{% elif match.status == 'pending' or match.status == 'confirmed' %}lm-card--pending{% endif %}">
-            <div class="lm-card__sport">{{ sport }} — {{ match.competition.name }}</div>
+            <div class="lm-card__sport">{{ sport }}  -  {{ match.competition.name }}</div>
             <div class="lm-card__teams">
                 <span class="lm-card__team">{{ match.home_team.name }}</span>
                 {% if match.status == 'completed' %}
@@ -330,7 +330,7 @@
         </div>
         {% for match in coming_up %}
         <div class="lm-card lm-card--upcoming">
-            <div class="lm-card__sport">{{ match.competition.get_sport_type_display }} — {{ match.competition.name }}</div>
+            <div class="lm-card__sport">{{ match.competition.get_sport_type_display }}  -  {{ match.competition.name }}</div>
             <div style="display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;background:#e65100;color:#fff;border-radius:50px;font-size:.6rem;font-weight:700;letter-spacing:.5px;margin-bottom:.5rem;">
                 <i class="bi bi-trophy-fill"></i> {{ match.get_knockout_round_display }}
             </div>

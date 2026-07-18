@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Transfer Requests — WSCC{% endblock %}
+{% block title %}Transfer Requests  -  WSCC{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -113,8 +113,8 @@
             {% else %}<span style="color:#41464b;background:#e2e3e5;padding:.15rem .55rem;border-radius:12px;font-size:.75rem">{{ t.get_status_display }}</span>
             {% endif %}
           </td>
-          <td style="padding:.55rem .9rem;color:#666;font-size:.82rem">{{ t.wscc_notes|default:"—" }}</td>
-          <td style="padding:.55rem .9rem;color:#888;font-size:.82rem">{{ t.wscc_reviewed_at|date:"d M Y"|default:"—" }}</td>
+          <td style="padding:.55rem .9rem;color:#666;font-size:.82rem">{{ t.wscc_notes|default:" - " }}</td>
+          <td style="padding:.55rem .9rem;color:#888;font-size:.82rem">{{ t.wscc_reviewed_at|date:"d M Y"|default:" - " }}</td>
         </tr>
         {% endfor %}
       </tbody>
