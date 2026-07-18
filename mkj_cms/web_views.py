@@ -632,9 +632,6 @@ def robots_txt_view(request):
         "Allow: /live/",
         "Allow: /media-hub/",
         "",
-        "# Crawl-delay for respectful crawling",
-        "Crawl-delay: 5",
-        "",
         f"Sitemap: {site_url}/sitemap.xml",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
@@ -648,7 +645,7 @@ def sitemap_xml_view(request):
     lastmod dates, competition standings pages, and news/gallery/video content
     from the news_media app.
     """
-    from news_media.models import NewsArticle, PhotoAlbum
+    from news_media.models import NewsArticle, GalleryAlbum
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
     today = date.today().isoformat()
 
@@ -704,7 +701,7 @@ def sitemap_xml_view(request):
 
     # Photo albums
     try:
-        for album in PhotoAlbum.objects.filter(is_published=True).order_by('-created_at')[:100]:
+        for album in GalleryAlbum.objects.filter(is_published=True).order_by('-created_at')[:100]:
             lastmod = album.updated_at.date().isoformat() if hasattr(album, 'updated_at') and album.updated_at else today
             urls.append((
                 f"{site_url}/media-hub/gallery/{album.slug}/",

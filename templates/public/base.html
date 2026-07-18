@@ -59,14 +59,15 @@
     .preloader-name{display:block;font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;color:#124491;letter-spacing:4px}
     .preloader-tagline{display:block;font-size:.7rem;color:#757575;letter-spacing:2px;text-transform:uppercase;margin-top:.25rem}
     .preloader-bar{width:160px;height:2px;background:rgba(26,111,181,.1);border-radius:2px;margin:1.2rem auto 0;overflow:hidden}
-    .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#124491,#E8B91E);border-radius:2px;transition:width .12s}
-    /* Navbar */
+    .preloader-bar-fill{height:100%;width:0;background:linear-gradient(90deg,#124491,#E8B91E);border-radius:2px;transition:width .12s}    /* Navbar */
     .fkf-nav{position:fixed;top:0;left:0;right:0;z-index:10000;padding:0 2rem;height:50px;display:flex;align-items:center;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:all .3s;pointer-events:auto}
     .fkf-nav--hero-page:not(.fkf-nav--solid){background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
     .fkf-nav--solid{background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 8px rgba(0,0,0,.06)}
     .fkf-nav-toggle{pointer-events:auto!important;touch-action:manipulation;-webkit-user-select:none;user-select:none}
     .fkf-nav-toggle span{pointer-events:none}
     </style>
+    <!-- Hide preloader for search engine crawlers (no-JS environments) -->
+    <noscript><style>#preloader{display:none!important;visibility:hidden!important}</style></noscript>
     {% block extra_css %}{% endblock %}
     <!-- JSON-LD: Organization Structured Data -->
     {% block structured_data %}
