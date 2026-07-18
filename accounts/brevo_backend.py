@@ -17,13 +17,54 @@ automatically route through this backend - zero code changes needed.
 """
 
 import logging
-import requests
-from django.conf import settings
-from django.core.mail.backends.base import BaseEmailBackend
+import sys
 
 logger = logging.getLogger(__name__)
 
+# Defensive import for `requests`.
+#
+# If this module fails to import for *any* reason, Django's mail loader
+# swallows the real ImportError/exception and just reports:
+#   Module "accounts.brevo_backend" does not define a "BrevoEmailBackend"
+# which makes the real cause impossible to see in the logs. To make the
+# root cause visible we log it explicitly (via logger AND stderr, since
+# logging may not be configured yet this early in Django's startup), but
+# we do NOT let a missing `requests` package prevent the module - and
+# therefore the BrevoEmailBackend class - from being importable. Instead,
+# `requests` is set to None and BrevoEmailBackend raises a clear error the
+# first time it actually tries to send an email.
+try:
+    import requests
+except Exception as exc:  # pragma: no cover - diagnostic path
+    requests = None
+    _import_error = exc
+    _msg = (
+        "accounts.brevo_backend: failed to import 'requests' "
+        f"({exc.__class__.__name__}: {exc}). BrevoEmailBackend will still "
+        "be importable, but sending email will fail until this is fixed. "
+        "Check that 'requests' is listed in requirements.txt and installed."
+    )
+    logger.error(_msg, exc_info=True)
+    print(_msg, file=sys.stderr)
+else:
+    _import_error = None
+
+try:
+    from django.conf import settings
+    from django.core.mail.backends.base import BaseEmailBackend
+except Exception as exc:  # pragma: no cover - diagnostic path
+    _msg = (
+        "accounts.brevo_backend: failed to import Django dependencies "
+        f"({exc.__class__.__name__}: {exc}). BrevoEmailBackend will NOT be "
+        "defined."
+    )
+    logger.error(_msg, exc_info=True)
+    print(_msg, file=sys.stderr)
+    raise
+
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+
+logger.info("accounts.brevo_backend module loaded successfully.")
 
 
 class BrevoEmailBackend(BaseEmailBackend):
@@ -37,6 +78,20 @@ class BrevoEmailBackend(BaseEmailBackend):
         self.api_key = getattr(settings, 'BREVO_API_KEY', '')
 
     def send_messages(self, email_messages):
+        if requests is None:
+            logger.error(
+                "The 'requests' library failed to import (%s) - Brevo "
+                "emails cannot be sent. Run 'python manage.py "
+                "test_email_backend' for diagnostics.",
+                _import_error,
+            )
+            if not self.fail_silently:
+                raise ImportError(
+                    "The 'requests' library is required by BrevoEmailBackend "
+                    f"but failed to import: {_import_error}"
+                )
+            return 0
+
         if not self.api_key:
             logger.error("BREVO_API_KEY is not set - emails will not be sent.")
             if not self.fail_silently:
