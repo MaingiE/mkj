@@ -432,6 +432,7 @@ if SENTRY_DSN:
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_REDIRECT_EXEMPT = [r"^health/$"]  # Railway healthcheck must not be redirected
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000

@@ -278,6 +278,9 @@ from .web_views import (
 from teams.ligi_views import ligi_register_view
 
 urlpatterns = [
+    # ── HEALTHCHECK (Railway internal probe — must return 200, no redirects) ──
+    path("health/", lambda request: __import__('django.http', fromlist=['HttpResponse']).HttpResponse("ok"), name="healthcheck"),
+
     # ── PUBLIC WEBSITE ────────────────────────────────────────────────────────
     path("robots.txt",                    robots_txt_view,                name="robots_txt"),
     path("ligi/register/",               ligi_register_view,             name="ligi_register"),
