@@ -33,6 +33,9 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=(
         "healthcheck.railway.app",
     ]
 ))
+# Always allow Railway's internal healthcheck host regardless of env var value
+if "healthcheck.railway.app" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("healthcheck.railway.app")
 
 # ── APPS ───────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
