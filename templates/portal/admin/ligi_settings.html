@@ -285,6 +285,71 @@
   {% endif %}
 </div>
 
+<!-- ── PENDING SCSO PLAYER REGISTRATION REQUESTS ──────────────── -->
+{% if pending_requests %}
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-top:4px solid #fbbf24">
+  <h2 style="font-size:1rem;color:#333;margin-bottom:.3rem">
+    <i class="bi bi-hourglass-split" style="color:#e67e22"></i>
+    Pending Player Registration Requests
+    <span style="background:#dc3545;color:#fff;font-size:.75rem;padding:.15rem .5rem;border-radius:10px;margin-left:.4rem">
+      {{ pending_requests|length }}
+    </span>
+  </h2>
+  <p style="font-size:.82rem;color:#888;margin-bottom:1rem">
+    Sub-County Sports Officers have requested changes to the player registration window. Review and approve or reject each request.
+  </p>
+  {% for req in pending_requests %}
+  <div style="border:1px solid #dee2e6;border-radius:8px;padding:1rem 1.2rem;margin-bottom:.9rem;background:#fffdf5">
+    <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:.3rem">
+          {% if req.action == 'open' %}
+            <span style="color:#198754"><i class="bi bi-unlock"></i> Request to OPEN Player Registration</span>
+          {% else %}
+            <span style="color:#dc3545"><i class="bi bi-lock"></i> Request to CLOSE Player Registration</span>
+          {% endif %}
+        </div>
+        <div style="font-size:.84rem;color:#555;margin-bottom:.3rem">
+          <strong>Sub-County:</strong> {{ req.sub_county }} &nbsp;|&nbsp;
+          <strong>Requested by:</strong> {{ req.requested_by.get_full_name }} ({{ req.requested_by.email }}) &nbsp;|&nbsp;
+          <strong>On:</strong> {{ req.created_at|date:"d M Y H:i" }}
+        </div>
+        <div style="font-size:.84rem;color:#333;background:#f8f9fa;padding:.5rem .75rem;border-radius:4px;border-left:3px solid #fbbf24">
+          <strong>Reason:</strong> {{ req.reason }}
+        </div>
+      </div>
+      <div style="min-width:260px">
+        <!-- Approve form -->
+        <form method="post" style="margin-bottom:.5rem">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="approve_player_reg_request">
+          <input type="hidden" name="request_pk" value="{{ req.pk }}">
+          <input type="text" name="review_note" placeholder="Optional approval note..."
+            style="width:100%;padding:.45rem .7rem;border:1px solid #dee2e6;border-radius:4px;font-size:.82rem;margin-bottom:.35rem">
+          <button type="submit"
+            style="width:100%;padding:.5rem;background:#198754;color:#fff;border:none;border-radius:5px;font-weight:600;cursor:pointer;font-size:.85rem">
+            <i class="bi bi-check-circle"></i> Approve - Apply Change
+          </button>
+        </form>
+        <!-- Reject form -->
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="reject_player_reg_request">
+          <input type="hidden" name="request_pk" value="{{ req.pk }}">
+          <input type="text" name="review_note" placeholder="Rejection reason (required)..."
+            style="width:100%;padding:.45rem .7rem;border:1px solid #dee2e6;border-radius:4px;font-size:.82rem;margin-bottom:.35rem" required>
+          <button type="submit"
+            style="width:100%;padding:.5rem;background:#f8d7da;color:#842029;border:1px solid #f5c2c7;border-radius:5px;font-weight:600;cursor:pointer;font-size:.85rem">
+            <i class="bi bi-x-circle"></i> Reject
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <!-- ── RECENT CHANGE LOG ───────────────────────────────────────── -->
 {% if recent_logs %}
 <div class="card" style="padding:1.5rem">

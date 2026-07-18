@@ -112,4 +112,47 @@
         </a>
     </div>
 </div>
+
+{% if qualified_to_subcounty %}
+<!-- Sub-County Qualification Panel -->
+<div class="card" style="padding:1.5rem;margin-top:1.5rem;border-top:4px solid #E8B91E;background:#fffdf5">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+        <span style="font-size:2rem">🏆</span>
+        <div>
+            <h2 style="font-size:1.1rem;color:#856404;margin:0">Your Ward Has Qualified!</h2>
+            <p style="font-size:.85rem;color:#888;margin:0">
+                {{ ward|title }} Ward - {{ discipline.get_sport_type_display }} has qualified for the
+                <strong>{{ sub_county }} Sub-County MKJ SUPA CUP Finals</strong>.
+            </p>
+        </div>
+    </div>
+
+    {% if eligible_count > 0 %}
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.88rem">
+        <i class="bi bi-info-circle"></i>
+        <strong>{{ eligible_count }} player{{ eligible_count|pluralize }}</strong> in your longlist
+        are aged 18-23 and eligible for the sub-county squad.
+        The WSCC will select the final team from this pool.
+    </div>
+    {% else %}
+    <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:6px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.88rem">
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>No eligible players found.</strong>
+        None of your registered players fall in the 18-23 age bracket required for sub-county competition.
+        Contact your WSCC.
+    </div>
+    {% endif %}
+
+    <div style="font-size:.85rem;color:#555">
+        <strong>Next steps:</strong>
+        <ol style="margin:.4rem 0 0 1.2rem;padding:0;line-height:1.8">
+            <li>The Ward Sports Council Chair reviews eligible players from your longlist</li>
+            <li>WSCC selects the sub-county squad (ages 18-23 only)</li>
+            <li>Selected squad is submitted to the Sub-County Sports Officer</li>
+            <li>Your team represents <strong>{{ ward|title }} Ward</strong> at the {{ sub_county }} sub-county finals</li>
+        </ol>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

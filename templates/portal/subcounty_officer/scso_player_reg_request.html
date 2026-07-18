@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Player Registration Window Request{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <span>Ligi Mashinani</span>
+    <span>Player Registration Request</span>
+  </div>
+  <h1><i class="bi bi-person-plus"></i> Player Registration Window</h1>
+  <p style="color:#666;font-size:.9rem">
+    Request the Director of Sports or Chief Sports Officer to open or close
+    the player registration window for <strong>{{ sub_county }}</strong>.
+  </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1.2rem">
+  {% for msg in messages %}
+  <div style="padding:.8rem 1.1rem;border-radius:6px;margin-bottom:.5rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+    {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+    {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Current state banner -->
+<div class="card" style="padding:1.2rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+  <span style="font-size:.9rem;color:#555;font-weight:600">Current window status:</span>
+  {% if settings_obj.player_registration_open %}
+    <span style="background:#d1e7dd;color:#0a3622;padding:.35rem .9rem;border-radius:20px;font-size:.9rem;font-weight:700">
+      <i class="bi bi-unlock-fill"></i> OPEN - Ward TMs can add players
+    </span>
+  {% else %}
+    <span style="background:#f8d7da;color:#842029;padding:.35rem .9rem;border-radius:20px;font-size:.9rem;font-weight:700">
+      <i class="bi bi-lock-fill"></i> CLOSED - Ward TMs cannot add players
+    </span>
+  {% endif %}
+</div>
+
+<!-- Pending request notice -->
+{% if pending %}
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem">
+  <strong><i class="bi bi-hourglass-split"></i> You have a pending request</strong>
+  <p style="margin:.4rem 0 0;font-size:.88rem">
+    Request to <strong>{{ pending.get_action_display }}</strong> submitted
+    {{ pending.created_at|date:"d M Y H:i" }} - awaiting DS/CSO review.
+  </p>
+</div>
+{% else %}
+
+<!-- Request form -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+  <h2 style="font-size:1.05rem;color:#333;margin-bottom:1rem">
+    <i class="bi bi-send"></i> Submit a New Request
+  </h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+    <!-- Open form -->
+    {% if not settings_obj.player_registration_open %}
+    <div style="border:2px solid #198754;border-radius:8px;padding:1.2rem">
+      <h3 style="font-size:.95rem;color:#198754;margin-bottom:.75rem">
+        <i class="bi bi-unlock"></i> Request to OPEN
+      </h3>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="open">
+        <label style="font-size:.85rem;font-weight:600;color:#333">Reason (required)</label>
+        <textarea name="reason" required rows="3"
+          style="width:100%;margin-top:.3rem;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.85rem;resize:vertical"
+          placeholder="e.g. Competition starts in 2 weeks, ward TMs need to finalise their squads..."></textarea>
+        <button type="submit"
+          style="margin-top:.75rem;width:100%;padding:.65rem;background:#198754;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem">
+          <i class="bi bi-send"></i> Submit Open Request
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- Close form -->
+    {% if settings_obj.player_registration_open %}
+    <div style="border:2px solid #dc3545;border-radius:8px;padding:1.2rem">
+      <h3 style="font-size:.95rem;color:#dc3545;margin-bottom:.75rem">
+        <i class="bi bi-lock"></i> Request to CLOSE
+      </h3>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="close">
+        <label style="font-size:.85rem;font-weight:600;color:#333">Reason (required)</label>
+        <textarea name="reason" required rows="3"
+          style="width:100%;margin-top:.3rem;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.85rem;resize:vertical"
+          placeholder="e.g. Registration period has ended, longlist submission deadline passed..."></textarea>
+        <button type="submit"
+          style="margin-top:.75rem;width:100%;padding:.65rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem">
+          <i class="bi bi-send"></i> Submit Close Request
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+
+<!-- Request history -->
+{% if recent %}
+<div class="card" style="padding:1.5rem">
+  <h2 style="font-size:1.05rem;color:#333;margin-bottom:1rem">
+    <i class="bi bi-clock-history"></i> Recent Requests
+  </h2>
+  <table style="width:100%;border-collapse:collapse;font-size:.87rem">
+    <thead>
+      <tr style="background:#f8f9fa;text-align:left">
+        <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Date</th>
+        <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Action</th>
+        <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Status</th>
+        <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Reviewed by</th>
+        <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in recent %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.55rem 1rem;color:#666">{{ req.created_at|date:"d M Y H:i" }}</td>
+        <td style="padding:.55rem 1rem;font-weight:600">
+          {% if req.action == 'open' %}
+            <span style="color:#198754"><i class="bi bi-unlock"></i> Open</span>
+          {% else %}
+            <span style="color:#dc3545"><i class="bi bi-lock"></i> Close</span>
+          {% endif %}
+        </td>
+        <td style="padding:.55rem 1rem">
+          {% if req.status == 'pending' %}
+            <span style="background:#fff3cd;color:#856404;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">Pending</span>
+          {% elif req.status == 'approved' %}
+            <span style="background:#d1e7dd;color:#0a3622;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">Approved</span>
+          {% else %}
+            <span style="background:#f8d7da;color:#842029;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">Rejected</span>
+          {% endif %}
+        </td>
+        <td style="padding:.55rem 1rem;color:#666">
+          {% if req.reviewed_by %}{{ req.reviewed_by.get_full_name }}{% else %}-{% endif %}
+        </td>
+        <td style="padding:.55rem 1rem;color:#666;font-size:.82rem">
+          {{ req.review_note|default:"-"|truncatechars:60 }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div style="margin-top:1.2rem">
+  <a href="{% url 'subcounty_officer_dashboard' %}" style="font-size:.88rem;color:#124491">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
+</div>
+{% endblock %}
