@@ -3,12 +3,74 @@
 
 {% block title %}Home{% endblock %}
 {% block meta_description %}<meta name="description" content="MKJ SUPA CUP 2026 - Governor Mutula Kilonzo Junior Supa Cup. Makueni County's biggest multi-sport competition. Football, Volleyball, Basketball & Handball. View fixtures, results, standings and register your team.">{% endblock %}
-{% block canonical_url %}https://mkjsupacup.com/{% endblock %}
+{% block canonical_url %}{{ SITE_URL }}/{% endblock %}
 {% block og_meta %}
 <meta property="og:title" content="MKJ SUPA CUP 2026 - Makueni County Supa Cup">
-<meta property="og:description" content="Makueni County's biggest multi-sport competition. Football, Volleyball, Basketball & Handball fixtures, results & standings.">
-<meta property="og:url" content="https://mkjsupacup.com/">
+<meta property="og:description" content="Makueni County's biggest multi-sport competition. Football, Volleyball, Basketball &amp; Handball fixtures, results &amp; standings.">
+<meta property="og:url" content="{{ SITE_URL }}/">
 {% endblock %}
+
+{% block structured_data %}
+{{ block.super }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "MKJ SUPA CUP",
+  "alternateName": "Governor Mutula Kilonzo Junior Supa Cup",
+  "url": "{{ SITE_URL }}/",
+  "description": "Makueni County's premier youth multi-sport championship - Football, Volleyball, Basketball and Handball.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "{{ SITE_URL }}/media-hub/news/?q={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is MKJ SUPA CUP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Governor Mutula Kilonzo Junior Supa Cup (MKJ SUPA CUP) is Makueni County's premier youth multi-sport championship featuring Football, Volleyball, Basketball and Handball competitions across all six sub-counties."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who can participate in MKJ SUPA CUP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "MKJ SUPA CUP is open to youth aged 18 to 23 from all wards and sub-counties of Makueni County, Kenya. The competition starts at Ligi Mashinani grassroots level up to the county finals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What sports are played in MKJ SUPA CUP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "MKJ SUPA CUP features Football (Men and Women), Volleyball (Men and Women), Basketball 5x5 (Men and Women), Basketball 3x3, and Handball competitions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I register a team for MKJ SUPA CUP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Team registration is done through the Ligi Mashinani portal at mkjsupacup.com. Ward Team Managers can register players and submit longlists during the open registration window."
+      }
+    }
+  ]
+}
+</script>
+{% endblock structured_data %}
 
 {% block extra_css %}
 <style>

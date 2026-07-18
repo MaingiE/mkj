@@ -10,23 +10,33 @@
     <meta name="keywords" content="MKJ SUPA CUP, Mutula Kilonzo Junior, Supa Cup, Makueni County, Sports, Football, Volleyball, Basketball, Handball, Kenya, Competition, Fixtures, Results, youth championship, Makueni sports, sub-county sports, MKJ TINA">
     <meta name="author" content="County Government of Makueni - MKJ TINA">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{% block canonical_url %}https://mkjsupacup.com/{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}{{ SITE_URL }}/{% endblock %}">
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:site_name" content="MKJ SUPA CUP">
     {% block og_meta %}
     <meta property="og:title" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Supa Cup">
-    <meta property="og:description" content="Makueni County's premier multi-sport competition. Live fixtures, results & standings for Football, Volleyball, Basketball & Handball.">
-    <meta property="og:url" content="https://mkjsupacup.com/">
+    <meta property="og:description" content="Makueni County's premier multi-sport competition. Live fixtures, results &amp; standings for Football, Volleyball, Basketball &amp; Handball.">
+    <meta property="og:url" content="{{ SITE_URL }}/">
     {% endblock %}
-    <meta property="og:image" content="{% static 'img/mkj_supa_cup_logo.png' %}">
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
+    {% block og_image %}
+    <meta property="og:image" content="{{ SITE_URL }}{% static 'img/mkj_supa_cup_logo.png' %}">
+    <meta property="og:image:width" content="630">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="MKJ SUPA CUP - Governor Mutula Kilonzo Junior Supa Cup">
+    {% endblock %}
+    <meta property="og:locale" content="en_KE">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
+    <meta name="twitter:site" content="@MKJSupaCup">
+    {% block twitter_meta %}
     <meta name="twitter:title" content="MKJ SUPA CUP - Makueni County Supa Cup">
-    <meta name="twitter:description" content="Live fixtures, results & standings for Makueni County's premier multi-sport competition.">
-    <meta name="twitter:image" content="{% static 'img/mkj_supa_cup_logo.png' %}">
+    <meta name="twitter:description" content="Live fixtures, results &amp; standings for Makueni County's premier multi-sport competition.">
+    <meta name="twitter:image" content="{{ SITE_URL }}{% static 'img/mkj_supa_cup_logo.png' %}">
+    {% endblock %}
     <link rel="icon" href="{% static 'img/mkj_supa_cup_logo.png' %}">
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://mkjsupacup.com/sitemap.xml">
+    <link rel="apple-touch-icon" href="{% static 'img/mkj_supa_cup_logo.png' %}">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ SITE_URL }}/sitemap.xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -67,7 +77,8 @@
       "name": "MKJ SUPA CUP",
       "alternateName": "Governor Mutula Kilonzo Junior Supa Cup",
       "url": "https://mkjsupacup.com/",
-      "logo": "{% static 'img/mkj_supa_cup_logo.png' %}",
+      "logo": "{{ SITE_URL }}{% static 'img/mkj_supa_cup_logo.png' %}",
+      "image": "{{ SITE_URL }}{% static 'img/mkj_supa_cup_logo.png' %}",
       "description": "MKJ SUPA CUP is Makueni County's premier youth multi-sport championship, organised by the County Government of Makueni. Featuring Football, Volleyball, Basketball and Handball competitions across all six sub-counties.",
       "sport": ["Football", "Volleyball", "Basketball", "Handball"],
       "address": {
@@ -89,6 +100,7 @@
       }
     }
     </script>
+    {% block breadcrumb_ld %}{% endblock %}
     {% endblock structured_data %}
 </head>
 <body>
