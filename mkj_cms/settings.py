@@ -26,7 +26,12 @@ if _os.environ.get("TEST_MODE") == "1":
 SECRET_KEY = "django-insecure-local-dev-only-replace-this-in-production"
 DEBUG      = env.bool("DEBUG", default=True)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=(
-    ["127.0.0.1", "localhost"] if DEBUG else ["mkjsupacup.com", "www.mkjsupacup.com", ".railway.app"]
+    ["127.0.0.1", "localhost"] if DEBUG else [
+        "mkjsupacup.com",
+        "www.mkjsupacup.com",
+        ".railway.app",
+        "healthcheck.railway.app",
+    ]
 ))
 
 # ── APPS ───────────────────────────────────────────────────────────────────────
