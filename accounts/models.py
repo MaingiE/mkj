@@ -192,6 +192,27 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name      = "User"
         verbose_name_plural = "Users"
         ordering = ["last_name", "first_name"]
+        constraints = [
+            # Only one active WSCC per ward within a sub-county.
+            # Ward names are NOT globally unique across Makueni (e.g. "Mbooni"
+            # is both a ward and a sub-county name), so the constraint must be
+            # scoped to ward + sub_county together.
+            # The condition filters on is_active=True and role so that
+            # deactivated / non-WSCC records do not consume the slot.
+            models.UniqueConstraint(
+                fields=["ward", "sub_county"],
+                condition=models.Q(
+                    role="ward_sports_council_chair",
+                    is_active=True,
+                ),
+                name="unique_active_wscc_per_ward_subcounty",
+                violation_error_message=(
+                    "An active Ward Sports Council Chair already exists for "
+                    "this ward in this sub-county. Deactivate the existing "
+                    "account before assigning a new WSCC."
+                ),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.get_role_display()})"
@@ -201,30 +222,43 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         """
-        Enforce uniqueness: only one active WSCC may exist per ward at any time.
+        Enforce uniqueness: only one active WSCC per ward within a sub-county.
 
-        This check applies on both create and update.  On update, the current
-        instance is excluded from the duplicate search so that saving an
-        existing WSCC without changing their ward does not raise a false error.
+        Ward names in Makueni are NOT globally unique (e.g. "Mbooni" is both a
+        ward and a sub-county name), so the uniqueness check must be scoped to
+        the combination of ward + sub_county.  This prevents two WSCCs from
+        being assigned to the same ward even if they are in different records
+        where only the ward name coincidentally matches.
+
+        Applies on both create and update; the current instance is excluded on
+        update via pk so that re-saving an existing WSCC without changing their
+        ward does not raise a false duplicate error.
         """
         super().clean()
         if (
             self.role == UserRole.WARD_SPORTS_COUNCIL_CHAIR
             and self.is_active
-            and self.ward  # ward must be non-blank
+            and self.ward      # ward must be non-blank
+            and self.sub_county  # sub_county must be non-blank
         ):
             qs = User.objects.filter(
                 role=UserRole.WARD_SPORTS_COUNCIL_CHAIR,
                 is_active=True,
                 ward=self.ward,
+                sub_county=self.sub_county,
             )
             if self.pk:
-                # Exclude the current record when updating an existing user
                 qs = qs.exclude(pk=self.pk)
             if qs.exists():
-                raise ValidationError(
-                    {"ward": "An active WSCC already exists for this ward."}
-                )
+                existing = qs.first()
+                raise ValidationError({
+                    "ward": (
+                        f"An active Ward Sports Council Chair already exists for "
+                        f"{self.ward} ward in {self.sub_county} sub-county "
+                        f"({existing.get_full_name()}, {existing.email}). "
+                        f"Deactivate that account before assigning a new WSCC."
+                    )
+                })
 
     # ── Role helpers ──────────────────────────────────────────────────────────
     @property

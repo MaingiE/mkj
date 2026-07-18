@@ -13280,18 +13280,21 @@ def ward_sub_approve_view(request, sub_pk):
 
 def _get_wscc_sub_county(user):
     """Return the sub-county to scope all WSCC queries.
-    Superusers/admins get an empty string (no scoping restriction).
+    Superusers/admins get None (no scoping restriction).
     """
     if user.is_superuser or user.role == 'admin':
-        return None  # None = no sub_county filter for admin
+        return None
     return user.sub_county or ''
 
 
 def _wscc_longlist_queryset(user):
-    """Return WardLonglist queryset scoped to the WSCC's sub-county.
+    """Return WardLonglist queryset scoped to the WSCC's ward + sub_county.
 
-    Filters by discipline.sub_county matching the WSCC's assigned sub_county so that
-    longlists from other sub-counties are never visible (Requirements 4.2, 10.5).
+    A WSCC is responsible for exactly one ward within one sub-county.
+    Scoping by both ward AND sub_county prevents cross-contamination when
+    ward names are not globally unique across Makueni sub-counties.
+
+    Admins/superusers see all longlists (no filter applied).
     """
     qs = WardLonglist.objects.select_related(
         'discipline__registration',
@@ -13299,9 +13302,16 @@ def _wscc_longlist_queryset(user):
     ).prefetch_related(
         'discipline__players',
     )
-    sub_county = _get_wscc_sub_county(user)
-    if sub_county is not None:
+    if user.is_superuser or user.role == 'admin':
+        return qs  # admins see everything
+
+    sub_county = user.sub_county or ''
+    ward       = user.ward or ''
+
+    if sub_county:
         qs = qs.filter(discipline__sub_county=sub_county)
+    if ward:
+        qs = qs.filter(discipline__ward=ward)
     return qs
 
 
@@ -13334,6 +13344,7 @@ def wscc_dashboard_view(request):
         'submitted_longlists': submitted_longlists,
         'counts': counts,
         'sub_county': user.sub_county if not user.is_superuser else 'All',
+ 'ward': user.ward if not user.is_superuser else 'All',
     }
     return render(request, 'ligi/wscc/dashboard.html', context)
 
@@ -13361,6 +13372,7 @@ def wscc_longlists_view(request):
         'status_filter': status_filter,
         'status_choices': WardLonglistStatus.choices,
         'sub_county': user.sub_county if not user.is_superuser else 'All',
+ 'ward': user.ward if not user.is_superuser else 'All',
     }
     return render(request, 'ligi/wscc/longlists.html', context)
 
@@ -13388,6 +13400,7 @@ def wscc_longlist_detail_view(request, longlist_pk):
         'players': players,
         'player_count': players.count(),
         'sub_county': user.sub_county if not user.is_superuser else 'All',
+ 'ward': user.ward if not user.is_superuser else 'All',
     }
     return render(request, 'ligi/wscc/longlist_detail.html', context)
 

@@ -1,32 +1,112 @@
+from django import forms
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.exceptions import ValidationError
-from .models import User, UserRole
+
+from .models import User, UserRole, MAKUENI_SUBCOUNTY_WARDS
+
+
+class UserAdminForm(forms.ModelForm):
+    """
+    Custom admin form for the User model.
+
+    Extra validations added on top of model-level clean():
+    - WSCC must have both ward and sub_county set
+    - WSCC's ward must belong to the declared sub_county
+      (prevents e.g. assigning Wote ward to Kibwezi West sub-county)
+    - Coordinators and scouts must have assigned_discipline
+    """
+
+    class Meta:
+        model  = User
+        fields = "__all__"
+
+    def clean(self):
+        cleaned = super().clean()
+        role       = cleaned.get("role", "")
+        sub_county = (cleaned.get("sub_county") or "").strip()
+        ward       = (cleaned.get("ward") or "").strip()
+        is_active  = cleaned.get("is_active", True)
+
+        if role == UserRole.WARD_SPORTS_COUNCIL_CHAIR:
+            # Both fields are required for a WSCC
+            if not sub_county:
+                self.add_error("sub_county", "Sub-county is required for a Ward Sports Council Chair.")
+            if not ward:
+                self.add_error("ward", "Ward is required for a Ward Sports Council Chair.")
+
+            # Ward must actually belong to the declared sub-county
+            if sub_county and ward:
+                valid_wards = MAKUENI_SUBCOUNTY_WARDS.get(sub_county, [])
+                if valid_wards and ward not in valid_wards:
+                    self.add_error(
+                        "ward",
+                        f'"{ward}" is not a valid ward for {sub_county} sub-county. '
+                        f'Valid wards: {", ".join(valid_wards)}.',
+                    )
+
+            # Duplicate check (complements the model-level UniqueConstraint)
+            if sub_county and ward and is_active:
+                pk = self.instance.pk if self.instance else None
+                qs = User.objects.filter(
+                    role=UserRole.WARD_SPORTS_COUNCIL_CHAIR,
+                    is_active=True,
+                    ward=ward,
+                    sub_county=sub_county,
+                )
+                if pk:
+                    qs = qs.exclude(pk=pk)
+                if qs.exists():
+                    existing = qs.first()
+                    self.add_error(
+                        "ward",
+                        f"An active WSCC already exists for {ward} ward in "
+                        f"{sub_county} sub-county: {existing.get_full_name()} "
+                        f"({existing.email}). Deactivate that account first.",
+                    )
+
+        if role in ("coordinator", "scout"):
+            if not cleaned.get("assigned_discipline"):
+                self.add_error("assigned_discipline", "Discipline is required for coordinators and scouts.")
+
+        return cleaned
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    form = UserAdminForm
+
     list_display  = [
-        "email", "get_full_name", "role", "county", "sub_county", "ward",
+        "email", "get_full_name", "role", "sub_county", "ward",
         "pending_longlist_count", "is_active", "date_joined",
     ]
     list_filter   = ["role", "county", "sub_county", "ward", "is_active", "is_staff"]
-    search_fields = ["email", "first_name", "last_name"]
+    search_fields = ["email", "first_name", "last_name", "ward", "sub_county"]
     ordering      = ["last_name", "first_name"]
 
     fieldsets = (
-        (None,        {"fields": ("email", "password")}),
-        ("Personal",  {"fields": ("first_name", "last_name", "phone", "profile_photo")}),
-        ("MKJ SUPA CUP", {"fields": ("role", "county", "sub_county", "ward", "assigned_discipline")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
-        ("Dates",     {"fields": ("date_joined", "last_login")}),
+        (None,       {"fields": ("email", "password")}),
+        ("Personal", {"fields": ("first_name", "last_name", "phone", "profile_photo")}),
+        ("MKJ SUPA CUP Role & Location", {
+            "description": (
+                "For Ward Sports Council Chair: both sub-county AND ward are required. "
+                "The ward must belong to the selected sub-county."
+            ),
+            "fields": ("role", "county", "sub_county", "ward", "assigned_discipline"),
+        }),
+        ("Permissions", {"fields": ("is_active", "is_suspended", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Dates",    {"fields": ("date_joined", "last_login")}),
     )
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
+            "description": (
+                "For Ward Sports Council Chair: set sub-county first, then "
+                "select the matching ward. Only one active WSCC is allowed per ward per sub-county."
+            ),
             "fields": (
-                "email", "first_name", "last_name",
+                "email", "first_name", "last_name", "phone",
                 "role", "county", "sub_county", "ward", "assigned_discipline",
                 "password1", "password2",
             ),
@@ -38,53 +118,47 @@ class UserAdmin(BaseUserAdmin):
     def pending_longlist_count(self, obj):
         """
         For WSCC users: count of WardLonglist records in 'submitted' status
-        scoped to their assigned ward.  Returns '-' for all other roles.
+        scoped to their assigned ward + sub_county.
+        Returns '-' for all other roles.
         """
         if obj.role != UserRole.WARD_SPORTS_COUNCIL_CHAIR or not obj.ward:
             return "-"
-        # Avoid a hard import at module level to keep the apps loosely coupled;
-        # the teams app is always installed so the lazy import is safe here.
         from teams.models import WardLonglist, WardLonglistStatus
         return WardLonglist.objects.filter(
             discipline__ward=obj.ward,
+            discipline__sub_county=obj.sub_county,
             status=WardLonglistStatus.SUBMITTED,
         ).count()
 
     def save_model(self, request, obj, form, change):
-        # Require assigned_discipline for coordinators and scouts
-        if obj.role in ["coordinator", "scout"] and not obj.assigned_discipline:
-            raise ValidationError("Discipline is required for coordinators and scouts.")
-
-        # When a WSCC is being deactivated, surface a warning about pending reviews
-        # that must be manually reassigned (Requirement 10.3).
+        # Deactivation warning: surface pending reviews that need reassignment
         if (
-            change  # only on updates, not new creates
+            change
             and obj.role == UserRole.WARD_SPORTS_COUNCIL_CHAIR
             and not obj.is_active
         ):
-            # Check whether this WSCC actually has pending reviews
             from teams.models import WardLonglist, WardLonglistStatus
             pending_count = WardLonglist.objects.filter(
                 discipline__ward=obj.ward,
+                discipline__sub_county=obj.sub_county,
                 status=WardLonglistStatus.SUBMITTED,
             ).count()
+            ward_label = f"{obj.ward} ward ({obj.sub_county})"
             if pending_count:
                 messages.warning(
                     request,
-                    f"WSCC deactivated with {pending_count} pending longlist review(s) "
-                    f"for ward '{obj.ward}'. These reviews cannot be actioned until a "
-                    f"replacement WSCC is assigned to this ward."
+                    f"WSCC for {ward_label} deactivated with {pending_count} "
+                    f"pending longlist review(s). A new WSCC must be assigned "
+                    f"to this ward before those reviews can be actioned."
                 )
             else:
                 messages.warning(
                     request,
-                    f"WSCC for ward '{obj.ward}' has been deactivated. "
-                    f"Any future pending reviews must be manually reassigned to a new WSCC "
-                    f"before they can be actioned."
+                    f"WSCC for {ward_label} has been deactivated. "
+                    f"Assign a replacement WSCC for future reviews."
                 )
 
-        # Run model-level clean() so the WSCC uniqueness check (and any other
-        # model validation) fires through the admin panel as well as through forms.
+        # Run model-level clean() so UniqueConstraint and clean() both fire
         try:
             obj.clean()
         except ValidationError:
