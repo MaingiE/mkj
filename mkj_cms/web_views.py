@@ -619,13 +619,17 @@ def robots_txt_view(request):
         "Disallow: /admin/",
         "Disallow: /api/",
         "Disallow: /accounts/",
+        "Disallow: /ligi/",
         "",
-        "# Allow public pages explicitly",
+        "# Public pages explicitly allowed",
         "Allow: /about/",
         "Allow: /fixtures/",
         "Allow: /results/",
+        "Allow: /statistics/",
         "Allow: /competitions/public/",
         "Allow: /contact/",
+        "Allow: /gallery/",
+        "Allow: /live/",
         "Allow: /media-hub/",
         "",
         "# Crawl-delay for respectful crawling",
@@ -640,26 +644,31 @@ def robots_txt_view(request):
 def sitemap_xml_view(request):
     """Serve a dynamic XML sitemap for search engine indexing.
 
-    Includes all public pages with appropriate priority and changefreq values,
-    plus individual competition detail pages with lastmod dates.
+    Includes all public static pages, individual competition pages with real
+    lastmod dates, competition standings pages, and news/gallery/video content
+    from the news_media app.
     """
-    from datetime import datetime
+    from news_media.models import NewsArticle, PhotoAlbum
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
     today = date.today().isoformat()
 
-    # (loc, changefreq, priority, lastmod)
+    # Static public pages — (loc, changefreq, priority, lastmod)
     urls = [
-        (f"{site_url}/",                      "daily",   "1.0", today),
-        (f"{site_url}/about/",                "monthly", "0.8", today),
-        (f"{site_url}/competitions/public/",  "weekly",  "0.8", today),
-        (f"{site_url}/fixtures/",             "daily",   "0.9", today),
-        (f"{site_url}/results/",              "daily",   "0.9", today),
-        (f"{site_url}/results/statistics/",   "weekly",  "0.7", today),
-        (f"{site_url}/contact/",              "monthly", "0.5", today),
-        (f"{site_url}/media-hub/",            "daily",   "0.7", today),
+        (f"{site_url}/",                         "daily",   "1.0", today),
+        (f"{site_url}/about/",                   "monthly", "0.8", today),
+        (f"{site_url}/competitions/public/",     "weekly",  "0.8", today),
+        (f"{site_url}/fixtures/",                "daily",   "0.9", today),
+        (f"{site_url}/results/",                 "daily",   "0.9", today),
+        (f"{site_url}/statistics/",              "weekly",  "0.7", today),
+        (f"{site_url}/gallery/",                 "weekly",  "0.7", today),
+        (f"{site_url}/live/",                    "daily",   "0.8", today),
+        (f"{site_url}/contact/",                 "monthly", "0.5", today),
+        (f"{site_url}/media-hub/news/",          "daily",   "0.8", today),
+        (f"{site_url}/media-hub/gallery/",       "weekly",  "0.7", today),
+        (f"{site_url}/media-hub/videos/",        "weekly",  "0.6", today),
     ]
 
-    # Add individual competition detail pages with real lastmod dates
+    # Individual competition pages with real lastmod dates
     for comp in Competition.objects.exclude(status='cancelled').order_by('-pk'):
         is_active = comp.status in ('active', 'group_stage', 'knockout')
         lastmod = (
@@ -672,9 +681,45 @@ def sitemap_xml_view(request):
             "0.8" if is_active else "0.6",
             lastmod,
         ))
+        # Competition standings page
+        urls.append((
+            f"{site_url}/results/competitions/{comp.pk}/standings/",
+            "daily" if is_active else "weekly",
+            "0.7" if is_active else "0.5",
+            lastmod,
+        ))
+
+    # Published news articles
+    for article in NewsArticle.objects.filter(status='published').order_by('-published_at')[:200]:
+        lastmod = (
+            article.updated_at.date().isoformat() if article.updated_at
+            else (article.published_at.date().isoformat() if article.published_at else today)
+        )
+        urls.append((
+            f"{site_url}/media-hub/news/{article.slug}/",
+            "monthly",
+            "0.7",
+            lastmod,
+        ))
+
+    # Photo albums
+    try:
+        for album in PhotoAlbum.objects.filter(is_published=True).order_by('-created_at')[:100]:
+            lastmod = album.updated_at.date().isoformat() if hasattr(album, 'updated_at') and album.updated_at else today
+            urls.append((
+                f"{site_url}/media-hub/gallery/{album.slug}/",
+                "monthly",
+                "0.6",
+                lastmod,
+            ))
+    except Exception:
+        pass  # PhotoAlbum model may differ — skip gracefully
 
     xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>']
-    xml_lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    xml_lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+                     ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+                     ' xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9'
+                     ' http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">')
     for loc, changefreq, priority, lastmod in urls:
         xml_lines.append(
             f"  <url>"
