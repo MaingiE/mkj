@@ -7,6 +7,9 @@ python manage.py collectstatic --noinput
 echo "=== Running migrations ==="
 python manage.py migrate --noinput
 
+echo "=== Clearing cache ==="
+python manage.py shell -c "from django.core.cache import cache; cache.clear(); print('Cache cleared.')" || echo "Cache clear skipped (no Redis yet)"
+
 echo "=== Ensuring superuser ==="
 python manage.py ensure_superuser
 

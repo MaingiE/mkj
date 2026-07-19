@@ -21,7 +21,7 @@ from functools import wraps
 import csv
 import secrets, string, json, re
 from urllib.parse import urlencode
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, never_cache
 from django.core.cache import cache as _django_cache
 
 
@@ -603,7 +603,7 @@ def _ensure_competition_for_sport_type(sport_type):
 #   SEO: robots.txt & sitemap.xml
 # ══════════════════════════════════════════════════════════════════════════════
 
-@cache_page(60 * 60 * 24)  # cache 24 hours
+@cache_page(60 * 60 * 6)  # cache 6 hours (was 24h - reduced so updates propagate faster)
 def robots_txt_view(request):
     """Serve robots.txt that tells search engines how to crawl the site."""
     site_url = getattr(django_settings, 'SITE_URL', 'https://mkjsupacup.com').rstrip('/')
@@ -637,7 +637,7 @@ def robots_txt_view(request):
     return HttpResponse("\n".join(lines), content_type="text/plain")
 
 
-@cache_page(60 * 30)  # cache 30 minutes
+@cache_page(60 * 10)  # cache 10 minutes (was 30 - refresh more often for crawlers)
 def sitemap_xml_view(request):
     """Serve a dynamic XML sitemap for search engine indexing.
 
@@ -734,6 +734,7 @@ def sitemap_xml_view(request):
 #   PUBLIC WEBSITE VIEWS (No login required)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@never_cache
 def home_view(request):
     """Public homepage with hero, upcoming fixtures, recent results, live matches, stats."""
     now = timezone.now()
