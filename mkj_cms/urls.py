@@ -250,6 +250,7 @@ from .web_views import (
     # Ligi Mashinani: Settings / Window Control
     ligi_settings_view,
     scso_player_reg_request_view,
+    ligi_admin_overview_view,
     # Ligi Mashinani: Transfer system
     ward_tm_transfers_view,
     ward_tm_request_transfer_view,
@@ -622,6 +623,7 @@ urlpatterns = [
     # ── LIGI MASHINANI: Settings / Window Control ─────────────────────────────
     path("portal/ligi/settings/",  ligi_settings_view, name="ligi_settings"),
     path("portal/subcounty/player-reg-request/", scso_player_reg_request_view, name="scso_player_reg_request"),
+    path("ligi/admin/overview/", ligi_admin_overview_view, name="ligi_admin_overview"),
 
     # ── LIGI MASHINANI: Transfer System ──────────────────────────────────────
     path("ligi/transfers/",                           ward_tm_transfers_view,       name="ward_tm_transfers"),

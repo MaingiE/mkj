@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
-from django.db import transaction
+from django.db import transaction, models as django_models
 from django.db.models import Count, Q
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
@@ -96,12 +96,16 @@ def custom_bad_request_view(request, exception):
 
 # ── ROLE DECORATOR ────────────────────────────────────────────────────────────
 def role_required(*roles):
-    """Allow access only to users with the given role(s)."""
+    """Allow access only to users with the given role(s). Admins always pass."""
     def decorator(view):
         @wraps(view)
         @login_required(login_url='web_login')
         def wrapper(request, *args, **kwargs):
-            if request.user.role not in roles and not request.user.is_superuser:
+            if (
+                request.user.role not in roles
+                and not request.user.is_superuser
+                and request.user.role != 'admin'  # admin role always has full access
+            ):
                 messages.error(request, 'You do not have permission to access this page.')
                 return redirect('dashboard')
             return view(request, *args, **kwargs)
@@ -2296,7 +2300,7 @@ def verify_player_view(request, player_pk):
 #   SQUAD SELECTION (Team Manager)
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def squad_select_view(request, fixture_pk):
     """Team Manager picks starters & subs with formation, kit, and GK validation."""
     from django.conf import settings as conf
@@ -7593,7 +7597,7 @@ def county_player_profile_view(request, player_pk):
 #   TEAM MANAGER PORTAL (dedicated portal for match management)
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def team_manager_dashboard_view(request):
     """
     Team Manager dedicated dashboard showing:
@@ -7707,7 +7711,7 @@ def team_manager_dashboard_view(request):
     })
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def team_manager_match_squad_view(request, fixture_pk):
     """
     Team Manager selects match day squad (starters + subs).
@@ -7872,7 +7876,7 @@ def team_manager_match_squad_view(request, fixture_pk):
     })
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def team_manager_opponent_view(request, fixture_pk):
     """
     View opponent team list - ONLY after referee has approved both squads.
@@ -7917,7 +7921,7 @@ def team_manager_opponent_view(request, fixture_pk):
     })
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def team_manager_sanctions_view(request):
     """View disciplinary sanctions for own team and opponents."""
     user = request.user
@@ -7955,7 +7959,7 @@ def team_manager_sanctions_view(request):
     })
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def team_manager_file_appeal_view(request):
     """
     Team Manager files a disciplinary appeal.
@@ -12360,31 +12364,46 @@ def edit_county_player_view(request, pk):
 
 # ── LIGI MASHINANI: Ward Team Manager Portal ──────────────────────────────────
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_dashboard_view(request):
     """
     Ward Team Manager dashboard for the Ligi Mashinani portal.
 
-    - Gated to users with role=TEAM_MANAGER.
-    - Redirects to /portal/ (dashboard) if the user has no linked WardLonglist
-      (i.e. they are a county-level team manager, not a ward TM).
-    - Displays ward, sub-county, discipline (sport type), longlist status,
-      player count, and a link to the longlist page.
+    - team_manager: scoped to their own ward+sub_county
+    - admin/superuser: can browse any ward via ?discipline=<pk>
+      When no discipline is selected, shows a list of all ward disciplines.
 
     Requirements: 2.5
     URL: /ligi/dashboard/
     """
     user = request.user
+    is_admin = user.is_superuser or user.role == 'admin'
 
-    # Fetch the ward-level discipline for this user
-    discipline = CountyDiscipline.objects.filter(
-        sub_county=user.sub_county,
-        ward=user.ward,
-        level='ward',
-    ).select_related('registration', 'ward_longlist').first()
+    # Admin with no ?discipline param: show selector
+    if is_admin and not user.ward:
+        discipline_pk = request.GET.get('discipline')
+        if discipline_pk:
+            discipline = CountyDiscipline.objects.filter(
+                pk=discipline_pk, level='ward',
+            ).select_related('registration', 'ward_longlist').first()
+            if not discipline:
+                messages.error(request, 'Ward discipline not found.')
+                return redirect('ligi_admin_overview')
+        else:
+            # Show admin overview of all ward disciplines
+            return redirect('ligi_admin_overview')
+    else:
+        # Fetch the ward-level discipline for this user
+        discipline = CountyDiscipline.objects.filter(
+            sub_county=user.sub_county,
+            ward=user.ward,
+            level='ward',
+        ).select_related('registration', 'ward_longlist').first()
 
-    # Guard: no ward discipline → not a Ligi Mashinani TM; send to regular dashboard
+    # Guard: no ward discipline
     if discipline is None:
+        if is_admin:
+            return redirect('ligi_admin_overview')
         messages.warning(
             request,
             'No ward team found for your account. '
@@ -12448,14 +12467,33 @@ def ward_tm_dashboard_view(request):
 
 # ── LIGI MASHINANI: Ward Team Manager  -  Longlist CRUD ─────────────────────────
 
-def _get_ward_tm_context(user):
+def _get_ward_tm_context(user, request=None):
     """
     Helper shared by all ward TM longlist views.
 
-    Returns (discipline, longlist) for the requesting user, or None/None if the
-    user has no linked ward discipline / longlist  -  caller should guard and
-    redirect in that case.
+    - For team_manager: scopes to user.sub_county + user.ward
+    - For admin/superuser: uses ?discipline=<pk> from the request, or
+      falls back to sub_county+ward if set on the admin account.
+
+    Returns (discipline, longlist) or (None, None).
     """
+    is_admin = user.is_superuser or user.role == 'admin'
+
+    if is_admin and request is not None:
+        discipline_pk = request.GET.get('discipline') or request.POST.get('discipline')
+        if discipline_pk:
+            discipline = CountyDiscipline.objects.filter(
+                pk=discipline_pk, level='ward',
+            ).select_related('registration', 'ward_longlist').first()
+            if discipline is None:
+                return None, None
+            try:
+                longlist = discipline.ward_longlist
+            except WardLonglist.DoesNotExist:
+                longlist = None
+            return discipline, longlist
+
+    # Standard TM lookup by ward+sub_county
     discipline = CountyDiscipline.objects.filter(
         sub_county=user.sub_county,
         ward=user.ward,
@@ -12473,7 +12511,7 @@ def _get_ward_tm_context(user):
     return discipline, longlist
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_longlist_view(request):
     """
     Display all CountyPlayer objects for the Ward Team Manager's ward discipline.
@@ -12483,7 +12521,7 @@ def ward_tm_longlist_view(request):
     URL: /ligi/longlist/
     """
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
 
     if discipline is None or longlist is None:
         messages.warning(
@@ -12532,7 +12570,7 @@ def ward_tm_longlist_view(request):
     return render(request, 'ligi/ward_tm_longlist.html', context)
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_add_player_view(request):
     """
     Add a player to the ward longlist.
@@ -12548,7 +12586,7 @@ def ward_tm_add_player_view(request):
     URL: /ligi/longlist/add-player/
     """
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
 
     if discipline is None or longlist is None:
         messages.warning(request, 'No ward team found for your account.')
@@ -12614,7 +12652,7 @@ def ward_tm_add_player_view(request):
     return render(request, 'ligi/ward_tm_add_player.html', context)
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_edit_player_view(request, player_pk):
     """
     Edit a player on the ward longlist.
@@ -12625,7 +12663,7 @@ def ward_tm_edit_player_view(request, player_pk):
     URL: /ligi/longlist/<int:player_pk>/edit/
     """
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
 
     if discipline is None or longlist is None:
         messages.warning(request, 'No ward team found for your account.')
@@ -12676,7 +12714,7 @@ def ward_tm_edit_player_view(request, player_pk):
     return render(request, 'ligi/ward_tm_edit_player.html', context)
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_delete_player_view(request, player_pk):
     """
     Delete a player from the ward longlist.
@@ -12687,7 +12725,7 @@ def ward_tm_delete_player_view(request, player_pk):
     URL: /ligi/longlist/<int:player_pk>/delete/
     """
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
 
     if discipline is None or longlist is None:
         messages.warning(request, 'No ward team found for your account.')
@@ -12721,7 +12759,7 @@ def ward_tm_delete_player_view(request, player_pk):
     return render(request, 'ligi/ward_tm_delete_player.html', context)
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_submit_longlist_view(request):
     """
     Submit the ward team's longlist to the WSCC for review.
@@ -12751,7 +12789,7 @@ def ward_tm_submit_longlist_view(request):
     if request.method != 'POST':
         return redirect('ward_tm_longlist')
 
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
 
     if discipline is None or longlist is None:
         messages.warning(
@@ -12886,7 +12924,7 @@ def ward_tm_submit_longlist_view(request):
 # Ligi Mashinani  -  Ward-Level Match Day Squad Selection
 # ═════════════════════════════════════════════════════════════════════════════
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_fixtures_view(request):
     """
     Display upcoming and recent ward fixtures for the Ward Team Manager.
@@ -12894,7 +12932,7 @@ def ward_tm_fixtures_view(request):
     Requirements: 5.1, 5.3
     """
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
 
     if discipline is None or longlist is None:
         messages.error(request, 'You do not have a ward discipline linked to your account.')
@@ -12937,7 +12975,7 @@ def ward_tm_fixtures_view(request):
     })
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_ward_squad_view(request, fixture_pk):
     """
     Upgraded Ward Team Manager squad selection  -  full parity with MKJ Supa Cup.
@@ -12962,7 +13000,7 @@ def ward_tm_ward_squad_view(request, fixture_pk):
     SQUAD_SUBMISSION_HOURS = getattr(conf, 'SQUAD_SUBMISSION_HOURS_BEFORE_KICKOFF', 2)
     user = request.user
 
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
     if discipline is None or longlist is None:
         messages.error(request, 'No ward team found for your account.')
         return redirect('ward_tm_dashboard')
@@ -14814,6 +14852,58 @@ def scso_player_reg_request_view(request):
     })
 
 
+@role_required('admin', 'chief_sports_officer', 'director_sports')
+def ligi_admin_overview_view(request):
+    """
+    Admin overview of all Ligi Mashinani ward disciplines.
+    Allows admin to pick any ward and browse it as if they were that ward's TM.
+    URL: /ligi/admin/overview/
+    """
+    from accounts.models import MAKUENI_SUBCOUNTY_WARDS
+
+    sub_county_filter = request.GET.get('sub_county', '').strip()
+    search = request.GET.get('q', '').strip()
+
+    qs = CountyDiscipline.objects.filter(
+        level='ward',
+    ).select_related('registration', 'ward_longlist', 'linked_team').order_by(
+        'sub_county', 'ward', 'sport_type'
+    )
+
+    if sub_county_filter:
+        qs = qs.filter(sub_county=sub_county_filter)
+    if search:
+        qs = qs.filter(
+            django_models.Q(ward__icontains=search) |
+            django_models.Q(sub_county__icontains=search)
+        )
+
+    # Annotate with player counts
+    disciplines_data = []
+    for d in qs:
+        player_count = CountyPlayer.objects.filter(discipline=d).count()
+        try:
+            longlist = d.ward_longlist
+            longlist_status = longlist.get_status_display()
+        except Exception:
+            longlist = None
+            longlist_status = 'No longlist'
+        disciplines_data.append({
+            'discipline': d,
+            'player_count': player_count,
+            'longlist': longlist,
+            'longlist_status': longlist_status,
+        })
+
+    return render(request, 'ligi/admin_overview.html', {
+        'disciplines_data': disciplines_data,
+        'sub_county_choices': list(MAKUENI_SUBCOUNTY_WARDS.keys()),
+        'sub_county_filter': sub_county_filter,
+        'search': search,
+        'total': len(disciplines_data),
+    })
+
+
 @role_required('chief_sports_officer', 'director_sports', 'admin')
 def ligi_settings_view(request):
     """
@@ -15052,7 +15142,7 @@ def _transfer_window_guard(request):
 
 # ── Ward Team Manager ─────────────────────────────────────────────────────────
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_transfers_view(request):
     """
     Ward TM: list their own transfer requests + button to create new one.
@@ -15060,7 +15150,7 @@ def ward_tm_transfers_view(request):
     """
     from teams.models import LigiTransferRequest, LigiSettings
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
     if discipline is None:
         messages.warning(request, 'No ward team found for your account.')
         return redirect('ward_tm_dashboard')
@@ -15087,7 +15177,7 @@ def ward_tm_transfers_view(request):
     })
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_request_transfer_view(request):
     """
     Upgraded: Ward TM submits a transfer request.
@@ -15107,7 +15197,7 @@ def ward_tm_request_transfer_view(request):
     from django.conf import settings as _conf
 
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
     if discipline is None:
         messages.warning(request, 'No ward team found for your account.')
         return redirect('ward_tm_dashboard')
@@ -15361,7 +15451,7 @@ def _notify_transfer_reviewer(transfer, requested_by, _conf):
         logger.warning('Transfer reviewer notification failed: %s', e)
 
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_withdraw_transfer_view(request, transfer_pk):
     """
     Ward TM: withdraw a pending transfer request.
@@ -15369,7 +15459,7 @@ def ward_tm_withdraw_transfer_view(request, transfer_pk):
     """
     from teams.models import LigiTransferRequest, LigiTransferStatus
     user = request.user
-    discipline, _ = _get_ward_tm_context(user)
+    discipline, _ = _get_ward_tm_context(user, request)
     if discipline is None:
         return redirect('ward_tm_dashboard')
 
@@ -15893,7 +15983,7 @@ def ligi_player_register_view(request):
 #  Ward TM requests a substitution → WSCC / SCSO / referee action
 # ══════════════════════════════════════════════════════════════════════════════
 
-@role_required('team_manager')
+@role_required('team_manager', 'admin')
 def ward_tm_substitution_view(request, fixture_pk):
     """
     Ward TM requests a substitution during a ward-level match.
@@ -15906,7 +15996,7 @@ def ward_tm_substitution_view(request, fixture_pk):
     from matches.models import SquadSubmission, SquadStatus
 
     user = request.user
-    discipline, longlist = _get_ward_tm_context(user)
+    discipline, longlist = _get_ward_tm_context(user, request)
     if discipline is None:
         return redirect('ward_tm_dashboard')
 

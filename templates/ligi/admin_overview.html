@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Ligi Mashinani - Admin Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <span>Ligi Mashinani</span>
+    <span>Admin Overview</span>
+  </div>
+  <h1><i class="bi bi-grid"></i> Ligi Mashinani - All Ward Teams</h1>
+  <p style="color:#666;font-size:.9rem">Browse and manage any ward team's player longlist as admin.</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+  {% for msg in messages %}
+  <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.4rem;font-size:.9rem;
+    {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;
+    {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;
+    {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;
+    {% else %}background:#cfe2ff;color:#084298;{% endif %}">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Filter bar -->
+<div class="card" style="padding:1rem 1.25rem;margin-bottom:1.25rem">
+  <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end">
+    <div>
+      <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.25rem">Sub-County</label>
+      <select name="sub_county" style="padding:.5rem .8rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;min-width:160px">
+        <option value="">All Sub-Counties</option>
+        {% for sc in sub_county_choices %}
+        <option value="{{ sc }}" {% if sc == sub_county_filter %}selected{% endif %}>{{ sc }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.25rem">Search ward</label>
+      <input type="text" name="q" value="{{ search }}" placeholder="Ward name..."
+        style="padding:.5rem .8rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;min-width:180px">
+    </div>
+    <button type="submit" style="padding:.5rem 1.1rem;background:#124491;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:.88rem">
+      <i class="bi bi-search"></i> Filter
+    </button>
+    {% if sub_county_filter or search %}
+    <a href="{% url 'ligi_admin_overview' %}" style="padding:.5rem 1rem;background:#f8f9fa;color:#555;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;text-decoration:none">
+      Clear
+    </a>
+    {% endif %}
+    <span style="margin-left:auto;font-size:.85rem;color:#888;align-self:center">{{ total }} ward team{{ total|pluralize }}</span>
+  </form>
+</div>
+
+{% if disciplines_data %}
+<div class="card" style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:.87rem">
+    <thead>
+      <tr style="background:#f0f4ff;text-align:left">
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Sub-County</th>
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Ward</th>
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Discipline</th>
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6;text-align:center">Players</th>
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Longlist Status</th>
+        <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in disciplines_data %}
+      <tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:.6rem 1rem;font-weight:600">{{ row.discipline.sub_county }}</td>
+        <td style="padding:.6rem 1rem">{{ row.discipline.ward }}</td>
+        <td style="padding:.6rem 1rem">{{ row.discipline.get_sport_type_display }}</td>
+        <td style="padding:.6rem 1rem;text-align:center;font-weight:700;color:#124491">{{ row.player_count }}</td>
+        <td style="padding:.6rem 1rem">
+          {% if row.longlist %}
+            {% if row.longlist.status == 'draft' %}
+              <span style="background:#fff3cd;color:#856404;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">Draft</span>
+            {% elif row.longlist.status == 'submitted' %}
+              <span style="background:#cfe2ff;color:#084298;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">Submitted</span>
+            {% elif row.longlist.status == 'wscc_approved' %}
+              <span style="background:#d1e7dd;color:#0a3622;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">WSCC Approved</span>
+            {% elif row.longlist.status == 'returned' %}
+              <span style="background:#f8d7da;color:#842029;padding:.2rem .6rem;border-radius:12px;font-size:.8rem;font-weight:600">Returned</span>
+            {% endif %}
+          {% else %}
+            <span style="color:#aaa;font-size:.82rem">No longlist</span>
+          {% endif %}
+        </td>
+        <td style="padding:.6rem 1rem">
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <a href="{% url 'ward_tm_dashboard' %}?discipline={{ row.discipline.pk }}"
+               style="padding:.3rem .7rem;background:#124491;color:#fff;border-radius:4px;text-decoration:none;font-size:.8rem;font-weight:600">
+              <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="{% url 'ward_tm_longlist' %}?discipline={{ row.discipline.pk }}"
+               style="padding:.3rem .7rem;background:#e9ecef;color:#495057;border-radius:4px;text-decoration:none;font-size:.8rem">
+              <i class="bi bi-people"></i> Players
+            </a>
+            {% if row.longlist %}
+            <a href="{% url 'wscc_longlist_detail' row.longlist.pk %}"
+               style="padding:.3rem .7rem;background:#f8f9fa;color:#6c757d;border-radius:4px;text-decoration:none;font-size:.8rem">
+              <i class="bi bi-eye"></i> Review
+            </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="padding:2.5rem;text-align:center;color:#888">
+  <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+  <p style="margin:0">No ward disciplines found{% if sub_county_filter or search %} matching your filters{% endif %}.</p>
+</div>
+{% endif %}
+
+<div style="margin-top:1.25rem;display:flex;gap:.75rem;flex-wrap:wrap">
+  <a href="{% url 'ligi_player_register' %}" style="font-size:.88rem;color:#124491;text-decoration:none">
+    <i class="bi bi-list-ul"></i> Full Player Register
+  </a>
+  <span style="color:#dee2e6">|</span>
+  <a href="{% url 'ligi_settings' %}" style="font-size:.88rem;color:#124491;text-decoration:none">
+    <i class="bi bi-toggles"></i> Window Settings
+  </a>
+  <span style="color:#dee2e6">|</span>
+  <a href="{% url 'ligi_registrations_list' %}" style="font-size:.88rem;color:#124491;text-decoration:none">
+    <i class="bi bi-person-plus"></i> Registrations
+  </a>
+</div>
+{% endblock %}
