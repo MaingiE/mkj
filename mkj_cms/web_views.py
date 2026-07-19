@@ -851,7 +851,7 @@ def home_view(request):
     from teams.models import LigiSettings
     _ligi = LigiSettings.get()
 
-    return render(request, 'public/home.html', {
+    response = render(request, 'public/home.html', {
         'active_page': 'home',
         'stats': stats,
         'upcoming_fixtures': upcoming_fixtures,
@@ -864,6 +864,11 @@ def home_view(request):
         'ligi_reg_deadline': _ligi.registration_deadline,
         'ligi_reg_closed_msg': _ligi.team_registration_closed_message,
     })
+    # Ensure no proxy/CDN caches the homepage so crawlers always get fresh HTML
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 def public_gallery_view(request):
