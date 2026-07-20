@@ -134,6 +134,9 @@ class BrevoEmailBackend(BaseEmailBackend):
     def _log_to_db(message, status='sent', error=''):
         """Log sent email to EmailLog so the admin dashboard can display it."""
         try:
+            import logging as _log
+            import re as _re
+            _logger = _log.getLogger(__name__)
             from admin_dashboard.models import EmailLog
 
             html_body = ''
@@ -143,11 +146,19 @@ class BrevoEmailBackend(BaseEmailBackend):
                         html_body = content
                         break
 
+            # Extract plain email address from "Name <email>" format
+            def _extract_email(addr):
+                addr = str(addr or '').strip()
+                m = _re.search(r'<([^>]+)>', addr)
+                return m.group(1).strip() if m else addr
+
+            from_addr = _extract_email(message.from_email)
+
             from django.utils import timezone as _tz
             EmailLog.objects.create(
                 direction='OUT',
                 status=status,
-                from_email=message.from_email or '',
+                from_email=from_addr,
                 to_emails=', '.join(message.to) if message.to else '',
                 cc_emails=', '.join(message.cc) if message.cc else '',
                 bcc_emails=', '.join(message.bcc) if message.bcc else '',
@@ -157,8 +168,10 @@ class BrevoEmailBackend(BaseEmailBackend):
                 sent_at=_tz.now(),
                 error_message=error,
             )
-        except Exception:
-            pass  # never break email delivery because of logging
+            _logger.info('EmailLog saved for: %s → %s', message.subject, message.to)
+        except Exception as exc:
+            import logging as _log
+            _log.getLogger(__name__).error('EmailLog save failed: %s', exc, exc_info=True)
 
     @staticmethod
     def _parse_email(email_str):
