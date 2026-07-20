@@ -1969,8 +1969,8 @@ a.hero-feat--link {
     position: fixed;
     z-index: 9000;
     bottom: 2rem;
-    right: 1.5rem;
-    width: 360px;
+    left: 1.5rem;          /* LEFT side — fixtures card is on the right */
+    width: 320px;
     max-width: calc(100vw - 2rem);
     background: linear-gradient(145deg, rgba(8,24,50,0.97) 0%, rgba(10,35,72,0.97) 60%, rgba(14,42,82,0.97) 100%);
     backdrop-filter: blur(20px);
@@ -2154,6 +2154,8 @@ a.hero-feat--link {
     font-weight: 900;
     font-size: 0.92rem;
     border-radius: 12px;
+    border: none;
+    cursor: pointer;
     text-decoration: none;
     min-height: 44px;
     letter-spacing: 0.3px;
@@ -2193,11 +2195,11 @@ a.hero-feat--link {
 @media (max-width: 479px) {
     #ligi-float-card {
         bottom: 1rem;
-        left: 1rem;
-        right: 1rem;
+        left: 0.75rem;
+        right: 0.75rem;
         width: auto;
         max-width: none;
-        width: calc(100% - 2rem);
+        width: calc(100% - 1.5rem);
     }
 }
 
@@ -2902,13 +2904,14 @@ a.hero-feat--link {
 
     <p class="ligi-card__deadline">Deadline: <strong>30 September 2026, 11:59 PM</strong></p>
 
-    <!-- CTA button -->
-    <a href="/ligi/register/"
-       class="ligi-card__btn"
-       id="ligi-register-btn">
+    <!-- CTA button — opens the existing Ligi Mashinani registration panel -->
+    <button class="ligi-card__btn"
+            id="ligi-register-btn"
+            type="button"
+            onclick="(function(){var p=document.getElementById('ligiPanel');if(p){p.classList.add('open');}})()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Register Your Team
-    </a>
+    </button>
   </div>
 </div>
 {% endif %}
@@ -3532,14 +3535,14 @@ a.hero-feat--link {
       return;
     }
 
-    // Pick a random side: 0=right, 1=left, 2=top, 3=bottom
+    // Pick a random side: 0=left, 1=top, 2=bottom, 3=right
     var side = Math.floor(Math.random() * 4);
     var startX, startY, startRot;
     switch (side) {
-      case 0: startX = '120vw';  startY = '-20vh'; startRot =  20; break; // right
-      case 1: startX = '-120vw'; startY = '-20vh'; startRot = -20; break; // left
-      case 2: startX = '10vw';   startY = '-120vh'; startRot = 15; break; // top
-      default:startX = '10vw';   startY = '120vh';  startRot = -15; break; // bottom
+      case 0: startX = '-130vw'; startY = '10vh';  startRot = -18; break; // left
+      case 1: startX = '-10vw';  startY = '-130vh'; startRot =  15; break; // top
+      case 2: startX = '-10vw';  startY = '130vh';  startRot = -15; break; // bottom
+      default:startX = '130vw';  startY = '10vh';   startRot =  18; break; // right
     }
 
     if (typeof card.animate === 'function') {
