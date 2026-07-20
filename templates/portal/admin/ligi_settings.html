@@ -181,147 +181,112 @@
 
 </div>
 
-<!-- ── REGISTRATION DEADLINE ─────────────────────────────────── -->
-<div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-top:4px solid #fbbf24">
-  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
-    <span style="font-size:1.8rem">⏳</span>
-    <div>
-      <h2 style="font-size:1.05rem;margin:0;color:#333">Registration Deadline Countdown</h2>
-      <p style="font-size:.8rem;color:#888;margin:0">Shows a live countdown on the public homepage registration panel</p>
-    </div>
-  </div>
-
-  {% if settings_obj.registration_deadline %}
-  <div style="background:#fff3cd;border:1px solid #ffecb5;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#856404">
-    Current deadline: <strong>{{ settings_obj.registration_deadline|date:"d M Y" }} at {{ settings_obj.registration_deadline|time:"H:i" }}</strong>
-    (Nairobi time)
-  </div>
-  {% else %}
-  <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#888">
-    No deadline set  -  countdown is hidden on homepage.
-  </div>
-  {% endif %}
-
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="set_deadline">
-    <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap">
-      <div style="flex:1;min-width:220px">
-        <label style="font-size:.8rem;color:#555;display:block;margin-bottom:.35rem;font-weight:600">Set New Deadline</label>
-        <input type="datetime-local" name="registration_deadline"
-          value="{% if settings_obj.registration_deadline %}{{ settings_obj.registration_deadline|date:'Y-m-d' }}T{{ settings_obj.registration_deadline|time:'H:i' }}{% endif %}"
-          style="width:100%;padding:.6rem .8rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
-      </div>
-      <button type="submit" style="padding:.6rem 1.2rem;background:#fbbf24;color:#1a1a1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.88rem">
-        ⏱ Set Deadline
-      </button>
-      {% if settings_obj.registration_deadline %}
-      <button type="submit" name="action" value="clear_deadline"
-        style="padding:.6rem 1rem;background:#f8f9fa;color:#6c757d;border:1px solid #dee2e6;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">
-        ✕ Clear Countdown
-      </button>
-      {% endif %}
-    </div>
-  </form>
-</div>
-
-<!-- ── SCHEDULED WINDOW TIMELINES ────────────────────────────── -->
+<!-- ── TIMELINES & DEADLINE ───────────────────────────────────── -->
 <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-top:4px solid #6366f1">
-  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
+
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.1rem">
     <span style="font-size:1.8rem">📅</span>
     <div>
-      <h2 style="font-size:1.05rem;margin:0;color:#333">Scheduled Window Timelines</h2>
+      <h2 style="font-size:1.05rem;margin:0;color:#333">Timelines &amp; Deadline</h2>
       <p style="font-size:.8rem;color:#888;margin:0">
-        Set future open/close times — windows switch automatically when the time arrives.
-        Leave a field blank to leave that transition unscheduled.
+        Schedule auto open/close times and set the public countdown deadline. All times are Nairobi (EAT).
       </p>
     </div>
   </div>
 
+  <!-- Pending actions banner -->
   {% if settings_obj.team_reg_open_at or settings_obj.team_reg_close_at or settings_obj.player_reg_open_at or settings_obj.player_reg_close_at %}
-  <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.84rem;color:#4c1d95">
+  <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:.7rem 1rem;margin-bottom:1.1rem;font-size:.83rem;color:#4c1d95">
     <strong>⏰ Pending scheduled actions:</strong>
-    <ul style="margin:.4rem 0 0 1rem;padding:0">
-      {% if settings_obj.team_reg_open_at %}
-      <li>📋 Team Registration <strong>OPENS</strong> on {{ settings_obj.team_reg_open_at|date:"d M Y" }} at {{ settings_obj.team_reg_open_at|time:"H:i" }} (Nairobi)</li>
-      {% endif %}
-      {% if settings_obj.team_reg_close_at %}
-      <li>📋 Team Registration <strong>CLOSES</strong> on {{ settings_obj.team_reg_close_at|date:"d M Y" }} at {{ settings_obj.team_reg_close_at|time:"H:i" }} (Nairobi)</li>
-      {% endif %}
-      {% if settings_obj.player_reg_open_at %}
-      <li>👤 Player Registration <strong>OPENS</strong> on {{ settings_obj.player_reg_open_at|date:"d M Y" }} at {{ settings_obj.player_reg_open_at|time:"H:i" }} (Nairobi)</li>
-      {% endif %}
-      {% if settings_obj.player_reg_close_at %}
-      <li>👤 Player Registration <strong>CLOSES</strong> on {{ settings_obj.player_reg_close_at|date:"d M Y" }} at {{ settings_obj.player_reg_close_at|time:"H:i" }} (Nairobi)</li>
-      {% endif %}
+    <ul style="margin:.35rem 0 0 1.1rem;padding:0;line-height:1.7">
+      {% if settings_obj.team_reg_open_at %}<li>📋 Team Reg <strong>OPENS</strong> — {{ settings_obj.team_reg_open_at|date:"d M Y" }} at {{ settings_obj.team_reg_open_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.team_reg_close_at %}<li>📋 Team Reg <strong>CLOSES</strong> — {{ settings_obj.team_reg_close_at|date:"d M Y" }} at {{ settings_obj.team_reg_close_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.player_reg_open_at %}<li>👤 Player Reg <strong>OPENS</strong> — {{ settings_obj.player_reg_open_at|date:"d M Y" }} at {{ settings_obj.player_reg_open_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.player_reg_close_at %}<li>👤 Player Reg <strong>CLOSES</strong> — {{ settings_obj.player_reg_close_at|date:"d M Y" }} at {{ settings_obj.player_reg_close_at|time:"H:i" }}</li>{% endif %}
     </ul>
-  </div>
-  {% else %}
-  <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:.65rem 1rem;margin-bottom:1rem;font-size:.83rem;color:#888">
-    No scheduled transitions — windows only change when manually toggled.
   </div>
   {% endif %}
 
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="action" value="set_schedule">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem">
 
-      <div>
-        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
-          📋 Team Registration — Open At
-        </label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.2rem">
+
+      <!-- Team Registration -->
+      <div style="background:#f8f9fa;border-radius:8px;padding:.85rem">
+        <p style="font-size:.75rem;font-weight:700;color:#124491;margin:0 0 .7rem;letter-spacing:.3px;text-transform:uppercase">📋 Team Registration</p>
+        <label style="font-size:.75rem;color:#555;display:block;margin-bottom:.25rem">Opens at</label>
         <input type="datetime-local" name="team_reg_open_at"
           value="{% if settings_obj.team_reg_open_at %}{{ settings_obj.team_reg_open_at|date:'Y-m-d' }}T{{ settings_obj.team_reg_open_at|time:'H:i' }}{% endif %}"
-          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
-        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-opens team reg at this time</p>
-      </div>
-
-      <div>
-        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
-          📋 Team Registration — Close At
-        </label>
+          style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem;margin-bottom:.6rem">
+        <label style="font-size:.75rem;color:#555;display:block;margin-bottom:.25rem">Closes at</label>
         <input type="datetime-local" name="team_reg_close_at"
           value="{% if settings_obj.team_reg_close_at %}{{ settings_obj.team_reg_close_at|date:'Y-m-d' }}T{{ settings_obj.team_reg_close_at|time:'H:i' }}{% endif %}"
-          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
-        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-closes team reg at this time</p>
+          style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
       </div>
 
-      <div>
-        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
-          👤 Player Registration — Open At
-        </label>
+      <!-- Player Registration -->
+      <div style="background:#f8f9fa;border-radius:8px;padding:.85rem">
+        <p style="font-size:.75rem;font-weight:700;color:#124491;margin:0 0 .7rem;letter-spacing:.3px;text-transform:uppercase">👤 Player Registration</p>
+        <label style="font-size:.75rem;color:#555;display:block;margin-bottom:.25rem">Opens at</label>
         <input type="datetime-local" name="player_reg_open_at"
           value="{% if settings_obj.player_reg_open_at %}{{ settings_obj.player_reg_open_at|date:'Y-m-d' }}T{{ settings_obj.player_reg_open_at|time:'H:i' }}{% endif %}"
-          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
-        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-opens player reg at this time</p>
-      </div>
-
-      <div>
-        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
-          👤 Player Registration — Close At
-        </label>
+          style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem;margin-bottom:.6rem">
+        <label style="font-size:.75rem;color:#555;display:block;margin-bottom:.25rem">Closes at</label>
         <input type="datetime-local" name="player_reg_close_at"
           value="{% if settings_obj.player_reg_close_at %}{{ settings_obj.player_reg_close_at|date:'Y-m-d' }}T{{ settings_obj.player_reg_close_at|time:'H:i' }}{% endif %}"
-          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
-        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-closes player reg at this time</p>
+          style="width:100%;padding:.5rem .65rem;border:1px solid #dee2e6;border-radius:5px;font-size:.85rem">
+      </div>
+
+      <!-- Homepage Countdown Deadline -->
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.85rem">
+        <p style="font-size:.75rem;font-weight:700;color:#92400e;margin:0 0 .35rem;letter-spacing:.3px;text-transform:uppercase">⏳ Homepage Countdown</p>
+        <p style="font-size:.72rem;color:#78350f;margin:0 0 .7rem">Shown on the public floating card</p>
+        {% if settings_obj.registration_deadline %}
+        <div style="font-size:.8rem;color:#92400e;font-weight:600;margin-bottom:.6rem">
+          Currently: {{ settings_obj.registration_deadline|date:"d M Y" }} {{ settings_obj.registration_deadline|time:"H:i" }}
+        </div>
+        {% endif %}
+        <label style="font-size:.75rem;color:#555;display:block;margin-bottom:.25rem">Deadline date &amp; time</label>
+        <input type="datetime-local" name="registration_deadline" form="deadline-form"
+          value="{% if settings_obj.registration_deadline %}{{ settings_obj.registration_deadline|date:'Y-m-d' }}T{{ settings_obj.registration_deadline|time:'H:i' }}{% endif %}"
+          style="width:100%;padding:.5rem .65rem;border:1px solid #fde68a;border-radius:5px;font-size:.85rem">
       </div>
 
     </div>
 
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
       <button type="submit"
         style="padding:.6rem 1.4rem;background:#6366f1;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.88rem">
         📅 Save Schedule
       </button>
       {% if settings_obj.team_reg_open_at or settings_obj.team_reg_close_at or settings_obj.player_reg_open_at or settings_obj.player_reg_close_at %}
       <button type="submit" name="action" value="clear_schedule"
-        style="padding:.6rem 1rem;background:#f8f9fa;color:#6c757d;border:1px solid #dee2e6;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">
-        ✕ Clear All Scheduled Times
+        style="padding:.6rem 1rem;background:#fff;color:#6c757d;border:1px solid #dee2e6;border-radius:6px;font-weight:600;cursor:pointer;font-size:.82rem">
+        ✕ Clear Schedule
       </button>
       {% endif %}
     </div>
   </form>
+
+  <!-- Deadline saved separately -->
+  <form id="deadline-form" method="post" style="margin-top:.85rem;padding-top:.85rem;border-top:1px solid #f0f0f0;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="set_deadline">
+    <button type="submit"
+      style="padding:.55rem 1.2rem;background:#fbbf24;color:#1a1a1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem">
+      ⏱ Save Deadline
+    </button>
+    {% if settings_obj.registration_deadline %}
+    <button type="submit" name="action" value="clear_deadline"
+      style="padding:.55rem .9rem;background:#fff;color:#6c757d;border:1px solid #dee2e6;border-radius:6px;font-weight:600;cursor:pointer;font-size:.82rem">
+      ✕ Clear Countdown
+    </button>
+    {% endif %}
+    <span style="font-size:.75rem;color:#aaa">The deadline input is in the Homepage Countdown box above.</span>
+  </form>
+
 </div>
 
 <!-- ── CURRENT STATUS SUMMARY ─────────────────────────────────── -->

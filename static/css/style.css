@@ -2509,6 +2509,25 @@ img { max-width: 100%; }
 .sidebar-link:hover .icon,
 .sidebar-link.active .icon { opacity: 1; }
 
+/* Sub-items indented under a parent sidebar link */
+.sidebar-sublink {
+    padding-left: 2.4rem;
+    font-size: .82rem;
+    opacity: .85;
+}
+.sidebar-sublink::before {
+    content: '';
+    position: absolute;
+    left: 1.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .4;
+}
+
 /* ── MAIN CONTENT ───────────────────────────────────────────────────────── */
 .main-content {
     flex: 1;
