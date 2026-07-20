@@ -168,18 +168,20 @@
 
         <div class="email-body-section">
             {% if email.body_html %}
-            <div class="body-label">HTML Body</div>
+            <div class="body-label">Email Preview</div>
             <div class="email-body-html">
                 <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_html|safe }}"></iframe>
             </div>
-            {% endif %}
-
-            {% if email.body_text %}
-            <div class="body-label {% if email.body_html %}mt-4{% endif %}">Plain Text</div>
+            {% elif email.body_text and '<html' in email.body_text %}
+            {# Fallback: body_text contains raw HTML (old records before fix) #}
+            <div class="body-label">Email Preview</div>
+            <div class="email-body-html">
+                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_text|safe }}"></iframe>
+            </div>
+            {% elif email.body_text %}
+            <div class="body-label">Message</div>
             <div class="email-body-text">{{ email.body_text }}</div>
-            {% endif %}
-
-            {% if not email.body_text and not email.body_html %}
+            {% else %}
             <p style="color:#999; font-size:.85rem;">(No body content)</p>
             {% endif %}
         </div>

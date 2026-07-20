@@ -35,6 +35,16 @@ LIGI_FROM_EMAIL = getattr(settings, 'LIGI_FROM_EMAIL', 'Ligi Mashinani <ligimash
 #  HELPERS
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _html_to_plain(html):
+    """Convert HTML to clean plain text, properly removing style/script blocks."""
+    import re
+    # Remove <style>...</style> and <script>...</script> blocks entirely
+    html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    # Strip remaining tags
+    return strip_tags(html).strip()
+
+
 def _send(subject, html_body, recipients, fail_silently=True, from_email=None):
     """
     Send an HTML email on a background daemon thread.
@@ -48,7 +58,7 @@ def _send(subject, html_body, recipients, fail_silently=True, from_email=None):
         return False
 
     sender = from_email or FROM_EMAIL
-    plain = strip_tags(html_body)
+    plain = _html_to_plain(html_body)
 
     def _worker():
         import time
