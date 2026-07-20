@@ -1961,6 +1961,177 @@ a.hero-feat--link {
     }
     .reveal-up { opacity: 1; transform: none; }
 }
+
+/* ── LIGI MASHINANI FLOATING REGISTRATION CARD ─────────────────────────── */
+#ligi-float-card {
+    position: fixed;
+    z-index: 9000;
+    bottom: 2rem;
+    right: 1.5rem;
+    max-width: 420px;
+    width: 420px;
+    background: #0a2f5c;
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(232,185,30,0.18);
+    border: 1px solid rgba(232,185,30,0.25);
+    opacity: 0; /* initial state — JS will animate in */
+}
+
+.ligi-card__dismiss {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 1.6rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    padding: 0;
+}
+.ligi-card__dismiss:hover {
+    color: #E8B91E;
+    background: rgba(232,185,30,0.12);
+}
+.ligi-card__dismiss:focus-visible {
+    outline: 2px solid #E8B91E;
+    outline-offset: 2px;
+}
+
+.ligi-card__body {
+    padding-top: 0.25rem;
+}
+
+.ligi-card__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 0.35rem;
+    color: #E8B91E;
+    letter-spacing: 0.3px;
+    line-height: 1.25;
+}
+
+.ligi-card__sub {
+    font-size: 0.88rem;
+    margin: 0 0 0.85rem;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.45;
+}
+
+.ligi-card__countdown {
+    font-family: 'Outfit', monospace;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #E8B91E;
+    margin-bottom: 1.1rem;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 18px rgba(232,185,30,0.35);
+}
+
+.ligi-card__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.6rem;
+    background: linear-gradient(135deg, #E8B91E, #FFD54F);
+    color: #0a2f5c;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    min-width: 44px;
+    min-height: 44px;
+    letter-spacing: 0.3px;
+    opacity: 0; /* hidden until card settles */
+    pointer-events: auto;
+    transition: transform 200ms cubic-bezier(0.4,0,0.2,1), background 200ms;
+    box-shadow: 0 4px 16px rgba(232,185,30,0.3);
+}
+.ligi-card__btn:hover {
+    transform: scale(1.07);
+    background: linear-gradient(135deg, #FFD54F, #ffe07a);
+    box-shadow: 0 8px 28px rgba(232,185,30,0.5);
+}
+.ligi-card__btn:focus-visible {
+    outline: 2px solid #0a2f5c;
+    outline-offset: 3px;
+}
+
+/* Settled state — button becomes visible and pulsing */
+#ligi-float-card.ligi-settled .ligi-card__btn {
+    animation: ligiBtnFadeIn 300ms ease forwards, ligiBtnPulse 1700ms ease-in-out 300ms infinite;
+}
+
+/* ── Task 2.2: Toss entry animation ────────────────────────────────────── */
+@keyframes ligiToss {
+    0% {
+        transform: translateX(110vw) translateY(-80vh) rotate(22deg);
+        opacity: 0;
+    }
+    62% {
+        transform: translateX(-8px) translateY(-12px) rotate(-3deg);
+        opacity: 1;
+    }
+    80% {
+        transform: translateX(4px) translateY(6px) rotate(1deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(0) translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* ── Task 2.3: Button fade-in and pulse keyframes ──────────────────────── */
+@keyframes ligiBtnFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ligiBtnPulse {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(232,185,30,0.3), 0 0 0 0 rgba(232,185,30,0);
+    }
+    50% {
+        box-shadow: 0 8px 32px rgba(232,185,30,0.65), 0 0 0 8px rgba(232,185,30,0.12);
+    }
+}
+
+/* ── Task 2.4: Responsive — viewport < 480px ───────────────────────────── */
+@media (max-width: 479px) {
+    #ligi-float-card {
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+        width: calc(100% - 2rem);
+    }
+}
+
+/* ── Task 2.5: Reduced-motion override for ligi card ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    #ligi-float-card {
+        animation: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+    .ligi-card__btn {
+        animation: none !important;
+        opacity: 1 !important;
+    }
+}
 </style>
 {% endblock %}
 
@@ -2602,6 +2773,39 @@ a.hero-feat--link {
     </div>
 </div>
 
+<!-- Ligi Mashinani Floating Registration Card -->
+<div id="ligi-float-card"
+     role="complementary"
+     aria-label="Ligi Mashinani registration"
+     aria-live="polite">
+
+  <!-- Dismiss control -->
+  <button class="ligi-card__dismiss"
+          aria-label="Close registration card"
+          type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+
+  <!-- Card body -->
+  <div class="ligi-card__body">
+    <h2 class="ligi-card__title">Ligi Mashinani 2026/2029 Season</h2>
+    <p class="ligi-card__sub">Register your ward team today</p>
+
+    <!-- Countdown timer -->
+    <div class="ligi-card__countdown" id="ligi-countdown">
+      <noscript>-- days --:--:--</noscript>
+      <span id="ligi-countdown-display">-- days --:--:--</span>
+    </div>
+
+    <!-- CTA button — plain <a> so it works without JS -->
+    <a href="/ligi/register/"
+       class="ligi-card__btn"
+       id="ligi-register-btn">
+      Register Now
+    </a>
+  </div>
+</div>
+
 {% endblock %}
 {% block extra_js %}
 <script>
@@ -3123,5 +3327,143 @@ a.hero-feat--link {
 })();
 </script>
 {% endif %}
+
+<!-- ── LIGI MASHINANI FLOATING CARD ─────────────────────────────────────── -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Configuration ───────────────────────────────────────────────────── */
+  const LIGI_DEADLINE = new Date('2025-12-31T23:59:59+03:00');
+
+  /* ── Pure helper: ms remaining → "DD days HH:MM:SS" or null ─────────── */
+  function formatCountdown(ms) {
+    if (ms <= 0) return null;
+    var totalSecs = Math.floor(ms / 1000);
+    var ss = totalSecs % 60;
+    var mm = Math.floor(totalSecs / 60) % 60;
+    var hh = Math.floor(totalSecs / 3600) % 24;
+    var dd = Math.floor(totalSecs / 86400);
+    function pad(n) { return String(n).padStart(2, '0'); }
+    return pad(dd) + ' days ' + pad(hh) + ':' + pad(mm) + ':' + pad(ss);
+  }
+
+  /* ── DOM refs ────────────────────────────────────────────────────────── */
+  var card         = document.getElementById('ligi-float-card');
+  var countdownEl  = document.getElementById('ligi-countdown-display');
+  var registerBtn  = document.getElementById('ligi-register-btn');
+  var dismissBtn   = document.querySelector('.ligi-card__dismiss');
+
+  if (!card) return; // guard: card not present on this page
+
+  /* ── Countdown ───────────────────────────────────────────────────────── */
+  function tickCountdown() {
+    var ms = LIGI_DEADLINE - Date.now();
+    var label = formatCountdown(ms);
+    if (label === null) {
+      if (countdownEl) countdownEl.textContent = 'Registration Closed';
+      if (registerBtn) {
+        registerBtn.style.display = 'none';
+        registerBtn.style.opacity = '0';
+      }
+    } else {
+      if (countdownEl) countdownEl.textContent = label;
+    }
+  }
+
+  function startCountdown() {
+    tickCountdown(); // immediate first tick — no blank display
+    setInterval(tickCountdown, 1000);
+  }
+
+  /* ── Dismiss ─────────────────────────────────────────────────────────── */
+  function dismissCard() {
+    card.style.transition = 'opacity 300ms ease';
+    card.style.opacity = '0';
+    setTimeout(function () {
+      card.style.display = 'none';
+      card.setAttribute('aria-hidden', 'true');
+    }, 300);
+  }
+
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', dismissCard);
+    dismissBtn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        dismissCard();
+      }
+    });
+  }
+
+  /* ── Button reveal ───────────────────────────────────────────────────── */
+  function showBtn() {
+    card.classList.add('ligi-settled');
+    startCountdown();
+  }
+
+  /* ── Toss animation ──────────────────────────────────────────────────── */
+  function startTossAnimation() {
+    /* Respect reduced-motion preference */
+    var prefersReduced = window.matchMedia &&
+                         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      card.style.opacity = '1';
+      card.style.transform = 'none';
+      showBtn();
+      return;
+    }
+
+    /* Web Animations API path */
+    if (typeof card.animate === 'function') {
+      var anim = card.animate([
+        {
+          transform: 'translateX(110vw) translateY(-80vh) rotate(22deg)',
+          opacity: '0'
+        },
+        {
+          transform: 'translateX(-8px) translateY(-12px) rotate(-3deg)',
+          opacity: '1',
+          offset: 0.62
+        },
+        {
+          transform: 'translateX(4px) translateY(6px) rotate(1deg)',
+          offset: 0.80
+        },
+        {
+          transform: 'translateX(0) translateY(0) rotate(0deg)',
+          opacity: '1'
+        }
+      ], {
+        duration: 900,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'forwards'
+      });
+
+      anim.finished.then(function () {
+        /* Lock the final state so it doesn't snap back */
+        card.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
+        card.style.opacity = '1';
+        showBtn();
+      }).catch(function () {
+        /* Animation was cancelled — still show the card */
+        card.style.opacity = '1';
+        showBtn();
+      });
+
+    } else {
+      /* Fallback: no animation support — show immediately */
+      card.style.opacity = '1';
+      showBtn();
+    }
+  }
+
+  /* ── Entry point ─────────────────────────────────────────────────────── */
+  window.addEventListener('load', function () {
+    setTimeout(startTossAnimation, 50);
+  });
+
+})();
+</script>
 
 {% endblock %}
