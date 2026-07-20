@@ -1962,159 +1962,240 @@ a.hero-feat--link {
     .reveal-up { opacity: 1; transform: none; }
 }
 
-/* ── LIGI MASHINANI FLOATING REGISTRATION CARD ─────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   LIGI MASHINANI FLOATING REGISTRATION CARD  —  Modern Redesign
+   ══════════════════════════════════════════════════════════════════════════ */
 #ligi-float-card {
     position: fixed;
     z-index: 9000;
     bottom: 2rem;
     right: 1.5rem;
-    max-width: 420px;
-    width: 420px;
-    background: #0a2f5c;
+    width: 360px;
+    max-width: calc(100vw - 2rem);
+    background: linear-gradient(145deg, rgba(8,24,50,0.97) 0%, rgba(10,35,72,0.97) 60%, rgba(14,42,82,0.97) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     color: #ffffff;
-    border-radius: 16px;
-    padding: 1.5rem 1.5rem 1.25rem;
+    border-radius: 20px;
+    padding: 0;
     overflow: hidden;
-    box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(232,185,30,0.18);
-    border: 1px solid rgba(232,185,30,0.25);
-    opacity: 0; /* initial state — JS will animate in */
+    box-shadow:
+        0 24px 64px rgba(0,0,0,0.65),
+        0 0 0 1px rgba(232,185,30,0.22),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+    border: 1px solid rgba(232,185,30,0.18);
+    opacity: 0;
+    will-change: transform, opacity;
 }
 
+/* Gold top accent strip */
+#ligi-float-card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, #E8B91E 0%, #FFD54F 50%, #E8B91E 100%);
+    background-size: 200% 100%;
+    animation: ligiGoldShimmer 2.5s linear infinite;
+}
+@keyframes ligiGoldShimmer {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+/* Card inner padding */
+.ligi-card__inner {
+    padding: 1.1rem 1.25rem 1.25rem;
+}
+
+/* Dismiss button */
 .ligi-card__dismiss {
     position: absolute;
-    top: 0.6rem;
-    right: 0.75rem;
-    background: transparent;
-    border: none;
-    color: rgba(255,255,255,0.6);
-    font-size: 1.6rem;
+    top: 0.7rem;
+    right: 0.7rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 1.1rem;
     cursor: pointer;
-    width: 32px;
-    height: 32px;
-    line-height: 1;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
+    border-radius: 50%;
+    transition: all 0.2s;
     padding: 0;
+    line-height: 1;
+    z-index: 2;
 }
 .ligi-card__dismiss:hover {
-    color: #E8B91E;
-    background: rgba(232,185,30,0.12);
+    color: #fff;
+    background: rgba(232,185,30,0.2);
+    border-color: rgba(232,185,30,0.4);
+    transform: rotate(90deg);
 }
 .ligi-card__dismiss:focus-visible {
     outline: 2px solid #E8B91E;
     outline-offset: 2px;
 }
 
-.ligi-card__body {
-    padding-top: 0.25rem;
-}
-
-.ligi-card__title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 800;
-    margin: 0 0 0.35rem;
-    color: #E8B91E;
-    letter-spacing: 0.3px;
-    line-height: 1.25;
-}
-
-.ligi-card__sub {
-    font-size: 0.88rem;
-    margin: 0 0 0.85rem;
-    color: rgba(255,255,255,0.82);
-    line-height: 1.45;
-}
-
-.ligi-card__countdown {
-    font-family: 'Outfit', monospace;
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #E8B91E;
-    margin-bottom: 1.1rem;
-    letter-spacing: 0.06em;
-    text-shadow: 0 0 18px rgba(232,185,30,0.35);
-}
-
-.ligi-card__btn {
+/* Live badge */
+.ligi-card__badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 0.65rem 1.6rem;
-    background: linear-gradient(135deg, #E8B91E, #FFD54F);
-    color: #0a2f5c;
+    gap: 0.3rem;
+    padding: 0.18rem 0.55rem;
+    background: rgba(46,160,67,0.15);
+    border: 1px solid rgba(46,160,67,0.35);
+    border-radius: 50px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: #6ee385;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+}
+.ligi-card__badge-dot {
+    width: 5px;
+    height: 5px;
+    background: #6ee385;
+    border-radius: 50%;
+    animation: ligiBadgePulse 1.3s ease infinite;
+}
+@keyframes ligiBadgePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.3; transform: scale(0.6); }
+}
+
+/* Title */
+.ligi-card__title {
     font-family: 'Outfit', sans-serif;
-    font-weight: 800;
-    font-size: 1rem;
+    font-size: 1.15rem;
+    font-weight: 900;
+    margin: 0 0 0.25rem;
+    color: #FFD54F;
+    letter-spacing: 0.2px;
+    line-height: 1.2;
+    text-shadow: 0 0 24px rgba(232,185,30,0.3);
+}
+
+/* Sub-text */
+.ligi-card__sub {
+    font-size: 0.78rem;
+    margin: 0 0 1rem;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.5;
+}
+
+/* ── SEGMENTED COUNTDOWN ────────────────────────────────── */
+.ligi-card__countdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+.ligi-cd-seg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(232,185,30,0.15);
     border-radius: 10px;
+    padding: 0.5rem 0.25rem 0.35rem;
+}
+.ligi-cd-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #FFD54F;
+    line-height: 1;
+    text-shadow: 0 0 16px rgba(232,185,30,0.5);
+    min-width: 2ch;
+    text-align: center;
+    transition: color 0.3s;
+}
+.ligi-cd-lbl {
+    font-size: 0.48rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+}
+/* Flash effect on tick */
+.ligi-cd-num.ligi-tick {
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255,255,255,0.6);
+}
+
+/* Deadline label */
+.ligi-card__deadline {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    margin-bottom: 0.9rem;
+    letter-spacing: 0.3px;
+}
+.ligi-card__deadline strong {
+    color: rgba(232,185,30,0.7);
+}
+
+/* CTA Button */
+.ligi-card__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.4rem;
+    background: linear-gradient(135deg, #E8B91E 0%, #FFD54F 50%, #E8B91E 100%);
+    background-size: 200% 100%;
+    color: #0a1e3d;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 0.92rem;
+    border-radius: 12px;
     text-decoration: none;
-    min-width: 44px;
     min-height: 44px;
     letter-spacing: 0.3px;
-    opacity: 0; /* hidden until card settles */
+    opacity: 0;
     pointer-events: auto;
-    transition: transform 200ms cubic-bezier(0.4,0,0.2,1), background 200ms;
-    box-shadow: 0 4px 16px rgba(232,185,30,0.3);
+    transition: transform 200ms cubic-bezier(0.4,0,0.2,1), box-shadow 200ms, background-position 0.4s;
+    box-shadow: 0 4px 20px rgba(232,185,30,0.35);
+    width: 100%;
 }
 .ligi-card__btn:hover {
-    transform: scale(1.07);
-    background: linear-gradient(135deg, #FFD54F, #ffe07a);
-    box-shadow: 0 8px 28px rgba(232,185,30,0.5);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 32px rgba(232,185,30,0.55);
+    background-position: 100% 0%;
 }
 .ligi-card__btn:focus-visible {
     outline: 2px solid #0a2f5c;
     outline-offset: 3px;
 }
 
-/* Settled state — button becomes visible and pulsing */
+/* Settled: button animates in then pulses */
 #ligi-float-card.ligi-settled .ligi-card__btn {
-    animation: ligiBtnFadeIn 300ms ease forwards, ligiBtnPulse 1700ms ease-in-out 300ms infinite;
+    animation: ligiBtnFadeIn 350ms cubic-bezier(0.16,1,0.3,1) forwards,
+               ligiBtnPulse 1800ms ease-in-out 350ms infinite;
 }
 
-/* ── Task 2.2: Toss entry animation ────────────────────────────────────── */
-@keyframes ligiToss {
-    0% {
-        transform: translateX(110vw) translateY(-80vh) rotate(22deg);
-        opacity: 0;
-    }
-    62% {
-        transform: translateX(-8px) translateY(-12px) rotate(-3deg);
-        opacity: 1;
-    }
-    80% {
-        transform: translateX(4px) translateY(6px) rotate(1deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(0) translateY(0) rotate(0deg);
-        opacity: 1;
-    }
-}
-
-/* ── Task 2.3: Button fade-in and pulse keyframes ──────────────────────── */
+/* Keyframes */
 @keyframes ligiBtnFadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
 @keyframes ligiBtnPulse {
-    0%, 100% {
-        box-shadow: 0 4px 16px rgba(232,185,30,0.3), 0 0 0 0 rgba(232,185,30,0);
-    }
-    50% {
-        box-shadow: 0 8px 32px rgba(232,185,30,0.65), 0 0 0 8px rgba(232,185,30,0.12);
-    }
+    0%, 100% { box-shadow: 0 4px 20px rgba(232,185,30,0.3), 0 0 0 0 rgba(232,185,30,0); }
+    50%       { box-shadow: 0 8px 36px rgba(232,185,30,0.6), 0 0 0 8px rgba(232,185,30,0.1); }
 }
 
-/* ── Task 2.4: Responsive — viewport < 480px ───────────────────────────── */
+/* Responsive */
 @media (max-width: 479px) {
     #ligi-float-card {
         bottom: 1rem;
         left: 1rem;
         right: 1rem;
+        width: auto;
         max-width: none;
         width: calc(100% - 2rem);
     }
@@ -2774,10 +2855,13 @@ a.hero-feat--link {
 </div>
 
 <!-- Ligi Mashinani Floating Registration Card -->
+{% if ligi_team_reg_open %}
 <div id="ligi-float-card"
      role="complementary"
      aria-label="Ligi Mashinani registration"
      aria-live="polite">
+
+  <!-- Gold shimmer top strip rendered by ::before -->
 
   <!-- Dismiss control -->
   <button class="ligi-card__dismiss"
@@ -2786,25 +2870,48 @@ a.hero-feat--link {
     <span aria-hidden="true">&times;</span>
   </button>
 
-  <!-- Card body -->
-  <div class="ligi-card__body">
-    <h2 class="ligi-card__title">Ligi Mashinani 2026/2029 Season</h2>
-    <p class="ligi-card__sub">Register your ward team today</p>
-
-    <!-- Countdown timer -->
-    <div class="ligi-card__countdown" id="ligi-countdown">
-      <noscript>-- days --:--:--</noscript>
-      <span id="ligi-countdown-display">-- days --:--:--</span>
+  <div class="ligi-card__inner">
+    <!-- Live badge -->
+    <div class="ligi-card__badge">
+      <span class="ligi-card__badge-dot"></span>
+      Registration Open
     </div>
 
-    <!-- CTA button — plain <a> so it works without JS -->
+    <h2 class="ligi-card__title">Ligi Mashinani 2026/2027 Season</h2>
+    <p class="ligi-card__sub">Played by teams from every ward across Makueni County. Register your ward team before the window closes!</p>
+
+    <!-- Segmented countdown -->
+    <div class="ligi-card__countdown" id="ligi-countdown" aria-label="Time remaining">
+      <div class="ligi-cd-seg">
+        <span class="ligi-cd-num" id="ligi-cd-days">--</span>
+        <span class="ligi-cd-lbl">Days</span>
+      </div>
+      <div class="ligi-cd-seg">
+        <span class="ligi-cd-num" id="ligi-cd-hours">--</span>
+        <span class="ligi-cd-lbl">Hours</span>
+      </div>
+      <div class="ligi-cd-seg">
+        <span class="ligi-cd-num" id="ligi-cd-mins">--</span>
+        <span class="ligi-cd-lbl">Mins</span>
+      </div>
+      <div class="ligi-cd-seg">
+        <span class="ligi-cd-num" id="ligi-cd-secs">--</span>
+        <span class="ligi-cd-lbl">Secs</span>
+      </div>
+    </div>
+
+    <p class="ligi-card__deadline">Deadline: <strong>30 September 2026, 11:59 PM</strong></p>
+
+    <!-- CTA button -->
     <a href="/ligi/register/"
        class="ligi-card__btn"
        id="ligi-register-btn">
-      Register Now
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Register Your Team
     </a>
   </div>
 </div>
+{% endif %}
 
 {% endblock %}
 {% block extra_js %}
@@ -3334,52 +3441,66 @@ a.hero-feat--link {
   'use strict';
 
   /* ── Configuration ───────────────────────────────────────────────────── */
-  const LIGI_DEADLINE = new Date('2025-12-31T23:59:59+03:00');
+  // Hardcoded deadline: 30 Sep 2026 23:59:59 EAT (UTC+3)
+  // When ligi_reg_deadline is set in Django, it takes precedence.
+  var deadlineStr = '{% if ligi_reg_deadline %}{{ ligi_reg_deadline|date:"c" }}{% else %}2026-09-30T23:59:59+03:00{% endif %}';
+  var LIGI_DEADLINE = new Date(deadlineStr);
+  // Fallback if Django date is invalid
+  if (isNaN(LIGI_DEADLINE.getTime())) {
+    LIGI_DEADLINE = new Date('2026-09-30T23:59:59+03:00');
+  }
 
-  /* ── Pure helper: ms remaining → "DD days HH:MM:SS" or null ─────────── */
-  function formatCountdown(ms) {
-    if (ms <= 0) return null;
-    var totalSecs = Math.floor(ms / 1000);
+  /* ── DOM refs ────────────────────────────────────────────────────────── */
+  var card       = document.getElementById('ligi-float-card');
+  var registerBtn = document.getElementById('ligi-register-btn');
+  var dismissBtn  = document.querySelector('.ligi-card__dismiss');
+  var cdDays  = document.getElementById('ligi-cd-days');
+  var cdHours = document.getElementById('ligi-cd-hours');
+  var cdMins  = document.getElementById('ligi-cd-mins');
+  var cdSecs  = document.getElementById('ligi-cd-secs');
+
+  if (!card) return; // registration is closed — card not in DOM
+
+  /* ── Helpers ─────────────────────────────────────────────────────────── */
+  function pad(n) { return String(Math.max(0, n)).padStart(2, '0'); }
+
+  function setNum(el, val) {
+    if (!el) return;
+    var v = pad(val);
+    if (el.textContent !== v) {
+      el.textContent = v;
+      el.classList.remove('ligi-tick');
+      void el.offsetWidth; // reflow
+      el.classList.add('ligi-tick');
+      setTimeout(function() { el.classList.remove('ligi-tick'); }, 300);
+    }
+  }
+
+  /* ── Countdown ───────────────────────────────────────────────────────── */
+  function tickCountdown() {
+    var diff = LIGI_DEADLINE - Date.now();
+    if (diff <= 0) {
+      setNum(cdDays, 0); setNum(cdHours, 0);
+      setNum(cdMins, 0); setNum(cdSecs, 0);
+      if (registerBtn) registerBtn.style.opacity = '0.4';
+      return;
+    }
+    var totalSecs = Math.floor(diff / 1000);
     var ss = totalSecs % 60;
     var mm = Math.floor(totalSecs / 60) % 60;
     var hh = Math.floor(totalSecs / 3600) % 24;
     var dd = Math.floor(totalSecs / 86400);
-    function pad(n) { return String(n).padStart(2, '0'); }
-    return pad(dd) + ' days ' + pad(hh) + ':' + pad(mm) + ':' + pad(ss);
-  }
-
-  /* ── DOM refs ────────────────────────────────────────────────────────── */
-  var card         = document.getElementById('ligi-float-card');
-  var countdownEl  = document.getElementById('ligi-countdown-display');
-  var registerBtn  = document.getElementById('ligi-register-btn');
-  var dismissBtn   = document.querySelector('.ligi-card__dismiss');
-
-  if (!card) return; // guard: card not present on this page
-
-  /* ── Countdown ───────────────────────────────────────────────────────── */
-  function tickCountdown() {
-    var ms = LIGI_DEADLINE - Date.now();
-    var label = formatCountdown(ms);
-    if (label === null) {
-      if (countdownEl) countdownEl.textContent = 'Registration Closed';
-      if (registerBtn) {
-        registerBtn.style.display = 'none';
-        registerBtn.style.opacity = '0';
-      }
-    } else {
-      if (countdownEl) countdownEl.textContent = label;
-    }
-  }
-
-  function startCountdown() {
-    tickCountdown(); // immediate first tick — no blank display
-    setInterval(tickCountdown, 1000);
+    setNum(cdDays, dd);
+    setNum(cdHours, hh);
+    setNum(cdMins, mm);
+    setNum(cdSecs, ss);
   }
 
   /* ── Dismiss ─────────────────────────────────────────────────────────── */
   function dismissCard() {
-    card.style.transition = 'opacity 300ms ease';
+    card.style.transition = 'opacity 300ms ease, transform 300ms ease';
     card.style.opacity = '0';
+    card.style.transform = 'scale(0.9) translateY(10px)';
     setTimeout(function () {
       card.style.display = 'none';
       card.setAttribute('aria-hidden', 'true');
@@ -3389,22 +3510,19 @@ a.hero-feat--link {
   if (dismissBtn) {
     dismissBtn.addEventListener('click', dismissCard);
     dismissBtn.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        dismissCard();
-      }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dismissCard(); }
     });
   }
 
   /* ── Button reveal ───────────────────────────────────────────────────── */
   function showBtn() {
     card.classList.add('ligi-settled');
-    startCountdown();
+    tickCountdown();
+    setInterval(tickCountdown, 1000);
   }
 
-  /* ── Toss animation ──────────────────────────────────────────────────── */
+  /* ── Toss animation — random side each load ──────────────────────────── */
   function startTossAnimation() {
-    /* Respect reduced-motion preference */
     var prefersReduced = window.matchMedia &&
                          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
@@ -3414,45 +3532,51 @@ a.hero-feat--link {
       return;
     }
 
-    /* Web Animations API path */
+    // Pick a random side: 0=right, 1=left, 2=top, 3=bottom
+    var side = Math.floor(Math.random() * 4);
+    var startX, startY, startRot;
+    switch (side) {
+      case 0: startX = '120vw';  startY = '-20vh'; startRot =  20; break; // right
+      case 1: startX = '-120vw'; startY = '-20vh'; startRot = -20; break; // left
+      case 2: startX = '10vw';   startY = '-120vh'; startRot = 15; break; // top
+      default:startX = '10vw';   startY = '120vh';  startRot = -15; break; // bottom
+    }
+
     if (typeof card.animate === 'function') {
       var anim = card.animate([
         {
-          transform: 'translateX(110vw) translateY(-80vh) rotate(22deg)',
+          transform: 'translate(' + startX + ', ' + startY + ') rotate(' + startRot + 'deg)',
           opacity: '0'
         },
         {
-          transform: 'translateX(-8px) translateY(-12px) rotate(-3deg)',
+          transform: 'translate(-6px, -10px) rotate(-2deg)',
           opacity: '1',
-          offset: 0.62
+          offset: 0.65
         },
         {
-          transform: 'translateX(4px) translateY(6px) rotate(1deg)',
-          offset: 0.80
+          transform: 'translate(4px, 5px) rotate(1deg)',
+          opacity: '1',
+          offset: 0.82
         },
         {
-          transform: 'translateX(0) translateY(0) rotate(0deg)',
+          transform: 'translate(0, 0) rotate(0deg)',
           opacity: '1'
         }
       ], {
-        duration: 900,
+        duration: 950,
         easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
         fill: 'forwards'
       });
 
       anim.finished.then(function () {
-        /* Lock the final state so it doesn't snap back */
-        card.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
+        card.style.transform = 'translate(0, 0) rotate(0deg)';
         card.style.opacity = '1';
         showBtn();
       }).catch(function () {
-        /* Animation was cancelled — still show the card */
         card.style.opacity = '1';
         showBtn();
       });
-
     } else {
-      /* Fallback: no animation support — show immediately */
       card.style.opacity = '1';
       showBtn();
     }
@@ -3460,7 +3584,7 @@ a.hero-feat--link {
 
   /* ── Entry point ─────────────────────────────────────────────────────── */
   window.addEventListener('load', function () {
-    setTimeout(startTossAnimation, 50);
+    setTimeout(startTossAnimation, 80);
   });
 
 })();
