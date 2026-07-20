@@ -170,7 +170,7 @@
             {% if email.body_html %}
             <div class="body-label">HTML Body</div>
             <div class="email-body-html">
-                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_html }}"></iframe>
+                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_html|safe }}"></iframe>
             </div>
             {% endif %}
 

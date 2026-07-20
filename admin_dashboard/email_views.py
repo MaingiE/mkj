@@ -27,7 +27,15 @@ def fetch_inbox_view(request):
             else:
                 messages.info(request, f'Inbox is up to date. ({skipped} already imported)')
         except Exception as exc:
-            messages.error(request, f'Inbox fetch failed: {exc}')
+            import logging
+            logger = logging.getLogger(__name__)
+            # Check specifically for misconfigured credentials — show a helpful admin-only hint
+            if 'credentials not configured' in str(exc).lower() or 'imap' in str(exc).lower():
+                logger.warning('IMAP inbox fetch skipped: %s', exc)
+                messages.warning(request, 'Inbox sync is not configured — set IMAP credentials in the environment to enable this feature.')
+            else:
+                logger.error('Inbox fetch failed: %s', exc, exc_info=True)
+                messages.error(request, 'Inbox sync failed. Please check the server logs.')
     return redirect('email_dashboard')
 
 

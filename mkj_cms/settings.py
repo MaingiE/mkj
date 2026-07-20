@@ -333,16 +333,19 @@ DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL", default="MKJ SUPA CUP <info@mkjs
 BREVO_API_KEY       = env("BREVO_API_KEY", default="")
 SITE_URL = env("SITE_URL", default="https://mkjsupacup.com")
 
-# ── WHATSAPP (Brevo WhatsApp API) ─────────────────────────────────────────────
-# Set BREVO_WHATSAPP_SENDER to your WhatsApp Business number (+254XXXXXXXXX)
-# Template IDs from your Brevo account (WhatsApp → Templates):
-BREVO_WHATSAPP_SENDER                    = env("BREVO_WHATSAPP_SENDER", default="")
-BREVO_WHATSAPP_TEMPLATE_CREDENTIALS      = env("BREVO_WHATSAPP_TEMPLATE_CREDENTIALS", default="")
-BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET   = env("BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET", default="")
-BREVO_WHATSAPP_TEMPLATE_DEADLINE         = env("BREVO_WHATSAPP_TEMPLATE_DEADLINE", default="")
-BREVO_WHATSAPP_TEMPLATE_TRANSFER         = env("BREVO_WHATSAPP_TEMPLATE_TRANSFER", default="")
-BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS  = env("BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS", default="")
-BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT     = env("BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT", default="")
+# ── WHATSAPP (Meta Cloud API) ─────────────────────────────────────────────────
+# Get these from Meta Business Manager → WhatsApp → API Setup:
+#   META_WA_TOKEN      - Permanent system user token (preferred) or temp token
+#   META_WA_PHONE_ID   - Phone Number ID (not the phone number itself)
+# Template names must match exactly what you register in Meta Business Manager:
+META_WA_TOKEN    = env("META_WA_TOKEN", default="")
+META_WA_PHONE_ID = env("META_WA_PHONE_ID", default="")
+META_WA_TEMPLATE_CREDENTIALS     = env("META_WA_TEMPLATE_CREDENTIALS",     default="mkj_credentials")
+META_WA_TEMPLATE_PASSWORD_RESET  = env("META_WA_TEMPLATE_PASSWORD_RESET",  default="mkj_password_reset")
+META_WA_TEMPLATE_DEADLINE        = env("META_WA_TEMPLATE_DEADLINE",        default="mkj_deadline")
+META_WA_TEMPLATE_TRANSFER        = env("META_WA_TEMPLATE_TRANSFER",        default="mkj_transfer_update")
+META_WA_TEMPLATE_LONGLIST_STATUS = env("META_WA_TEMPLATE_LONGLIST_STATUS", default="mkj_longlist_status")
+META_WA_TEMPLATE_MATCH_RESULT    = env("META_WA_TEMPLATE_MATCH_RESULT",    default="mkj_match_result")
 
 # ── DUAL EMAIL SENDERS ────────────────────────────────────────────────────────
 # admin@mkjsupacup.com     -  general admin, system, and leadership notifications

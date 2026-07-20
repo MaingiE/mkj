@@ -10,11 +10,13 @@ Sends HTML emails for:
   6. Match report submitted → coordinator
   7. Team registration → admin, subcounty officer
 
-WhatsApp notifications (via Brevo WhatsApp API):
-  - Account credentials to new users on approval
+WhatsApp notifications (via Meta Cloud API):
+  - Account credentials to new users on account creation
+  - Password reset notifications
+  - Deadline reminders, transfer updates, longlist status, match results
 
 All notifications are dispatched on background daemon threads so they
-never block the web request  -  timeouts / API errors only appear in logs.
+never block the web request — timeouts / API errors only appear in logs.
 """
 import logging
 import threading
@@ -112,160 +114,157 @@ def _get_coordinators_for_discipline(discipline):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  WHATSAPP NOTIFICATIONS  (Brevo WhatsApp API)
+#  WHATSAPP NOTIFICATIONS  (Meta Cloud API)
+#
+#  Replaces the Brevo WhatsApp backend.
+#  Uses the Meta WhatsApp Business Cloud API (v20.0+).
+#
+#  Required environment variables:
+#    META_WA_TOKEN          - Permanent system user token or temporary access token
+#    META_WA_PHONE_ID       - WhatsApp Business phone number ID (from Meta dashboard)
+#    META_WA_TEMPLATE_*     - Approved template names (see template list below)
+#
+#  Template naming convention (create these in Meta Business Manager):
+#    mkj_credentials        - new account credentials
+#    mkj_password_reset     - password reset
+#    mkj_deadline           - deadline reminder
+#    mkj_transfer_update    - transfer status update
+#    mkj_longlist_status    - longlist status change
+#    mkj_match_result       - match result
+#
+#  All templates must be in English, approved by Meta before use.
+#  Template language code: en_US (or en for Kenya)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def send_whatsapp(phone_number, template_id, params=None):
+def send_whatsapp(phone_number, template_name, params=None, language='en'):
     """
-    Send a WhatsApp template message via Brevo WhatsApp API.
+    Send a WhatsApp template message via Meta Cloud API.
 
-    In local development (DEBUG=True and no BREVO_API_KEY set), the message is
-    printed to the terminal instead of being sent, so you can see exactly what
-    would be delivered without needing real credentials.
+    In local development (DEBUG=True and no META_WA_TOKEN set), the message is
+    printed to the terminal instead of being sent.
 
-    Requirements (configure in .env / settings):
-      BREVO_API_KEY            -  existing Brevo API key
-      BREVO_WHATSAPP_SENDER    -  your WhatsApp Business sender number (e.g. +254XXXXXXXXX)
-      BREVO_WHATSAPP_TEMPLATE_CREDENTIALS  -  template ID for credentials message
+    Args:
+        phone_number: International format e.g. +254712345678 or 254712345678
+        template_name: Approved Meta template name e.g. 'mkj_credentials'
+        params: list of parameter values in order, e.g. ['John', 'john@email.com', 'pass123']
+        language: BCP-47 language code, default 'en'
 
-    The phone number must be in international format (+254XXXXXXXXX).
-    Returns True if dispatched (delivery is async), False if skipped/failed.
+    Returns True if dispatched, False if skipped/failed.
     """
     import requests as _req
 
-    api_key  = getattr(settings, 'BREVO_API_KEY', '')
-    sender   = getattr(settings, 'BREVO_WHATSAPP_SENDER', '')
+    token    = getattr(settings, 'META_WA_TOKEN', '')
+    phone_id = getattr(settings, 'META_WA_PHONE_ID', '')
     debug    = getattr(settings, 'DEBUG', False)
 
-    if not phone_number or not phone_number.startswith('+'):
-        logger.warning("WhatsApp skipped  -  invalid/missing phone: %r", phone_number)
+    if not phone_number:
+        logger.warning("WhatsApp skipped — missing phone number for template %s", template_name)
         return False
 
-    # ── Local dev: print to terminal instead of hitting Brevo API ────────────
-    if debug and (not api_key or not sender):
-        _print_whatsapp_to_terminal(phone_number, template_id, params)
+    # Normalise: strip '+' for Meta API (expects digits only, e.g. 254712345678)
+    wa_number = phone_number.lstrip('+').replace(' ', '').replace('-', '')
+    if not wa_number.isdigit() or len(wa_number) < 9:
+        logger.warning("WhatsApp skipped — invalid phone %r for template %s", phone_number, template_name)
+        return False
+
+    # ── Local dev: print to terminal instead of hitting Meta API ─────────────
+    if debug and (not token or not phone_id):
+        _print_whatsapp_to_terminal(phone_number, template_name, params)
         return True
 
-    if not api_key or not sender:
+    if not token or not phone_id:
         logger.warning(
-            "WhatsApp not configured (missing BREVO_API_KEY or BREVO_WHATSAPP_SENDER). "
-            "Skipping WhatsApp notification."
+            "WhatsApp not configured (missing META_WA_TOKEN or META_WA_PHONE_ID). "
+            "Skipping WhatsApp notification for template %s.", template_name
         )
         return False
 
-    payload = {
-        "senderNumber": sender,
-        "contactNumbers": [phone_number],
-        "templateId": template_id,
-    }
+    # Build the body components list from positional params
+    components = []
     if params:
-        payload["params"] = params
+        body_params = [{"type": "text", "text": str(p)} for p in params]
+        components.append({"type": "body", "parameters": body_params})
 
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": wa_number,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {"code": language},
+            "components": components,
+        },
+    }
+
+    url = f"https://graph.facebook.com/v20.0/{phone_id}/messages"
     headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "api-key": api_key,
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
     }
 
     def _worker():
         try:
-            resp = _req.post(
-                "https://api.brevo.com/v3/whatsapp/sendMessage",
-                json=payload,
-                headers=headers,
-                timeout=15,
-            )
-            if resp.status_code in (200, 201, 202):
-                logger.info("📱 WhatsApp sent template=%s → %s", template_id, phone_number)
+            resp = _req.post(url, json=payload, headers=headers, timeout=15)
+            if resp.status_code in (200, 201):
+                data = resp.json()
+                msg_id = data.get('messages', [{}])[0].get('id', 'unknown')
+                logger.info("📱 WhatsApp sent template=%s → %s (id=%s)", template_name, phone_number, msg_id)
             else:
                 logger.error(
                     "📱 WhatsApp API error %d template=%s → %s: %s",
-                    resp.status_code, template_id, phone_number, resp.text,
+                    resp.status_code, template_name, phone_number, resp.text,
                 )
         except Exception as exc:
-            logger.error("📱 WhatsApp send failed template=%s → %s: %s", template_id, phone_number, exc)
+            logger.error("📱 WhatsApp send failed template=%s → %s: %s", template_name, phone_number, exc)
 
-    import threading
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
     return True
 
 
-def _print_whatsapp_to_terminal(phone_number, template_id, params=None):
+def _print_whatsapp_to_terminal(phone_number, template_name, params=None):
     """Print a WhatsApp message to the terminal for local development inspection."""
-    import threading
-    # Resolve template body from known templates
-    body_lines = []
-    if params:
-        # Credentials template (BREVO_WHATSAPP_TEMPLATE_CREDENTIALS)
-        if "1" in params and "2" in params and "3" in params:
-            body_lines = [
-                f"Hello {params.get('1', '')}!",
-                f"Your MKJ SUPA CUP portal account is ready.",
-                f"Email:    {params.get('2', '')}",
-                f"Password: {params.get('3', '')}",
-                f"Role:     {params.get('5', '')}",
-                f"Login:    {params.get('4', '')}",
-                f"Please change your password on first login.",
-            ]
-        else:
-            body_lines = [f"  param[{k}] = {v}" for k, v in params.items()]
-
     sep = "─" * 60
+    param_lines = []
+    if params:
+        for i, p in enumerate(params, 1):
+            param_lines.append(f"    {{{{ {i} }}}} = {p}")
+
     lines = [
         "",
         sep,
-        "📱  WHATSAPP MESSAGE (local dev  -  not actually sent)",
+        "📱  WHATSAPP MESSAGE (local dev — not actually sent)",
         sep,
-        f"  To:          {phone_number}",
-        f"  Template ID: {template_id}",
+        f"  To:       {phone_number}",
+        f"  Template: {template_name}",
         "",
-        "  Message body:",
-        *[f"    {line}" for line in body_lines],
+        "  Parameters:",
+        *param_lines,
         sep,
         "",
     ]
     print("\n".join(lines), flush=True)
-    logger.info("📱 WhatsApp (dev) template=%s → %s", template_id, phone_number)
+    logger.info("📱 WhatsApp (dev) template=%s → %s", template_name, phone_number)
 
 
 def notify_credentials_whatsapp(phone_number, first_name, email, temp_password, role_label="Team Manager"):
     """
     Send login credentials to the user's WhatsApp number.
-    Uses the BREVO_WHATSAPP_TEMPLATE_CREDENTIALS template.
+    Meta template name: mkj_credentials (or META_WA_TEMPLATE_CREDENTIALS setting)
 
-    The template should be created in Brevo with variables:
-      {{1}} = first name
-      {{2}} = email
-      {{3}} = password
-      {{4}} = login URL
-      {{5}} = role label
-
-    Example template body:
-      Hello {{1}}! Your MKJ SUPA CUP portal account is ready.
-      Email: {{2}}
-      Password: {{3}}
-      Role: {{5}}
-      Login: {{4}}
-      Please change your password on first login.
+    Template body (submit this exact text to Meta for approval):
+        Hello {{1}}! Your MKJ SUPA CUP portal account is ready.
+        Email: {{2}}
+        Password: {{3}}
+        Role: {{4}}
+        Login: {{5}}
+        Please change your password on first login.
     """
-    template_id = getattr(settings, 'BREVO_WHATSAPP_TEMPLATE_CREDENTIALS', None)
-    if not template_id:
-        logger.warning(
-            "BREVO_WHATSAPP_TEMPLATE_CREDENTIALS not set  -  skipping WhatsApp credentials message."
-        )
-        return False
-
+    template = getattr(settings, 'META_WA_TEMPLATE_CREDENTIALS', 'mkj_credentials')
     return send_whatsapp(
         phone_number=phone_number,
-        template_id=int(template_id),
-        params={
-            "1": first_name,
-            "2": email,
-            "3": temp_password,
-            "4": f"{SITE_URL}/portal/login/",
-            "5": role_label,
-        },
+        template_name=template,
+        params=[first_name, email, temp_password, role_label, f"{SITE_URL}/portal/login/"],
     )
 
 
@@ -728,70 +727,59 @@ def notify_action_needed(recipients, title, message, action_url=None):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  WHATSAPP NOTIFICATION FUNCTIONS  (Brevo template-based)
+#  WHATSAPP NOTIFICATION FUNCTIONS  (Meta Cloud API template-based)
 #
-#  Each function maps to a Brevo WhatsApp template.
-#  Template variables {{1}}, {{2}} ... are passed as params dict.
+#  Each function maps to a Meta-approved message template.
+#  Template variables {{1}}, {{2}} ... are passed as a positional list.
 #
-#  TEMPLATE SETUP IN BREVO (WhatsApp → Templates):
-#  ─────────────────────────────────────────────────
-#  1. CREDENTIALS (BREVO_WHATSAPP_TEMPLATE_CREDENTIALS)
+#  TEMPLATE SETUP IN META BUSINESS MANAGER (WhatsApp → Templates):
+#  ────────────────────────────────────────────────────────────────
+#  1. mkj_credentials
 #     "Hello {{1}}! Your MKJ SUPA CUP account is ready.\nEmail: {{2}}\nPassword: {{3}}\nRole: {{4}}\nLogin: {{5}}\nChange password on first login."
 #
-#  2. PASSWORD_RESET (BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET)
+#  2. mkj_password_reset
 #     "Hello {{1}}! Your MKJ SUPA CUP password has been reset.\nNew password: {{2}}\nLogin: {{3}}\nChange it immediately after login."
 #
-#  3. DEADLINE (BREVO_WHATSAPP_TEMPLATE_DEADLINE)
-#     "⏰ MKJ SUPA CUP Reminder  -  {{1}}.\nDeadline: {{2}}.\n{{3}}"
+#  3. mkj_deadline
+#     "⏰ MKJ SUPA CUP Reminder — {{1}}.\nDeadline: {{2}}.\n{{3}}"
 #
-#  4. TRANSFER (BREVO_WHATSAPP_TEMPLATE_TRANSFER)
-#     "🔄 Transfer Update  -  {{1}} {{2}}.\nStatus: {{3}}\nFrom: {{4}} → To: {{5}}\n{{6}}"
+#  4. mkj_transfer_update
+#     "🔄 Transfer Update — {{1}} {{2}}.\nStatus: {{3}}\nFrom: {{4}} → To: {{5}}\n{{6}}"
 #
-#  5. LONGLIST_STATUS (BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS)
-#     "📋 Longlist Update  -  {{1}} Ward ({{2}}).\nStatus: {{3}}\n{{4}}"
+#  5. mkj_longlist_status
+#     "📋 Longlist Update — {{1}} Ward ({{2}}).\nStatus: {{3}}\n{{4}}"
 #
-#  6. SQUAD_RESULT (BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT)
-#     "⚽ Match Result  -  {{1}} vs {{2}}.\nScore: {{3}} - {{4}}\n{{5}}"
+#  6. mkj_match_result
+#     "⚽ Match Result — {{1}} vs {{2}}.\nScore: {{3}} - {{4}}\n{{5}}"
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _get_template_id(setting_name):
-    """Return template ID integer from settings, or None if not configured."""
+    """Return template name from settings, or None if not configured."""
     val = getattr(settings, setting_name, '')
-    if not val:
-        return None
-    try:
-        return int(val)
-    except (ValueError, TypeError):
-        return None
+    return val.strip() if val and val.strip() else None
 
 
 def _wa(phone, setting_name, params, label='notification'):
     """
     Generic WhatsApp send helper.
-    Resolves template ID from settings, calls send_whatsapp on a background thread.
+    Resolves template name from settings, calls send_whatsapp on a background thread.
     Returns True if dispatched, False if skipped.
     """
-    template_id = _get_template_id(setting_name)
-    if not template_id:
-        logger.info('WhatsApp %s skipped  -  %s not set in settings.', label, setting_name)
+    template_name = _get_template_id(setting_name)
+    if not template_name:
+        logger.info('WhatsApp %s skipped — %s not set in settings.', label, setting_name)
         return False
-    return send_whatsapp(phone_number=phone, template_id=template_id, params=params)
+    return send_whatsapp(phone_number=phone, template_name=template_name, params=list(params.values()) if isinstance(params, dict) else params)
 
-
-# ── 1. Credentials (new account) ─────────────────────────────────────────────
 
 def notify_wa_credentials(phone, first_name, email, temp_password, role_label):
     """
     Send new account credentials via WhatsApp.
-    Template variables: {{1}}=first_name {{2}}=email {{3}}=password {{4}}=role {{5}}=login_url
+    Template params in order: first_name, email, password, role, login_url
     """
-    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_CREDENTIALS', {
-        '1': first_name,
-        '2': email,
-        '3': temp_password,
-        '4': role_label,
-        '5': f"{SITE_URL}/portal/login/",
-    }, label='credentials')
+    return _wa(phone, 'META_WA_TEMPLATE_CREDENTIALS', [
+        first_name, email, temp_password, role_label, f"{SITE_URL}/portal/login/",
+    ], label='credentials')
 
 
 # ── 2. Password reset ────────────────────────────────────────────────────────
@@ -799,13 +787,11 @@ def notify_wa_credentials(phone, first_name, email, temp_password, role_label):
 def notify_wa_password_reset(phone, first_name, new_password):
     """
     Send password reset notification via WhatsApp.
-    Template variables: {{1}}=first_name {{2}}=new_password {{3}}=login_url
+    Template params in order: first_name, new_password, login_url
     """
-    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_PASSWORD_RESET', {
-        '1': first_name,
-        '2': new_password,
-        '3': f"{SITE_URL}/portal/login/",
-    }, label='password_reset')
+    return _wa(phone, 'META_WA_TEMPLATE_PASSWORD_RESET', [
+        first_name, new_password, f"{SITE_URL}/portal/login/",
+    ], label='password_reset')
 
 
 # ── 3. Deadline reminder ─────────────────────────────────────────────────────
@@ -813,16 +799,13 @@ def notify_wa_password_reset(phone, first_name, new_password):
 def notify_wa_deadline(phone, event_label, deadline_str, action_text=''):
     """
     Send a deadline reminder via WhatsApp.
-    Template variables: {{1}}=event {{2}}=deadline {{3}}=action_text
-    Examples:
-        notify_wa_deadline(phone, 'Longlist Submission', '15 Jul 2026 at 17:00', 'Submit your longlist before the deadline.')
-        notify_wa_deadline(phone, 'Squad Selection', '16 Jul 2026 at 10:00', 'Select your match-day squad.')
+    Template params in order: event_label, deadline_str, action_text
     """
-    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_DEADLINE', {
-        '1': event_label,
-        '2': deadline_str,
-        '3': action_text or f"Visit {SITE_URL}/portal/login/ to action.",
-    }, label='deadline')
+    return _wa(phone, 'META_WA_TEMPLATE_DEADLINE', [
+        event_label,
+        deadline_str,
+        action_text or f"Visit {SITE_URL}/portal/login/ to action.",
+    ], label='deadline')
 
 
 # ── 4. Transfer status update ────────────────────────────────────────────────
@@ -831,16 +814,12 @@ def notify_wa_transfer_update(phone, first_name, last_name, status_label,
                                from_ward, to_ward, notes=''):
     """
     Notify Ward TM of a transfer decision via WhatsApp.
-    Template variables: {{1}}=first_name {{2}}=last_name {{3}}=status {{4}}=from_ward {{5}}=to_ward {{6}}=notes
+    Template params in order: first_name, last_name, status, from_ward, to_ward, notes
     """
-    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_TRANSFER', {
-        '1': first_name,
-        '2': last_name,
-        '3': status_label,
-        '4': from_ward,
-        '5': to_ward,
-        '6': notes or 'No additional notes.',
-    }, label='transfer_update')
+    return _wa(phone, 'META_WA_TEMPLATE_TRANSFER', [
+        first_name, last_name, status_label, from_ward, to_ward,
+        notes or 'No additional notes.',
+    ], label='transfer_update')
 
 
 # ── 5. Longlist status update ────────────────────────────────────────────────
@@ -848,15 +827,12 @@ def notify_wa_transfer_update(phone, first_name, last_name, status_label,
 def notify_wa_longlist_status(phone, ward, sport_label, status_label, message=''):
     """
     Notify Ward TM of their longlist status change via WhatsApp.
-    Template variables: {{1}}=ward {{2}}=sport {{3}}=status {{4}}=message
-    Examples: approved, returned for corrections, etc.
+    Template params in order: ward, sport_label, status_label, message
     """
-    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_LONGLIST_STATUS', {
-        '1': ward,
-        '2': sport_label,
-        '3': status_label,
-        '4': message or f"Log in at {SITE_URL}/ligi/longlist/ to view.",
-    }, label='longlist_status')
+    return _wa(phone, 'META_WA_TEMPLATE_LONGLIST_STATUS', [
+        ward, sport_label, status_label,
+        message or f"Log in at {SITE_URL}/ligi/longlist/ to view.",
+    ], label='longlist_status')
 
 
 # ── 6. Match result / squad outcome ─────────────────────────────────────────
@@ -864,15 +840,12 @@ def notify_wa_longlist_status(phone, ward, sport_label, status_label, message=''
 def notify_wa_match_result(phone, home_team, away_team, home_score, away_score, note=''):
     """
     Send match result via WhatsApp to team manager.
-    Template variables: {{1}}=home_team {{2}}=away_team {{3}}=home_score {{4}}=away_score {{5}}=note
+    Template params in order: home_team, away_team, home_score, away_score, note
     """
-    return _wa(phone, 'BREVO_WHATSAPP_TEMPLATE_SQUAD_RESULT', {
-        '1': home_team,
-        '2': away_team,
-        '3': str(home_score),
-        '4': str(away_score),
-        '5': note or 'Match completed.',
-    }, label='match_result')
+    return _wa(phone, 'META_WA_TEMPLATE_MATCH_RESULT', [
+        home_team, away_team, str(home_score), str(away_score),
+        note or 'Match completed.',
+    ], label='match_result')
 
 
 # ── Bulk deadline broadcast ───────────────────────────────────────────────────
