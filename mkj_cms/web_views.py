@@ -15327,14 +15327,14 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
             if raw:
                 try:
                     from django.utils.dateparse import parse_datetime
-                    import pytz
-                    nai = pytz.timezone('Africa/Nairobi')
+                    from zoneinfo import ZoneInfo
+                    nai = ZoneInfo('Africa/Nairobi')
                     dt = parse_datetime(raw)
                     if dt is None:
                         raise ValueError("Could not parse datetime")
                     # If naive, localise to Nairobi time
                     if dt.tzinfo is None:
-                        dt = nai.localize(dt)
+                        dt = dt.replace(tzinfo=nai)
                     settings_obj.registration_deadline = dt
                     messages.success(request, f'Registration deadline set to {dt.strftime("%d %b %Y at %H:%M")} (Nairobi time).')
                 except Exception as exc:
@@ -15349,9 +15349,9 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
             messages.success(request, 'Registration countdown cleared.')
 
         elif action == 'set_schedule':
-            import pytz
+            from zoneinfo import ZoneInfo
             from django.utils.dateparse import parse_datetime
-            nai = pytz.timezone('Africa/Nairobi')
+            nai = ZoneInfo('Africa/Nairobi')
 
             def _parse_local(raw):
                 if not raw or not raw.strip():
@@ -15360,7 +15360,7 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
                 if dt is None:
                     raise ValueError(f"Cannot parse: {raw!r}")
                 if dt.tzinfo is None:
-                    dt = nai.localize(dt)
+                    dt = dt.replace(tzinfo=nai)
                 return dt
 
             errors = []
