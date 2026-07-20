@@ -130,8 +130,8 @@ def email_compose(request):
 <p style="font-size:15px;line-height:1.7;color:#333">{body_html_content}</p>
 <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid #e8edf5;font-size:12px;color:#888;line-height:1.8">
   <strong style="color:#124491">MKJ SUPA CUP Administration</strong><br>
-  📞 0700 000 000 &nbsp;|&nbsp;
-  ✉ <a href="mailto:info@mkjsupacup.com" style="color:#124491">info@mkjsupacup.com</a><br>
+  📞 0704517498 &nbsp;|&nbsp;
+  ✉ <a href="mailto:admin@mkjsupacup.com" style="color:#124491">admin@mkjsupacup.com</a><br>
   🌐 <a href="https://mkjsupacup.com" style="color:#124491">mkjsupacup.com</a>
 </div>
 """
@@ -140,8 +140,8 @@ def email_compose(request):
             # Plain text fallback (clean, no CSS)
             plain_body = body + (
                 "\n\n---\nMKJ SUPA CUP Administration\n"
-                "Phone: 0700 000 000\n"
-                "info@mkjsupacup.com | https://mkjsupacup.com"
+                "Phone: 0704517498\n"
+                "admin@mkjsupacup.com | https://mkjsupacup.com"
             )
 
             msg = EmailMultiAlternatives(
@@ -150,7 +150,7 @@ def email_compose(request):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=to_list,
                 cc=cc_list,
-                reply_to=['info@mkjsupacup.com'],
+                reply_to=['admin@mkjsupacup.com'],
             )
             msg.attach_alternative(html_body, 'text/html')
             msg.send()
