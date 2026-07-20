@@ -167,16 +167,19 @@
         </div>
 
         <div class="email-body-section">
-            {% with preview_html=email.body_html|default:email.body_text %}
-            {% if preview_html %}
+            {% if email.body_html %}
             <div class="body-label">Email Preview</div>
             <div class="email-body-html">
-                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ preview_html|safe }}"></iframe>
+                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_html|safe }}"></iframe>
+            </div>
+            {% elif email.body_text %}
+            <div class="body-label">Email Preview</div>
+            <div class="email-body-html">
+                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_text|safe }}"></iframe>
             </div>
             {% else %}
             <p style="color:#999; font-size:.85rem;">(No body content)</p>
             {% endif %}
-            {% endwith %}
         </div>
     </div>
 </div>

@@ -113,32 +113,49 @@ def email_compose(request):
         to_list = [e.strip() for e in to_raw.split(',') if e.strip()]
         cc_list = [e.strip() for e in cc_raw.split(',') if e.strip()]
 
-        # Append standard sign-off
-        sign_off = (
-            "\n\n---\n"
-            "MKJ SUPA CUP Administration\n"
-            "Phone: 0700 000 000\n"
-            "Reply to: info@mkjsupacup.com\n"
-            "https://mkjsupacup.com"
-        )
-        body_with_sign_off = body + sign_off
-
         try:
+            # Build branded HTML body
+            from accounts.notifications import _base_html
+            import re
+
+            # Convert plain text body to simple HTML (preserve line breaks)
+            body_html_content = '<br>'.join(
+                f'<p style="margin:0 0 .5em">{line}</p>' if line.strip() else '<br>'
+                for line in body.splitlines()
+            )
+
+            html_body = _base_html(
+                subject,
+                f"""
+<p style="font-size:15px;line-height:1.7;color:#333">{body_html_content}</p>
+<div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid #e8edf5;font-size:12px;color:#888;line-height:1.8">
+  <strong style="color:#124491">MKJ SUPA CUP Administration</strong><br>
+  📞 0700 000 000 &nbsp;|&nbsp;
+  ✉ <a href="mailto:info@mkjsupacup.com" style="color:#124491">info@mkjsupacup.com</a><br>
+  🌐 <a href="https://mkjsupacup.com" style="color:#124491">mkjsupacup.com</a>
+</div>
+"""
+            )
+
+            # Plain text fallback (clean, no CSS)
+            plain_body = body + (
+                "\n\n---\nMKJ SUPA CUP Administration\n"
+                "Phone: 0700 000 000\n"
+                "info@mkjsupacup.com | https://mkjsupacup.com"
+            )
+
             msg = EmailMultiAlternatives(
                 subject=subject,
-                body=body_with_sign_off,
+                body=plain_body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=to_list,
                 cc=cc_list,
                 reply_to=['info@mkjsupacup.com'],
             )
+            msg.attach_alternative(html_body, 'text/html')
             msg.send()
 
-            # Ensure the compose email is logged for backends that
-            # don't auto-log (e.g. console).  Backends that already
-            # log (Brevo, LoggingSMTP) will create a row; the extra
-            # row from compose is acceptable for dashboard-sent mail
-            # to guarantee visibility.
+            # Log for backends that don't auto-log
             if not EmailLog.objects.filter(
                 direction='OUT', subject=subject,
                 to_emails=', '.join(to_list),
@@ -151,7 +168,8 @@ def email_compose(request):
                     to_emails=', '.join(to_list),
                     cc_emails=', '.join(cc_list),
                     subject=subject,
-                    body_text=body,
+                    body_text=plain_body,
+                    body_html=html_body,
                     sent_at=timezone.now(),
                     sent_by=request.user,
                 )
@@ -167,6 +185,7 @@ def email_compose(request):
                 cc_emails=', '.join(cc_list),
                 subject=subject,
                 body_text=body,
+                body_html='',
                 sent_at=timezone.now(),
                 sent_by=request.user,
                 error_message=str(exc),
