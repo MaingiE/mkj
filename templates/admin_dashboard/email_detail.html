@@ -167,23 +167,16 @@
         </div>
 
         <div class="email-body-section">
-            {% if email.body_html %}
+            {% with preview_html=email.body_html|default:email.body_text %}
+            {% if preview_html %}
             <div class="body-label">Email Preview</div>
             <div class="email-body-html">
-                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_html|safe }}"></iframe>
+                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ preview_html|safe }}"></iframe>
             </div>
-            {% elif email.body_text and '<html' in email.body_text %}
-            {# Fallback: body_text contains raw HTML (old records before fix) #}
-            <div class="body-label">Email Preview</div>
-            <div class="email-body-html">
-                <iframe id="htmlFrame" sandbox="allow-same-origin" srcdoc="{{ email.body_text|safe }}"></iframe>
-            </div>
-            {% elif email.body_text %}
-            <div class="body-label">Message</div>
-            <div class="email-body-text">{{ email.body_text }}</div>
             {% else %}
             <p style="color:#999; font-size:.85rem;">(No body content)</p>
             {% endif %}
+            {% endwith %}
         </div>
     </div>
 </div>
