@@ -15338,7 +15338,8 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
                     settings_obj.registration_deadline = dt
                     messages.success(request, f'Registration deadline set to {dt.strftime("%d %b %Y at %H:%M")} (Nairobi time).')
                 except Exception as exc:
-                    messages.error(request, f'Invalid date/time: {exc}')
+                    logger.error('ligi_settings set_deadline error: %s', exc, exc_info=True)
+                    messages.error(request, 'Could not save deadline — please check the date and time format and try again.')
                     return redirect('ligi_settings')
             else:
                 messages.error(request, 'Please enter a deadline date and time.')
@@ -15369,11 +15370,12 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
                 settings_obj.team_reg_close_at  = _parse_local(request.POST.get('team_reg_close_at', ''))
                 settings_obj.player_reg_open_at  = _parse_local(request.POST.get('player_reg_open_at', ''))
                 settings_obj.player_reg_close_at = _parse_local(request.POST.get('player_reg_close_at', ''))
-            except ValueError as exc:
-                errors.append(str(exc))
+            except Exception as exc:
+                logger.error('ligi_settings set_schedule error: %s', exc, exc_info=True)
+                errors.append('One or more dates could not be read — please use the date picker and try again.')
 
             if errors:
-                messages.error(request, 'Invalid date(s): ' + '; '.join(errors))
+                messages.error(request, '; '.join(errors))
                 return redirect('ligi_settings')
 
             scheduled = []
