@@ -134,8 +134,6 @@ class BrevoEmailBackend(BaseEmailBackend):
     def _log_to_db(message, status='sent', error=''):
         """Log sent email to EmailLog so the admin dashboard can display it."""
         try:
-            import re
-            from django.utils.html import strip_tags
             from admin_dashboard.models import EmailLog
 
             html_body = ''
@@ -144,14 +142,6 @@ class BrevoEmailBackend(BaseEmailBackend):
                     if mimetype == 'text/html':
                         html_body = content
                         break
-
-            # Strip style/script blocks before converting to plain text
-            def _clean(h):
-                h = re.sub(r'<style[^>]*>.*?</style>', '', h, flags=re.DOTALL | re.IGNORECASE)
-                h = re.sub(r'<script[^>]*>.*?</script>', '', h, flags=re.DOTALL | re.IGNORECASE)
-                return strip_tags(h).strip()
-
-            plain = _clean(html_body) if html_body else (message.body or '')
 
             from django.utils import timezone as _tz
             EmailLog.objects.create(
@@ -162,7 +152,7 @@ class BrevoEmailBackend(BaseEmailBackend):
                 cc_emails=', '.join(message.cc) if message.cc else '',
                 bcc_emails=', '.join(message.bcc) if message.bcc else '',
                 subject=message.subject or '',
-                body_text=plain,
+                body_text=message.body or '',
                 body_html=html_body,
                 sent_at=_tz.now(),
                 error_message=error,

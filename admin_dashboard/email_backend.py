@@ -55,6 +55,5 @@ class LoggingSMTPBackend(SMTPBackend):
                     body_text=plain,
                     body_html=html_body,
                     sent_at=timezone.now(),
-                )
-        except Exception:
+                )        except Exception:
             pass  # never break email delivery because of logging

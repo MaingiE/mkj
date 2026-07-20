@@ -142,7 +142,7 @@ def send_payment_receipt(team, confirmed_by_user):
             <!-- Contact Information -->
             <div style="border-top: 2px solid #f1f1f1; padding-top: 20px; margin-top: 25px;">
                 <p style="margin: 0 0 6px; color: #004D1A; font-size: 13px; text-align: center; font-weight: 600;">MKJ SUPA CUP Administration</p>
-                <p style="margin: 0 0 6px; color: #555; font-size: 12px; text-align: center;">&#128222; 0700 000 000 &nbsp;|&nbsp; Reply to: <a href="mailto:info@mkjsupacup.com" style="color:#004D1A;text-decoration:none;">info@mkjsupacup.com</a></p>
+                <p style="margin: 0 0 6px; color: #555; font-size: 12px; text-align: center;">&#128222; 0704 517 498 &nbsp;|&nbsp; Reply to: <a href="mailto:admin@mkjsupacup.com" style="color:#004D1A;text-decoration:none;">admin@mkjsupacup.com</a></p>
                 <p style="margin: 0; color: #666; font-size: 12px; text-align: center;">
                     &copy; 2026 MKJ SUPA CUP - Makueni County Sports Department<br>
                     <a href="https://mkjsupacup.com" style="color:#004D1A;text-decoration:none;">mkjsupacup.com</a><br>

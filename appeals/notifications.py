@@ -56,7 +56,7 @@ table td {{ padding: 10px; border-bottom: 1px solid #e8edf5; font-size: 14px; }}
  </div>
  <div class="footer">
   <p class="sign-off">MKJ SUPA CUP Administration</p>
-  <p style="font-size:12px;color:#555;margin:6px 0;">&#128222; 0700 000 000 &nbsp;|&nbsp; Reply to: <a href="mailto:info@mkjsupacup.com" style="color:#1a237e;text-decoration:none;">info@mkjsupacup.com</a></p>
+  <p style="font-size:12px;color:#555;margin:6px 0;">&#128222; 0704 517 498 &nbsp;|&nbsp; Reply to: <a href="mailto:admin@mkjsupacup.com" style="color:#1a237e;text-decoration:none;">admin@mkjsupacup.com</a></p>
   <p>&copy; 2026 MKJ SUPA CUP - Makueni County Sports Department</p>
   <p><a href="{SITE_URL}" style="color:#1a237e;text-decoration:none;">{SITE_URL}</a></p>
  </div>
