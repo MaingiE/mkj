@@ -235,6 +235,7 @@ from .web_views import (
     ward_tm_submit_longlist_view,
     ward_tm_fixtures_view,
     ward_tm_ward_squad_view,
+    ward_longlist_pdf_view,
     # Ligi Mashinani: Ward Sports Council Chair (WSCC) portal
     wscc_dashboard_view,
     wscc_longlists_view,
@@ -292,6 +293,7 @@ urlpatterns = [
     path("ligi/longlist/<int:player_pk>/edit/",   ward_tm_edit_player_view,   name="ward_tm_edit_player"),
     path("ligi/longlist/<int:player_pk>/delete/", ward_tm_delete_player_view, name="ward_tm_delete_player"),
     path("ligi/longlist/submit/",                 ward_tm_submit_longlist_view, name="ward_tm_submit_longlist"),
+    path("ligi/longlist/<int:discipline_pk>/pdf/", ward_longlist_pdf_view,       name="ward_longlist_pdf"),
     # ── LIGI MASHINANI: Ward Team Manager  -  fixtures & squad selection ──────
     path("ligi/fixtures/",                                  ward_tm_fixtures_view,        name="ward_tm_fixtures"),
     path("ligi/fixtures/<int:fixture_pk>/squad/",           ward_tm_ward_squad_view,      name="ward_tm_ward_squad"),

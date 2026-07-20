@@ -38,7 +38,7 @@
   {% endif %}
 
   {% if not longlist.is_locked %}
-  <a href="{% url 'ward_tm_add_player' %}" class="btn btn--primary" style="margin-left:auto">
+  <a href="{% url 'ward_tm_add_player' %}{% if request.GET.discipline %}?discipline={{ request.GET.discipline }}{% endif %}" class="btn btn--primary" style="margin-left:auto">
     <i class="bi bi-person-plus"></i> Add Player
   </a>
   {% endif %}
@@ -47,6 +47,16 @@
     <i class="bi bi-send"></i> Submit for Review
   </a>
   {% endif %}
+  <!-- PDF Downloads -->
+  <a href="{% url 'ward_longlist_pdf' discipline.pk %}?sort={{ request.GET.sort|default:'name' }}"
+     style="padding:.45rem .9rem;background:#dc3545;color:#fff;border-radius:6px;font-size:.85rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem">
+    <i class="bi bi-file-earmark-pdf"></i> PDF (All)
+  </a>
+  <a href="{% url 'ward_longlist_pdf' discipline.pk %}?sort={{ request.GET.sort|default:'name' }}&eligible_only=1"
+     style="padding:.45rem .9rem;background:#856404;color:#fff;border-radius:6px;font-size:.85rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem"
+     title="Download only eligible (18-23) players">
+    <i class="bi bi-file-earmark-pdf"></i> PDF (18-23)
+  </a>
 </div>
 
 {% if longlist.status == 'returned' and longlist.return_reason %}

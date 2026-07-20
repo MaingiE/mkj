@@ -12924,6 +12924,299 @@ def ward_tm_submit_longlist_view(request):
 # Ligi Mashinani  -  Ward-Level Match Day Squad Selection
 # ═════════════════════════════════════════════════════════════════════════════
 
+@role_required('team_manager', 'ward_sports_council_chair', 'subcounty_sports_officer',
+               'admin', 'director_sports', 'chief_sports_officer')
+def ward_longlist_pdf_view(request, discipline_pk):
+    """
+    Generate a downloadable PDF of the Ligi Mashinani ward player longlist.
+
+    - Headers: MKJ SUPA CUP logo + Makueni County Government logo
+    - Filters: sort by name/age/position, filter by age group (18-23 only toggle)
+    - Each player row: photo, name, DOB, age, national ID, position, docs status
+    - Admin/SCSO/WSCC can download any ward; TM only their own ward
+    - URL: /ligi/longlist/<discipline_pk>/pdf/
+    """
+    from io import BytesIO
+    import os
+
+    discipline = get_object_or_404(
+        CountyDiscipline.objects.select_related('registration'),
+        pk=discipline_pk,
+        level='ward',
+    )
+
+    # Permission check
+    user = request.user
+    is_admin = user.is_superuser or user.role in ('admin', 'director_sports', 'chief_sports_officer')
+    is_wscc = user.role == 'ward_sports_council_chair'
+    is_scso = user.role == 'subcounty_sports_officer'
+    is_tm   = user.role == 'team_manager'
+
+    if is_tm and (user.sub_county != discipline.sub_county or user.ward != discipline.ward):
+        messages.error(request, 'You can only download your own ward longlist.')
+        return redirect('ward_tm_longlist')
+    if is_wscc and user.sub_county != discipline.sub_county:
+        messages.error(request, 'Permission denied.')
+        return redirect('wscc_longlists')
+    if is_scso and user.sub_county != discipline.sub_county:
+        messages.error(request, 'Permission denied.')
+        return redirect('subcounty_officer_dashboard')
+
+    # Query params
+    sort      = request.GET.get('sort', 'name')
+    age_only  = request.GET.get('eligible_only', '0') == '1'  # show only 18-23
+
+    players_qs = CountyPlayer.objects.filter(discipline=discipline)
+
+    # Sort
+    if sort == 'age':
+        from django.db.models import F
+        players_qs = players_qs.order_by(F('date_of_birth').asc(nulls_last=True))
+    elif sort == 'position':
+        players_qs = players_qs.order_by('position', 'last_name', 'first_name')
+    else:
+        players_qs = players_qs.order_by('last_name', 'first_name')
+
+    players = list(players_qs)
+
+    # Age filter
+    from django.utils import timezone as _tz
+    today = _tz.now().date()
+
+    def calc_age(dob):
+        if not dob:
+            return None
+        return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+    if age_only:
+        players = [p for p in players if 18 <= (calc_age(p.date_of_birth) or 0) <= 23]
+
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.platypus import (
+            SimpleDocTemplate, Table, TableStyle,
+            Paragraph, Spacer, Image as RLImage,
+        )
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm, mm
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=A4,
+            topMargin=1.2*cm, bottomMargin=1.5*cm,
+            leftMargin=1.5*cm, rightMargin=1.5*cm,
+        )
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # Locate logos from static files
+        static_base = (
+            django_settings.STATICFILES_DIRS[0]
+            if django_settings.STATICFILES_DIRS
+            else django_settings.STATIC_ROOT
+        )
+
+        def _img_path(*rels):
+            for r in rels:
+                p = os.path.join(static_base, r)
+                if os.path.exists(p):
+                    return p
+            return None
+
+        mkj_path     = _img_path('img/mkj_supa_cup_logo.png', 'img/mkj .jpeg')
+        makueni_path = _img_path('img/makueni_logo.png')
+        govt_path    = _img_path('img/GOVT.jpeg', 'img/kenya_flag.png')
+
+        # ── Dual-logo header ────────────────────────────────────────────────
+        logo_w, logo_h = 22*mm, 22*mm
+        left_logo  = RLImage(govt_path,    logo_w, logo_h) if govt_path    else Paragraph('', styles['Normal'])
+        mid_logo   = RLImage(mkj_path,     logo_w, logo_h) if mkj_path     else Paragraph('', styles['Normal'])
+        right_logo = RLImage(makueni_path, logo_w, logo_h) if makueni_path else Paragraph('', styles['Normal'])
+
+        page_w = A4[0] - 3*cm  # usable width
+        logo_table = Table(
+            [[left_logo, mid_logo, right_logo]],
+            colWidths=[page_w/3, page_w/3, page_w/3],
+        )
+        logo_table.setStyle(TableStyle([
+            ('ALIGN',   (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN',  (0,0), (-1,-1), 'MIDDLE'),
+            ('LEFTPADDING',  (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ('TOPPADDING',   (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING',(0,0), (-1,-1), 0),
+        ]))
+        elements.append(logo_table)
+        elements.append(Spacer(1, 3*mm))
+
+        # ── Title block ────────────────────────────────────────────────────
+        blue  = colors.HexColor('#124491')
+        gold  = colors.HexColor('#E8B91E')
+        dark  = colors.HexColor('#1a1a1a')
+
+        title_style = ParagraphStyle(
+            'DocTitle', parent=styles['Normal'],
+            fontSize=14, fontName='Helvetica-Bold',
+            textColor=blue, alignment=1, spaceAfter=1*mm,
+        )
+        sub_style = ParagraphStyle(
+            'DocSub', parent=styles['Normal'],
+            fontSize=10, textColor=dark, alignment=1, spaceAfter=0.5*mm,
+        )
+        note_style = ParagraphStyle(
+            'Note', parent=styles['Normal'],
+            fontSize=8, textColor=colors.grey, alignment=1, spaceAfter=3*mm,
+        )
+
+        sport_label = discipline.get_sport_type_display()
+        filter_note = 'Eligible Age Group (18-23) Only' if age_only else 'All Registered Players'
+        sort_label  = {'name': 'Sorted by Name', 'age': 'Sorted by Age', 'position': 'Sorted by Position'}.get(sort, '')
+
+        elements.append(Paragraph('GOVERNOR MUTULA KILONZO JUNIOR SUPA CUP', title_style))
+        elements.append(Paragraph('LIGI MASHINANI - WARD PLAYER LONGLIST', title_style))
+        elements.append(Paragraph(
+            f'{discipline.ward} Ward &bull; {discipline.sub_county} Sub-County &bull; {sport_label}',
+            sub_style,
+        ))
+        elements.append(Paragraph(
+            f'{filter_note} &bull; {sort_label} &bull; Generated: {today.strftime("%d %B %Y")}',
+            note_style,
+        ))
+
+        # ── Divider ────────────────────────────────────────────────────────
+        divider = Table([['']], colWidths=[page_w])
+        divider.setStyle(TableStyle([
+            ('LINEABOVE', (0,0), (-1,0), 2, gold),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ]))
+        elements.append(divider)
+        elements.append(Spacer(1, 2*mm))
+
+        # ── Player table ───────────────────────────────────────────────────
+        name_s = ParagraphStyle('PN', parent=styles['Normal'], fontSize=8, fontName='Helvetica-Bold', leading=10)
+        cell_s = ParagraphStyle('PC', parent=styles['Normal'], fontSize=7.5, leading=9)
+        hdr_bg = blue
+        alt_bg = colors.HexColor('#F0F4FF')
+
+        headers = ['#', 'Photo', 'Full Name', 'National ID', 'DOB', 'Age', 'Position', 'Docs']
+        col_ws  = [0.7*cm, 1.9*cm, 4.5*cm, 2.7*cm, 2.2*cm, 0.9*cm, 2.1*cm, 1.3*cm]
+
+        table_data = [headers]
+        row_heights = [8*mm]
+
+        for idx, p in enumerate(players, 1):
+            age = calc_age(p.date_of_birth)
+
+            # Photo
+            photo_cell = Paragraph('No photo', cell_s)
+            if p.photo:
+                try:
+                    photo_path = p.photo.path if hasattr(p.photo, 'path') else None
+                    if photo_path and os.path.exists(photo_path):
+                        photo_cell = RLImage(photo_path, width=14*mm, height=18*mm)
+                except Exception:
+                    pass
+            elif hasattr(p, 'photo') and p.photo:
+                # Cloud storage - skip image, show placeholder text
+                photo_cell = Paragraph('(cloud)', cell_s)
+
+            # Docs status
+            has_id_doc  = bool(p.id_document)
+            has_photo   = bool(p.photo)
+            has_bc      = bool(p.birth_certificate)
+            docs_ok     = has_photo and (has_id_doc or has_bc)
+            docs_cell   = Paragraph('OK' if docs_ok else 'Missing', cell_s)
+
+            # Age highlight: ineligible players are visually marked in note
+            dob_str = p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else '-'
+            age_str = str(age) if age is not None else '-'
+
+            table_data.append([
+                str(idx),
+                photo_cell,
+                Paragraph(f'{p.last_name.upper()} {p.first_name}', name_s),
+                Paragraph(p.national_id_number or '-', cell_s),
+                dob_str,
+                age_str,
+                p.position or '-',
+                docs_cell,
+            ])
+            row_heights.append(22*mm)
+
+        player_table = Table(table_data, colWidths=col_ws, rowHeights=row_heights, repeatRows=1)
+        player_table.setStyle(TableStyle([
+            # Header row
+            ('BACKGROUND',   (0,0), (-1,0),  hdr_bg),
+            ('TEXTCOLOR',    (0,0), (-1,0),  colors.white),
+            ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
+            ('FONTSIZE',     (0,0), (-1,0),  8),
+            ('ALIGN',        (0,0), (-1,0),  'CENTER'),
+            # Data rows
+            ('ROWBACKGROUNDS',(0,1), (-1,-1), [colors.white, alt_bg]),
+            ('FONTSIZE',     (0,1), (-1,-1),  7.5),
+            ('VALIGN',       (0,0), (-1,-1),  'MIDDLE'),
+            ('ALIGN',        (0,0), (0,-1),   'CENTER'),  # # col
+            ('ALIGN',        (5,0), (5,-1),   'CENTER'),  # Age col
+            ('ALIGN',        (7,0), (7,-1),   'CENTER'),  # Docs col
+            ('GRID',         (0,0), (-1,-1),  0.4, colors.HexColor('#CCCCCC')),
+            ('LEFTPADDING',  (0,0), (-1,-1),  3),
+            ('RIGHTPADDING', (0,0), (-1,-1),  3),
+            ('TOPPADDING',   (0,0), (-1,-1),  2),
+            ('BOTTOMPADDING',(0,0), (-1,-1),  2),
+        ]))
+
+        if not players:
+            elements.append(Paragraph(
+                f'No players found ({filter_note.lower()}).',
+                ParagraphStyle('Empty', parent=styles['Normal'], fontSize=10,
+                               textColor=colors.grey, alignment=1, spaceAfter=5*mm)
+            ))
+        else:
+            elements.append(player_table)
+
+        # ── Summary footer ─────────────────────────────────────────────────
+        elements.append(Spacer(1, 4*mm))
+        eligible = sum(1 for p in players if 18 <= (calc_age(p.date_of_birth) or 0) <= 23)
+        total    = len(players)
+        footer_s = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
+        elements.append(Paragraph(
+            f'Total players: <b>{total}</b> &nbsp;&nbsp; '
+            f'Eligible (18-23): <b>{eligible}</b> &nbsp;&nbsp; '
+            f'Docs complete: <b>{sum(1 for p in players if p.photo and (p.id_document or p.birth_certificate))}</b>',
+            footer_s,
+        ))
+        elements.append(Spacer(1, 2*mm))
+        elements.append(Paragraph(
+            'MKJ SUPA CUP &bull; County Government of Makueni &bull; mkjsupacup.com',
+            ParagraphStyle('Brand', parent=styles['Normal'], fontSize=7,
+                           textColor=colors.HexColor('#124491'), alignment=1),
+        ))
+
+        doc.build(elements)
+        buffer.seek(0)
+
+        sort_tag  = f'_{sort}' if sort != 'name' else ''
+        age_tag   = '_eligible_only' if age_only else ''
+        ward_safe = discipline.ward.replace('/', '-').replace(' ', '_')
+        sc_safe   = discipline.sub_county.replace(' ', '_')
+        sport_safe = discipline.sport_type.replace('_', '-')
+        filename  = f'LigiMashinani_{sc_safe}_{ward_safe}_{sport_safe}{sort_tag}{age_tag}.pdf'
+
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    except ImportError:
+        messages.error(request, 'PDF generation requires reportlab. Already installed on Railway.')
+        return redirect('ward_tm_longlist')
+    except Exception as exc:
+        logger.exception('Ligi longlist PDF error: %s', exc)
+        messages.error(request, f'PDF generation failed: {exc}')
+        return redirect('ward_tm_longlist')
+
+
 @role_required('team_manager', 'admin')
 def ward_tm_fixtures_view(request):
     """

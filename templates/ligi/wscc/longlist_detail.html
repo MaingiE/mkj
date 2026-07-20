@@ -9,7 +9,17 @@
         <span>{{ discipline.ward|title }}  -  {{ discipline.get_sport_type_display }}</span>
     </div>
     <h1><i class="bi bi-person-lines-fill"></i> Longlist Review</h1>
-    <p>{{ discipline.ward|title }} Ward &mdash; {{ discipline.sub_county|title }} Sub-County &mdash; {{ discipline.get_sport_type_display }}</p>
+    <p>{{ discipline.ward|title }} Ward - {{ discipline.sub_county|title }} Sub-County - {{ discipline.get_sport_type_display }}
+      &nbsp;&nbsp;
+      <a href="{% url 'ward_longlist_pdf' discipline.pk %}"
+         style="padding:.3rem .7rem;background:#dc3545;color:#fff;border-radius:5px;font-size:.8rem;font-weight:600;text-decoration:none">
+        <i class="bi bi-file-earmark-pdf"></i> PDF (All)
+      </a>
+      <a href="{% url 'ward_longlist_pdf' discipline.pk %}?eligible_only=1"
+         style="margin-left:.35rem;padding:.3rem .7rem;background:#856404;color:#fff;border-radius:5px;font-size:.8rem;font-weight:600;text-decoration:none">
+        <i class="bi bi-file-earmark-pdf"></i> PDF (18-23)
+      </a>
+    </p>
 </div>
 
 {% if messages %}
