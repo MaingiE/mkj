@@ -853,7 +853,7 @@ def home_view(request):
     })
 
     from teams.models import LigiSettings
-    _ligi = LigiSettings.get()
+    _ligi = LigiSettings.apply_scheduled_windows()
 
     response = render(request, 'public/home.html', {
         'active_page': 'home',
@@ -15211,7 +15211,7 @@ def ligi_settings_view(request):
     """
     from teams.models import LigiSettings
 
-    settings_obj = LigiSettings.get()
+    settings_obj = LigiSettings.apply_scheduled_windows()
 
     if request.method == 'POST':
         action = request.POST.get('action', '').strip()
@@ -15348,6 +15348,56 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
             settings_obj.registration_deadline = None
             messages.success(request, 'Registration countdown cleared.')
 
+        elif action == 'set_schedule':
+            import pytz
+            from django.utils.dateparse import parse_datetime
+            nai = pytz.timezone('Africa/Nairobi')
+
+            def _parse_local(raw):
+                if not raw or not raw.strip():
+                    return None
+                dt = parse_datetime(raw.strip())
+                if dt is None:
+                    raise ValueError(f"Cannot parse: {raw!r}")
+                if dt.tzinfo is None:
+                    dt = nai.localize(dt)
+                return dt
+
+            errors = []
+            try:
+                settings_obj.team_reg_open_at   = _parse_local(request.POST.get('team_reg_open_at', ''))
+                settings_obj.team_reg_close_at  = _parse_local(request.POST.get('team_reg_close_at', ''))
+                settings_obj.player_reg_open_at  = _parse_local(request.POST.get('player_reg_open_at', ''))
+                settings_obj.player_reg_close_at = _parse_local(request.POST.get('player_reg_close_at', ''))
+            except ValueError as exc:
+                errors.append(str(exc))
+
+            if errors:
+                messages.error(request, 'Invalid date(s): ' + '; '.join(errors))
+                return redirect('ligi_settings')
+
+            scheduled = []
+            if settings_obj.team_reg_open_at:
+                scheduled.append(f"Team Reg opens {settings_obj.team_reg_open_at.strftime('%d %b %Y %H:%M')}")
+            if settings_obj.team_reg_close_at:
+                scheduled.append(f"Team Reg closes {settings_obj.team_reg_close_at.strftime('%d %b %Y %H:%M')}")
+            if settings_obj.player_reg_open_at:
+                scheduled.append(f"Player Reg opens {settings_obj.player_reg_open_at.strftime('%d %b %Y %H:%M')}")
+            if settings_obj.player_reg_close_at:
+                scheduled.append(f"Player Reg closes {settings_obj.player_reg_close_at.strftime('%d %b %Y %H:%M')}")
+
+            if scheduled:
+                messages.success(request, 'Schedule saved: ' + ' | '.join(scheduled))
+            else:
+                messages.info(request, 'All schedule times cleared.')
+
+        elif action == 'clear_schedule':
+            settings_obj.team_reg_open_at = None
+            settings_obj.team_reg_close_at = None
+            settings_obj.player_reg_open_at = None
+            settings_obj.player_reg_close_at = None
+            messages.success(request, 'All scheduled window times cleared.')
+
         else:
             messages.error(request, f'Unknown action: {action}')
             return redirect('ligi_settings')
@@ -15366,6 +15416,8 @@ registration window for <strong>{req.sub_county}</strong> has been <strong style
                 'save_messages':     'Closed Messages',
                 'set_deadline':      'Registration Deadline',
                 'clear_deadline':    'Registration Deadline Cleared',
+                'set_schedule':      'Window Schedule',
+                'clear_schedule':    'Window Schedule Cleared',
             }
             label = flag_labels.get(action, action)
             log_activity(

@@ -1833,6 +1833,24 @@ class LigiSettings(models.Model):
         ),
     )
 
+    # ── Scheduled open / close times ──────────────────────────────────────
+    team_reg_open_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Auto-open team registration at this datetime (Nairobi time). Cleared once applied.",
+    )
+    team_reg_close_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Auto-close team registration at this datetime (Nairobi time). Cleared once applied.",
+    )
+    player_reg_open_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Auto-open player registration at this datetime (Nairobi time). Cleared once applied.",
+    )
+    player_reg_close_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Auto-close player registration at this datetime (Nairobi time). Cleared once applied.",
+    )
+
     # ── Audit trail ───────────────────────────────────────────────────────
     last_changed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1863,6 +1881,50 @@ class LigiSettings(models.Model):
     def get(cls):
         """Return the singleton instance, creating it with defaults if absent."""
         obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @classmethod
+    def apply_scheduled_windows(cls):
+        """
+        Check if any scheduled open/close times have passed and apply them.
+        Call this on homepage and settings views to auto-trigger without Celery Beat.
+        Returns the (possibly updated) settings object.
+        """
+        from django.utils import timezone
+        obj = cls.get()
+        now = timezone.now()
+        changed = False
+
+        # Team registration scheduled open
+        if obj.team_reg_open_at and now >= obj.team_reg_open_at:
+            obj.team_registration_open = True
+            obj.team_reg_open_at = None
+            changed = True
+
+        # Team registration scheduled close
+        if obj.team_reg_close_at and now >= obj.team_reg_close_at:
+            obj.team_registration_open = False
+            obj.team_reg_close_at = None
+            changed = True
+
+        # Player registration scheduled open
+        if obj.player_reg_open_at and now >= obj.player_reg_open_at:
+            obj.player_registration_open = True
+            obj.player_reg_open_at = None
+            changed = True
+
+        # Player registration scheduled close
+        if obj.player_reg_close_at and now >= obj.player_reg_close_at:
+            obj.player_registration_open = False
+            obj.player_reg_close_at = None
+            changed = True
+
+        if changed:
+            obj.save(update_fields=[
+                'team_registration_open', 'team_reg_open_at', 'team_reg_close_at',
+                'player_registration_open', 'player_reg_open_at', 'player_reg_close_at',
+            ])
+        return obj
         return obj
 
 

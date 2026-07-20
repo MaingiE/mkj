@@ -11,7 +11,7 @@
   <h1><i class="bi bi-toggles"></i> Ligi Mashinani  -  Window Control</h1>
   <p style="color:#666;font-size:.9rem">
     Control which registration and transfer windows are open for Ligi Mashinani.
-    Changes take effect immediately for all users.
+    Changes take effect immediately, or schedule future open/close times.
   </p>
 </div>
 
@@ -225,6 +225,105 @@
   </form>
 </div>
 
+<!-- ── SCHEDULED WINDOW TIMELINES ────────────────────────────── -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-top:4px solid #6366f1">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
+    <span style="font-size:1.8rem">📅</span>
+    <div>
+      <h2 style="font-size:1.05rem;margin:0;color:#333">Scheduled Window Timelines</h2>
+      <p style="font-size:.8rem;color:#888;margin:0">
+        Set future open/close times — windows switch automatically when the time arrives.
+        Leave a field blank to leave that transition unscheduled.
+      </p>
+    </div>
+  </div>
+
+  {% if settings_obj.team_reg_open_at or settings_obj.team_reg_close_at or settings_obj.player_reg_open_at or settings_obj.player_reg_close_at %}
+  <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.84rem;color:#4c1d95">
+    <strong>⏰ Pending scheduled actions:</strong>
+    <ul style="margin:.4rem 0 0 1rem;padding:0">
+      {% if settings_obj.team_reg_open_at %}
+      <li>📋 Team Registration <strong>OPENS</strong> on {{ settings_obj.team_reg_open_at|date:"d M Y" }} at {{ settings_obj.team_reg_open_at|time:"H:i" }} (Nairobi)</li>
+      {% endif %}
+      {% if settings_obj.team_reg_close_at %}
+      <li>📋 Team Registration <strong>CLOSES</strong> on {{ settings_obj.team_reg_close_at|date:"d M Y" }} at {{ settings_obj.team_reg_close_at|time:"H:i" }} (Nairobi)</li>
+      {% endif %}
+      {% if settings_obj.player_reg_open_at %}
+      <li>👤 Player Registration <strong>OPENS</strong> on {{ settings_obj.player_reg_open_at|date:"d M Y" }} at {{ settings_obj.player_reg_open_at|time:"H:i" }} (Nairobi)</li>
+      {% endif %}
+      {% if settings_obj.player_reg_close_at %}
+      <li>👤 Player Registration <strong>CLOSES</strong> on {{ settings_obj.player_reg_close_at|date:"d M Y" }} at {{ settings_obj.player_reg_close_at|time:"H:i" }} (Nairobi)</li>
+      {% endif %}
+    </ul>
+  </div>
+  {% else %}
+  <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:.65rem 1rem;margin-bottom:1rem;font-size:.83rem;color:#888">
+    No scheduled transitions — windows only change when manually toggled.
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="set_schedule">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem">
+
+      <div>
+        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
+          📋 Team Registration — Open At
+        </label>
+        <input type="datetime-local" name="team_reg_open_at"
+          value="{% if settings_obj.team_reg_open_at %}{{ settings_obj.team_reg_open_at|date:'Y-m-d' }}T{{ settings_obj.team_reg_open_at|time:'H:i' }}{% endif %}"
+          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-opens team reg at this time</p>
+      </div>
+
+      <div>
+        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
+          📋 Team Registration — Close At
+        </label>
+        <input type="datetime-local" name="team_reg_close_at"
+          value="{% if settings_obj.team_reg_close_at %}{{ settings_obj.team_reg_close_at|date:'Y-m-d' }}T{{ settings_obj.team_reg_close_at|time:'H:i' }}{% endif %}"
+          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-closes team reg at this time</p>
+      </div>
+
+      <div>
+        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
+          👤 Player Registration — Open At
+        </label>
+        <input type="datetime-local" name="player_reg_open_at"
+          value="{% if settings_obj.player_reg_open_at %}{{ settings_obj.player_reg_open_at|date:'Y-m-d' }}T{{ settings_obj.player_reg_open_at|time:'H:i' }}{% endif %}"
+          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-opens player reg at this time</p>
+      </div>
+
+      <div>
+        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:.3rem">
+          👤 Player Registration — Close At
+        </label>
+        <input type="datetime-local" name="player_reg_close_at"
+          value="{% if settings_obj.player_reg_close_at %}{{ settings_obj.player_reg_close_at|date:'Y-m-d' }}T{{ settings_obj.player_reg_close_at|time:'H:i' }}{% endif %}"
+          style="width:100%;padding:.55rem .75rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+        <p style="font-size:.72rem;color:#888;margin:.25rem 0 0">Auto-closes player reg at this time</p>
+      </div>
+
+    </div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button type="submit"
+        style="padding:.6rem 1.4rem;background:#6366f1;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.88rem">
+        📅 Save Schedule
+      </button>
+      {% if settings_obj.team_reg_open_at or settings_obj.team_reg_close_at or settings_obj.player_reg_open_at or settings_obj.player_reg_close_at %}
+      <button type="submit" name="action" value="clear_schedule"
+        style="padding:.6rem 1rem;background:#f8f9fa;color:#6c757d;border:1px solid #dee2e6;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem">
+        ✕ Clear All Scheduled Times
+      </button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
 <!-- ── CURRENT STATUS SUMMARY ─────────────────────────────────── -->
 <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
   <h2 style="font-size:1rem;color:#333;margin-bottom:1rem"><i class="bi bi-info-circle"></i> Current Status Summary</h2>
@@ -246,7 +345,14 @@
             <span style="color:#dc3545;font-weight:600">🔴 Closed</span>
           {% endif %}
         </td>
-        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.team_registration_closed_message }}</td>
+        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.team_registration_closed_message }}
+          {% if settings_obj.team_reg_open_at or settings_obj.team_reg_close_at %}
+          <div style="margin-top:.3rem;font-size:.75rem;color:#6366f1">
+            {% if settings_obj.team_reg_open_at %}⏰ Opens {{ settings_obj.team_reg_open_at|date:"d M H:i" }}{% endif %}
+            {% if settings_obj.team_reg_close_at %} &nbsp;·&nbsp; ⏰ Closes {{ settings_obj.team_reg_close_at|date:"d M H:i" }}{% endif %}
+          </div>
+          {% endif %}
+        </td>
       </tr>
       <tr style="border-bottom:1px solid #dee2e6">
         <td style="padding:.65rem 1rem;font-weight:500">👤 Player Registration</td>
@@ -257,7 +363,14 @@
             <span style="color:#dc3545;font-weight:600">🔴 Closed</span>
           {% endif %}
         </td>
-        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.player_registration_closed_message }}</td>
+        <td style="padding:.65rem 1rem;color:#666;font-size:.82rem">{{ settings_obj.player_registration_closed_message }}
+          {% if settings_obj.player_reg_open_at or settings_obj.player_reg_close_at %}
+          <div style="margin-top:.3rem;font-size:.75rem;color:#6366f1">
+            {% if settings_obj.player_reg_open_at %}⏰ Opens {{ settings_obj.player_reg_open_at|date:"d M H:i" }}{% endif %}
+            {% if settings_obj.player_reg_close_at %} &nbsp;·&nbsp; ⏰ Closes {{ settings_obj.player_reg_close_at|date:"d M H:i" }}{% endif %}
+          </div>
+          {% endif %}
+        </td>
       </tr>
       <tr>
         <td style="padding:.65rem 1rem;font-weight:500">🔄 Transfer Window</td>
