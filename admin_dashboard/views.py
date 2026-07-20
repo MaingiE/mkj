@@ -552,6 +552,7 @@ def create_user(request):
 
 
 @login_required
+@login_required
 @user_passes_test(superadmin_required)
 def toggle_user_status(request, user_id):
     """Activate or deactivate a user."""
@@ -566,6 +567,29 @@ def toggle_user_status(request, user_id):
 
     status = "activated" if user_obj.is_active else "deactivated"
     messages.success(request, f"{user_obj.email} has been {status}.")
+
+    # Notify the user by email
+    try:
+        from accounts.notifications import _send, _base_html, SITE_URL
+        if user_obj.is_active:
+            body = f"""
+<p>Dear <strong>{user_obj.first_name} {user_obj.last_name}</strong>,</p>
+<p>Your MKJ SUPA CUP portal account has been <strong style="color:#198754">reactivated</strong>.
+You can now log in and access the system.</p>
+<a href="{SITE_URL}/portal/login/" class="btn">Login to Portal</a>"""
+            _send("Your MKJ SUPA CUP Account Has Been Reactivated",
+                  _base_html("Account Reactivated", body), [user_obj.email])
+        else:
+            body = f"""
+<p>Dear <strong>{user_obj.first_name} {user_obj.last_name}</strong>,</p>
+<p>Your MKJ SUPA CUP portal account has been <strong style="color:#dc3545">deactivated</strong>.</p>
+<p>If you believe this is an error, please contact the system administrator at
+<a href="mailto:admin@mkjsupacup.com">admin@mkjsupacup.com</a> or call 0704 517 498.</p>"""
+            _send("Your MKJ SUPA CUP Account Has Been Deactivated",
+                  _base_html("Account Deactivated", body), [user_obj.email])
+    except Exception:
+        pass  # never block the toggle because of email failure
+
     return redirect('manage_users')
 
 
