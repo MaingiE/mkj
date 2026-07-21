@@ -12429,6 +12429,13 @@ def ward_tm_dashboard_view(request):
     # Count players registered in this ward discipline
     player_count = CountyPlayer.objects.filter(discipline=discipline).count()
 
+    # Get the team name from the Ligi registration for this manager
+    from teams.models import LigiMashinaniRegistration
+    team_registration = LigiMashinaniRegistration.objects.filter(
+        account=user, status='approved'
+    ).order_by('-submitted_at').first()
+    team_name = team_registration.team_name if team_registration else None
+
     # Check if the ward's team has qualified to sub-county finals
     team = getattr(discipline, 'linked_team', None)
     qualified_to_subcounty = (
@@ -12458,6 +12465,7 @@ def ward_tm_dashboard_view(request):
         'sub_county': user.sub_county,
         'player_count': player_count,
         'team': team,
+        'team_name': team_name,
         'qualified_to_subcounty': qualified_to_subcounty,
         'eligible_for_subcounty': eligible_for_subcounty,
         'eligible_count': len(eligible_for_subcounty),

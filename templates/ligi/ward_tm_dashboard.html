@@ -7,7 +7,10 @@
         <span>Ligi Mashinani</span>
         <span>Dashboard</span>
     </div>
-    <h1><i class="bi bi-speedometer2"></i> Ligi Mashinani  —  Team Manager</h1>
+    <h1><i class="bi bi-speedometer2"></i>
+        {% if team_name %}{{ team_name }}{% else %}Ligi Mashinani{% endif %}
+        &nbsp;—&nbsp; Team Manager
+    </h1>
     <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward</p>
 </div>
 
@@ -17,6 +20,13 @@
         <i class="bi bi-info-circle"></i> Team Overview
     </h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">
+
+        {% if team_name %}
+        <div style="background:#e8f0fe;border-radius:8px;padding:1rem;text-align:center;grid-column:1/-1">
+            <div style="font-size:.75rem;color:#1d4ed8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Your Team</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#124491">{{ team_name }}</div>
+        </div>
+        {% endif %}
 
         <div style="background:#f8f9fa;border-radius:8px;padding:1rem;text-align:center">
             <div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Ward</div>
