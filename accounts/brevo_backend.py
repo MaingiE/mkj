@@ -116,7 +116,7 @@ class BrevoEmailBackend(BaseEmailBackend):
                 [r["email"] for r in to_list],
                 response.json().get("messageId", "?"),
             )
-            self._log_to_db(message, status='sent')
+            self._log_to_db(message, status='sent', html_override=html_content or '')
             return True
         else:
             logger.error(
@@ -131,7 +131,7 @@ class BrevoEmailBackend(BaseEmailBackend):
             return False
 
     @staticmethod
-    def _log_to_db(message, status='sent', error=''):
+    def _log_to_db(message, status='sent', error='', html_override=None):
         """Log sent email to EmailLog so the admin dashboard can display it."""
         try:
             import logging as _log
@@ -139,12 +139,16 @@ class BrevoEmailBackend(BaseEmailBackend):
             _logger = _log.getLogger(__name__)
             from admin_dashboard.models import EmailLog
 
-            html_body = ''
-            if hasattr(message, 'alternatives'):
-                for content, mimetype in getattr(message, 'alternatives', []):
-                    if mimetype == 'text/html':
-                        html_body = content
-                        break
+            # Use html_override if provided (captured before send), else read from alternatives
+            if html_override is not None:
+                html_body = html_override
+            else:
+                html_body = ''
+                if hasattr(message, 'alternatives'):
+                    for content, mimetype in getattr(message, 'alternatives', []):
+                        if mimetype == 'text/html':
+                            html_body = content
+                            break
 
             # Extract plain email address from "Name <email>" format
             def _extract_email(addr):

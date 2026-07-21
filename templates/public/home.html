@@ -1968,9 +1968,10 @@ a.hero-feat--link {
 #ligi-float-card {
     position: fixed;
     z-index: 9000;
-    bottom: 2rem;
-    left: 1.5rem;          /* LEFT side — fixtures card is on the right */
-    width: 320px;
+    top: 50%;
+    left: 1.5rem;
+    transform: translateY(-50%);
+    width: 300px;
     max-width: calc(100vw - 2rem);
     background: linear-gradient(145deg, rgba(8,24,50,0.97) 0%, rgba(10,35,72,0.97) 60%, rgba(14,42,82,0.97) 100%);
     backdrop-filter: blur(20px);
@@ -2194,9 +2195,11 @@ a.hero-feat--link {
 /* Responsive */
 @media (max-width: 479px) {
     #ligi-float-card {
-        bottom: 1rem;
+        top: auto;
+        bottom: 5rem;
         left: 0.75rem;
         right: 0.75rem;
+        transform: none;
         width: auto;
         max-width: none;
         width: calc(100% - 1.5rem);
@@ -2443,7 +2446,7 @@ a.hero-feat--link {
                 <div class="ligi-panel__icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <h3>Register for Ligi Mashinani</h3>
+                <h3>Register for Ligi Mashinani <span style="font-size:.9rem;opacity:.75;font-weight:500">(2026/2027 Season)</span></h3>
             </div>
 
             {% if ligi_reg_deadline %}
@@ -3529,7 +3532,7 @@ a.hero-feat--link {
                          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
       card.style.opacity = '1';
-      card.style.transform = 'none';
+      card.style.transform = 'translateY(-50%)';
       showBtn();
       return;
     }
@@ -3571,7 +3574,8 @@ a.hero-feat--link {
       });
 
       anim.finished.then(function () {
-        card.style.transform = 'translate(0, 0) rotate(0deg)';
+        /* Restore CSS-based vertical centering after animation */
+        card.style.transform = 'translateY(-50%)';
         card.style.opacity = '1';
         showBtn();
       }).catch(function () {
