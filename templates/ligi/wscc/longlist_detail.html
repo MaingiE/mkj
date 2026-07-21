@@ -94,12 +94,12 @@
     <!-- Approve form -->
     <form method="post" action="{% url 'wscc_approve_longlist' longlist.pk %}"
           style="flex:1;min-width:280px"
-          onsubmit="return confirm('Approve this longlist? The Ward Team Manager will be notified.');">
+          onsubmit="return confirm('Approve this longlist? The team manager will be notified.');">
         {% csrf_token %}
         <div class="card" style="padding:1.25rem;border:2px solid #badbcc">
             <h3 style="font-size:1rem;color:#0a3622;margin-bottom:.75rem"><i class="bi bi-check-circle"></i> Approve Longlist</h3>
             <p style="font-size:.87rem;color:#555;margin-bottom:1rem">
-                Approving will allow the Ward Team Manager to select match-day squads from this longlist.
+                Approving will allow the team manager to select match-day squads from this longlist.
                 An email notification will be sent to them.
             </p>
             <button type="submit"
@@ -135,7 +135,7 @@
 {% elif longlist.status == 'wscc_approved' %}
 <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.9rem;color:#0a3622">
     <i class="bi bi-check-circle-fill"></i> <strong>This longlist has been approved.</strong>
-    The Ward Team Manager can now select match-day squads from these players.
+    The team manager can now select match-day squads from these players.
     <br><br>
     <em>You can still return an approved longlist if corrections are needed  -  use the form below.</em>
     <form method="post" action="{% url 'wscc_return_longlist' longlist.pk %}" style="margin-top:1rem">
