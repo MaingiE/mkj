@@ -1,4 +1,4 @@
-"""
+1"""
 MKJ SUPA CUP Accounts - Views & Permissions
 """
 from rest_framework import generics, status, permissions
