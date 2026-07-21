@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Select Ward Team Manager — {{ ward }} Ward{% endblock %}
+
+{% block extra_css %}
+<style>
+.wtm-hero {
+    background: linear-gradient(135deg, #0a2f5c 0%, #124491 60%, #1a5db8 100%);
+    border-radius: 16px; padding: 1.75rem 2rem; color: #fff;
+    margin-bottom: 1.75rem; position: relative; overflow: hidden;
+}
+.wtm-hero::after {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 200px; height: 200px; background: rgba(255,255,255,.05); border-radius: 50%;
+}
+.wtm-hero h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 .25rem; position: relative; }
+.wtm-hero p  { opacity: .75; font-size: .88rem; margin: 0; position: relative; }
+
+.disc-card {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    margin-bottom: 1.5rem; overflow: hidden;
+}
+.disc-header {
+    background: #f8faff; padding: .85rem 1.25rem;
+    border-bottom: 1px solid #eef2ff;
+    display: flex; align-items: center; gap: .75rem;
+}
+.disc-header h2 { font-size: 1rem; font-weight: 700; color: #1e3a6e; margin: 0; }
+.disc-header .sport-icon {
+    width: 36px; height: 36px; background: #e8efff; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: #124491; flex-shrink: 0;
+}
+
+.current-tm-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .25rem .75rem; background: #d1fae5; color: #065f46;
+    border-radius: 20px; font-size: .72rem; font-weight: 700;
+    border: 1px solid #6ee7b7;
+}
+
+.tm-options { padding: 1rem 1.25rem; display: grid; gap: .65rem; }
+.tm-option {
+    display: flex; align-items: center; gap: 1rem;
+    padding: .85rem 1rem; border: 2px solid #e5e7eb;
+    border-radius: 10px; cursor: pointer; transition: all .2s;
+    background: #fafafa;
+}
+.tm-option:hover { border-color: #124491; background: #f0f4ff; }
+.tm-option.selected { border-color: #124491; background: #eef2ff; }
+.tm-option input[type=radio] { width: 18px; height: 18px; accent-color: #124491; flex-shrink: 0; }
+.tm-option-info { flex: 1; }
+.tm-option-name { font-weight: 700; color: #111827; font-size: .92rem; }
+.tm-option-team { font-size: .78rem; color: #6b7280; margin-top: .1rem; }
+.tm-option-email { font-size: .72rem; color: #9ca3af; }
+
+.submit-btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .65rem 1.5rem; background: #124491; color: #fff;
+    border: none; border-radius: 9px; font-weight: 700; font-size: .9rem;
+    cursor: pointer; transition: background .2s;
+}
+.submit-btn:hover { background: #0a2f5c; }
+
+.empty-state {
+    padding: 3rem 2rem; text-align: center; color: #9ca3af;
+}
+.empty-state i { font-size: 2.5rem; display: block; margin-bottom: .75rem; opacity: .4; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="wtm-hero">
+    <h1><i class="bi bi-person-badge-fill me-2" style="opacity:.8"></i>Select Ward Team Manager</h1>
+    <p>{{ ward }} Ward &nbsp;·&nbsp; {{ sub_county }} Sub-County &nbsp;·&nbsp; Select the winning team's manager per discipline</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1.25rem">
+{% for msg in messages %}
+<div style="padding:.75rem 1rem;border-radius:8px;margin-bottom:.4rem;font-size:.88rem;
+    {% if 'error' in msg.tags %}background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;
+    {% elif 'success' in msg.tags %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;
+    {% elif 'warning' in msg.tags %}background:#fef3c7;color:#92400e;border:1px solid #fcd34d;
+    {% else %}background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;{% endif %}">
+    {{ msg }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if not has_registrations %}
+<div class="disc-card">
+    <div class="empty-state">
+        <i class="bi bi-people"></i>
+        <p style="font-weight:600;color:#374151;margin:.25rem 0">No approved team registrations found</p>
+        <p style="font-size:.85rem">Teams must be approved before a Ward TM can be selected.</p>
+        <a href="{% url 'wscc_dashboard' %}" style="color:#124491;font-size:.85rem">← Back to Dashboard</a>
+    </div>
+</div>
+{% else %}
+
+<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.5rem;font-size:.85rem;color:#92400e">
+    <i class="bi bi-info-circle me-1"></i>
+    Select the team manager for each discipline. Typically this is the <strong>winning team's manager</strong>
+    from the Ligi Mashinani season. They will receive ward-level access to manage the sub-county squad.
+</div>
+
+{% for item in discipline_data %}
+<div class="disc-card">
+    <div class="disc-header">
+        <div class="sport-icon"><i class="bi bi-trophy"></i></div>
+        <h2>{{ item.sport_label }}</h2>
+        {% if item.current_manager %}
+        <span class="current-tm-badge">
+            <i class="bi bi-check-circle-fill"></i>
+            Current: {{ item.current_manager.get_full_name }}
+        </span>
+        {% endif %}
+    </div>
+
+    <form method="post" style="margin:0">
+        {% csrf_token %}
+        <input type="hidden" name="discipline" value="{{ item.discipline }}">
+
+        <div class="tm-options">
+            {% for reg in item.registrations %}
+            <label class="tm-option {% if item.current_manager and reg.account and reg.account.pk == item.current_manager.pk %}selected{% endif %}">
+                <input type="radio" name="selected_user_pk"
+                    value="{{ reg.account.pk }}"
+                    {% if item.current_manager and reg.account and reg.account.pk == item.current_manager.pk %}checked{% endif %}
+                    required>
+                <div class="tm-option-info">
+                    <div class="tm-option-name">
+                        {{ reg.manager_first_name }} {{ reg.manager_last_name }}
+                        {% if item.current_manager and reg.account and reg.account.pk == item.current_manager.pk %}
+                        <span style="font-size:.68rem;background:#d1fae5;color:#065f46;padding:.1rem .4rem;border-radius:4px;margin-left:.4rem;font-weight:700">CURRENT</span>
+                        {% endif %}
+                    </div>
+                    <div class="tm-option-team">🏟 {{ reg.team_name }}</div>
+                    <div class="tm-option-email">✉ {{ reg.manager_email }}</div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div style="padding:.85rem 1.25rem;border-top:1px solid #f0f0f0;display:flex;gap:.75rem;align-items:center">
+            <button type="submit" class="submit-btn">
+                <i class="bi bi-person-check-fill"></i>
+                Confirm Ward TM for {{ item.sport_label }}
+            </button>
+            <span style="font-size:.75rem;color:#9ca3af">They will be notified by email</span>
+        </div>
+    </form>
+</div>
+{% endfor %}
+
+{% endif %}
+
+<div style="margin-top:1rem">
+    <a href="{% url 'wscc_dashboard' %}" style="color:#6b7280;font-size:.85rem;text-decoration:none">
+        <i class="bi bi-arrow-left me-1"></i> Back to WSCC Dashboard
+    </a>
+</div>
+
+<script>
+// Highlight selected option
+document.querySelectorAll('.tm-option input[type=radio]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        var form = this.closest('form');
+        form.querySelectorAll('.tm-option').forEach(function(opt) { opt.classList.remove('selected'); });
+        this.closest('.tm-option').classList.add('selected');
+    });
+});
+</script>
+
+{% endblock %}

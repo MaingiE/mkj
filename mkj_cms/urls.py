@@ -271,6 +271,7 @@ from .web_views import (
     wscc_ward_comp_pools_view,
     wscc_ward_comp_generate_fixtures_view,
     wscc_ward_match_sheet_view,
+    wscc_select_ward_tm_view,
     # Ligi Mashinani: Senior transfers (CSO/Director/Admin)
     senior_transfers_view,
     senior_transfer_action_view,
@@ -645,6 +646,7 @@ urlpatterns = [
     path("ligi/wscc/ward-competition/<int:comp_pk>/pools/",         wscc_ward_comp_pools_view,              name="wscc_ward_comp_pools"),
     path("ligi/wscc/ward-competition/<int:comp_pk>/generate/",      wscc_ward_comp_generate_fixtures_view,  name="wscc_ward_comp_generate"),
     path("ligi/wscc/match-sheet/<int:fixture_pk>/",                 wscc_ward_match_sheet_view,             name="wscc_ward_match_sheet"),
+    path("ligi/wscc/select-ward-tm/",                               wscc_select_ward_tm_view,               name="wscc_select_ward_tm"),
 
     # ── LIGI MASHINANI: Senior Transfer Portal (CSO / Director / Admin) ──────
     path("portal/ligi/transfers/senior/",                          senior_transfers_view,          name="senior_transfers"),

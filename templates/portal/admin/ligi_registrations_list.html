@@ -1,165 +1,405 @@
 {% extends 'base.html' %}
-{% block title %}Ligi Mashinani Registrations  -  MKJ Portal{% endblock %}
+{% block title %}Ligi Mashinani Registrations — MKJ Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── PAGE HERO ──────────────────────────────────────────────────── */
+.lr-hero {
+    background: linear-gradient(135deg, #0a2f5c 0%, #124491 60%, #1a5db8 100%);
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    color: #fff;
+    margin-bottom: 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
+.lr-hero::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,.05);
+    border-radius: 50%;
+}
+.lr-hero h1 {
+    font-size: 1.45rem;
+    font-weight: 800;
+    margin: 0 0 .25rem;
+}
+.lr-hero p { opacity: .75; font-size: .88rem; margin: 0; }
+
+/* ── STAT CARDS ─────────────────────────────────────────────────── */
+.lr-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 900px) { .lr-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 540px) { .lr-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.lr-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.1rem 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    border-left: 4px solid transparent;
+    transition: box-shadow .2s, transform .2s;
+}
+.lr-stat:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
+.lr-stat-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.lr-stat-val { font-size: 1.6rem; font-weight: 900; line-height: 1; }
+.lr-stat-lbl { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; opacity: .6; margin-top: .15rem; }
+
+.lr-stat--pending  { border-color: #f59e0b; }
+.lr-stat--pending  .lr-stat-icon { background: #fef3c7; color: #b45309; }
+.lr-stat--pending  .lr-stat-val  { color: #b45309; }
+
+.lr-stat--verified { border-color: #3b82f6; }
+.lr-stat--verified .lr-stat-icon { background: #dbeafe; color: #1d4ed8; }
+.lr-stat--verified .lr-stat-val  { color: #1d4ed8; }
+
+.lr-stat--approved { border-color: #10b981; }
+.lr-stat--approved .lr-stat-icon { background: #d1fae5; color: #065f46; }
+.lr-stat--approved .lr-stat-val  { color: #065f46; }
+
+.lr-stat--rejected { border-color: #ef4444; }
+.lr-stat--rejected .lr-stat-icon { background: #fee2e2; color: #b91c1c; }
+.lr-stat--rejected .lr-stat-val  { color: #b91c1c; }
+
+.lr-stat--total    { border-color: #8b5cf6; }
+.lr-stat--total    .lr-stat-icon { background: #ede9fe; color: #6d28d9; }
+.lr-stat--total    .lr-stat-val  { color: #6d28d9; }
+
+/* ── FILTER CARD ────────────────────────────────────────────────── */
+.lr-filters {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: flex-end;
+}
+.lr-filters .f-group { display: flex; flex-direction: column; gap: .25rem; flex: 1; min-width: 160px; }
+.lr-filters label { font-size: .7rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+.lr-filters input, .lr-filters select {
+    padding: .5rem .75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: .85rem;
+    background: #f9fafb;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+}
+.lr-filters input:focus, .lr-filters select:focus {
+    border-color: #124491;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(18,68,145,.1);
+}
+.lr-filters .f-actions { display: flex; gap: .5rem; align-items: flex-end; }
+.lr-btn-filter {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .5rem 1.1rem; background: #124491; color: #fff;
+    border: none; border-radius: 8px; font-size: .82rem; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+    white-space: nowrap;
+}
+.lr-btn-filter:hover { background: #0a2f5c; }
+.lr-btn-clear {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .5rem .9rem; background: #fff; color: #6b7280;
+    border: 1px solid #e5e7eb; border-radius: 8px; font-size: .82rem; font-weight: 600;
+    text-decoration: none; transition: all .2s;
+    white-space: nowrap;
+}
+.lr-btn-clear:hover { border-color: #ef4444; color: #ef4444; background: #fff5f5; }
+
+/* ── TABLE CARD ─────────────────────────────────────────────────── */
+.lr-table-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    overflow: hidden;
+}
+.lr-table-head {
+    padding: .85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f0f0f0;
+}
+.lr-table-head h2 { font-size: .9rem; font-weight: 700; color: #374151; margin: 0; }
+.lr-count-badge {
+    background: #f3f4f6; color: #6b7280;
+    font-size: .72rem; font-weight: 600;
+    padding: .2rem .6rem; border-radius: 20px;
+}
+
+table.lr-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.lr-table thead tr { background: #f8faff; }
+.lr-table thead th {
+    padding: .65rem 1rem;
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #9ca3af;
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+}
+.lr-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+}
+.lr-table tbody tr:last-child { border-bottom: none; }
+.lr-table tbody tr:hover { background: #f8faff; }
+.lr-table td { padding: .75rem 1rem; vertical-align: middle; color: #374151; }
+.lr-table td.num { color: #d1d5db; font-size: .78rem; font-weight: 600; }
+
+.team-name { font-weight: 700; color: #111827; }
+.ward-name { font-size: .78rem; color: #6b7280; margin-top: .1rem; }
+.mgr-email { font-size: .75rem; color: #9ca3af; }
+
+/* Status badges */
+.s-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .25rem .65rem; border-radius: 20px;
+    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    white-space: nowrap;
+}
+.s-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.s-pending  { background: #fef3c7; color: #b45309; }
+.s-pending::before  { background: #f59e0b; }
+.s-ward     { background: #dbeafe; color: #1d4ed8; }
+.s-ward::before     { background: #3b82f6; }
+.s-approved { background: #d1fae5; color: #065f46; }
+.s-approved::before { background: #10b981; }
+.s-rejected { background: #fee2e2; color: #b91c1c; }
+.s-rejected::before { background: #ef4444; }
+.s-other    { background: #f3f4f6; color: #6b7280; }
+.s-other::before    { background: #9ca3af; }
+
+.acct-badge {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .15rem .5rem; border-radius: 6px;
+    font-size: .63rem; font-weight: 600;
+    background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;
+    margin-top: .3rem;
+}
+
+.lr-view-btn {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .35rem .8rem; background: #f0f4ff; color: #124491;
+    border: 1px solid #c7d7f7; border-radius: 7px;
+    font-size: .78rem; font-weight: 600; text-decoration: none;
+    transition: all .2s;
+}
+.lr-view-btn:hover { background: #124491; color: #fff; border-color: #124491; }
+
+/* Empty state */
+.lr-empty {
+    padding: 3.5rem 2rem;
+    text-align: center;
+    color: #9ca3af;
+}
+.lr-empty i { font-size: 2.5rem; display: block; margin-bottom: .75rem; opacity: .4; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-    <div>
-        <h1><i class="bi bi-people-fill"></i> Ligi Mashinani Registrations</h1>
-        <p class="text-muted mb-0">Review and approve ward team manager registrations</p>
+
+<!-- Hero -->
+<div class="lr-hero">
+    <div style="position:relative;z-index:1">
+        <h1><i class="bi bi-people-fill me-2" style="opacity:.8"></i>Ligi Mashinani Registrations</h1>
+        <p>Review and approve ward team manager registrations — 2026/2027 Season</p>
     </div>
 </div>
 
 {% if messages %}
+<div style="margin-bottom:1.25rem">
 {% for msg in messages %}
-<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
-    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div style="padding:.75rem 1rem;border-radius:8px;margin-bottom:.4rem;font-size:.88rem;
+    {% if 'error' in msg.tags %}background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;
+    {% elif 'success' in msg.tags %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;
+    {% elif 'warning' in msg.tags %}background:#fef3c7;color:#92400e;border:1px solid #fcd34d;
+    {% else %}background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;{% endif %}">
+    {{ msg }}
 </div>
 {% endfor %}
+</div>
 {% endif %}
 
-<!-- Summary Cards -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem">
-    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#856404">{{ counts.pending }}</div>
-        <div style="font-size:.8rem;color:#856404;text-transform:uppercase">Pending</div>
+<!-- Stat cards -->
+<div class="lr-stats">
+    <div class="lr-stat lr-stat--pending">
+        <div class="lr-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+            <div class="lr-stat-val">{{ counts.pending }}</div>
+            <div class="lr-stat-lbl">Pending</div>
+        </div>
     </div>
-    <div style="background:#cfe2ff;border:1px solid #b6d4fe;border-radius:8px;padding:1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#084298">{{ counts.ward_verified }}</div>
-        <div style="font-size:.8rem;color:#084298;text-transform:uppercase">Ward Verified</div>
+    <div class="lr-stat lr-stat--verified">
+        <div class="lr-stat-icon"><i class="bi bi-patch-check"></i></div>
+        <div>
+            <div class="lr-stat-val">{{ counts.ward_verified }}</div>
+            <div class="lr-stat-lbl">Ward Verified</div>
+        </div>
     </div>
-    <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#0a3622">{{ counts.approved }}</div>
-        <div style="font-size:.8rem;color:#0a3622;text-transform:uppercase">Approved</div>
+    <div class="lr-stat lr-stat--approved">
+        <div class="lr-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <div>
+            <div class="lr-stat-val">{{ counts.approved }}</div>
+            <div class="lr-stat-lbl">Approved</div>
+        </div>
     </div>
-    <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:8px;padding:1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#842029">{{ counts.rejected }}</div>
-        <div style="font-size:.8rem;color:#842029;text-transform:uppercase">Rejected</div>
+    <div class="lr-stat lr-stat--rejected">
+        <div class="lr-stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+        <div>
+            <div class="lr-stat-val">{{ counts.rejected }}</div>
+            <div class="lr-stat-lbl">Rejected</div>
+        </div>
     </div>
-    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#124491">{{ counts.total }}</div>
-        <div style="font-size:.8rem;color:#888;text-transform:uppercase">Total</div>
+    <div class="lr-stat lr-stat--total">
+        <div class="lr-stat-icon"><i class="bi bi-collection-fill"></i></div>
+        <div>
+            <div class="lr-stat-val">{{ counts.total }}</div>
+            <div class="lr-stat-lbl">Total</div>
+        </div>
     </div>
 </div>
 
 <!-- Filters -->
-<form method="get" class="card shadow-sm mb-4">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-3">
-                <label class="form-label small fw-semibold">Search</label>
-                <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
-                       placeholder="Team, manager, ward, email…">
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold">Status</label>
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">All</option>
-                    {% for val, label in status_choices %}
-                    <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold">Sub-County</label>
-                <select name="sub_county" class="form-select form-select-sm">
-                    <option value="">All</option>
-                    {% for val, label in sub_county_choices %}
-                    <option value="{{ val }}" {% if sub_county_filter == val %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label small fw-semibold">Discipline</label>
-                <select name="discipline" class="form-select form-select-sm">
-                    <option value="">All</option>
-                    {% for val, label in discipline_choices %}
-                    <option value="{{ val }}" {% if discipline_filter == val %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-6 col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm w-100">
-                    <i class="bi bi-search"></i> Filter
-                </button>
-                <a href="{% url 'ligi_registrations_list' %}" class="btn btn-outline-secondary btn-sm w-100">
-                    <i class="bi bi-x"></i> Clear
-                </a>
-            </div>
-        </div>
+<form method="get" class="lr-filters">
+    <div class="f-group" style="flex:2;min-width:200px">
+        <label>Search</label>
+        <input type="text" name="q" value="{{ search }}" placeholder="Team, manager, ward, email…">
+    </div>
+    <div class="f-group">
+        <label>Status</label>
+        <select name="status">
+            <option value="">All</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="f-group">
+        <label>Sub-County</label>
+        <select name="sub_county">
+            <option value="">All</option>
+            {% for val, label in sub_county_choices %}
+            <option value="{{ val }}" {% if sub_county_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="f-group">
+        <label>Discipline</label>
+        <select name="discipline">
+            <option value="">All</option>
+            {% for val, label in discipline_choices %}
+            <option value="{{ val }}" {% if discipline_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="f-actions">
+        <button type="submit" class="lr-btn-filter">
+            <i class="bi bi-search"></i> Filter
+        </button>
+        <a href="{% url 'ligi_registrations_list' %}" class="lr-btn-clear">
+            <i class="bi bi-x"></i> Clear
+        </a>
     </div>
 </form>
 
-<!-- Registrations Table -->
+<!-- Table -->
 {% if registrations %}
-<div class="card shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0" style="font-size:.88rem">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Team</th>
-                        <th>Ward / Sub-County</th>
-                        <th>Discipline</th>
-                        <th>Manager</th>
-                        <th>Submitted</th>
-                        <th>Status</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for reg in registrations %}
-                <tr>
-                    <td class="text-muted">{{ reg.pk }}</td>
-                    <td><strong>{{ reg.team_name }}</strong></td>
-                    <td>
-                        {{ reg.ward }}<br>
-                        <span class="text-muted small">{{ reg.sub_county }}</span>
-                    </td>
-                    <td>{{ reg.get_discipline_display|default:reg.discipline }}</td>
-                    <td>
-                        {{ reg.manager_first_name }} {{ reg.manager_last_name }}<br>
-                        <span class="text-muted small">{{ reg.manager_email }}</span>
-                    </td>
-                    <td class="text-muted small">
-                        {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %} - {% endif %}
-                    </td>
-                    <td>
-                        {% if reg.status == 'pending' %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        {% elif reg.status == 'ward_verified' %}
-                            <span class="badge bg-info text-dark">Ward Verified</span>
-                        {% elif reg.status == 'approved' %}
-                            <span class="badge bg-success">Approved</span>
-                            {% if reg.account_created %}<br><span class="badge bg-light text-success border border-success" style="font-size:.7rem">Account Created</span>{% endif %}
-                        {% elif reg.status == 'rejected' %}
-                            <span class="badge bg-danger">Rejected</span>
-                        {% else %}
-                            <span class="badge bg-secondary">{{ reg.status }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'ligi_registration_detail' reg.pk %}"
-                           class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-eye"></i> View
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="lr-table-card">
+    <div class="lr-table-head">
+        <h2><i class="bi bi-table me-1" style="opacity:.5"></i> Registrations</h2>
+        <span class="lr-count-badge">{{ registrations|length }} shown</span>
     </div>
-    <div class="card-footer text-muted small">
-        {{ registrations|length }} registration{{ registrations|length|pluralize }} shown
+    <div style="overflow-x:auto">
+        <table class="lr-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>Ward / Sub-County</th>
+                    <th>Discipline</th>
+                    <th>Manager</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th style="text-align:right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for reg in registrations %}
+            <tr>
+                <td class="num">{{ reg.pk }}</td>
+                <td>
+                    <div class="team-name">{{ reg.team_name }}</div>
+                </td>
+                <td>
+                    <div class="team-name" style="font-size:.82rem">{{ reg.ward }}</div>
+                    <div class="ward-name">{{ reg.sub_county }}</div>
+                </td>
+                <td style="white-space:nowrap">{{ reg.get_discipline_display|default:reg.discipline }}</td>
+                <td>
+                    <div style="font-weight:600;font-size:.83rem">{{ reg.manager_first_name }} {{ reg.manager_last_name }}</div>
+                    <div class="mgr-email">{{ reg.manager_email }}</div>
+                </td>
+                <td style="white-space:nowrap;color:#9ca3af;font-size:.8rem">
+                    {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if reg.status == 'pending' %}
+                        <span class="s-badge s-pending">Pending</span>
+                    {% elif reg.status == 'ward_verified' %}
+                        <span class="s-badge s-ward">Ward Verified</span>
+                    {% elif reg.status == 'approved' %}
+                        <div>
+                            <span class="s-badge s-approved">Approved</span>
+                            {% if reg.account_created %}
+                            <div><span class="acct-badge"><i class="bi bi-person-check-fill"></i> Account Created</span></div>
+                            {% endif %}
+                        </div>
+                    {% elif reg.status == 'rejected' %}
+                        <span class="s-badge s-rejected">Rejected</span>
+                    {% else %}
+                        <span class="s-badge s-other">{{ reg.status }}</span>
+                    {% endif %}
+                </td>
+                <td style="text-align:right">
+                    <a href="{% url 'ligi_registration_detail' reg.pk %}" class="lr-view-btn">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% else %}
-<div class="card shadow-sm">
-    <div class="card-body text-center text-muted py-5">
-        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-        No registrations found{% if search or status_filter or sub_county_filter or discipline_filter %} for the current filters{% endif %}.
+<div class="lr-table-card">
+    <div class="lr-empty">
+        <i class="bi bi-inbox"></i>
+        <p style="font-weight:600;color:#374151;margin:.25rem 0">No registrations found</p>
+        {% if search or status_filter or sub_county_filter or discipline_filter %}
+        <p style="font-size:.85rem">Try adjusting your filters</p>
+        {% endif %}
     </div>
 </div>
 {% endif %}
+
 {% endblock %}

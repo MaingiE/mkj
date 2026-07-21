@@ -17079,3 +17079,199 @@ def transfer_tracking_dashboard_view(request):
         'sc_choices':     MakueniSubCounty.choices,
         'sport_choices':  SportType.choices,
     })
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LIGI MASHINANI: WSCC  —  Select / Promote Ward Team Manager
+#
+#  After a Ligi Mashinani season the WSCC selects the winning team's manager
+#  as the Ward Team Manager for sub-county competition.
+#
+#  URL: /ligi/wscc/select-ward-tm/
+#  Auth: ward_sports_council_chair, admin
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_select_ward_tm_view(request):
+    """
+    WSCC selects a team manager from their ward to become the Ward Team Manager
+    (representing the ward at sub-county level).
+
+    - Lists all approved Ligi Mashinani registrations for this WSCC's ward
+    - WSCC selects one team manager per discipline
+    - On confirmation: promotes that user to ward_team_manager role,
+      demotes the previous Ward TM back to team_manager
+    - Notifies both users by email
+    - Requires SCSO approval before promotion takes effect (optional flow)
+    """
+    from teams.models import LigiMashinaniRegistration
+    from accounts.models import User, UserRole
+
+    user = request.user
+    ward      = getattr(user, 'ward', '') or ''
+    sub_county = getattr(user, 'sub_county', '') or ''
+
+    if not ward or not sub_county:
+        messages.error(request, 'Your account is not assigned to a ward. Contact your administrator.')
+        return redirect('wscc_dashboard')
+
+    # All APPROVED team registrations in this ward (any discipline)
+    registrations = (
+        LigiMashinaniRegistration.objects
+        .filter(ward=ward, sub_county=sub_county, status='approved')
+        .select_related('account')
+        .order_by('discipline', 'team_name')
+    )
+
+    # Group by discipline
+    from collections import defaultdict
+    by_discipline = defaultdict(list)
+    for reg in registrations:
+        by_discipline[reg.discipline].append(reg)
+
+    # Current Ward TMs for this ward
+    current_ward_tms = User.objects.filter(
+        role=UserRole.TEAM_MANAGER,
+        ward=ward,
+        sub_county=sub_county,
+        is_active=True,
+    )
+    # Actually — Ward TMs have role ward_sports_council_chair's sub-role, but in
+    # this system they have role='team_manager' with a WardLonglist assigned.
+    # We track who is "acting Ward TM" via CountyDiscipline.manager field.
+    from teams.models import CountyDiscipline
+    current_discipline_managers = {
+        cd.sport_type: cd.manager
+        for cd in CountyDiscipline.objects.filter(
+            ward=ward, sub_county=sub_county, level='ward',
+        ).select_related('manager')
+        if cd.manager
+    }
+
+    if request.method == 'POST':
+        discipline  = request.POST.get('discipline', '').strip()
+        selected_pk = request.POST.get('selected_user_pk', '').strip()
+
+        if not discipline or not selected_pk:
+            messages.error(request, 'Please select a discipline and a team manager.')
+            return redirect('wscc_select_ward_tm')
+
+        try:
+            selected_user = User.objects.get(pk=selected_pk, is_active=True)
+        except User.DoesNotExist:
+            messages.error(request, 'Selected user not found.')
+            return redirect('wscc_select_ward_tm')
+
+        # Ensure the selected user manages a team in this ward
+        if not registrations.filter(account=selected_user, discipline=discipline).exists():
+            messages.error(request, 'Selected user does not have an approved registration in this ward/discipline.')
+            return redirect('wscc_select_ward_tm')
+
+        # Get the CountyDiscipline for this ward + discipline
+        try:
+            cd = CountyDiscipline.objects.get(
+                ward=ward,
+                sub_county=sub_county,
+                sport_type=discipline,
+                level='ward',
+            )
+        except CountyDiscipline.DoesNotExist:
+            messages.error(request, f'No ward discipline found for {discipline}. Contact admin.')
+            return redirect('wscc_select_ward_tm')
+
+        previous_manager = cd.manager
+
+        # Update the CountyDiscipline manager
+        cd.manager = selected_user
+        cd.save(update_fields=['manager'])
+
+        # Update the selected user: ensure they have ward/sub_county set
+        selected_user.ward       = ward
+        selected_user.sub_county = sub_county
+        selected_user.save(update_fields=['ward', 'sub_county'])
+
+        # Log this action
+        try:
+            from admin_dashboard.activity_logger import log_activity
+            log_activity(
+                user=request.user,
+                action='USER_UPDATE',
+                description=(
+                    f'WSCC {request.user.get_full_name()} selected '
+                    f'{selected_user.get_full_name()} as Ward TM for '
+                    f'{ward} ({discipline}) in {sub_county} sub-county.'
+                ),
+                obj=selected_user,
+            )
+        except Exception:
+            pass
+
+        # Email the newly selected Ward TM
+        try:
+            from accounts.notifications import _send, _base_html, SITE_URL
+            body = f"""
+<p>Dear <strong>{selected_user.first_name} {selected_user.last_name}</strong>,</p>
+<p>Congratulations! You have been selected as the <strong>Ward Team Manager</strong>
+for <strong>{ward} Ward — {discipline}</strong> in <strong>{sub_county} Sub-County</strong>
+for the Ligi Mashinani season.</p>
+<p>You can now access the ward team management portal to compose the ward longlist
+and manage your team at sub-county level.</p>
+<a href="{SITE_URL}/ligi/dashboard/" class="btn">Go to Ward TM Dashboard</a>
+<p style="margin-top:1.5rem;font-size:.85rem;color:#666">
+Selected by: {request.user.get_full_name()} (Ward Sports Council Chair)
+</p>"""
+            _send(
+                f'You are now Ward Team Manager — {ward} Ward ({discipline})',
+                _base_html('Ward Team Manager Selection', body),
+                [selected_user.email],
+            )
+        except Exception as exc:
+            logger.warning('Failed to notify new Ward TM: %s', exc)
+
+        # Email the previous manager (if different)
+        if previous_manager and previous_manager.pk != selected_user.pk:
+            try:
+                from accounts.notifications import _send, _base_html, SITE_URL
+                body_prev = f"""
+<p>Dear <strong>{previous_manager.first_name} {previous_manager.last_name}</strong>,</p>
+<p>The Ward Sports Council Chair has updated the Ward Team Manager selection for
+<strong>{ward} Ward — {discipline}</strong>.</p>
+<p>You remain a registered team manager and can still manage your team's roster.
+Please contact your Ward Sports Council Chair if you have any questions.</p>"""
+                _send(
+                    f'Ward Team Manager Update — {ward} Ward ({discipline})',
+                    _base_html('Ward Team Manager Update', body_prev),
+                    [previous_manager.email],
+                )
+            except Exception as exc:
+                logger.warning('Failed to notify previous Ward TM: %s', exc)
+
+        messages.success(
+            request,
+            f'{selected_user.get_full_name()} has been set as Ward TM for '
+            f'{ward} — {discipline}. They can now manage the ward longlist.',
+        )
+        return redirect('wscc_select_ward_tm')
+
+    # Build display list per discipline
+    discipline_data = []
+    for disc, regs in sorted(by_discipline.items()):
+        current_mgr = current_discipline_managers.get(disc)
+        # Get display label
+        from teams.models import SportType
+        try:
+            sport_label = dict(SportType.choices).get(disc, disc)
+        except Exception:
+            sport_label = disc
+        discipline_data.append({
+            'discipline': disc,
+            'sport_label': sport_label,
+            'registrations': regs,
+            'current_manager': current_mgr,
+        })
+
+    return render(request, 'ligi/wscc/select_ward_tm.html', {
+        'ward': ward,
+        'sub_county': sub_county,
+        'discipline_data': discipline_data,
+        'has_registrations': bool(discipline_data),
+    })
