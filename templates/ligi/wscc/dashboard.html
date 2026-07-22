@@ -25,27 +25,32 @@
 </div>
 {% endif %}
 
-<!-- Stats summary cards -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
-    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1.1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#856404">{{ counts.submitted }}</div>
-        <div style="font-size:.8rem;color:#856404;text-transform:uppercase;letter-spacing:.05em">Awaiting Review</div>
+<!-- Compact stat pills -->
+<div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem">
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.5rem .9rem;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>
+        <span style="font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.5px">Awaiting</span>
+        <span style="font-size:1.1rem;font-weight:800;color:#b45309">{{ counts.submitted }}</span>
     </div>
-    <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:1.1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#0a3622">{{ counts.approved }}</div>
-        <div style="font-size:.8rem;color:#0a3622;text-transform:uppercase;letter-spacing:.05em">Approved</div>
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.5rem .9rem;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0"></div>
+        <span style="font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.5px">Approved</span>
+        <span style="font-size:1.1rem;font-weight:800;color:#065f46">{{ counts.approved }}</span>
     </div>
-    <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:8px;padding:1.1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#842029">{{ counts.returned }}</div>
-        <div style="font-size:.8rem;color:#842029;text-transform:uppercase;letter-spacing:.05em">Returned</div>
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.5rem .9rem;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0"></div>
+        <span style="font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.5px">Returned</span>
+        <span style="font-size:1.1rem;font-weight:800;color:#b91c1c">{{ counts.returned }}</span>
     </div>
-    <div style="background:#e2e3e5;border:1px solid #d3d6db;border-radius:8px;padding:1.1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#41464b">{{ counts.draft }}</div>
-        <div style="font-size:.8rem;color:#41464b;text-transform:uppercase;letter-spacing:.05em">Draft</div>
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.5rem .9rem;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#9ca3af;flex-shrink:0"></div>
+        <span style="font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.5px">Draft</span>
+        <span style="font-size:1.1rem;font-weight:800;color:#374151">{{ counts.draft }}</span>
     </div>
-    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:1.1rem;text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:#124491">{{ counts.total }}</div>
-        <div style="font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.05em">Total</div>
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.5rem .9rem;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#6366f1;flex-shrink:0"></div>
+        <span style="font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.5px">Total</span>
+        <span style="font-size:1.1rem;font-weight:800;color:#4338ca">{{ counts.total }}</span>
     </div>
 </div>
 

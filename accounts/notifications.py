@@ -16,7 +16,7 @@ WhatsApp notifications (via Meta Cloud API):
   - Deadline reminders, transfer updates, longlist status, match results
 
 All notifications are dispatched on background daemon threads so they
-never block the web request — timeouts / API errors only appear in logs.
+never block the web request - timeouts / API errors only appear in logs.
 """
 import logging
 import threading
@@ -168,13 +168,13 @@ def send_whatsapp(phone_number, template_name, params=None, language='en'):
     debug    = getattr(settings, 'DEBUG', False)
 
     if not phone_number:
-        logger.warning("WhatsApp skipped — missing phone number for template %s", template_name)
+        logger.warning("WhatsApp skipped - missing phone number for template %s", template_name)
         return False
 
     # Normalise: strip '+' for Meta API (expects digits only, e.g. 254712345678)
     wa_number = phone_number.lstrip('+').replace(' ', '').replace('-', '')
     if not wa_number.isdigit() or len(wa_number) < 9:
-        logger.warning("WhatsApp skipped — invalid phone %r for template %s", phone_number, template_name)
+        logger.warning("WhatsApp skipped - invalid phone %r for template %s", phone_number, template_name)
         return False
 
     # ── Local dev: print to terminal instead of hitting Meta API ─────────────
@@ -243,7 +243,7 @@ def _print_whatsapp_to_terminal(phone_number, template_name, params=None):
     lines = [
         "",
         sep,
-        "📱  WHATSAPP MESSAGE (local dev — not actually sent)",
+        "📱  WHATSAPP MESSAGE (local dev - not actually sent)",
         sep,
         f"  To:       {phone_number}",
         f"  Template: {template_name}",

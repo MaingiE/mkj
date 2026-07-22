@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Appoint Officials — {{ allstars.official_name }}{% endblock %}
+{% block title %}Appoint Officials - {{ allstars.official_name }}{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1><i class="bi bi-person-badge-fill"></i> Appoint Officials</h1>
@@ -36,7 +36,7 @@
         <input type="hidden" name="role_type" value="tm">
         <div class="mb-2">
           <select name="tm_user_pk" class="form-select form-select-sm">
-            <option value="">— Select —</option>
+            <option value="">Select</option>
             {% for tm in eligible_tms %}<option value="{{ tm.pk }}" {% if allstars.appointed_tm_user and tm.pk == allstars.appointed_tm_user.pk %}selected{% endif %}>{{ tm.get_full_name }}</option>{% endfor %}
           </select>
         </div>

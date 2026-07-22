@@ -199,10 +199,10 @@
   <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;padding:.7rem 1rem;margin-bottom:1.1rem;font-size:.83rem;color:#4c1d95">
     <strong>⏰ Pending scheduled actions:</strong>
     <ul style="margin:.35rem 0 0 1.1rem;padding:0;line-height:1.7">
-      {% if settings_obj.team_reg_open_at %}<li>📋 Team Reg <strong>OPENS</strong> — {{ settings_obj.team_reg_open_at|date:"d M Y" }} at {{ settings_obj.team_reg_open_at|time:"H:i" }}</li>{% endif %}
-      {% if settings_obj.team_reg_close_at %}<li>📋 Team Reg <strong>CLOSES</strong> — {{ settings_obj.team_reg_close_at|date:"d M Y" }} at {{ settings_obj.team_reg_close_at|time:"H:i" }}</li>{% endif %}
-      {% if settings_obj.player_reg_open_at %}<li>👤 Player Reg <strong>OPENS</strong> — {{ settings_obj.player_reg_open_at|date:"d M Y" }} at {{ settings_obj.player_reg_open_at|time:"H:i" }}</li>{% endif %}
-      {% if settings_obj.player_reg_close_at %}<li>👤 Player Reg <strong>CLOSES</strong> — {{ settings_obj.player_reg_close_at|date:"d M Y" }} at {{ settings_obj.player_reg_close_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.team_reg_open_at %}<li>Team Reg <strong>OPENS</strong> - {{ settings_obj.team_reg_open_at|date:"d M Y" }} at {{ settings_obj.team_reg_open_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.team_reg_close_at %}<li>Team Reg <strong>CLOSES</strong> - {{ settings_obj.team_reg_close_at|date:"d M Y" }} at {{ settings_obj.team_reg_close_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.player_reg_open_at %}<li>Player Reg <strong>OPENS</strong> - {{ settings_obj.player_reg_open_at|date:"d M Y" }} at {{ settings_obj.player_reg_open_at|time:"H:i" }}</li>{% endif %}
+      {% if settings_obj.player_reg_close_at %}<li>Player Reg <strong>CLOSES</strong> - {{ settings_obj.player_reg_close_at|date:"d M Y" }} at {{ settings_obj.player_reg_close_at|time:"H:i" }}</li>{% endif %}
     </ul>
   </div>
   {% endif %}

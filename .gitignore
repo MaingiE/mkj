@@ -34,3 +34,6 @@ nul
 # Compiled/build
 staticfiles/
 node_modules
+
+# Kiro AI workspace (local only, not part of the project)
+.kiro/
