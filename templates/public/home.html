@@ -3544,62 +3544,6 @@ a.hero-feat--link {
      Just start the countdown once the card becomes visible. */
   setTimeout(showBtn, 1200);
 
-    // Pick a random side: 0=left, 1=top, 2=bottom, 3=right
-    var side = Math.floor(Math.random() * 4);
-    var startX, startY, startRot;
-    switch (side) {
-      case 0: startX = '-130vw'; startY = '10vh';  startRot = -18; break; // left
-      case 1: startX = '-10vw';  startY = '-130vh'; startRot =  15; break; // top
-      case 2: startX = '-10vw';  startY = '130vh';  startRot = -15; break; // bottom
-      default:startX = '130vw';  startY = '10vh';   startRot =  18; break; // right
-    }
-
-    if (typeof card.animate === 'function') {
-      var anim = card.animate([
-        {
-          transform: 'translate(' + startX + ', ' + startY + ') rotate(' + startRot + 'deg)',
-          opacity: '0'
-        },
-        {
-          transform: 'translate(-6px, -10px) rotate(-2deg)',
-          opacity: '1',
-          offset: 0.65
-        },
-        {
-          transform: 'translate(4px, 5px) rotate(1deg)',
-          opacity: '1',
-          offset: 0.82
-        },
-        {
-          transform: 'translate(0, 0) rotate(0deg)',
-          opacity: '1'
-        }
-      ], {
-        duration: 950,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-        fill: 'forwards'
-      });
-
-      anim.finished.then(function () {
-        /* Restore CSS-based vertical centering after animation */
-        card.style.transform = 'translateY(-50%)';
-        card.style.opacity = '1';
-        showBtn();
-      }).catch(function () {
-        card.style.opacity = '1';
-        showBtn();
-      });
-    } else {
-      card.style.opacity = '1';
-      showBtn();
-    }
-  }
-
-  /* ── Entry point ─────────────────────────────────────────────────────── */
-  window.addEventListener('load', function () {
-    setTimeout(startTossAnimation, 80);
-  });
-
 })();
 </script>
 
