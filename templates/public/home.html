@@ -1968,25 +1968,39 @@ a.hero-feat--link {
 #ligi-float-card {
     position: fixed;
     z-index: 9000;
-    top: 50%;
-    left: 1.5rem;
-    transform: translateY(-50%);
-    width: 300px;
+    bottom: 2rem;
+    right: 1.5rem;
+    top: auto;
+    left: auto;
+    transform: translateY(0);
+    width: 310px;
     max-width: calc(100vw - 2rem);
-    background: linear-gradient(145deg, rgba(8,24,50,0.97) 0%, rgba(10,35,72,0.97) 60%, rgba(14,42,82,0.97) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: linear-gradient(160deg, #060f1f 0%, #0a1e3d 55%, #0d2550 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     color: #ffffff;
     border-radius: 20px;
     padding: 0;
     overflow: hidden;
     box-shadow:
-        0 24px 64px rgba(0,0,0,0.65),
-        0 0 0 1px rgba(232,185,30,0.22),
-        inset 0 1px 0 rgba(255,255,255,0.06);
-    border: 1px solid rgba(232,185,30,0.18);
+        0 32px 80px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(232,185,30,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.07);
+    border: 1px solid rgba(232,185,30,0.2);
     opacity: 0;
     will-change: transform, opacity;
+    animation: ligiCardEntry 600ms cubic-bezier(0.16,1,0.3,1) 1.2s forwards;
+}
+
+@keyframes ligiCardEntry {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* Gold top accent strip */
@@ -2071,20 +2085,20 @@ a.hero-feat--link {
 /* Title */
 .ligi-card__title {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 900;
     margin: 0 0 0.25rem;
     color: #FFD54F;
     letter-spacing: 0.2px;
-    line-height: 1.2;
+    line-height: 1.25;
     text-shadow: 0 0 24px rgba(232,185,30,0.3);
 }
 
 /* Sub-text */
 .ligi-card__sub {
-    font-size: 0.78rem;
-    margin: 0 0 1rem;
-    color: rgba(255,255,255,0.65);
+    font-size: 0.75rem;
+    margin: 0 0 0.9rem;
+    color: rgba(255,255,255,0.6);
     line-height: 1.5;
 }
 
@@ -2092,8 +2106,8 @@ a.hero-feat--link {
 .ligi-card__countdown {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.4rem;
-    margin-bottom: 1rem;
+    gap: 0.35rem;
+    margin-bottom: 0.8rem;
 }
 .ligi-cd-seg {
     display: flex;
@@ -2102,43 +2116,44 @@ a.hero-feat--link {
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(232,185,30,0.15);
     border-radius: 10px;
-    padding: 0.5rem 0.25rem 0.35rem;
+    padding: 0.5rem 0.2rem 0.35rem;
 }
 .ligi-cd-num {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 900;
     color: #FFD54F;
     line-height: 1;
     text-shadow: 0 0 16px rgba(232,185,30,0.5);
     min-width: 2ch;
     text-align: center;
-    transition: color 0.3s;
+    transition: color 0.15s, transform 0.15s;
 }
 .ligi-cd-lbl {
-    font-size: 0.48rem;
+    font-size: 0.46rem;
     font-weight: 700;
     color: rgba(255,255,255,0.35);
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-top: 0.2rem;
 }
-/* Flash effect on tick */
+/* Tick flash + bounce */
 .ligi-cd-num.ligi-tick {
     color: #fff;
     text-shadow: 0 0 20px rgba(255,255,255,0.6);
+    transform: scale(1.12);
 }
 
 /* Deadline label */
 .ligi-card__deadline {
-    font-size: 0.65rem;
+    font-size: 0.63rem;
     color: rgba(255,255,255,0.35);
     text-align: center;
     margin-bottom: 0.9rem;
     letter-spacing: 0.3px;
 }
 .ligi-card__deadline strong {
-    color: rgba(232,185,30,0.7);
+    color: rgba(232,185,30,0.75);
 }
 
 /* CTA Button */
@@ -2147,24 +2162,24 @@ a.hero-feat--link {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.4rem;
+    padding: 0.72rem 1.4rem;
     background: linear-gradient(135deg, #E8B91E 0%, #FFD54F 50%, #E8B91E 100%);
     background-size: 200% 100%;
     color: #0a1e3d;
     font-family: 'Outfit', sans-serif;
     font-weight: 900;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     border-radius: 12px;
     border: none;
     cursor: pointer;
     text-decoration: none;
     min-height: 44px;
     letter-spacing: 0.3px;
-    opacity: 0;
-    pointer-events: auto;
     transition: transform 200ms cubic-bezier(0.4,0,0.2,1), box-shadow 200ms, background-position 0.4s;
     box-shadow: 0 4px 20px rgba(232,185,30,0.35);
     width: 100%;
+    opacity: 0;
+    animation: ligiBtnFadeIn 400ms cubic-bezier(0.16,1,0.3,1) 1.8s forwards;
 }
 .ligi-card__btn:hover {
     transform: translateY(-2px) scale(1.02);
@@ -2176,46 +2191,38 @@ a.hero-feat--link {
     outline-offset: 3px;
 }
 
-/* Settled: button animates in then pulses */
-#ligi-float-card.ligi-settled .ligi-card__btn {
-    animation: ligiBtnFadeIn 350ms cubic-bezier(0.16,1,0.3,1) forwards,
-               ligiBtnPulse 1800ms ease-in-out 350ms infinite;
-}
-
 /* Keyframes */
 @keyframes ligiBtnFadeIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes ligiBtnPulse {
-    0%, 100% { box-shadow: 0 4px 20px rgba(232,185,30,0.3), 0 0 0 0 rgba(232,185,30,0); }
-    50%       { box-shadow: 0 8px 36px rgba(232,185,30,0.6), 0 0 0 8px rgba(232,185,30,0.1); }
+
+/* Dismiss: slide out to right + fade */
+#ligi-float-card.ligi-dismissing {
+    animation: ligiCardExit 280ms cubic-bezier(0.4,0,1,1) forwards;
+}
+@keyframes ligiCardExit {
+    to { opacity: 0; transform: translateX(120%) scale(0.9); }
 }
 
-/* Responsive */
+/* Responsive - bottom center on very small screens */
 @media (max-width: 479px) {
     #ligi-float-card {
-        top: auto;
-        bottom: 5rem;
-        left: 0.75rem;
+        bottom: 1rem;
         right: 0.75rem;
-        transform: none;
+        left: 0.75rem;
         width: auto;
         max-width: none;
-        width: calc(100% - 1.5rem);
     }
 }
 
-/* ── Task 2.5: Reduced-motion override for ligi card ───────────────────── */
+/* ── Reduced-motion override ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-    #ligi-float-card {
-        animation: none !important;
-        transform: none !important;
-        opacity: 1 !important;
-    }
+    #ligi-float-card,
     .ligi-card__btn {
         animation: none !important;
         opacity: 1 !important;
+        transform: none !important;
     }
 }
 </style>
@@ -2911,9 +2918,10 @@ a.hero-feat--link {
     <button class="ligi-card__btn"
             id="ligi-register-btn"
             type="button"
-            onclick="(function(){var p=document.getElementById('ligiPanel');if(p){p.classList.add('open');}})()">
+            onclick="(function(){var p=document.getElementById('ligiPanel');if(p){p.classList.add('open');}window.scrollTo({top:0,behavior:'smooth'});})()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Register Your Team
+    </button>
   </div>
 </div>
 {% endif %}
@@ -3503,13 +3511,12 @@ a.hero-feat--link {
 
   /* ── Dismiss ─────────────────────────────────────────────────────────── */
   function dismissCard() {
-    card.style.transition = 'opacity 300ms ease, transform 300ms ease';
-    card.style.opacity = '0';
-    card.style.transform = 'scale(0.9) translateY(10px)';
+    card.classList.add('ligi-dismissing');
     setTimeout(function () {
       card.style.display = 'none';
       card.setAttribute('aria-hidden', 'true');
-    }, 300);
+    }, 290);
+    try { sessionStorage.setItem('ligiCardDismissed', '1'); } catch(e){}
   }
 
   if (dismissBtn) {
@@ -3519,23 +3526,23 @@ a.hero-feat--link {
     });
   }
 
-  /* ── Button reveal ───────────────────────────────────────────────────── */
+  /* ── Button reveal + countdown start ────────────────────────────────── */
   function showBtn() {
-    card.classList.add('ligi-settled');
     tickCountdown();
     setInterval(tickCountdown, 1000);
   }
 
-  /* ── Toss animation — random side each load ──────────────────────────── */
-  function startTossAnimation() {
-    var prefersReduced = window.matchMedia &&
-                         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(-50%)';
-      showBtn();
+  /* ── Already dismissed this session? ────────────────────────────────── */
+  try {
+    if (sessionStorage.getItem('ligiCardDismissed') === '1') {
+      card.style.display = 'none';
       return;
     }
+  } catch(e) {}
+
+  /* CSS handles the entry animation (ligiCardEntry keyframe + delay).
+     Just start the countdown once the card becomes visible. */
+  setTimeout(showBtn, 1200);
 
     // Pick a random side: 0=left, 1=top, 2=bottom, 3=right
     var side = Math.floor(Math.random() * 4);
