@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}SDC Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb"><span>Subcounty Discipline Coordinator</span><span>Dashboard</span></div>
+  <h1><i class="bi bi-clipboard-data-fill"></i> Subcounty Discipline Coordinator</h1>
+  {% if sdc %}<p>{{ sdc.sub_county }} Sub-County · {{ sdc.get_sport_type_display }} · {{ sdc.season }} Season</p>{% endif %}
+</div>
+
+{% if not sdc %}
+<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i> You have not been assigned as a Subcounty Discipline Coordinator yet. Contact the Sub-County Sports Officer.</div>
+{% else %}
+
+<!-- Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
+  <div style="background:#dbeafe;border-radius:12px;padding:1rem;text-align:center">
+    <div style="font-size:1.8rem;font-weight:800;color:#1d4ed8">{{ competitions|length }}</div>
+    <div style="font-size:.72rem;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px">Competitions</div>
+  </div>
+  <div style="background:#d1fae5;border-radius:12px;padding:1rem;text-align:center">
+    <div style="font-size:1.8rem;font-weight:800;color:#065f46">{{ fixtures|length }}</div>
+    <div style="font-size:.72rem;color:#065f46;text-transform:uppercase;letter-spacing:.5px">Upcoming Fixtures</div>
+  </div>
+</div>
+
+<!-- Competitions -->
+{% if competitions %}
+<div class="card shadow-sm" style="margin-bottom:1.25rem">
+  <div class="card-header"><h5 class="mb-0"><i class="bi bi-trophy"></i> Subcounty Finals Competitions</h5></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.86rem">
+      <thead class="table-light"><tr><th>Competition</th><th>Season</th><th>Status</th><th>Teams</th></tr></thead>
+      <tbody>
+      {% for c in competitions %}
+      <tr>
+        <td><strong>{{ c.name }}</strong></td>
+        <td>{{ c.season|default:"—" }}</td>
+        <td><span class="badge bg-{% if c.status == 'active' %}success{% elif c.status == 'completed' %}secondary{% else %}warning text-dark{% endif %}">{{ c.get_status_display }}</span></td>
+        <td>{{ c.teams.count }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Upcoming Fixtures -->
+{% if fixtures %}
+<div class="card shadow-sm">
+  <div class="card-header"><h5 class="mb-0"><i class="bi bi-calendar3"></i> Upcoming Fixtures</h5></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.86rem">
+      <thead class="table-light"><tr><th>Match</th><th>Date</th><th>Venue</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for f in fixtures %}
+      <tr>
+        <td><strong>{{ f.home_team.name }}</strong> vs <strong>{{ f.away_team.name }}</strong></td>
+        <td>{{ f.match_date|date:"d M Y" }}{% if f.kickoff_time %} {{ f.kickoff_time|time:"H:i" }}{% endif %}</td>
+        <td>{{ f.venue|default:"TBD" }}</td>
+        <td><span class="badge bg-secondary">{{ f.get_status_display }}</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm"><div class="card-body text-center text-muted py-4">No upcoming fixtures at this time.</div></div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

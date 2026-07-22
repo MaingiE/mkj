@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Outside-Ligi Requests — {{ allstars.official_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-clock-history"></i> Outside-Ligi Player Requests</h1>
+  <p>{{ allstars.official_name }}</p>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+<div class="mb-3">
+  <a href="{% url 'allstars_tm_request_outside_player' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> New Request</a>
+  <a href="{% url 'allstars_tm_longlist' %}" class="btn btn-outline-secondary btn-sm ms-2">← Longlist</a>
+</div>
+{% if requests %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.86rem">
+      <thead class="table-light"><tr><th>Player</th><th>National ID</th><th>DOB</th><th>Status</th><th>Submitted</th></tr></thead>
+      <tbody>
+      {% for req in requests %}
+      <tr>
+        <td><strong>{{ req.player_name }}</strong></td>
+        <td>{{ req.national_id }}</td>
+        <td>{{ req.date_of_birth|date:"d M Y" }}</td>
+        <td>
+          {% if req.status == 'pending_director' %}<span class="badge bg-warning text-dark">Pending Director</span>
+          {% elif req.status == 'forwarded_cso' %}<span class="badge bg-info">Forwarded to CSO</span>
+          {% elif req.status == 'cso_approved' %}<span class="badge bg-success">Approved ✓</span>
+          {% elif req.status == 'cso_rejected' or req.status == 'director_rejected' %}<span class="badge bg-danger">Rejected</span>
+          {% endif %}
+        </td>
+        <td class="text-muted">{{ req.created_at|date:"d M Y" }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm"><div class="card-body text-center text-muted py-5">No outside-Ligi requests submitted yet.</div></div>
+{% endif %}
+{% endblock %}

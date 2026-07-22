@@ -1,0 +1,41 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('accounts', '0019_wscc_unique_ward_subcounty'),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name='user',
+            name='role',
+            field=models.CharField(
+                choices=[
+                    ('competition_manager', 'Organising Secretary'),
+                    ('coordinator', 'Coordinator'),
+                    ('verification_officer', 'Verification Officer'),
+                    ('referee', 'Referee'),
+                    ('team_manager', 'Team Manager'),
+                    ('cec_sports', 'County CEC Member - Sports'),
+                    ('treasurer', 'Treasurer'),
+                    ('jury_chair', 'Chair of the Jury'),
+                    ('media_manager', 'Media Manager'),
+                    ('secretary_general', 'Secretary General'),
+                    ('scout', 'Scout'),
+                    ('subcounty_sports_officer', 'Sub-County Sports Officer'),
+                    ('chief_sports_officer', 'Chief Sports Officer'),
+                    ('director_sports', 'Director of Sports'),
+                    ('chief_officer_sports', 'Chief Officer - Sports'),
+                    ('governor', 'Governor'),
+                    ('waziri_sports', 'Waziri - Sports'),
+                    ('ward_sports_council_chair', 'Ward Sports Council Chair'),
+                    ('subcounty_discipline_coordinator', 'Subcounty Discipline Coordinator'),
+                    ('admin', 'System Admin'),
+                ],
+                default='team_manager',
+                max_length=40,
+            ),
+        ),
+    ]

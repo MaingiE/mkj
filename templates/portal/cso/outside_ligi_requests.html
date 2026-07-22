@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Outside-Ligi Requests — CSO Final Approval{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-shield-check"></i> Outside-Ligi Requests — Final Approval</h1>
+  <p>Forwarded by Director of Sports — your decision is final</p>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+{% if requests %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.86rem">
+      <thead class="table-light"><tr><th>Player</th><th>Ward All Stars</th><th>Director's Notes</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for req in requests %}
+      <tr>
+        <td><strong>{{ req.player_name }}</strong><br><span class="text-muted small">ID: {{ req.national_id }}</span></td>
+        <td>{{ req.ward_allstars.official_name }}</td>
+        <td class="text-muted small">{{ req.director_notes|default:"—" }}</td>
+        <td>{{ req.director_reviewed_at|date:"d M Y"|default:"—" }}</td>
+        <td><a href="{% url 'cso_outside_ligi_review' req.pk %}" class="btn btn-sm btn-outline-primary">Decide</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm"><div class="card-body text-center text-muted py-5"><i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>No requests awaiting CSO decision.</div></div>
+{% endif %}
+{% endblock %}

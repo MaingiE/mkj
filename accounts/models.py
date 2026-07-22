@@ -78,6 +78,7 @@ class UserRole(models.TextChoices):
     GOVERNOR            = "governor",            "Governor"
     WAZIRI_SPORTS       = "waziri_sports",       "Waziri - Sports"
     WARD_SPORTS_COUNCIL_CHAIR = "ward_sports_council_chair", "Ward Sports Council Chair"
+    SUBCOUNTY_DISCIPLINE_COORDINATOR = "subcounty_discipline_coordinator", "Subcounty Discipline Coordinator"
     ADMIN               = "admin",               "System Admin"
 
 
@@ -158,7 +159,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[national_id_validator],
         help_text="National ID number (digits only, 5-10 chars)",
     )
-    role        = models.CharField(max_length=30, choices=UserRole.choices, default=UserRole.TEAM_MANAGER)
+    role        = models.CharField(max_length=40, choices=UserRole.choices, default=UserRole.TEAM_MANAGER)
     county      = models.CharField(max_length=100, blank=True, help_text="Kenyan county")
     sub_county  = models.CharField(
         max_length=100, blank=True, default="",

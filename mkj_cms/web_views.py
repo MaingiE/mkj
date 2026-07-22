@@ -17283,3 +17283,887 @@ Please contact your Ward Sports Council Chair if you have any questions.</p>"""
         'discipline_data': discipline_data,
         'has_registrations': bool(discipline_data),
     })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SCSO — LIGI MASHINANI OVERVIEW
+#
+#  Sub-County Sports Officer sees:
+#    - All approved team registrations in their sub-county
+#    - Ward-level disciplines (longlists) with player counts
+#    - Filter by ward, discipline, longlist status
+#    - Drill down into a specific ward's longlist with age-sort
+#
+#  URLs:
+#    /portal/subcounty/ligi/               → overview (registrations + wards)
+#    /portal/subcounty/ligi/ward/<ward>/   → ward longlist detail
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'admin', 'chief_sports_officer', 'director_sports')
+def scso_ligi_overview_view(request):
+    """
+    SCSO overview of all Ligi Mashinani activity in their sub-county:
+    - Registered teams (from LigiMashinaniRegistration)
+    - Ward disciplines / longlists progress
+    - Filters: ward, discipline, longlist status
+    """
+    from teams.models import LigiMashinaniRegistration, CountyDiscipline, WardLonglist, CountyPlayer
+    from django.utils import timezone as tz
+    from collections import defaultdict
+
+    user    = request.user
+    is_admin = user.is_superuser or user.role in ('admin', 'chief_sports_officer', 'director_sports')
+    sub_county = request.GET.get('sub_county', '') if is_admin else (user.sub_county or '')
+
+    if not sub_county and not is_admin:
+        messages.error(request, 'Your account is not assigned to a sub-county.')
+        return redirect('subcounty_officer_dashboard')
+
+    # ── Filter params ─────────────────────────────────────────────────────────
+    ward_filter       = request.GET.get('ward', '').strip()
+    discipline_filter = request.GET.get('discipline', '').strip()
+    status_filter     = request.GET.get('status', '').strip()
+    search            = request.GET.get('q', '').strip()
+
+    # ── Team Registrations ────────────────────────────────────────────────────
+    regs_qs = LigiMashinaniRegistration.objects.filter(status='approved')
+    if sub_county:
+        regs_qs = regs_qs.filter(sub_county=sub_county)
+    if ward_filter:
+        regs_qs = regs_qs.filter(ward=ward_filter)
+    if discipline_filter:
+        regs_qs = regs_qs.filter(discipline=discipline_filter)
+    if search:
+        from django.db.models import Q as _Q
+        regs_qs = regs_qs.filter(
+            _Q(team_name__icontains=search) |
+            _Q(manager_first_name__icontains=search) |
+            _Q(manager_last_name__icontains=search) |
+            _Q(ward__icontains=search)
+        )
+    registrations = regs_qs.order_by('ward', 'discipline', 'team_name')
+
+    # ── Ward Disciplines / Longlists ──────────────────────────────────────────
+    wards_qs = CountyDiscipline.objects.filter(level='ward')
+    if sub_county:
+        wards_qs = wards_qs.filter(sub_county=sub_county)
+    if ward_filter:
+        wards_qs = wards_qs.filter(ward=ward_filter)
+    if discipline_filter:
+        wards_qs = wards_qs.filter(sport_type=discipline_filter)
+    wards_qs = wards_qs.select_related('ward_longlist').order_by('ward', 'sport_type')
+
+    # Build ward discipline summary
+    ward_discipline_data = []
+    for cd in wards_qs:
+        try:
+            ll = cd.ward_longlist
+            ll_status = ll.status
+            player_count = CountyPlayer.objects.filter(discipline=cd).count()
+        except Exception:
+            ll = None
+            ll_status = 'no_longlist'
+            player_count = CountyPlayer.objects.filter(discipline=cd).count()
+
+        if status_filter and ll_status != status_filter:
+            continue
+
+        # Age breakdown
+        today = tz.now().date()
+        players = CountyPlayer.objects.filter(discipline=cd).order_by('date_of_birth')
+        eligible_count = 0
+        for p in players:
+            if p.date_of_birth:
+                age = today.year - p.date_of_birth.year - (
+                    (today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day)
+                )
+                if 18 <= age <= 23:
+                    eligible_count += 1
+
+        from teams.models import SportType
+        ward_discipline_data.append({
+            'discipline': cd,
+            'longlist': ll,
+            'll_status': ll_status,
+            'player_count': player_count,
+            'eligible_count': eligible_count,
+            'sport_label': dict(SportType.choices).get(cd.sport_type, cd.sport_type),
+        })
+
+    # ── Summary stats ─────────────────────────────────────────────────────────
+    total_teams = LigiMashinaniRegistration.objects.filter(
+        status='approved', sub_county=sub_county
+    ).count() if sub_county else 0
+
+    total_players = CountyPlayer.objects.filter(
+        discipline__sub_county=sub_county, discipline__level='ward'
+    ).count() if sub_county else 0
+
+    wards_with_longlists = CountyDiscipline.objects.filter(
+        sub_county=sub_county, level='ward', ward_longlist__isnull=False
+    ).count() if sub_county else 0
+
+    # ── Filter choices ────────────────────────────────────────────────────────
+    ward_choices = sorted(set(
+        LigiMashinaniRegistration.objects.filter(
+            status='approved', sub_county=sub_county
+        ).values_list('ward', flat=True)
+    )) if sub_county else []
+
+    from teams.models import SportType
+    discipline_choices = SportType.choices
+
+    ll_status_choices = [
+        ('draft',        'Draft'),
+        ('submitted',    'Submitted'),
+        ('wscc_approved','WSCC Approved'),
+        ('returned',     'Returned'),
+    ]
+
+    return render(request, 'portal/subcounty_officer/ligi_overview.html', {
+        'sub_county':           sub_county,
+        'registrations':        registrations,
+        'ward_discipline_data': ward_discipline_data,
+        'total_teams':          total_teams,
+        'total_players':        total_players,
+        'wards_with_longlists': wards_with_longlists,
+        'ward_choices':         ward_choices,
+        'discipline_choices':   discipline_choices,
+        'll_status_choices':    ll_status_choices,
+        'ward_filter':          ward_filter,
+        'discipline_filter':    discipline_filter,
+        'status_filter':        status_filter,
+        'search':               search,
+        'is_admin':             is_admin,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin', 'chief_sports_officer', 'director_sports')
+def scso_ligi_ward_detail_view(request, ward, discipline):
+    """
+    SCSO drill-down: full player longlist for a specific ward+discipline.
+    Sortable by name, age, position.
+    """
+    from teams.models import CountyDiscipline, CountyPlayer, SportType
+    from django.utils import timezone as tz
+
+    user = request.user
+    is_admin = user.is_superuser or user.role in ('admin', 'chief_sports_officer', 'director_sports')
+    sub_county = user.sub_county if not is_admin else request.GET.get('sub_county', user.sub_county or '')
+
+    cd = CountyDiscipline.objects.filter(
+        ward=ward, discipline=discipline if hasattr(CountyDiscipline, 'discipline') else None,
+        sport_type=discipline,
+        level='ward',
+    ).first()
+
+    if not cd:
+        cd = CountyDiscipline.objects.filter(
+            ward=ward, sport_type=discipline, level='ward'
+        ).first()
+
+    if not cd:
+        messages.error(request, f'No ward discipline found for {ward} — {discipline}.')
+        return redirect('scso_ligi_overview')
+
+    if not is_admin and cd.sub_county != sub_county:
+        messages.error(request, 'Access denied.')
+        return redirect('scso_ligi_overview')
+
+    sort = request.GET.get('sort', 'name')
+    players_qs = CountyPlayer.objects.filter(discipline=cd)
+
+    if sort == 'age':
+        players_qs = players_qs.order_by('date_of_birth')
+    elif sort == 'position':
+        players_qs = players_qs.order_by('position', 'first_name')
+    else:
+        players_qs = players_qs.order_by('first_name', 'last_name')
+
+    # Annotate age
+    today = tz.now().date()
+    players = []
+    for p in players_qs:
+        age = None
+        eligible = False
+        if p.date_of_birth:
+            age = today.year - p.date_of_birth.year - (
+                (today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day)
+            )
+            eligible = 18 <= age <= 23
+        players.append({'player': p, 'age': age, 'eligible': eligible})
+
+    try:
+        longlist = cd.ward_longlist
+    except Exception:
+        longlist = None
+
+    sport_label = dict(SportType.choices).get(discipline, discipline)
+
+    return render(request, 'portal/subcounty_officer/ligi_ward_detail.html', {
+        'cd':          cd,
+        'ward':        ward,
+        'discipline':  discipline,
+        'sport_label': sport_label,
+        'sub_county':  cd.sub_county,
+        'players':     players,
+        'longlist':    longlist,
+        'sort':        sort,
+        'player_count': len(players),
+        'eligible_count': sum(1 for p in players if p['eligible']),
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — WSCC: Ward All Stars Management
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_allstars_dashboard_view(request):
+    """
+    WSCC dashboard showing all WardAllStarsTeam records for their ward.
+    GET /ligi/wscc/allstars/
+    """
+    from teams.models import WardAllStarsTeam
+    user = request.user
+    ward       = getattr(user, 'ward', '') or ''
+    sub_county = getattr(user, 'sub_county', '') or ''
+
+    if not ward and not (user.is_superuser or user.role == 'admin'):
+        messages.error(request, 'Your account is not assigned to a ward.')
+        return redirect('wscc_dashboard')
+
+    qs = WardAllStarsTeam.objects.select_related(
+        'competition', 'appointed_tm_user', 'appointed_coach_user'
+    )
+    if not (user.is_superuser or user.role == 'admin'):
+        qs = qs.filter(ward=ward, sub_county=sub_county)
+
+    return render(request, 'ligi/wscc/allstars_dashboard.html', {
+        'allstars_teams': qs.order_by('-created_at'),
+        'ward': ward,
+        'sub_county': sub_county,
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_create_allstars_team_view(request, competition_pk):
+    """
+    WSCC creates a WardAllStarsTeam for a given Subcounty Finals competition.
+    GET/POST /ligi/wscc/allstars/<int:competition_pk>/create/
+    """
+    from competitions.models import Competition
+    from teams.models import WardAllStarsTeam, CountyDiscipline
+    from accounts.models import User
+
+    user       = request.user
+    ward       = getattr(user, 'ward', '') or ''
+    sub_county = getattr(user, 'sub_county', '') or ''
+
+    competition = get_object_or_404(Competition, pk=competition_pk)
+
+    # Check not already created
+    existing = WardAllStarsTeam.objects.filter(
+        competition=competition,
+        ward=ward,
+        sport_type=competition.sport_type,
+    ).first()
+
+    if request.method == 'POST':
+        official_name = request.POST.get('official_name', '').strip()
+        coach_name    = request.POST.get('coach_name', '').strip()
+        tm_pk         = request.POST.get('tm_user_pk', '').strip()
+
+        if not official_name:
+            messages.error(request, 'Official team name is required.')
+        else:
+            tm_user = None
+            if tm_pk:
+                try:
+                    tm_user = User.objects.get(pk=tm_pk, role='team_manager', is_active=True)
+                except User.DoesNotExist:
+                    messages.error(request, 'Selected team manager not found.')
+                    tm_user = None
+
+            # Get source ward discipline
+            source_disc = CountyDiscipline.objects.filter(
+                ward=ward, sub_county=sub_county,
+                sport_type=competition.sport_type,
+                level='ward',
+            ).first()
+
+            # Get/create subcounty discipline
+            sc_disc = CountyDiscipline.objects.filter(
+                sub_county=sub_county,
+                sport_type=competition.sport_type,
+                level='subcounty',
+            ).first()
+
+            allstars = WardAllStarsTeam.objects.create(
+                competition=competition,
+                ward=ward,
+                sub_county=sub_county,
+                sport_type=competition.sport_type,
+                official_name=official_name,
+                appointed_coach_name=coach_name,
+                appointed_tm_user=tm_user,
+                appointed_by_wscc=user,
+                appointed_at=timezone.now() if (tm_user or coach_name) else None,
+                source_discipline=source_disc,
+                subcounty_discipline=sc_disc,
+                qualified_from_ligi=True,
+            )
+
+            if tm_user:
+                try:
+                    from accounts.notifications import _send, _base_html, SITE_URL
+                    body = f"""
+<p>Dear <strong>{tm_user.first_name}</strong>,</p>
+<p>You have been appointed as Team Manager for <strong>{official_name}</strong>
+in the MKJ Supa Cup Subcounty Finals ({competition.name}).</p>
+<p>Please log in to start building the Under-23 longlist.</p>
+<a href="{SITE_URL}/ligi/allstars/dashboard/" class="btn">Go to Dashboard</a>"""
+                    _send(
+                        f"You are Team Manager — {official_name}",
+                        _base_html("Ward All Stars Appointment", body),
+                        [tm_user.email],
+                    )
+                except Exception as exc:
+                    logger.warning('Failed to notify Ward All Stars TM: %s', exc)
+
+            messages.success(request, f'"{official_name}" created successfully.')
+            return redirect('wscc_allstars_dashboard')
+
+    # Eligible TMs: team managers in this ward
+    eligible_tms = User.objects.filter(
+        role='team_manager', ward=ward, sub_county=sub_county, is_active=True
+    ).order_by('first_name')
+
+    return render(request, 'ligi/wscc/allstars_create.html', {
+        'competition': competition,
+        'existing': existing,
+        'eligible_tms': eligible_tms,
+        'suggested_name': f"{ward} Ward All Stars",
+        'ward': ward,
+        'sub_county': sub_county,
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_appoint_officials_view(request, allstars_pk):
+    """
+    WSCC appoints or replaces Coach / Team Manager for an allstars team.
+    GET/POST /ligi/wscc/allstars/<int:allstars_pk>/appoint/
+    """
+    from teams.models import WardAllStarsTeam
+    from accounts.models import User
+
+    allstars = get_object_or_404(WardAllStarsTeam, pk=allstars_pk)
+    user = request.user
+    if not (user.is_superuser or user.role == 'admin'):
+        if allstars.ward != user.ward or allstars.sub_county != user.sub_county:
+            messages.error(request, 'Access denied.')
+            return redirect('wscc_allstars_dashboard')
+
+    if request.method == 'POST':
+        role_type   = request.POST.get('role_type', '').strip()  # "coach" or "tm"
+        coach_name  = request.POST.get('coach_name', '').strip()
+        tm_pk       = request.POST.get('tm_user_pk', '').strip()
+
+        if role_type == 'coach':
+            allstars.appointed_coach_name = coach_name
+            allstars.appointed_at = timezone.now()
+            allstars.save(update_fields=['appointed_coach_name', 'appointed_at'])
+            messages.success(request, f'Coach updated to {coach_name}.')
+
+        elif role_type == 'tm' and tm_pk:
+            try:
+                tm_user = User.objects.get(pk=tm_pk, role='team_manager', is_active=True)
+                old_tm = allstars.appointed_tm_user
+                allstars.appointed_tm_user = tm_user
+                allstars.appointed_at = timezone.now()
+                allstars.appointed_by_wscc = user
+                allstars.save(update_fields=['appointed_tm_user', 'appointed_at', 'appointed_by_wscc'])
+                messages.success(request, f'{tm_user.get_full_name()} appointed as Team Manager.')
+                # Notify new TM
+                try:
+                    from accounts.notifications import _send, _base_html, SITE_URL
+                    body = f"""
+<p>Dear <strong>{tm_user.first_name}</strong>,</p>
+<p>You have been appointed as Team Manager for <strong>{allstars.official_name}</strong>
+in the MKJ Supa Cup Subcounty Finals.</p>
+<a href="{SITE_URL}/ligi/allstars/dashboard/" class="btn">Go to Dashboard</a>"""
+                    _send(
+                        f"Ward All Stars TM Appointment — {allstars.official_name}",
+                        _base_html("Ward All Stars Appointment", body),
+                        [tm_user.email],
+                    )
+                except Exception:
+                    pass
+            except User.DoesNotExist:
+                messages.error(request, 'Selected user not found.')
+        else:
+            messages.error(request, 'Invalid appointment data.')
+
+        return redirect('wscc_allstars_dashboard')
+
+    eligible_tms = User.objects.filter(
+        role='team_manager', ward=allstars.ward,
+        sub_county=allstars.sub_county, is_active=True,
+    ).order_by('first_name')
+
+    return render(request, 'ligi/wscc/allstars_appoint.html', {
+        'allstars': allstars,
+        'eligible_tms': eligible_tms,
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_revoke_official_view(request, allstars_pk):
+    """
+    POST /ligi/wscc/allstars/<int:allstars_pk>/revoke/
+    POST: {role: "coach"|"tm"}
+    """
+    from teams.models import WardAllStarsTeam
+    if request.method != 'POST':
+        return redirect('wscc_allstars_dashboard')
+
+    allstars = get_object_or_404(WardAllStarsTeam, pk=allstars_pk)
+    role_type = request.POST.get('role', '').strip()
+
+    if role_type == 'coach':
+        allstars.appointed_coach_name = ''
+        allstars.appointed_coach_user = None
+        allstars.save(update_fields=['appointed_coach_name', 'appointed_coach_user'])
+        messages.success(request, 'Coach appointment revoked.')
+    elif role_type == 'tm':
+        allstars.appointed_tm_user = None
+        allstars.save(update_fields=['appointed_tm_user'])
+        messages.success(request, 'Team Manager appointment revoked.')
+    else:
+        messages.error(request, 'Invalid role.')
+
+    return redirect('wscc_allstars_dashboard')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Ward All Stars TM Portal
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _get_allstars_for_user(user):
+    """Return the WardAllStarsTeam the user is appointed TM of, or None."""
+    from teams.models import WardAllStarsTeam
+    return WardAllStarsTeam.objects.filter(
+        appointed_tm_user=user, is_active=True,
+    ).select_related('competition', 'source_discipline', 'subcounty_discipline').first()
+
+
+@role_required('team_manager', 'admin')
+def allstars_tm_dashboard_view(request):
+    """GET /ligi/allstars/dashboard/"""
+    from teams.models import CountyPlayer
+    from competitions.models import Fixture
+
+    allstars = _get_allstars_for_user(request.user)
+    if allstars is None:
+        # Fall through to regular ward TM dashboard
+        return redirect('ward_tm_dashboard')
+
+    sc_discipline = allstars.subcounty_discipline
+    player_count = CountyPlayer.objects.filter(allstars_team=allstars).count()
+
+    # Upcoming fixtures for this team
+    from django.db.models import Q as _Q
+    team = allstars.competition
+    fixtures = []
+    try:
+        from competitions.models import PoolTeam
+        pool_team = PoolTeam.objects.filter(
+            team__source_discipline=sc_discipline
+        ).first()
+        if pool_team:
+            fixtures = Fixture.objects.filter(
+                _Q(home_team=pool_team.team) | _Q(away_team=pool_team.team),
+                status__in=['scheduled', 'pending'],
+            ).order_by('match_date')[:5]
+    except Exception:
+        pass
+
+    return render(request, 'ligi/allstars_tm/dashboard.html', {
+        'allstars': allstars,
+        'player_count': player_count,
+        'fixtures': fixtures,
+    })
+
+
+@role_required('team_manager', 'admin')
+def allstars_tm_longlist_view(request):
+    """GET /ligi/allstars/longlist/"""
+    from teams.models import CountyPlayer
+    from django.utils import timezone as tz
+
+    allstars = _get_allstars_for_user(request.user)
+    if allstars is None:
+        return redirect('ward_tm_longlist')
+
+    players_qs = CountyPlayer.objects.filter(allstars_team=allstars).order_by('first_name', 'last_name')
+    ref_date = getattr(allstars.competition, 'start_date', None) or tz.now().date()
+    today = ref_date
+
+    players = []
+    for p in players_qs:
+        age = None
+        eligible = False
+        if p.date_of_birth:
+            age = today.year - p.date_of_birth.year - (
+                (today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day)
+            )
+            eligible = 18 <= age <= 23
+        players.append({'player': p, 'age': age, 'eligible': eligible})
+
+    return render(request, 'ligi/allstars_tm/longlist.html', {
+        'allstars': allstars,
+        'players': players,
+        'player_count': len(players),
+        'eligible_count': sum(1 for p in players if p['eligible']),
+    })
+
+
+@role_required('team_manager', 'admin')
+def allstars_tm_add_ligi_player_view(request):
+    """GET/POST /ligi/allstars/longlist/add-ligi-player/"""
+    from teams.models import CountyPlayer
+    from teams.subcounty_finals import promote_ligi_player_to_allstars
+    from django.utils import timezone as tz
+
+    allstars = _get_allstars_for_user(request.user)
+    if allstars is None:
+        return redirect('ward_tm_longlist')
+
+    if request.method == 'POST':
+        player_pk = request.POST.get('county_player_pk', '').strip()
+        try:
+            ward_player = CountyPlayer.objects.get(
+                pk=player_pk,
+                discipline__ward=allstars.ward,
+                discipline__sub_county=allstars.sub_county,
+                discipline__sport_type=allstars.sport_type,
+                discipline__level='ward',
+            )
+            promote_ligi_player_to_allstars(ward_player, allstars)
+            messages.success(request, f'{ward_player.first_name} {ward_player.last_name} added to longlist.')
+        except CountyPlayer.DoesNotExist:
+            messages.error(request, 'Player not found in this ward.')
+        except Exception as exc:
+            messages.error(request, str(exc))
+        return redirect('allstars_tm_longlist')
+
+    # Show eligible ward players not yet in allstars
+    ref_date = getattr(allstars.competition, 'start_date', None) or tz.now().date()
+    already_added_ids = CountyPlayer.objects.filter(
+        allstars_team=allstars
+    ).values_list('national_id_number', flat=True)
+
+    ward_players_qs = CountyPlayer.objects.filter(
+        discipline__ward=allstars.ward,
+        discipline__sub_county=allstars.sub_county,
+        discipline__sport_type=allstars.sport_type,
+        discipline__level='ward',
+    ).exclude(national_id_number__in=already_added_ids)
+
+    eligible = []
+    ineligible = []
+    for p in ward_players_qs:
+        age = None
+        if p.date_of_birth:
+            age = ref_date.year - p.date_of_birth.year - (
+                (ref_date.month, ref_date.day) < (p.date_of_birth.month, p.date_of_birth.day)
+            )
+        if age is not None and 18 <= age <= 23:
+            eligible.append({'player': p, 'age': age})
+        else:
+            ineligible.append({'player': p, 'age': age})
+
+    return render(request, 'ligi/allstars_tm/add_ligi_player.html', {
+        'allstars': allstars,
+        'eligible': eligible,
+        'ineligible': ineligible,
+    })
+
+
+@role_required('team_manager', 'admin')
+def allstars_tm_request_outside_player_view(request):
+    """GET/POST /ligi/allstars/longlist/request-outside-player/"""
+    from teams.subcounty_finals import submit_outside_ligi_player_request
+    from datetime import date
+
+    allstars = _get_allstars_for_user(request.user)
+    if allstars is None:
+        return redirect('ward_tm_longlist')
+
+    if request.method == 'POST':
+        player_name   = request.POST.get('player_name', '').strip()
+        national_id   = request.POST.get('national_id', '').strip()
+        dob_str       = request.POST.get('date_of_birth', '').strip()
+        justification = request.POST.get('justification', '').strip()
+        doc           = request.FILES.get('supporting_doc')
+
+        errors = []
+        if not player_name: errors.append('Player name is required.')
+        if not national_id: errors.append('National ID is required.')
+        if not dob_str:     errors.append('Date of birth is required.')
+        if not justification: errors.append('Justification is required.')
+
+        dob = None
+        if dob_str:
+            try:
+                dob = date.fromisoformat(dob_str)
+            except ValueError:
+                errors.append('Invalid date of birth format.')
+
+        if errors:
+            for e in errors: messages.error(request, e)
+        else:
+            try:
+                submit_outside_ligi_player_request(
+                    allstars, player_name, national_id, dob,
+                    justification, request.user, doc,
+                )
+                messages.success(
+                    request,
+                    f'Request for {player_name} submitted to the Director of Sports.'
+                )
+                return redirect('allstars_tm_outside_requests')
+            except Exception as exc:
+                messages.error(request, str(exc))
+
+    return render(request, 'ligi/allstars_tm/request_outside_player.html', {
+        'allstars': allstars,
+    })
+
+
+@role_required('team_manager', 'admin')
+def allstars_tm_outside_requests_view(request):
+    """GET /ligi/allstars/longlist/outside-requests/"""
+    from teams.models import OutsideLigiPlayerRequest
+
+    allstars = _get_allstars_for_user(request.user)
+    if allstars is None:
+        return redirect('ward_tm_longlist')
+
+    reqs = OutsideLigiPlayerRequest.objects.filter(
+        ward_allstars=allstars
+    ).order_by('-created_at')
+
+    return render(request, 'ligi/allstars_tm/outside_requests.html', {
+        'allstars': allstars,
+        'requests': reqs,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Director of Sports: Outside-Ligi Review
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('director_sports', 'admin')
+def director_outside_ligi_requests_view(request):
+    """GET /portal/director/outside-ligi-requests/"""
+    from teams.models import OutsideLigiPlayerRequest, OutsideLigiRequestStatus
+
+    reqs = OutsideLigiPlayerRequest.objects.filter(
+        status=OutsideLigiRequestStatus.PENDING_DIRECTOR
+    ).select_related('ward_allstars', 'requested_by').order_by('created_at')
+
+    return render(request, 'portal/director/outside_ligi_requests.html', {
+        'requests': reqs,
+    })
+
+
+@role_required('director_sports', 'admin')
+def director_outside_ligi_review_view(request, request_pk):
+    """GET/POST /portal/director/outside-ligi-requests/<int:request_pk>/"""
+    from teams.models import OutsideLigiPlayerRequest
+    from teams.subcounty_finals import director_review_outside_ligi_request
+
+    req = get_object_or_404(OutsideLigiPlayerRequest, pk=request_pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+        notes  = request.POST.get('notes', '').strip()
+        try:
+            director_review_outside_ligi_request(req, request.user, action, notes)
+            if action == 'approve':
+                messages.success(request, f'Request for {req.player_name} forwarded to Chief Sports Officer.')
+            else:
+                messages.warning(request, f'Request for {req.player_name} rejected.')
+        except Exception as exc:
+            messages.error(request, str(exc))
+        return redirect('director_outside_ligi_requests')
+
+    return render(request, 'portal/director/outside_ligi_review.html', {'req': req})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Chief Sports Officer: Final Outside-Ligi Approval
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('chief_sports_officer', 'admin')
+def cso_outside_ligi_requests_view(request):
+    """GET /portal/cso/outside-ligi-requests/"""
+    from teams.models import OutsideLigiPlayerRequest, OutsideLigiRequestStatus
+
+    reqs = OutsideLigiPlayerRequest.objects.filter(
+        status=OutsideLigiRequestStatus.FORWARDED_CSO
+    ).select_related('ward_allstars', 'requested_by', 'director_reviewed_by').order_by('created_at')
+
+    return render(request, 'portal/cso/outside_ligi_requests.html', {
+        'requests': reqs,
+    })
+
+
+@role_required('chief_sports_officer', 'admin')
+def cso_outside_ligi_review_view(request, request_pk):
+    """GET/POST /portal/cso/outside-ligi-requests/<int:request_pk>/"""
+    from teams.models import OutsideLigiPlayerRequest
+    from teams.subcounty_finals import cso_final_review_outside_ligi_request
+
+    req = get_object_or_404(OutsideLigiPlayerRequest, pk=request_pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+        notes  = request.POST.get('notes', '').strip()
+        try:
+            cso_final_review_outside_ligi_request(req, request.user, action, notes)
+            if action == 'approve':
+                messages.success(request, f'{req.player_name} approved and added to allstars longlist.')
+            else:
+                messages.warning(request, f'Request for {req.player_name} rejected.')
+        except Exception as exc:
+            messages.error(request, str(exc))
+        return redirect('cso_outside_ligi_requests')
+
+    return render(request, 'portal/cso/outside_ligi_review.html', {'req': req})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — SCSO: Ward Qualification + All Stars Overview
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_qualify_ward_champion_view(request, competition_pk):
+    """
+    SCSO marks a ward team as the Ligi Mashinani champion,
+    triggering qualification to the Subcounty Finals.
+    GET/POST /portal/subcounty/competitions/<int:competition_pk>/qualify-ward/
+    """
+    from competitions.models import Competition
+    from teams.models import Team, WardAllStarsTeam
+
+    competition = get_object_or_404(Competition, pk=competition_pk)
+    user = request.user
+
+    if request.method == 'POST':
+        team_pk = request.POST.get('team_pk', '').strip()
+        try:
+            team = Team.objects.get(pk=team_pk)
+            team.qualified_to_subcounty_finals = True
+            team.qualifying_subcounty_competition = competition
+            team.save(update_fields=['qualified_to_subcounty_finals', 'qualifying_subcounty_competition'])
+
+            # Create WardAllStarsTeam stub
+            WardAllStarsTeam.objects.get_or_create(
+                competition=competition,
+                ward=team.source_discipline.ward if team.source_discipline else '',
+                sport_type=competition.sport_type,
+                defaults={
+                    'sub_county': user.sub_county or '',
+                    'official_name': f"{team.source_discipline.ward if team.source_discipline else team.name} Ward All Stars",
+                    'qualified_from_ligi': True,
+                    'source_discipline': team.source_discipline,
+                    'appointed_by_wscc': None,
+                }
+            )
+            messages.success(request, f'{team.name} marked as ward champion and qualified to Subcounty Finals.')
+        except Team.DoesNotExist:
+            messages.error(request, 'Team not found.')
+        return redirect('sc_allstars_overview', competition_pk=competition_pk)
+
+    # List ward teams in this competition
+    from competitions.models import PoolTeam
+    pool_teams = PoolTeam.objects.filter(
+        pool__competition=competition
+    ).select_related('team', 'team__source_discipline')
+
+    return render(request, 'portal/subcounty_officer/qualify_ward.html', {
+        'competition': competition,
+        'pool_teams': pool_teams,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def sc_allstars_overview_view(request, competition_pk):
+    """
+    SCSO overview of all WardAllStarsTeam records in a Subcounty Finals competition.
+    GET /portal/subcounty/competitions/<int:competition_pk>/allstars/
+    """
+    from competitions.models import Competition
+    from teams.models import WardAllStarsTeam, CountyPlayer
+
+    competition = get_object_or_404(Competition, pk=competition_pk)
+    allstars = WardAllStarsTeam.objects.filter(
+        competition=competition
+    ).select_related('appointed_tm_user', 'appointed_coach_user').order_by('ward')
+
+    data = []
+    for a in allstars:
+        player_count = CountyPlayer.objects.filter(allstars_team=a).count()
+        data.append({'allstars': a, 'player_count': player_count})
+
+    return render(request, 'portal/subcounty_officer/allstars_overview.html', {
+        'competition': competition,
+        'allstars_data': data,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Subcounty Discipline Coordinator portal
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_discipline_coordinator', 'coordinator', 'admin')
+def sdc_dashboard_view(request):
+    """
+    Subcounty Discipline Coordinator — read-only fixture/standings monitor.
+    GET /portal/sdc/dashboard/
+    """
+    from teams.models import SubcountyDisciplineCoordinator
+    from competitions.models import Competition, CompetitionLevel, Fixture
+    from django.db.models import Q as _Q
+
+    user = request.user
+
+    # Find SDC assignment
+    sdc = SubcountyDisciplineCoordinator.objects.filter(
+        user=user, is_active=True,
+    ).first()
+
+    competitions = []
+    fixtures     = []
+
+    if sdc:
+        competitions = Competition.objects.filter(
+            level=CompetitionLevel.SUBCOUNTY,
+            sub_county=sdc.sub_county,
+            sport_type=sdc.sport_type,
+        ).order_by('-created_at')[:5]
+
+        comp_ids = list(competitions.values_list('id', flat=True))
+        fixtures = Fixture.objects.filter(
+            competition_id__in=comp_ids,
+        ).order_by('match_date')[:20]
+
+    return render(request, 'portal/sdc/dashboard.html', {
+        'sdc': sdc,
+        'competitions': competitions,
+        'fixtures': fixtures,
+        'user': user,
+    })

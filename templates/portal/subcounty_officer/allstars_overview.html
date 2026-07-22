@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Ward All Stars Overview — {{ competition.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb"><a href="{% url 'subcounty_officer_dashboard' %}">Dashboard</a><span>{{ competition.name }}</span><span>All Stars</span></div>
+  <h1><i class="bi bi-trophy-fill"></i> Ward All Stars Overview</h1>
+  <p>{{ competition.name }} · {{ competition.sub_county }}</p>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+<div class="mb-3">
+  <a href="{% url 'sc_qualify_ward_champion' competition.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-award"></i> Mark Ward Champion</a>
+</div>
+{% if allstars_data %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.86rem">
+      <thead class="table-light"><tr><th>Ward</th><th>Official Name</th><th>Coach</th><th>Team Manager</th><th>Players</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for item in allstars_data %}
+      <tr>
+        <td><strong>{{ item.allstars.ward }}</strong></td>
+        <td>{{ item.allstars.official_name }}</td>
+        <td>{{ item.allstars.appointed_coach_name|default:"—" }}</td>
+        <td>{% if item.allstars.appointed_tm_user %}{{ item.allstars.appointed_tm_user.get_full_name }}{% else %}<span class="text-warning">Not appointed</span>{% endif %}</td>
+        <td><span class="badge bg-primary">{{ item.player_count }}</span></td>
+        <td>{% if item.allstars.qualified_from_ligi %}<span class="badge bg-success">Qualified ✓</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm"><div class="card-body text-center text-muted py-5">No Ward All Stars teams registered for this competition yet.</div></div>
+{% endif %}
+{% endblock %}

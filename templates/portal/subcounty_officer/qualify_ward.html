@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Mark Ward Champion — {{ competition.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'subcounty_officer_dashboard' %}">Dashboard</a>
+    <span>{{ competition.name }}</span>
+    <span>Mark Ward Champion</span>
+  </div>
+  <h1><i class="bi bi-award-fill"></i> Mark Ward Champion</h1>
+  <p>Select the winning team that qualifies for the Subcounty Finals</p>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+
+{% if pool_teams %}
+<div class="card shadow-sm">
+  <div class="card-header"><h5 class="mb-0">Teams in {{ competition.name }}</h5></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.88rem">
+      <thead class="table-light"><tr><th>Team</th><th>Ward</th><th>Already Qualified</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for pt in pool_teams %}
+      <tr>
+        <td><strong>{{ pt.team.name }}</strong></td>
+        <td>{{ pt.team.source_discipline.ward|default:"—" }}</td>
+        <td>{% if pt.team.qualified_to_subcounty_finals %}<span class="badge bg-success">Yes ✓</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+        <td>
+          {% if not pt.team.qualified_to_subcounty_finals %}
+          <form method="post">{% csrf_token %}
+            <input type="hidden" name="team_pk" value="{{ pt.team.pk }}">
+            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Mark {{ pt.team.name }} as ward champion and qualify them to Subcounty Finals?')">
+              <i class="bi bi-trophy"></i> Mark Champion
+            </button>
+          </form>
+          {% else %}
+          <span class="text-success small"><i class="bi bi-check-circle"></i> Qualified</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm"><div class="card-body text-center text-muted py-5">No teams found in this competition's pools.</div></div>
+{% endif %}
+
+<div class="mt-3">
+  <a href="{% url 'sc_allstars_overview' competition.pk %}" class="btn btn-outline-secondary btn-sm">← All Stars Overview</a>
+</div>
+{% endblock %}

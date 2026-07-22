@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}CSO Final Decision — {{ req.player_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-shield-check"></i> Final Decision — Outside-Ligi Request</h1>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+<div class="card shadow-sm" style="max-width:640px">
+  <div class="card-body">
+    <dl class="row">
+      <dt class="col-sm-4">Player</dt><dd class="col-sm-8">{{ req.player_name }}</dd>
+      <dt class="col-sm-4">National ID</dt><dd class="col-sm-8">{{ req.national_id }}</dd>
+      <dt class="col-sm-4">Date of Birth</dt><dd class="col-sm-8">{{ req.date_of_birth|date:"d M Y" }}</dd>
+      <dt class="col-sm-4">Ward All Stars</dt><dd class="col-sm-8">{{ req.ward_allstars.official_name }}</dd>
+      <dt class="col-sm-4">Justification</dt><dd class="col-sm-8">{{ req.justification }}</dd>
+      <dt class="col-sm-4">Director Notes</dt><dd class="col-sm-8">{{ req.director_notes|default:"—" }}</dd>
+      {% if req.supporting_doc %}<dt class="col-sm-4">Document</dt><dd class="col-sm-8"><a href="{{ req.supporting_doc.url }}" target="_blank">View</a></dd>{% endif %}
+    </dl>
+    <div class="alert alert-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i> <strong>This is your final decision.</strong> Approving will automatically add this player to the Ward All Stars longlist.</div>
+    <hr>
+    <form method="post">{% csrf_token %}
+      <div class="mb-3"><label class="form-label fw-semibold">Notes</label><textarea name="notes" class="form-control" rows="3" placeholder="Optional notes for approval, or required reason for rejection"></textarea></div>
+      <div class="d-flex gap-2">
+        <button type="submit" name="action" value="approve" class="btn btn-success"><i class="bi bi-check-circle"></i> Approve — Add to Longlist</button>
+        <button type="submit" name="action" value="reject" class="btn btn-danger"><i class="bi bi-x-circle"></i> Reject</button>
+        <a href="{% url 'cso_outside_ligi_requests' %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

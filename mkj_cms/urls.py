@@ -252,6 +252,31 @@ from .web_views import (
     ligi_settings_view,
     scso_player_reg_request_view,
     ligi_admin_overview_view,
+    # Ligi Mashinani: SCSO Ligi Overview
+    scso_ligi_overview_view,
+    scso_ligi_ward_detail_view,
+    # Subcounty Finals: WSCC All Stars management
+    wscc_allstars_dashboard_view,
+    wscc_create_allstars_team_view,
+    wscc_appoint_officials_view,
+    wscc_revoke_official_view,
+    # Subcounty Finals: Ward All Stars TM portal
+    allstars_tm_dashboard_view,
+    allstars_tm_longlist_view,
+    allstars_tm_add_ligi_player_view,
+    allstars_tm_request_outside_player_view,
+    allstars_tm_outside_requests_view,
+    # Subcounty Finals: Director of Sports
+    director_outside_ligi_requests_view,
+    director_outside_ligi_review_view,
+    # Subcounty Finals: Chief Sports Officer
+    cso_outside_ligi_requests_view,
+    cso_outside_ligi_review_view,
+    # Subcounty Finals: SCSO
+    sc_qualify_ward_champion_view,
+    sc_allstars_overview_view,
+    # Subcounty Finals: SDC
+    sdc_dashboard_view,
     # Ligi Mashinani: Transfer system
     ward_tm_transfers_view,
     ward_tm_request_transfer_view,
@@ -626,6 +651,36 @@ urlpatterns = [
     # ── LIGI MASHINANI: Settings / Window Control ─────────────────────────────
     path("portal/ligi/settings/",  ligi_settings_view, name="ligi_settings"),
     path("portal/subcounty/player-reg-request/", scso_player_reg_request_view, name="scso_player_reg_request"),
+    path("portal/subcounty/ligi/",               scso_ligi_overview_view,        name="scso_ligi_overview"),
+    path("portal/subcounty/ligi/<str:ward>/<str:discipline>/", scso_ligi_ward_detail_view, name="scso_ligi_ward_detail"),
+
+    # ── SUBCOUNTY FINALS: WSCC All Stars ──────────────────────────────────────
+    path("ligi/wscc/allstars/",                              wscc_allstars_dashboard_view,        name="wscc_allstars_dashboard"),
+    path("ligi/wscc/allstars/<int:competition_pk>/create/",  wscc_create_allstars_team_view,      name="wscc_create_allstars_team"),
+    path("ligi/wscc/allstars/<int:allstars_pk>/appoint/",   wscc_appoint_officials_view,          name="wscc_appoint_officials"),
+    path("ligi/wscc/allstars/<int:allstars_pk>/revoke/",    wscc_revoke_official_view,            name="wscc_revoke_official"),
+
+    # ── SUBCOUNTY FINALS: Ward All Stars TM portal ────────────────────────────
+    path("ligi/allstars/dashboard/",                         allstars_tm_dashboard_view,          name="allstars_tm_dashboard"),
+    path("ligi/allstars/longlist/",                          allstars_tm_longlist_view,           name="allstars_tm_longlist"),
+    path("ligi/allstars/longlist/add-ligi-player/",          allstars_tm_add_ligi_player_view,    name="allstars_tm_add_ligi_player"),
+    path("ligi/allstars/longlist/request-outside-player/",   allstars_tm_request_outside_player_view, name="allstars_tm_request_outside_player"),
+    path("ligi/allstars/longlist/outside-requests/",         allstars_tm_outside_requests_view,   name="allstars_tm_outside_requests"),
+
+    # ── SUBCOUNTY FINALS: Director of Sports ──────────────────────────────────
+    path("portal/director/outside-ligi-requests/",           director_outside_ligi_requests_view, name="director_outside_ligi_requests"),
+    path("portal/director/outside-ligi-requests/<int:request_pk>/", director_outside_ligi_review_view, name="director_outside_ligi_review"),
+
+    # ── SUBCOUNTY FINALS: Chief Sports Officer ────────────────────────────────
+    path("portal/cso/outside-ligi-requests/",                cso_outside_ligi_requests_view,     name="cso_outside_ligi_requests"),
+    path("portal/cso/outside-ligi-requests/<int:request_pk>/", cso_outside_ligi_review_view,     name="cso_outside_ligi_review"),
+
+    # ── SUBCOUNTY FINALS: SCSO ────────────────────────────────────────────────
+    path("portal/subcounty/competitions/<int:competition_pk>/qualify-ward/", sc_qualify_ward_champion_view, name="sc_qualify_ward_champion"),
+    path("portal/subcounty/competitions/<int:competition_pk>/allstars/",     sc_allstars_overview_view,     name="sc_allstars_overview"),
+
+    # ── SUBCOUNTY FINALS: SDC ─────────────────────────────────────────────────
+    path("portal/sdc/dashboard/",                            sdc_dashboard_view,                 name="sdc_dashboard"),
     path("ligi/admin/overview/", ligi_admin_overview_view, name="ligi_admin_overview"),
 
     # ── LIGI MASHINANI: Transfer System ──────────────────────────────────────

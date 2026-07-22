@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% block title %}Ligi Mashinani Overview — {{ sub_county }} Sub-County{% endblock %}
+
+{% block extra_css %}
+<style>
+.lm-hero {
+    background: linear-gradient(135deg, #0a2f5c 0%, #124491 60%, #1a5db8 100%);
+    border-radius: 16px; padding: 1.75rem 2rem; color: #fff;
+    margin-bottom: 1.75rem; position: relative; overflow: hidden;
+}
+.lm-hero::after { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; background:rgba(255,255,255,.05); border-radius:50%; }
+.lm-hero h1 { font-size:1.4rem; font-weight:800; margin:0 0 .25rem; position:relative; }
+.lm-hero p  { opacity:.75; font-size:.88rem; margin:0; position:relative; }
+
+.lm-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.lm-stat { background:#fff; border-radius:14px; padding:1.1rem; box-shadow:0 2px 10px rgba(0,0,0,.06); display:flex; align-items:center; gap:.85rem; border-left:4px solid; }
+.lm-stat-icon { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.lm-stat-val { font-size:1.6rem; font-weight:900; line-height:1; }
+.lm-stat-lbl { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; opacity:.6; margin-top:.15rem; }
+.lm-stat--teams  { border-color:#3b82f6; } .lm-stat--teams  .lm-stat-icon { background:#dbeafe; color:#1d4ed8; } .lm-stat--teams  .lm-stat-val { color:#1d4ed8; }
+.lm-stat--players{ border-color:#10b981; } .lm-stat--players .lm-stat-icon { background:#d1fae5; color:#065f46; } .lm-stat--players .lm-stat-val { color:#065f46; }
+.lm-stat--wards  { border-color:#8b5cf6; } .lm-stat--wards  .lm-stat-icon { background:#ede9fe; color:#6d28d9; } .lm-stat--wards  .lm-stat-val { color:#6d28d9; }
+
+.lm-filters { background:#fff; border-radius:14px; padding:1.1rem 1.25rem; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:1.5rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:flex-end; }
+.lm-filters .fg { display:flex; flex-direction:column; gap:.25rem; flex:1; min-width:140px; }
+.lm-filters label { font-size:.68rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.5px; }
+.lm-filters input, .lm-filters select { padding:.5rem .75rem; border:1px solid #e5e7eb; border-radius:8px; font-size:.85rem; background:#f9fafb; outline:none; transition:border-color .2s; }
+.lm-filters input:focus, .lm-filters select:focus { border-color:#124491; background:#fff; }
+.btn-f { display:inline-flex; align-items:center; gap:.35rem; padding:.5rem 1.1rem; background:#124491; color:#fff; border:none; border-radius:8px; font-size:.82rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+.btn-f:hover { background:#0a2f5c; }
+.btn-cl { display:inline-flex; align-items:center; gap:.3rem; padding:.5rem .9rem; background:#fff; color:#6b7280; border:1px solid #e5e7eb; border-radius:8px; font-size:.82rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+.btn-cl:hover { border-color:#ef4444; color:#ef4444; }
+
+.section-card { background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); overflow:hidden; margin-bottom:1.5rem; }
+.section-head { padding:.85rem 1.25rem; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; }
+.section-head h2 { font-size:.92rem; font-weight:700; color:#374151; margin:0; }
+.count-badge { background:#f3f4f6; color:#6b7280; font-size:.72rem; font-weight:600; padding:.2rem .6rem; border-radius:20px; }
+
+table.lm-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+.lm-table thead tr { background:#f8faff; }
+.lm-table thead th { padding:.6rem 1rem; font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#9ca3af; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
+.lm-table tbody tr { border-bottom:1px solid #f9fafb; transition:background .15s; }
+.lm-table tbody tr:hover { background:#f8faff; }
+.lm-table tbody tr:last-child { border-bottom:none; }
+.lm-table td { padding:.7rem 1rem; vertical-align:middle; color:#374151; }
+
+.s-pill { display:inline-flex; align-items:center; gap:.28rem; padding:.22rem .6rem; border-radius:20px; font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+.s-pill::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.sp-draft     { background:#fef3c7; color:#b45309; } .sp-draft::before     { background:#f59e0b; }
+.sp-sub       { background:#dbeafe; color:#1d4ed8; } .sp-sub::before       { background:#3b82f6; }
+.sp-approved  { background:#d1fae5; color:#065f46; } .sp-approved::before  { background:#10b981; }
+.sp-returned  { background:#fee2e2; color:#b91c1c; } .sp-returned::before  { background:#ef4444; }
+.sp-none      { background:#f3f4f6; color:#9ca3af; } .sp-none::before      { background:#d1d5db; }
+
+.view-btn { display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .75rem; background:#f0f4ff; color:#124491; border:1px solid #c7d7f7; border-radius:7px; font-size:.76rem; font-weight:600; text-decoration:none; transition:all .2s; }
+.view-btn:hover { background:#124491; color:#fff; border-color:#124491; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="lm-hero">
+    <h1><i class="bi bi-trophy-fill me-2" style="opacity:.8"></i>Ligi Mashinani — {{ sub_county }} Sub-County</h1>
+    <p>Team registrations, ward longlists and player progress — 2026/2027 Season</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1.25rem">
+{% for msg in messages %}
+<div style="padding:.75rem 1rem;border-radius:8px;margin-bottom:.4rem;font-size:.88rem;
+    {% if 'error' in msg.tags %}background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;
+    {% elif 'success' in msg.tags %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;
+    {% else %}background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;{% endif %}">{{ msg }}</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="lm-stats">
+    <div class="lm-stat lm-stat--teams">
+        <div class="lm-stat-icon"><i class="bi bi-people-fill"></i></div>
+        <div><div class="lm-stat-val">{{ total_teams }}</div><div class="lm-stat-lbl">Registered Teams</div></div>
+    </div>
+    <div class="lm-stat lm-stat--players">
+        <div class="lm-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+        <div><div class="lm-stat-val">{{ total_players }}</div><div class="lm-stat-lbl">Total Players</div></div>
+    </div>
+    <div class="lm-stat lm-stat--wards">
+        <div class="lm-stat-icon"><i class="bi bi-map-fill"></i></div>
+        <div><div class="lm-stat-val">{{ wards_with_longlists }}</div><div class="lm-stat-lbl">Wards with Longlists</div></div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="lm-filters">
+    <div class="fg" style="flex:2;min-width:180px">
+        <label>Search</label>
+        <input type="text" name="q" value="{{ search }}" placeholder="Team, manager, ward…">
+    </div>
+    <div class="fg">
+        <label>Ward</label>
+        <select name="ward">
+            <option value="">All Wards</option>
+            {% for w in ward_choices %}<option value="{{ w }}" {% if ward_filter == w %}selected{% endif %}>{{ w }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="fg">
+        <label>Discipline</label>
+        <select name="discipline">
+            <option value="">All Disciplines</option>
+            {% for val, label in discipline_choices %}<option value="{{ val }}" {% if discipline_filter == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="fg">
+        <label>Longlist Status</label>
+        <select name="status">
+            <option value="">All Statuses</option>
+            {% for val, label in ll_status_choices %}<option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:flex-end">
+        <button type="submit" class="btn-f"><i class="bi bi-search"></i> Filter</button>
+        <a href="{% url 'scso_ligi_overview' %}" class="btn-cl"><i class="bi bi-x"></i> Clear</a>
+    </div>
+</form>
+
+<!-- Ward Disciplines & Longlists -->
+<div class="section-card">
+    <div class="section-head">
+        <h2><i class="bi bi-map me-1" style="opacity:.5"></i> Ward Disciplines & Longlist Progress</h2>
+        <span class="count-badge">{{ ward_discipline_data|length }} ward(s)</span>
+    </div>
+    {% if ward_discipline_data %}
+    <div style="overflow-x:auto">
+        <table class="lm-table">
+            <thead><tr>
+                <th>Ward</th><th>Discipline</th><th>Longlist Status</th>
+                <th>Players</th><th>Age-Eligible (18-23)</th><th style="text-align:right">Actions</th>
+            </tr></thead>
+            <tbody>
+            {% for item in ward_discipline_data %}
+            <tr>
+                <td style="font-weight:700">{{ item.discipline.ward|title }}</td>
+                <td>{{ item.sport_label }}</td>
+                <td>
+                    {% if item.ll_status == 'draft' %}<span class="s-pill sp-draft">Draft</span>
+                    {% elif item.ll_status == 'submitted' %}<span class="s-pill sp-sub">Submitted</span>
+                    {% elif item.ll_status == 'wscc_approved' %}<span class="s-pill sp-approved">WSCC Approved</span>
+                    {% elif item.ll_status == 'returned' %}<span class="s-pill sp-returned">Returned</span>
+                    {% else %}<span class="s-pill sp-none">No Longlist</span>{% endif %}
+                </td>
+                <td style="font-weight:600">{{ item.player_count }}</td>
+                <td>
+                    <span style="font-weight:700;color:{% if item.eligible_count > 0 %}#065f46{% else %}#9ca3af{% endif %}">
+                        {{ item.eligible_count }}
+                    </span>
+                </td>
+                <td style="text-align:right">
+                    <a href="{% url 'scso_ligi_ward_detail' item.discipline.ward item.discipline.sport_type %}" class="view-btn">
+                        <i class="bi bi-eye"></i> View Longlist
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:2.5rem;text-align:center;color:#9ca3af">
+        <i class="bi bi-map" style="font-size:2rem;display:block;margin-bottom:.75rem;opacity:.4"></i>
+        <p style="font-weight:600;color:#374151;margin:.25rem 0">No ward disciplines found</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Registered Teams -->
+<div class="section-card">
+    <div class="section-head">
+        <h2><i class="bi bi-people me-1" style="opacity:.5"></i> Registered Teams</h2>
+        <span class="count-badge">{{ registrations|length }} team(s)</span>
+    </div>
+    {% if registrations %}
+    <div style="overflow-x:auto">
+        <table class="lm-table">
+            <thead><tr>
+                <th>#</th><th>Team</th><th>Ward</th><th>Discipline</th>
+                <th>Manager / Coach</th><th>Registered</th>
+            </tr></thead>
+            <tbody>
+            {% for reg in registrations %}
+            <tr>
+                <td style="color:#d1d5db;font-size:.78rem">{{ reg.pk }}</td>
+                <td style="font-weight:700">{{ reg.team_name }}</td>
+                <td>{{ reg.ward }}</td>
+                <td>{{ reg.get_discipline_display|default:reg.discipline }}</td>
+                <td>
+                    <div style="font-weight:600;font-size:.83rem">{{ reg.manager_first_name }} {{ reg.manager_last_name }}</div>
+                    <div style="font-size:.72rem;color:#9ca3af">{{ reg.manager_email }}</div>
+                </td>
+                <td style="font-size:.78rem;color:#9ca3af;white-space:nowrap">
+                    {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:2.5rem;text-align:center;color:#9ca3af">
+        <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:.75rem;opacity:.4"></i>
+        <p style="font-weight:600;color:#374151;margin:.25rem 0">No approved registrations found</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

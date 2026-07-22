@@ -305,6 +305,26 @@ class CountyPlayer(models.Model):
         related_name="county_instances",
         help_text="Sub-county player this county player was promoted from",
     )
+
+    # ── Subcounty Finals — Ward All Stars tracking ─────────────────────────────
+    allstars_team = models.ForeignKey(
+        "WardAllStarsTeam",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="allstars_players",
+        help_text="Ward All Stars team this player is registered for (Subcounty Finals)",
+    )
+    is_outside_ligi = models.BooleanField(
+        default=False,
+        help_text="True when player was not in Ligi Mashinani and added via OutsideLigiPlayerRequest",
+    )
+    outside_ligi_request = models.ForeignKey(
+        "OutsideLigiPlayerRequest",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="approved_players",
+        help_text="The approved OutsideLigiPlayerRequest that authorised this player's inclusion",
+    )
     
     photo = models.ImageField(upload_to="county_players/photos/", null=True, blank=True,
                               help_text="Passport-size photo (required)")
@@ -854,6 +874,19 @@ class Team(models.Model):
         null=True, blank=True,
         related_name="qualified_teams",
         help_text="County competition this team qualified for",
+    )
+
+    # ── Subcounty Finals qualification (ward → sub-county level) ──────────────
+    qualified_to_subcounty_finals = models.BooleanField(
+        default=False,
+        help_text="True when this ward team qualifies to MKJ Supa Cup Subcounty Finals",
+    )
+    qualifying_subcounty_competition = models.ForeignKey(
+        "competitions.Competition",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="ward_qualified_teams",
+        help_text="Subcounty Finals competition this ward team qualified for",
     )
 
     # ── Payment tracking ───────────────────────────────────────────────────────
@@ -2234,3 +2267,207 @@ class WardSubstitutionRequest(models.Model):
             f"Ward Sub: {self.player_off.first_name} → {self.player_on.first_name} "
             f"min {self.minute} [{self.get_status_display()}]"
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Ward All Stars Team
+# ══════════════════════════════════════════════════════════════════════════════
+
+class WardAllStarsTeam(models.Model):
+    """
+    Links a qualifying ward to its appointed officials and Under-23 squad
+    for a specific MKJ Supa Cup Subcounty Finals competition.
+
+    Created by WSCC after their ward qualifies from Ligi Mashinani.
+    One record per (competition, ward, sport_type).
+    """
+    competition = models.ForeignKey(
+        'competitions.Competition',
+        on_delete=models.CASCADE,
+        related_name='ward_all_stars_teams',
+    )
+    ward        = models.CharField(max_length=100)
+    sub_county  = models.CharField(max_length=100)
+    sport_type  = models.CharField(max_length=30, choices=SportType.choices)
+    official_name = models.CharField(
+        max_length=200,
+        help_text="Official name e.g. 'Mavindini Ward All Stars'",
+    )
+
+    # Appointed officials (set by WSCC)
+    appointed_coach_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='coached_ward_allstars',
+    )
+    appointed_coach_name = models.CharField(max_length=200, blank=True, default='')
+    appointed_tm_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='managed_ward_allstars',
+    )
+    appointed_by_wscc = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='wscc_allstars_appointments',
+    )
+    appointed_at = models.DateTimeField(null=True, blank=True)
+
+    # Linked ward discipline (source of eligible players from Ligi Mashinani)
+    source_discipline = models.ForeignKey(
+        'CountyDiscipline',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='allstars_source',
+        limit_choices_to={'level': 'ward'},
+    )
+
+    # Linked subcounty discipline (where allstars players are registered)
+    subcounty_discipline = models.ForeignKey(
+        'CountyDiscipline',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='ward_allstars_sources',
+        limit_choices_to={'level': 'subcounty'},
+    )
+
+    is_active             = models.BooleanField(default=True)
+    qualified_from_ligi   = models.BooleanField(
+        default=False,
+        help_text='True when ward champion flag is confirmed.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['competition', 'ward', 'sport_type']
+        verbose_name = 'Ward All Stars Team'
+        verbose_name_plural = 'Ward All Stars Teams'
+        ordering = ['sub_county', 'ward', 'sport_type']
+
+    def __str__(self):
+        return f'{self.official_name} ({self.get_sport_type_display()})'
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Outside-Ligi Player Request
+# ══════════════════════════════════════════════════════════════════════════════
+
+class OutsideLigiRequestStatus(models.TextChoices):
+    PENDING_DIRECTOR  = 'pending_director',  'Pending Director of Sports'
+    FORWARDED_CSO     = 'forwarded_cso',     'Forwarded to Chief Sports Officer'
+    CSO_APPROVED      = 'cso_approved',      'Approved by CSO'
+    CSO_REJECTED      = 'cso_rejected',      'Rejected by CSO'
+    DIRECTOR_REJECTED = 'director_rejected', 'Rejected by Director of Sports'
+
+
+class OutsideLigiPlayerRequest(models.Model):
+    """
+    Request to add a player NOT registered in Ligi Mashinani to a ward all-stars
+    team for the Subcounty Finals.
+
+    Flow: TM submits → Director reviews → forwards to CSO → CSO approves/rejects.
+    On CSO approval a CountyPlayer record is auto-created.
+    """
+    ward_allstars = models.ForeignKey(
+        WardAllStarsTeam,
+        on_delete=models.CASCADE,
+        related_name='outside_ligi_requests',
+    )
+    player_name    = models.CharField(max_length=200)
+    national_id    = models.CharField(max_length=20, validators=[national_id_validator])
+    date_of_birth  = models.DateField()
+    justification  = models.TextField(
+        help_text='Why this player is needed and why they were not in Ligi Mashinani.',
+    )
+    supporting_doc = models.FileField(
+        upload_to='outside_ligi_requests/', null=True, blank=True,
+    )
+
+    status = models.CharField(
+        max_length=25,
+        choices=OutsideLigiRequestStatus.choices,
+        default=OutsideLigiRequestStatus.PENDING_DIRECTOR,
+        db_index=True,
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='outside_ligi_requests_made',
+    )
+
+    # Director review
+    director_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='director_olp_reviews',
+    )
+    director_reviewed_at = models.DateTimeField(null=True, blank=True)
+    director_notes       = models.TextField(blank=True, default='')
+
+    # CSO review
+    cso_reviewed_by  = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='cso_olp_reviews',
+    )
+    cso_reviewed_at = models.DateTimeField(null=True, blank=True)
+    cso_notes       = models.TextField(blank=True, default='')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['ward_allstars', 'national_id']
+        verbose_name = 'Outside-Ligi Player Request'
+        verbose_name_plural = 'Outside-Ligi Player Requests'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return (
+            f'{self.player_name} ({self.national_id}) — '
+            f'{self.ward_allstars.ward} — {self.get_status_display()}'
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SUBCOUNTY FINALS — Subcounty Discipline Coordinator appointment
+# ══════════════════════════════════════════════════════════════════════════════
+
+class SubcountyDisciplineCoordinator(models.Model):
+    """
+    Links a Coordinator-role user to a specific discipline + sub-county
+    for the Subcounty Finals.  One active SDC per discipline per sub-county.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'coordinator'},
+        related_name='sdc_assignments',
+    )
+    sub_county  = models.CharField(max_length=100)
+    sport_type  = models.CharField(max_length=30, choices=SportType.choices)
+    season      = models.CharField(max_length=10, default='2026')
+    appointed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='sdc_appointments_made',
+    )
+    appointed_at = models.DateTimeField(auto_now_add=True)
+    is_active    = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ['sub_county', 'sport_type', 'season']
+        verbose_name = 'Subcounty Discipline Coordinator'
+        verbose_name_plural = 'Subcounty Discipline Coordinators'
+
+    def __str__(self):
+        sport = dict(SportType.choices).get(self.sport_type, self.sport_type)
+        return f'{self.user.get_full_name()} — {self.sub_county} {sport} ({self.season})'

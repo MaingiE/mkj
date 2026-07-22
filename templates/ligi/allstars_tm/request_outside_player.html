@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Request Outside-Ligi Player{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-person-exclamation"></i> Request Outside-Ligi Player</h1>
+  <p>{{ allstars.official_name }} · Requires Director of Sports → Chief Sports Officer approval</p>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+<div class="card shadow-sm" style="max-width:600px">
+  <div class="card-body">
+    <div class="alert alert-warning mb-3"><i class="bi bi-exclamation-triangle me-1"></i> This player was <strong>not registered in Ligi Mashinani</strong>. Their inclusion requires approval from the Director of Sports and Chief Sports Officer.</div>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="mb-3"><label class="form-label fw-semibold">Player Full Name *</label><input type="text" name="player_name" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label fw-semibold">National ID *</label><input type="text" name="national_id" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Date of Birth *</label><input type="date" name="date_of_birth" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Justification *</label><textarea name="justification" class="form-control" rows="4" required placeholder="Why is this player needed? Why were they not registered in Ligi Mashinani?"></textarea></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Supporting Document (optional)</label><input type="file" name="supporting_doc" class="form-control"></div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Submit Request</button>
+        <a href="{% url 'allstars_tm_longlist' %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

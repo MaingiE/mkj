@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Appoint Officials — {{ allstars.official_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-person-badge-fill"></i> Appoint Officials</h1>
+  <p>{{ allstars.official_name }}</p>
+</div>
+{% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;max-width:800px">
+
+  <!-- Coach -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5><i class="bi bi-whistle-fill"></i> Coach</h5>
+      <p class="text-muted small">Current: <strong>{{ allstars.appointed_coach_name|default:"Not appointed" }}</strong></p>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="role_type" value="coach">
+        <div class="mb-2"><input type="text" name="coach_name" class="form-control" placeholder="Coach full name" value="{{ allstars.appointed_coach_name }}"></div>
+        <button type="submit" class="btn btn-primary btn-sm w-100">Update Coach</button>
+      </form>
+      {% if allstars.appointed_coach_name %}
+      <form method="post" action="{% url 'wscc_revoke_official' allstars.pk %}" class="mt-2">{% csrf_token %}
+        <input type="hidden" name="role" value="coach">
+        <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Revoke coach appointment?')">Revoke</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Team Manager -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5><i class="bi bi-person-fill-gear"></i> Team Manager</h5>
+      <p class="text-muted small">Current: <strong>{% if allstars.appointed_tm_user %}{{ allstars.appointed_tm_user.get_full_name }}{% else %}Not appointed{% endif %}</strong></p>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="role_type" value="tm">
+        <div class="mb-2">
+          <select name="tm_user_pk" class="form-select form-select-sm">
+            <option value="">— Select —</option>
+            {% for tm in eligible_tms %}<option value="{{ tm.pk }}" {% if allstars.appointed_tm_user and tm.pk == allstars.appointed_tm_user.pk %}selected{% endif %}>{{ tm.get_full_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm w-100">Update Team Manager</button>
+      </form>
+      {% if allstars.appointed_tm_user %}
+      <form method="post" action="{% url 'wscc_revoke_official' allstars.pk %}" class="mt-2">{% csrf_token %}
+        <input type="hidden" name="role" value="tm">
+        <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Revoke TM appointment?')">Revoke</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+<div class="mt-3"><a href="{% url 'wscc_allstars_dashboard' %}" class="btn btn-outline-secondary btn-sm">← Back</a></div>
+{% endblock %}
