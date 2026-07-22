@@ -12432,7 +12432,7 @@ def ward_tm_dashboard_view(request):
     # Get the team name from the Ligi registration for this manager
     from teams.models import LigiMashinaniRegistration
     team_registration = LigiMashinaniRegistration.objects.filter(
-        account=user, status='approved'
+        manager_email=user.email, status='approved'
     ).order_by('-submitted_at').first()
     team_name = team_registration.team_name if team_registration else None
 
