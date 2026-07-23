@@ -34,7 +34,7 @@
       {% for c in competitions %}
       <tr>
         <td><strong>{{ c.name }}</strong></td>
-        <td>{{ c.season|default:"—" }}</td>
+        <td>{{ c.season|default:"N/A" }}</td>
         <td><span class="badge bg-{% if c.status == 'active' %}success{% elif c.status == 'completed' %}secondary{% else %}warning text-dark{% endif %}">{{ c.get_status_display }}</span></td>
         <td>{{ c.teams.count }}</td>
       </tr>

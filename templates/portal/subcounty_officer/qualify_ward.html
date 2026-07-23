@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Mark Ward Champion — {{ competition.name }}{% endblock %}
+{% block title %}Mark Ward Champion for {{ competition.name }}{% endblock %}
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb">
@@ -22,7 +22,7 @@
       {% for pt in pool_teams %}
       <tr>
         <td><strong>{{ pt.team.name }}</strong></td>
-        <td>{{ pt.team.source_discipline.ward|default:"—" }}</td>
+        <td>{{ pt.team.source_discipline.ward|default:"N/A" }}</td>
         <td>{% if pt.team.qualified_to_subcounty_finals %}<span class="badge bg-success">Yes ✓</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
         <td>
           {% if not pt.team.qualified_to_subcounty_finals %}

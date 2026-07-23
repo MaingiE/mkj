@@ -13,7 +13,7 @@
       <dt class="col-sm-4">Date of Birth</dt><dd class="col-sm-8">{{ req.date_of_birth|date:"d M Y" }}</dd>
       <dt class="col-sm-4">Ward All Stars</dt><dd class="col-sm-8">{{ req.ward_allstars.official_name }}</dd>
       <dt class="col-sm-4">Justification</dt><dd class="col-sm-8">{{ req.justification }}</dd>
-      <dt class="col-sm-4">Director Notes</dt><dd class="col-sm-8">{{ req.director_notes|default:"—" }}</dd>
+      <dt class="col-sm-4">Director Notes</dt><dd class="col-sm-8">{{ req.director_notes|default:"N/A" }}</dd>
       {% if req.supporting_doc %}<dt class="col-sm-4">Document</dt><dd class="col-sm-8"><a href="{{ req.supporting_doc.url }}" target="_blank">View</a></dd>{% endif %}
     </dl>
     <div class="alert alert-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i> <strong>This is your final decision.</strong> Approving will automatically add this player to the Ward All Stars longlist.</div>

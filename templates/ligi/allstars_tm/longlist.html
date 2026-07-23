@@ -22,8 +22,8 @@
       <tr>
         <td class="text-muted">{{ forloop.counter }}</td>
         <td><strong>{{ item.player.first_name }} {{ item.player.last_name }}</strong></td>
-        <td>{{ item.player.position|default:"—" }}</td>
-        <td>{% if item.age %}{{ item.age }} yrs{% else %}—{% endif %}</td>
+        <td>{{ item.player.position|default:"N/A" }}</td>
+        <td>{% if item.age %}{{ item.age }} yrs{% else %}N/A{% endif %}</td>
         <td>{% if item.eligible %}<span class="badge bg-success">✓</span>{% else %}<span class="badge bg-danger">✗</span>{% endif %}</td>
         <td>{% if item.player.is_outside_ligi %}<span class="badge bg-warning text-dark">Outside-Ligi</span>{% else %}<span class="badge bg-info">Ligi Mashinani</span>{% endif %}</td>
       </tr>

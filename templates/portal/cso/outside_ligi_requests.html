@@ -16,8 +16,8 @@
       <tr>
         <td><strong>{{ req.player_name }}</strong><br><span class="text-muted small">ID: {{ req.national_id }}</span></td>
         <td>{{ req.ward_allstars.official_name }}</td>
-        <td class="text-muted small">{{ req.director_notes|default:"—" }}</td>
-        <td>{{ req.director_reviewed_at|date:"d M Y"|default:"—" }}</td>
+        <td class="text-muted small">{{ req.director_notes|default:"N/A" }}</td>
+        <td>{{ req.director_reviewed_at|date:"d M Y"|default:"N/A" }}</td>
         <td><a href="{% url 'cso_outside_ligi_review' req.pk %}" class="btn btn-sm btn-outline-primary">Decide</a></td>
       </tr>
       {% endfor %}

@@ -20,7 +20,7 @@
       <tr>
         <td><strong>{{ item.allstars.ward }}</strong></td>
         <td>{{ item.allstars.official_name }}</td>
-        <td>{{ item.allstars.appointed_coach_name|default:"—" }}</td>
+        <td>{{ item.allstars.appointed_coach_name|default:"N/A" }}</td>
         <td>{% if item.allstars.appointed_tm_user %}{{ item.allstars.appointed_tm_user.get_full_name }}{% else %}<span class="text-warning">Not appointed</span>{% endif %}</td>
         <td><span class="badge bg-primary">{{ item.player_count }}</span></td>
         <td>{% if item.allstars.qualified_from_ligi %}<span class="badge bg-success">Qualified ✓</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>

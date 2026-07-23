@@ -17,7 +17,7 @@
       {% for item in eligible %}
       <tr>
         <td><strong>{{ item.player.first_name }} {{ item.player.last_name }}</strong></td>
-        <td>{{ item.player.position|default:"—" }}</td>
+        <td>{{ item.player.position|default:"N/A" }}</td>
         <td>{{ item.age }} yrs</td>
         <td>
           <form method="post">{% csrf_token %}
@@ -42,7 +42,7 @@
     <table class="table mb-0" style="font-size:.83rem">
       <thead class="table-light"><tr><th>Name</th><th>Position</th><th>Age</th></tr></thead>
       <tbody>
-      {% for item in ineligible %}<tr><td>{{ item.player.first_name }} {{ item.player.last_name }}</td><td>{{ item.player.position|default:"—" }}</td><td>{% if item.age %}{{ item.age }} yrs{% else %}DOB missing{% endif %}</td></tr>{% endfor %}
+      {% for item in ineligible %}<tr><td>{{ item.player.first_name }} {{ item.player.last_name }}</td><td>{{ item.player.position|default:"N/A" }}</td><td>{% if item.age %}{{ item.age }} yrs{% else %}DOB missing{% endif %}</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

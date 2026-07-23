@@ -198,7 +198,7 @@ table.lm-table { width:100%; border-collapse:collapse; font-size:.84rem; }
                     <div style="font-size:.72rem;color:#9ca3af">{{ reg.manager_email }}</div>
                 </td>
                 <td style="font-size:.78rem;color:#9ca3af;white-space:nowrap">
-                    {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}—{% endif %}
+                    {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}N/A{% endif %}
                 </td>
             </tr>
             {% endfor %}

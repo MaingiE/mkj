@@ -12,7 +12,7 @@
       <dt class="col-sm-4">National ID</dt><dd class="col-sm-8">{{ req.national_id }}</dd>
       <dt class="col-sm-4">Date of Birth</dt><dd class="col-sm-8">{{ req.date_of_birth|date:"d M Y" }}</dd>
       <dt class="col-sm-4">Ward All Stars</dt><dd class="col-sm-8">{{ req.ward_allstars.official_name }}</dd>
-      <dt class="col-sm-4">Requested by</dt><dd class="col-sm-8">{{ req.requested_by.get_full_name|default:"—" }}</dd>
+      <dt class="col-sm-4">Requested by</dt><dd class="col-sm-8">{{ req.requested_by.get_full_name|default:"N/A" }}</dd>
       <dt class="col-sm-4">Submitted</dt><dd class="col-sm-8">{{ req.created_at|date:"d M Y H:i" }}</dd>
       <dt class="col-sm-4">Justification</dt><dd class="col-sm-8">{{ req.justification }}</dd>
       {% if req.supporting_doc %}<dt class="col-sm-4">Document</dt><dd class="col-sm-8"><a href="{{ req.supporting_doc.url }}" target="_blank">View document</a></dd>{% endif %}

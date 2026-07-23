@@ -359,7 +359,7 @@ table.lr-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
                     <div class="mgr-email">{{ reg.manager_email }}</div>
                 </td>
                 <td style="white-space:nowrap;color:#9ca3af;font-size:.8rem">
-                    {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}—{% endif %}
+                    {% if reg.submitted_at %}{{ reg.submitted_at|date:"d M Y" }}{% else %}N/A{% endif %}
                 </td>
                 <td>
                     {% if reg.status == 'pending' %}

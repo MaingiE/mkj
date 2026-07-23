@@ -26,7 +26,7 @@
           <td><strong>{{ t.official_name }}</strong></td>
           <td>{{ t.competition.name }}</td>
           <td>{{ t.get_sport_type_display }}</td>
-          <td>{{ t.appointed_coach_name|default:"—" }}</td>
+          <td>{{ t.appointed_coach_name|default:"N/A" }}</td>
           <td>{% if t.appointed_tm_user %}{{ t.appointed_tm_user.get_full_name }}{% else %}<span class="text-muted">Not appointed</span>{% endif %}</td>
           <td>{% if t.qualified_from_ligi %}<span class="badge bg-success">Qualified</span>{% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}</td>
           <td>
