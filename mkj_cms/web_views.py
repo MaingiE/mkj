@@ -1775,12 +1775,24 @@ def competition_detail_view(request, pk):
 
 @login_required(login_url='web_login')
 def teams_list_view(request):
-    """List teams - team managers see only their teams."""
+    """
+    List teams.
+    - Team managers see only their teams.
+    - County-level views exclude ward-level Ligi Mashinani teams (those have
+      source_discipline__level='ward'). Ligi Mashinani teams are managed
+      through the dedicated /ligi/ portal, not the Supa Cup teams list.
+    """
     user = request.user
     if user.role == 'team_manager':
+        if getattr(user, 'ward', ''):
+            # Ward TM — redirect to their own portal, not Supa Cup teams list
+            return redirect('ward_tm_longlist')
         teams = Team.objects.filter(manager=user)
     else:
-        teams = Team.objects.all()
+        # Exclude ward-level Ligi Mashinani teams from the Supa Cup teams list
+        teams = Team.objects.exclude(
+            source_discipline__level='ward'
+        ).select_related('county', 'manager', 'source_discipline')
     return render(request, 'teams/list.html', {'teams': teams})
 
 
@@ -11745,13 +11757,19 @@ def admin_clear_team_view(request, team_pk):
     OR delete the entire team registration entirely.
     URL: /portal/admin/teams/<int:team_pk>/clear/
     """
-    from teams.models import LigiMashinaniRegistration
+    from teams.models import LigiMashinaniRegistration, CountyDiscipline
 
-    team = get_object_or_404(
-        LigiMashinaniRegistration.objects.select_related('discipline'),
-        pk=team_pk,
-    )
-    discipline = team.discipline
+    # LigiMashinaniRegistration.discipline is a CharField (sport type), NOT a FK.
+    # The linked CountyDiscipline is found via the ward + sub_county + discipline fields.
+    team = get_object_or_404(LigiMashinaniRegistration, pk=team_pk)
+
+    # Resolve the actual CountyDiscipline record for this registration
+    cd = CountyDiscipline.objects.filter(
+        level='ward',
+        ward=team.ward,
+        sub_county=team.sub_county,
+        sport_type=team.discipline,
+    ).first()
 
     if request.method == 'POST':
         action = request.POST.get('action', 'clear_players')
@@ -11762,9 +11780,9 @@ def admin_clear_team_view(request, team_pk):
             messages.error(request, 'You must type "confirm" to proceed with this action.')
             return redirect('admin_clear_team', team_pk=team_pk)
 
-        if action == 'clear_players' and discipline:
-            count = discipline.players.count()
-            discipline.players.all().delete()
+        if action == 'clear_players' and cd:
+            count = cd.players.count()
+            cd.players.all().delete()
             try:
                 from admin_dashboard.activity_logger import log_activity, get_client_ip
                 log_activity(
@@ -11784,15 +11802,14 @@ def admin_clear_team_view(request, team_pk):
         elif action == 'delete_team':
             team_name = team.team_name
             ward = team.ward
-            # Also delete linked WardLonglist and CountyDiscipline players
-            if discipline:
-                discipline.players.all().delete()
+            if cd:
+                cd.players.all().delete()
                 try:
                     from teams.models import WardLonglist
-                    WardLonglist.objects.filter(discipline=discipline).delete()
+                    WardLonglist.objects.filter(discipline=cd).delete()
                 except Exception:
                     pass
-                discipline.delete()
+                cd.delete()
             team.delete()
             try:
                 from admin_dashboard.activity_logger import log_activity, get_client_ip
@@ -11810,11 +11827,11 @@ def admin_clear_team_view(request, team_pk):
             messages.success(request, f'Team "{team_name}" and all associated data deleted.')
             return redirect('ligi_registrations_list')
 
-    player_count = discipline.players.count() if discipline else 0
+    player_count = cd.players.count() if cd else 0
 
     return render(request, 'portal/admin/clear_team.html', {
         'team': team,
-        'discipline': discipline,
+        'discipline': cd,
         'player_count': player_count,
     })
 
@@ -11825,13 +11842,17 @@ def director_clear_team_view(request, team_pk):
     Director of Sports: clear all players from a ward team's longlist.
     URL: /portal/director/teams/<int:team_pk>/clear/
     """
-    from teams.models import LigiMashinaniRegistration
+    from teams.models import LigiMashinaniRegistration, CountyDiscipline
 
-    team = get_object_or_404(
-        LigiMashinaniRegistration.objects.select_related('discipline'),
-        pk=team_pk,
-    )
-    discipline = team.discipline
+    team = get_object_or_404(LigiMashinaniRegistration, pk=team_pk)
+
+    # Resolve the actual CountyDiscipline — discipline field on the reg is a CharField
+    cd = CountyDiscipline.objects.filter(
+        level='ward',
+        ward=team.ward,
+        sub_county=team.sub_county,
+        sport_type=team.discipline,
+    ).first()
 
     if request.method == 'POST':
         confirm = request.POST.get('confirm', '').strip().lower()
@@ -11845,9 +11866,9 @@ def director_clear_team_view(request, team_pk):
             messages.error(request, 'A reason is required.')
             return redirect('director_clear_team', team_pk=team_pk)
 
-        count = discipline.players.count() if discipline else 0
-        if discipline:
-            discipline.players.all().delete()
+        count = cd.players.count() if cd else 0
+        if cd:
+            cd.players.all().delete()
 
         try:
             from admin_dashboard.activity_logger import log_activity, get_client_ip
@@ -11866,10 +11887,10 @@ def director_clear_team_view(request, team_pk):
         messages.success(request, f'{count} player(s) cleared from {team.team_name}.')
         return redirect('ligi_admin_overview')
 
-    player_count = discipline.players.count() if discipline else 0
+    player_count = cd.players.count() if cd else 0
     return render(request, 'portal/director/clear_team.html', {
         'team': team,
-        'discipline': discipline,
+        'discipline': cd,
         'player_count': player_count,
     })
 
@@ -14040,20 +14061,30 @@ def wscc_dashboard_view(request):
     # Get registered teams in WSCC's ward
     registered_teams = []
     if hasattr(user, 'ward') and user.ward:
+        from teams.models import CountyDiscipline
         teams_qs = LigiMashinaniRegistration.objects.filter(
             sub_county=user.sub_county,
             ward=user.ward,
             status='approved'
-        ).select_related('discipline')
-        
+        )
+        # Build a lookup of CountyDiscipline records for this ward to get player counts
+        cd_map = {
+            cd.sport_type: cd
+            for cd in CountyDiscipline.objects.filter(
+                level='ward',
+                ward=user.ward,
+                sub_county=user.sub_county,
+            )
+        }
         for team in teams_qs:
+            cd = cd_map.get(team.discipline)
             registered_teams.append({
                 'pk': team.pk,
                 'team_name': team.team_name,
-                'discipline': team.discipline,
-                'manager_name': team.manager_name,
+                'discipline': team.get_discipline_display(),
+                'manager_name': team.manager_full_name,
                 'manager_phone': team.manager_phone,
-                'player_count': team.discipline.players.count() if team.discipline else 0,
+                'player_count': cd.players.count() if cd else 0,
             })
 
     context = {
@@ -14394,17 +14425,14 @@ def wscc_team_players_view(request, team_pk):
     
     URL: /ligi/wscc/teams/<int:team_pk>/players/
     """
-    from teams.models import LigiMashinaniRegistration, CountyPlayer
+    from teams.models import LigiMashinaniRegistration, CountyPlayer, CountyDiscipline
     from teams.forms import WardLonglistPlayerForm
     from django.utils import timezone as tz
     
     user = request.user
     
-    # Get the team and verify it's in WSCC's ward
-    team = get_object_or_404(
-        LigiMashinaniRegistration.objects.select_related('discipline'),
-        pk=team_pk
-    )
+    # LigiMashinaniRegistration.discipline is a CharField — get team without select_related
+    team = get_object_or_404(LigiMashinaniRegistration, pk=team_pk)
     
     # Verify ward access
     if not (user.is_superuser or user.role == 'admin'):
@@ -14412,14 +14440,21 @@ def wscc_team_players_view(request, team_pk):
             messages.error(request, 'You can only manage teams in your assigned ward.')
             return redirect('wscc_dashboard')
     
-    discipline = team.discipline
-    if not discipline:
-        messages.error(request, 'This team has no discipline assigned.')
+    # Resolve the actual CountyDiscipline FK object
+    cd = CountyDiscipline.objects.filter(
+        level='ward',
+        ward=team.ward,
+        sub_county=team.sub_county,
+        sport_type=team.discipline,
+    ).first()
+    
+    if not cd:
+        messages.error(request, 'No ward discipline found for this team. Contact admin.')
         return redirect('wscc_dashboard')
     
     # Get existing players for this discipline
     players = CountyPlayer.objects.filter(
-        discipline=discipline
+        discipline=cd
     ).order_by('-created_at')
     
     # Handle player addition
@@ -14427,7 +14462,7 @@ def wscc_team_players_view(request, team_pk):
         form = WardLonglistPlayerForm(request.POST, request.FILES)
         if form.is_valid():
             player = form.save(commit=False)
-            player.discipline = discipline
+            player.discipline = cd
             player.sub_county = team.sub_county
             player.ward = team.ward
             
@@ -14482,7 +14517,7 @@ def wscc_team_players_view(request, team_pk):
     
     context = {
         'team': team,
-        'discipline': discipline,
+        'discipline': cd,
         'players': players,
         'form': form,
         'ward': team.ward,
@@ -17932,12 +17967,15 @@ def wscc_delete_team_view(request, team_pk):
 
             team_name = team.team_name
             ward_name = team.ward
-            # Delete linked discipline + longlist + players
-            if team.discipline:
-                from teams.models import WardLonglist
-                WardLonglist.objects.filter(discipline=team.discipline).delete()
-                team.discipline.players.all().delete()
-                team.discipline.delete()
+            # Delete linked CountyDiscipline + WardLonglist + players
+            from teams.models import CountyDiscipline, WardLonglist
+            cd = CountyDiscipline.objects.filter(
+                level='ward', ward=team.ward, sub_county=team.sub_county, sport_type=team.discipline
+            ).first()
+            if cd:
+                WardLonglist.objects.filter(discipline=cd).delete()
+                cd.players.all().delete()
+                cd.delete()
             team.delete()
 
             try:
@@ -18149,11 +18187,18 @@ def cso_team_deletion_review_view(request, request_pk):
             del_req.save()
 
             # Delete team + players + longlist
-            if team.discipline:
-                from teams.models import WardLonglist
-                WardLonglist.objects.filter(discipline=team.discipline).delete()
-                team.discipline.players.all().delete()
-                team.discipline.delete()
+            # team.registration.discipline is a CharField; resolve CountyDiscipline FK
+            from teams.models import CountyDiscipline, WardLonglist as _WardLonglist
+            cd = CountyDiscipline.objects.filter(
+                level='ward',
+                ward=team.ward,
+                sub_county=team.sub_county,
+                sport_type=team.discipline,
+            ).first()
+            if cd:
+                _WardLonglist.objects.filter(discipline=cd).delete()
+                cd.players.all().delete()
+                cd.delete()
             team.delete()
 
             log_msg = (

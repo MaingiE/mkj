@@ -25,16 +25,37 @@ class PlayerInline(admin.TabularInline):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display  = ["name", "county", "manager", "status", "registered_at"]
-    list_filter   = ["status", "county", "competition"]
-    search_fields = ["name", "county"]
+    list_display  = ["name", "team_level_badge", "sub_county", "ward_display", "county", "manager", "status", "registered_at"]
+    list_filter   = ["status", "county", "competition", "source_discipline__level"]
+    search_fields = ["name", "county__name", "sub_county"]
     inlines       = [PlayerInline]
 
     actions = ["approve_teams"]
 
+    def team_level_badge(self, obj):
+        from django.utils.html import format_html
+        level = getattr(obj.source_discipline, 'level', None) if obj.source_discipline else None
+        if level == 'ward':
+            return format_html('<span style="background:#d1e7dd;color:#0a3622;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:700">Ligi Mashinani</span>')
+        elif level == 'subcounty':
+            return format_html('<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:700">Sub-County Finals</span>')
+        return format_html('<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:700">MKJ Supa Cup</span>')
+    team_level_badge.short_description = "Level"
+    team_level_badge.admin_order_field = "source_discipline__level"
+
+    def ward_display(self, obj):
+        if obj.source_discipline and obj.source_discipline.ward:
+            return obj.source_discipline.ward
+        return "-"
+    ward_display.short_description = "Ward"
+
     def approve_teams(self, request, queryset):
         queryset.update(status="registered")
     approve_teams.short_description = "✅ Approve selected teams"
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('county', 'manager', 'source_discipline')
 
 
 @admin.register(Player)
