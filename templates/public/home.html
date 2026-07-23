@@ -2197,17 +2197,39 @@ a.hero-feat--link {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Gentle in-place "toss" animation for personality. Activated by JS */
-@keyframes ligiToss {
-    0%   { transform: translateY(0) rotate(0deg); }
-    25%  { transform: translateY(-6px) rotate(-2deg); }
-    50%  { transform: translateY(0) rotate(0deg); }
-    75%  { transform: translateY(4px) rotate(2deg); }
-    100% { transform: translateY(0) rotate(0deg); }
+/* One-time randomized fly-in from a random side, then settle */
+@keyframes ligiFlyFromLeft {
+    0%   { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
+    60%  { transform: translateX(8px) rotate(4deg); opacity: 1; }
+    100% { transform: translateX(0) rotate(0); }
 }
-.ligi-card__inner.ligi-toss-active {
-    animation: ligiToss 4.6s cubic-bezier(.16,1,.3,1) var(--toss-delay, 0s) infinite alternate;
-    will-change: transform;
+@keyframes ligiFlyFromRight {
+    0%   { transform: translateX(120%) rotate(12deg); opacity: 0; }
+    60%  { transform: translateX(-8px) rotate(-4deg); opacity: 1; }
+    100% { transform: translateX(0) rotate(0); }
+}
+@keyframes ligiFlyFromTop {
+    0%   { transform: translateY(-120%) rotate(-8deg); opacity: 0; }
+    60%  { transform: translateY(6px) rotate(2deg); opacity: 1; }
+    100% { transform: translateY(0) rotate(0); }
+}
+@keyframes ligiFlyFromBottom {
+    0%   { transform: translateY(120%) rotate(8deg); opacity: 0; }
+    60%  { transform: translateY(-6px) rotate(-2deg); opacity: 1; }
+    100% { transform: translateY(0) rotate(0); }
+}
+
+.ligi-card__inner.ligi-fly--left {
+    animation: ligiFlyFromLeft 700ms cubic-bezier(.16,1,.3,1) var(--fly-delay, 0s) forwards;
+}
+.ligi-card__inner.ligi-fly--right {
+    animation: ligiFlyFromRight 700ms cubic-bezier(.16,1,.3,1) var(--fly-delay, 0s) forwards;
+}
+.ligi-card__inner.ligi-fly--top {
+    animation: ligiFlyFromTop 700ms cubic-bezier(.16,1,.3,1) var(--fly-delay, 0s) forwards;
+}
+.ligi-card__inner.ligi-fly--bottom {
+    animation: ligiFlyFromBottom 700ms cubic-bezier(.16,1,.3,1) var(--fly-delay, 0s) forwards;
 }
 
 /* Dismiss: slide out to right + fade */
@@ -3487,10 +3509,20 @@ a.hero-feat--link {
 
             var inner = card.querySelector('.ligi-card__inner');
             if (inner) {
-                var randDelay = (Math.random() * 1.8).toFixed(2) + 's';
-                inner.style.setProperty('--toss-delay', randDelay);
-                // enable toss after entry animation finishes
-                setTimeout(function(){ inner.classList.add('ligi-toss-active'); }, 1400);
+                // Choose a random direction for entry: left/right/top/bottom
+                var dirs = ['left','right','top','bottom'];
+                var dir = dirs[Math.floor(Math.random() * dirs.length)];
+                var randDelay = (Math.random() * 1.0).toFixed(2) + 's';
+                inner.style.setProperty('--fly-delay', randDelay);
+                // add fly-in class; let animation run once then keep settled state
+                setTimeout(function(){
+                    inner.classList.add('ligi-fly--' + dir);
+                    // remove the fly class after animation ends to avoid re-trigger
+                    inner.addEventListener('animationend', function fn(){
+                        inner.classList.remove('ligi-fly--' + dir);
+                        inner.removeEventListener('animationend', fn);
+                    });
+                }, 1400);
             }
         }
     } catch(e) {}
