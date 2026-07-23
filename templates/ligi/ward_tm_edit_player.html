@@ -77,8 +77,12 @@
             </div>
             <div>
                 <label for="{{ form.phone.id_for_label }}" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.3rem">{{ form.phone.label }}</label>
-                {{ form.phone }}
+                <div class="input-group">
+                    <span class="input-group-text fw-bold" style="background:#124491;color:#fff;font-size:.85rem">+254</span>
+                    {{ form.phone }}
+                </div>
                 {% if form.phone.errors %}<p style="color:#dc3545;font-size:.8rem;margin:.3rem 0 0">{{ form.phone.errors.0 }}</p>{% endif %}
+                <p style="font-size:.75rem;color:#888;margin:.3rem 0 0">Enter 9 digits (optional)</p>
             </div>
         </div>
 

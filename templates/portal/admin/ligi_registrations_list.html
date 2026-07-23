@@ -364,8 +364,16 @@ table.lr-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
                 <td>
                     {% if reg.status == 'pending' %}
                         <span class="s-badge s-pending">Pending</span>
+                        {% if not reg.payment_confirmed %}
+                        <div><span style="font-size:.65rem;color:#dc3545"><i class="bi bi-x-circle"></i> Unpaid</span></div>
+                        {% else %}
+                        <div><span style="font-size:.65rem;color:#198754"><i class="bi bi-check-circle"></i> Paid</span></div>
+                        {% endif %}
                     {% elif reg.status == 'ward_verified' %}
                         <span class="s-badge s-ward">Ward Verified</span>
+                        {% if reg.payment_confirmed %}
+                        <div><span style="font-size:.65rem;color:#198754"><i class="bi bi-check-circle"></i> Paid</span></div>
+                        {% endif %}
                     {% elif reg.status == 'approved' %}
                         <div>
                             <span class="s-badge s-approved">Approved</span>
@@ -380,9 +388,17 @@ table.lr-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
                     {% endif %}
                 </td>
                 <td style="text-align:right">
-                    <a href="{% url 'ligi_registration_detail' reg.pk %}" class="lr-view-btn">
-                        <i class="bi bi-eye"></i> View
-                    </a>
+                    <div style="display:flex;gap:.4rem;justify-content:flex-end;flex-wrap:wrap">
+                        <a href="{% url 'ligi_registration_detail' reg.pk %}" class="lr-view-btn">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        {% if reg.status == 'approved' %}
+                        <a href="{% url 'admin_clear_team' reg.pk %}"
+                           style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .8rem;background:#fff5f5;color:#dc3545;border:1px solid #fca5a5;border-radius:7px;font-size:.78rem;font-weight:600;text-decoration:none;white-space:nowrap">
+                            <i class="bi bi-trash3"></i> Clear
+                        </a>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}

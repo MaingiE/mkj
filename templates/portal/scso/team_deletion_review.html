@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Review Deletion Request – {{ del_req.registration.team_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'subcounty_officer_dashboard' %}">Sub-County Dashboard</a>
+        <a href="{% url 'scso_team_deletion_requests' %}">Team Deletion Requests</a>
+        <span>Review</span>
+    </div>
+    <h1><i class="bi bi-clipboard2-check"></i> Endorse or Reject Deletion Request</h1>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% else %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Request details -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+    <h3 style="font-size:1rem;margin:0 0 1rem;color:#374151">Request Details</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;font-size:.88rem">
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Team</span><strong>{{ del_req.registration.team_name }}</strong></div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Ward</span>{{ del_req.registration.ward|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Sub-County</span>{{ del_req.registration.sub_county|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Discipline</span>{{ del_req.registration.get_discipline_display }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Payment</span>
+            {% if del_req.registration.payment_confirmed %}
+            <span style="color:#198754;font-weight:600">Confirmed</span>
+            {% else %}
+            <span style="color:#dc3545;font-weight:600">Not Confirmed</span>
+            {% endif %}
+        </div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Requested By (WSCC)</span>{{ del_req.requested_by.get_full_name }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Date Submitted</span>{{ del_req.created_at|date:"d M Y, H:i" }}</div>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f3f4f6">
+        <span style="color:#9ca3af;font-size:.78rem;display:block;margin-bottom:.35rem">Reason: {{ del_req.get_reason_category_display }}</span>
+        <p style="font-size:.88rem;color:#374151;margin:0">{{ del_req.reason_detail }}</p>
+    </div>
+</div>
+
+<!-- Review form -->
+<div class="card" style="padding:1.5rem">
+    <h3 style="font-size:1rem;margin:0 0 1.25rem;color:#374151">Your Review</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">
+                SCSO Notes (required if rejecting)
+            </label>
+            <textarea name="scso_notes" rows="3"
+                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Add notes for the Chief Sports Officer or reason for rejection..."></textarea>
+        </div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button type="submit" name="action" value="endorse"
+                style="padding:.55rem 1.25rem;background:#0d6efd;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-send-check"></i> Endorse & Forward to CSO
+            </button>
+            <button type="submit" name="action" value="reject"
+                style="padding:.55rem 1.25rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-x-circle"></i> Reject Request
+            </button>
+            <a href="{% url 'scso_team_deletion_requests' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

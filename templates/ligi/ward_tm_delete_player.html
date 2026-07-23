@@ -1,55 +1,102 @@
 {% extends 'base.html' %}
-{% block title %}Remove Player  -  Ligi Mashinani{% endblock %}
+{% block title %}Remove Player – {{ player.first_name }} {{ player.last_name }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="breadcrumb">
-        <a href="{% url 'ward_tm_dashboard' %}">Ligi Mashinani</a>
-        <a href="{% url 'ward_tm_longlist' %}">Player Longlist</a>
+        <a href="{% url 'ward_tm_dashboard' %}">Dashboard</a>
+        <a href="{% url 'ward_tm_longlist' %}">Longlist</a>
         <span>Remove Player</span>
     </div>
-    <h1><i class="bi bi-trash"></i> Remove Player from Longlist</h1>
-    <p>{{ sub_county|title }} Sub-County &mdash; {{ ward|title }} Ward &mdash; {{ discipline.get_sport_type_display }}</p>
+    <h1><i class="bi bi-person-dash"></i> Remove Player from Longlist</h1>
 </div>
 
-<div class="card" style="padding:1.75rem;max-width:540px">
-    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:.9rem 1rem;margin-bottom:1.5rem;font-size:.88rem">
-        <strong><i class="bi bi-exclamation-triangle"></i> Confirm removal</strong>
-        <p style="margin:.5rem 0 0">
-            You are about to remove <strong>{{ player.first_name }} {{ player.last_name }}</strong>
-            (ID: {{ player.national_id_number }}) from the longlist.
-            This action cannot be undone.
-        </p>
-    </div>
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'info' in msg.tags %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;
+        {% else %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
 
-    <!-- Player summary -->
-    <div style="background:#f8f9fa;border-radius:6px;padding:1rem;margin-bottom:1.5rem;font-size:.88rem">
-        <div style="display:flex;gap:1rem;align-items:center">
-            {% if player.photo %}
-            <img src="{{ player.photo.url }}" alt="Photo" style="width:54px;height:54px;object-fit:cover;border-radius:50%;border:1px solid #dee2e6;flex-shrink:0">
-            {% else %}
-            <div style="width:54px;height:54px;background:#dee2e6;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <i class="bi bi-person" style="font-size:1.4rem;color:#888"></i>
-            </div>
-            {% endif %}
-            <div>
-                <p style="font-weight:700;margin:0 0 .2rem">{{ player.first_name }} {{ player.last_name }}</p>
-                <p style="color:#666;margin:0 0 .2rem">National ID: {{ player.national_id_number }}</p>
-                {% if player.date_of_birth %}<p style="color:#666;margin:0">DOB: {{ player.date_of_birth|date:"d M Y" }}{% if player.age %} (Age {{ player.age }}){% endif %}</p>{% endif %}
-            </div>
-        </div>
+<!-- Player info -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-left:4px solid #dc3545">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.9rem">
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Full Name</span>
+            <strong>{{ player.first_name }} {{ player.last_name }}</strong></div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">National ID</span>{{ player.national_id_number|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Date of Birth</span>{{ player.date_of_birth|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Position</span>{{ player.position|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Age</span>{{ player.age_value|default:"N/A" }} yrs</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Discipline</span>{{ discipline.get_sport_type_display }}</div>
     </div>
+</div>
 
-    <form method="post">
+{% if window_open %}
+<!-- Window OPEN: direct deletion -->
+<div style="background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem">
+    <i class="bi bi-unlock-fill"></i> The registration window is <strong>open</strong>. You can remove this player directly.
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <p style="font-size:.9rem;color:#374151;margin-bottom:1.25rem">
+        Are you sure you want to remove <strong>{{ player.first_name }} {{ player.last_name }}</strong>
+        from the longlist? This action cannot be undone.
+    </p>
+    <form method="post" style="display:inline">
         {% csrf_token %}
         <div style="display:flex;gap:.75rem">
-            <button type="submit" style="padding:.55rem 1.2rem;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.9rem">
-                <i class="bi bi-trash"></i> Yes, Remove Player
+            <button type="submit"
+                style="padding:.55rem 1.25rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-trash3-fill"></i> Remove Player
             </button>
-            <a href="{% url 'ward_tm_longlist' %}" style="padding:.55rem 1.2rem;font-size:.9rem;color:#495057;text-decoration:none;border:1px solid #dee2e6;border-radius:6px">
+            <a href="{% url 'ward_tm_longlist' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
                 Cancel
             </a>
         </div>
     </form>
 </div>
+
+{% else %}
+<!-- Window CLOSED: removal request required -->
+<div style="background:#fff3cd;color:#856404;border:1px solid #ffecb5;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem">
+    <i class="bi bi-lock-fill"></i> <strong>The registration window is closed.</strong>
+    {{ window_closed_message }}
+    <br><br>You can submit a <strong>removal request</strong> with a valid reason.
+    The <strong>Director of Sports</strong> will review and approve or reject it.
+    Approved removals are logged to the Chief Officer.
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <h3 style="font-size:1rem;margin:0 0 1.25rem;color:#374151">Submit Removal Request</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">
+                Reason for Removal *
+            </label>
+            <textarea name="reason" required rows="4"
+                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Explain clearly why this player needs to be removed (e.g. player relocated, duplicate registration, age dispute, injury, etc.)..."></textarea>
+            <p style="font-size:.78rem;color:#9ca3af;margin:.3rem 0 0">
+                Be specific. Vague reasons will be rejected.
+            </p>
+        </div>
+        <div style="display:flex;gap:.75rem">
+            <button type="submit"
+                style="padding:.55rem 1.25rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-send"></i> Submit Removal Request
+            </button>
+            <a href="{% url 'ward_tm_longlist' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endif %}
 {% endblock %}

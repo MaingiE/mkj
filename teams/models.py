@@ -1756,6 +1756,19 @@ class LigiMashinaniRegistration(models.Model):
     updated_at   = models.DateTimeField(auto_now=True)
     notes        = models.TextField(blank=True, default="", help_text="Internal admin notes")
 
+    # ── Payment confirmation ─────────────────────────────────────────────
+    payment_confirmed = models.BooleanField(
+        default=False,
+        help_text=(
+            "Confirmed by WSCC that the team has paid the required registration fee. "
+            "Only paid teams can be approved to proceed."
+        ),
+    )
+    payment_notes = models.TextField(
+        blank=True, default="",
+        help_text="Optional notes on payment (M-Pesa ref, receipt, etc.)"
+    )
+
     class Meta:
         verbose_name          = "Ligi Mashinani Registration"
         verbose_name_plural   = "Ligi Mashinani Registrations"
@@ -2471,3 +2484,154 @@ class SubcountyDisciplineCoordinator(models.Model):
     def __str__(self):
         sport = dict(SportType.choices).get(self.sport_type, self.sport_type)
         return f'{self.user.get_full_name()} — {self.sub_county} {sport} ({self.season})'
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  PLAYER REMOVAL REQUEST  (Ward TM requests; Director of Sports approves)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class PlayerRemovalStatus(models.TextChoices):
+    PENDING  = "pending",  "Pending Review"
+    APPROVED = "approved", "Approved – Player Removed"
+    REJECTED = "rejected", "Rejected – Player Retained"
+
+
+class PlayerRemovalRequest(models.Model):
+    """
+    When a Ward Team Manager (or any team manager) wants to remove a player
+    from their longlist/squad, they cannot do so directly.  They must submit
+    a removal request with a written reason.  The Director of Sports (or system
+    admin) reviews the request and either approves (which triggers the actual
+    deletion) or rejects it (player stays on the list).
+    """
+    player = models.ForeignKey(
+        CountyPlayer,
+        on_delete=models.CASCADE,
+        related_name='removal_requests',
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='player_removal_requests_made',
+    )
+    reason = models.TextField(
+        help_text="Provide a clear and valid reason for removing this player."
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=PlayerRemovalStatus.choices,
+        default=PlayerRemovalStatus.PENDING,
+    )
+    # Review fields
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='player_removal_requests_reviewed',
+    )
+    reviewed_at  = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, default='')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Player Removal Request'
+        verbose_name_plural = 'Player Removal Requests'
+
+    def __str__(self):
+        return (
+            f"Remove {self.player.first_name} {self.player.last_name} "
+            f"— requested by {self.requested_by.get_full_name()} ({self.status})"
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  TEAM DELETION REQUEST
+#  WSCC initiates → SCSO endorses → Chief Sports Officer gives final approval
+#  Entire chain is logged to Director of Sports + Chief Officer
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TeamDeletionStatus(models.TextChoices):
+    PENDING_SCSO = "pending_scso", "Pending SCSO Endorsement"
+    SCSO_ENDORSED = "scso_endorsed", "SCSO Endorsed – Pending CSO Approval"
+    SCSO_REJECTED = "scso_rejected", "Rejected by SCSO"
+    CSO_APPROVED  = "cso_approved",  "Approved by Chief Sports Officer – Team Deleted"
+    CSO_REJECTED  = "cso_rejected",  "Rejected by Chief Sports Officer"
+
+
+class TeamDeletionReason(models.TextChoices):
+    NON_PARTICIPATION = "non_participation", "Non-Participation"
+    DUPLICATE_ENTRY   = "duplicate_entry",   "Duplicate Entry"
+    INELIGIBLE_TEAM   = "ineligible_team",   "Ineligible Team"
+    NON_PAYMENT       = "non_payment",       "Non-Payment of Registration Fee"
+    OTHER             = "other",             "Other (specify in notes)"
+
+
+class TeamDeletionRequest(models.Model):
+    """
+    Workflow for removing a Ligi Mashinani team when the registration window is closed.
+
+    Window open  → WSCC deletes team directly.
+    Window closed → WSCC submits this request → SCSO endorses → CSO approves.
+    All approvals are logged to Director of Sports and Chief Officer.
+    """
+    registration = models.ForeignKey(
+        LigiMashinaniRegistration,
+        on_delete=models.CASCADE,
+        related_name='deletion_requests',
+    )
+    # Step 1: WSCC initiates
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='team_deletion_requests_made',
+    )
+    reason_category = models.CharField(
+        max_length=30,
+        choices=TeamDeletionReason.choices,
+        default=TeamDeletionReason.NON_PARTICIPATION,
+    )
+    reason_detail = models.TextField(
+        help_text="Provide full details justifying this team's removal."
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=TeamDeletionStatus.choices,
+        default=TeamDeletionStatus.PENDING_SCSO,
+    )
+
+    # Step 2: SCSO endorsement
+    scso_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='team_deletion_scso_reviews',
+    )
+    scso_reviewed_at = models.DateTimeField(null=True, blank=True)
+    scso_notes       = models.TextField(blank=True, default='')
+
+    # Step 3: CSO final approval
+    cso_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='team_deletion_cso_reviews',
+    )
+    cso_reviewed_at = models.DateTimeField(null=True, blank=True)
+    cso_notes       = models.TextField(blank=True, default='')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Team Deletion Request'
+        verbose_name_plural = 'Team Deletion Requests'
+
+    def __str__(self):
+        return (
+            f"Delete {self.registration.team_name} ({self.registration.ward} Ward) "
+            f"– {self.get_status_display()}"
+        )

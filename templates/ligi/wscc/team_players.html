@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Manage Players – {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <span>Manage Players</span>
+        <span>{{ team.team_name }}</span>
+    </div>
+    <h1><i class="bi bi-person-plus"></i> Manage Players – {{ team.team_name }}</h1>
+    <p>
+        <span style="font-weight:700;color:#198754">{{ ward|title }} Ward</span>
+        &nbsp;·&nbsp; {{ sub_county|title }} Sub-County
+        &nbsp;·&nbsp; {{ discipline.get_sport_type_display }}
+    </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+
+    <!-- LEFT: Add Player Form -->
+    <div class="card" style="padding:1.5rem">
+        <h2 style="font-size:1.05rem;color:#333;margin-bottom:1.25rem;border-bottom:2px solid #e5e7eb;padding-bottom:.75rem">
+            <i class="bi bi-person-plus-fill" style="color:#198754"></i> Add New Player
+        </h2>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div style="margin-bottom:1rem">
+                <label style="display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:.35rem">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for err in field.errors %}
+                    <p style="color:#dc2626;font-size:.8rem;margin:.25rem 0 0">{{ err }}</p>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                <p style="color:#6b7280;font-size:.75rem;margin:.2rem 0 0">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% if form.non_field_errors %}
+            <div style="background:#f8d7da;color:#842029;border:1px solid #f5c2c7;padding:.75rem;border-radius:6px;margin-bottom:1rem;font-size:.87rem">
+                {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap">
+                <button type="submit" name="action" value="add_more"
+                    style="padding:.55rem 1.25rem;background:#198754;color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer">
+                    <i class="bi bi-plus-circle"></i> Add &amp; Add Another
+                </button>
+                <button type="submit" name="action" value="finish"
+                    style="padding:.55rem 1.25rem;background:#0d6efd;color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer">
+                    <i class="bi bi-check2-all"></i> Add &amp; Finish
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- RIGHT: Existing Players -->
+    <div class="card" style="padding:1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;border-bottom:2px solid #e5e7eb;padding-bottom:.75rem">
+            <h2 style="font-size:1.05rem;color:#333;margin:0">
+                <i class="bi bi-people-fill" style="color:#124491"></i> Current Players
+            </h2>
+            <span style="background:#e8f5e9;color:#1b5e20;padding:.2rem .7rem;border-radius:12px;font-size:.8rem;font-weight:700">
+                {{ players.count }} player{{ players.count|pluralize }}
+            </span>
+        </div>
+
+        {% if players %}
+        <div style="overflow-x:auto;max-height:70vh">
+            <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+                <thead>
+                    <tr style="background:#f0f4ff;text-align:left;position:sticky;top:0">
+                        <th style="padding:.55rem .75rem;border-bottom:2px solid #dee2e6">#</th>
+                        <th style="padding:.55rem .75rem;border-bottom:2px solid #dee2e6">Name</th>
+                        <th style="padding:.55rem .75rem;border-bottom:2px solid #dee2e6">ID No.</th>
+                        <th style="padding:.55rem .75rem;border-bottom:2px solid #dee2e6">Age</th>
+                        <th style="padding:.55rem .75rem;border-bottom:2px solid #dee2e6">Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in players %}
+                    <tr style="border-bottom:1px solid #f3f4f6">
+                        <td style="padding:.5rem .75rem;color:#9ca3af">{{ forloop.counter }}</td>
+                        <td style="padding:.5rem .75rem">
+                            <div style="display:flex;align-items:center;gap:.6rem">
+                                {% if player.photo %}
+                                <img src="{{ player.photo.url }}" alt=""
+                                    style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #dee2e6">
+                                {% else %}
+                                <div style="width:32px;height:32px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center">
+                                    <i class="bi bi-person" style="color:#9ca3af;font-size:.9rem"></i>
+                                </div>
+                                {% endif %}
+                                <span style="font-weight:600">{{ player.first_name }} {{ player.last_name }}</span>
+                            </div>
+                        </td>
+                        <td style="padding:.5rem .75rem;font-size:.8rem;color:#6b7280">{{ player.national_id_number|default:"N/A" }}</td>
+                        <td style="padding:.5rem .75rem">
+                            {% if player.age_value %}
+                            <span style="background:#dbeafe;color:#1e40af;padding:.15rem .5rem;border-radius:10px;font-size:.78rem;font-weight:600">
+                                {{ player.age_value }} yrs
+                            </span>
+                            {% else %}N/A{% endif %}
+                        </td>
+                        <td style="padding:.5rem .75rem;color:#6b7280;font-size:.82rem">{{ player.position|default:"N/A" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="padding:2rem;text-align:center;color:#9ca3af">
+            <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+            <p style="margin:0">No players registered yet. Use the form to add the first player.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<div style="margin-top:1.25rem">
+    <a href="{% url 'wscc_dashboard' %}" style="color:#6b7280;font-size:.88rem;text-decoration:none">
+        <i class="bi bi-arrow-left"></i> Back to WSCC Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Team Management – {{ ward|title }} Ward{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <span>Team Management</span>
+    </div>
+    <h1><i class="bi bi-building"></i> Team Management</h1>
+    <p><span style="font-weight:700;color:#198754">{{ ward|title }} Ward</span> · {{ sub_county|title }} Sub-County</p>
+</div>
+
+{% if not window_open %}
+<div style="background:#fff3cd;color:#856404;border:1px solid #ffecb5;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem">
+    <i class="bi bi-lock-fill"></i> <strong>Registration window is closed.</strong>
+    Team deletions during a closed window require approval from Sub-County Sports Officer and Chief Sports Officer.
+</div>
+{% endif %}
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% elif 'warning' in msg.tags %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="padding:1.5rem">
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+            <thead>
+                <tr style="background:#f0f4ff;text-align:left">
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Team</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Discipline</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Manager</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Status</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Payment</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr style="border-bottom:1px solid #f3f4f6">
+                    <td style="padding:.6rem 1rem;font-weight:600">{{ team.team_name }}</td>
+                    <td style="padding:.6rem 1rem">{{ team.get_discipline_display }}</td>
+                    <td style="padding:.6rem 1rem">{{ team.manager_full_name }}<br>
+                        <span style="font-size:.78rem;color:#9ca3af">{{ team.manager_phone }}</span></td>
+                    <td style="padding:.6rem 1rem">
+                        <span style="padding:.2rem .6rem;border-radius:10px;font-size:.78rem;font-weight:600;
+                            {% if team.status == 'approved' %}background:#d1e7dd;color:#0a3622;
+                            {% elif team.status == 'pending' %}background:#fff3cd;color:#856404;
+                            {% elif team.status == 'rejected' %}background:#f8d7da;color:#842029;
+                            {% else %}background:#e5e7eb;color:#374151;{% endif %}">
+                            {{ team.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="padding:.6rem 1rem">
+                        {% if team.payment_confirmed %}
+                        <span style="background:#d1e7dd;color:#0a3622;padding:.2rem .6rem;border-radius:10px;font-size:.78rem;font-weight:600">
+                            <i class="bi bi-check-circle-fill"></i> Paid
+                        </span>
+                        {% else %}
+                        <span style="background:#f8d7da;color:#842029;padding:.2rem .6rem;border-radius:10px;font-size:.78rem;font-weight:600">
+                            <i class="bi bi-x-circle"></i> Unpaid
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:.6rem 1rem">
+                        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+                            <!-- Confirm Payment -->
+                            <button onclick="document.getElementById('payModal{{ team.pk }}').style.display='flex'"
+                                style="padding:.3rem .7rem;font-size:.78rem;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer">
+                                <i class="bi bi-cash"></i> Payment
+                            </button>
+
+                            {% if team.pk in pending_deletions %}
+                            <span style="padding:.3rem .7rem;font-size:.78rem;background:#fff3cd;color:#856404;border-radius:4px;border:1px solid #ffecb5">
+                                <i class="bi bi-hourglass"></i> Pending Deletion
+                            </span>
+                            {% else %}
+                            <a href="{% url 'wscc_delete_team' team.pk %}"
+                               style="padding:.3rem .7rem;font-size:.78rem;background:#dc3545;color:#fff;border-radius:4px;text-decoration:none">
+                                <i class="bi bi-trash3"></i> Delete
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Payment Modal -->
+                <div id="payModal{{ team.pk }}" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+                    <div style="background:#fff;border-radius:10px;padding:1.5rem;max-width:440px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,.15)">
+                        <h3 style="font-size:1rem;margin:0 0 1rem">Confirm Payment – {{ team.team_name }}</h3>
+                        <form method="post" action="{% url 'wscc_confirm_payment' team.pk %}">
+                            {% csrf_token %}
+                            <label style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;cursor:pointer">
+                                <input type="checkbox" name="payment_confirmed" value="1"
+                                    {% if team.payment_confirmed %}checked{% endif %}
+                                    style="width:18px;height:18px">
+                                <span style="font-size:.9rem;font-weight:600">Payment confirmed (team has paid)</span>
+                            </label>
+                            <textarea name="payment_notes" placeholder="M-Pesa ref, receipt number, notes (optional)"
+                                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.85rem;resize:vertical;min-height:70px">{{ team.payment_notes }}</textarea>
+                            <div style="display:flex;gap:.75rem;margin-top:1rem;justify-content:flex-end">
+                                <button type="button" onclick="document.getElementById('payModal{{ team.pk }}').style.display='none'"
+                                    style="padding:.45rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;cursor:pointer">Cancel</button>
+                                <button type="submit"
+                                    style="padding:.45rem 1rem;background:#198754;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding:2rem;text-align:center;color:#9ca3af">
+                        <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+                        No teams registered in {{ ward|title }} Ward.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top:1rem">
+    <a href="{% url 'wscc_dashboard' %}" style="color:#6b7280;font-size:.88rem;text-decoration:none">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

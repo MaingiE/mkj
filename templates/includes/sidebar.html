@@ -309,6 +309,38 @@
         </div>
     </div>
 
+    {% elif user.role == 'ward_sports_council_chair' %}
+    <!-- WARD SPORTS COUNCIL CHAIR (WSCC) SIDEBAR -->
+    <div class="sidebar-section">
+        <div class="sidebar-section-toggle"><h4>WSCC Portal</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
+        <div class="sidebar-section-body">
+            <a href="{% url 'wscc_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wscc_dashboard' %}active{% endif %}">
+                <span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+            </a>
+            <a href="{% url 'wscc_longlists' %}" class="sidebar-link {% if 'wscc_longlist' in request.resolver_match.url_name %}active{% endif %}">
+                <span class="icon"><i class="bi bi-list-ul"></i></span> Longlists
+            </a>
+            <a href="{% url 'wscc_ward_competition_setup' %}" class="sidebar-link {% if 'wscc_ward_comp' in request.resolver_match.url_name or request.resolver_match.url_name == 'wscc_ward_competition_setup' %}active{% endif %}">
+                <span class="icon"><i class="bi bi-trophy"></i></span> Ward Competition
+            </a>
+            <a href="{% url 'wscc_transfers' %}" class="sidebar-link {% if 'wscc_transfer' in request.resolver_match.url_name %}active{% endif %}">
+                <span class="icon"><i class="bi bi-arrow-left-right"></i></span> Transfer Requests
+            </a>
+            <a href="{% url 'wscc_allstars_dashboard' %}" class="sidebar-link {% if 'wscc_allstars' in request.resolver_match.url_name or request.resolver_match.url_name == 'wscc_appoint_officials' %}active{% endif %}">
+                <span class="icon"><i class="bi bi-trophy-fill"></i></span> Ward All Stars
+            </a>
+            <a href="{% url 'wscc_select_ward_tm' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wscc_select_ward_tm' %}active{% endif %}">
+                <span class="icon"><i class="bi bi-person-badge-fill"></i></span> Select Ward TM
+            </a>
+            <a href="{% url 'ligi_player_register' %}" class="sidebar-link {% if request.resolver_match.url_name == 'ligi_player_register' %}active{% endif %}">
+                <span class="icon"><i class="bi bi-people-fill"></i></span> Player Register
+            </a>
+            <a href="{% url 'wscc_teams_list' %}" class="sidebar-link {% if 'wscc_teams' in request.resolver_match.url_name or 'wscc_delete_team' in request.resolver_match.url_name or 'wscc_confirm_payment' in request.resolver_match.url_name %}active{% endif %}">
+                <span class="icon"><i class="bi bi-building"></i></span> Team Management
+            </a>
+        </div>
+    </div>
+
     {% elif user.role == 'subcounty_sports_officer' %}
     <!-- SUB-COUNTY SPORTS OFFICER SIDEBAR -->
     <div class="sidebar-section">
@@ -317,6 +349,7 @@
             <a href="{% url 'subcounty_officer_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
             <a href="{% url 'scso_ligi_overview' %}" class="sidebar-link {% if 'scso_ligi' in request.resolver_match.url_name %}active{% endif %}"><span class="icon"><i class="bi bi-trophy-fill"></i></span> Ligi Mashinani</a>
             <a href="{% url 'scso_player_reg_request' %}" class="sidebar-link {% if 'scso_player_reg' in request.resolver_match.url_name %}active{% endif %}"><span class="icon"><i class="bi bi-person-plus"></i></span> Player Reg Request</a>
+            <a href="{% url 'scso_team_deletion_requests' %}" class="sidebar-link {% if 'scso_team_deletion' in request.resolver_match.url_name %}active{% endif %}"><span class="icon"><i class="bi bi-trash3"></i></span> Team Deletion Requests</a>
             <a href="{% url 'subcounty_officer_disciplines' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_disciplines' or request.resolver_match.url_name == 'subcounty_officer_discipline_players' or request.resolver_match.url_name == 'subcounty_officer_add_player' %}active{% endif %}"><span class="icon"><i class="bi bi-person-vcard"></i></span> Disciplines &amp; Players</a>
             <a href="{% url 'subcounty_officer_delegation_members' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_delegation_members' %}active{% endif %}"><span class="icon"><i class="bi bi-person-badge"></i></span> Sub-County Delegation</a>
             <a href="{% url 'subcounty_officer_referees' %}" class="sidebar-link {% if request.resolver_match.url_name == 'subcounty_officer_referees' %}active{% endif %}"><span class="icon"><i class="bi bi-flag"></i></span> Referees</a>
@@ -334,6 +367,7 @@
         <div class="sidebar-section-toggle"><h4>Chief Sports Officer</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'chief_sports_officer_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'chief_sports_officer_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-check"></i></span> Dashboard</a>
+            <a href="{% url 'cso_team_deletion_requests' %}" class="sidebar-link {% if 'cso_team_deletion' in request.resolver_match.url_name %}active{% endif %}"><span class="icon"><i class="bi bi-trash3"></i></span> Team Deletion Approvals</a>
             <a href="{% url 'director_sports_verified_players' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_verified_players' %}active{% endif %}"><span class="icon"><i class="bi bi-patch-check-fill"></i></span> Verified Players</a>
             <a href="{% url 'director_sports_shortlist_requests' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_shortlist_requests' %}active{% endif %}"><span class="icon"><i class="bi bi-pencil-square"></i></span> Scout Edit Requests</a>
             <a href="{% url 'director_sports_audit' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_audit' %}active{% endif %}"><span class="icon"><i class="bi bi-journal-text"></i></span> Audit &amp; Reports</a>
@@ -355,6 +389,7 @@
         <div class="sidebar-section-toggle"><h4>Director of Sports</h4><span class="toggle-icon"><i class="bi bi-chevron-down"></i></span></div>
         <div class="sidebar-section-body">
             <a href="{% url 'director_sports_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_dashboard' %}active{% endif %}"><span class="icon"><i class="bi bi-shield-shaded"></i></span> Dashboard</a>
+            <a href="{% url 'player_removal_requests' %}" class="sidebar-link {% if 'player_removal' in request.resolver_match.url_name %}active{% endif %}"><span class="icon"><i class="bi bi-person-dash"></i></span> Player Removal Requests</a>
             <a href="{% url 'director_sports_verified_players' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_verified_players' %}active{% endif %}"><span class="icon"><i class="bi bi-patch-check-fill"></i></span> Verified Players</a>
             <a href="{% url 'director_sports_shortlist_requests' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_shortlist_requests' %}active{% endif %}"><span class="icon"><i class="bi bi-pencil-square"></i></span> Scout Edit Requests</a>
             <a href="{% url 'director_sports_audit' %}" class="sidebar-link {% if request.resolver_match.url_name == 'director_sports_audit' %}active{% endif %}"><span class="icon"><i class="bi bi-journal-text"></i></span> Audit &amp; Reports</a>

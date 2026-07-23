@@ -8,7 +8,7 @@
         <span>WSCC Dashboard</span>
     </div>
     <h1><i class="bi bi-shield-check"></i> Ward Sports Council Chair  -  Dashboard</h1>
-    <p>{{ sub_county|title }} Sub-County</p>
+    <p>{{ sub_county|title }} Sub-County {% if ward and ward != 'All' %}<span style="font-weight:700;color:#198754"> → {{ ward|title }} Ward</span>{% endif %}</p>
 </div>
 
 {% if messages %}
@@ -101,6 +101,56 @@
     <div style="padding:2rem;text-align:center;color:#888">
         <i class="bi bi-check-circle" style="font-size:2rem;display:block;margin-bottom:.75rem;color:#198754"></i>
         <p style="margin:0">No longlists are currently awaiting review.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick navigation -->
+<div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1.1rem;color:#333;margin-bottom:1rem">
+        <i class="bi bi-people-fill"></i> Registered Teams in {{ ward|title }} Ward
+    </h2>
+    
+    {% if registered_teams %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+            <thead>
+                <tr style="background:#f0f4ff;text-align:left">
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Team Name</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Discipline</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Manager</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Phone</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Players</th>
+                    <th style="padding:.65rem 1rem;border-bottom:2px solid #dee2e6">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in registered_teams %}
+                <tr style="border-bottom:1px solid #dee2e6{% if forloop.last %};border-bottom:none{% endif %}">
+                    <td style="padding:.65rem 1rem;font-weight:500">{{ team.team_name }}</td>
+                    <td style="padding:.65rem 1rem">{{ team.discipline|title }}</td>
+                    <td style="padding:.65rem 1rem">{{ team.manager_name }}</td>
+                    <td style="padding:.65rem 1rem;font-size:.85rem">{{ team.manager_phone }}</td>
+                    <td style="padding:.65rem 1rem">
+                        <span style="display:inline-block;padding:.2rem .6rem;background:#e8f5e9;color:#1b5e20;border-radius:12px;font-size:.8rem;font-weight:600">
+                            {{ team.player_count }} players
+                        </span>
+                    </td>
+                    <td style="padding:.65rem 1rem">
+                        <a href="{% url 'wscc_team_players' team.pk %}"
+                           style="padding:.3rem .75rem;font-size:.82rem;background:#198754;color:#fff;border-radius:4px;text-decoration:none;display:inline-block">
+                            <i class="bi bi-person-plus"></i> Manage Players
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:2rem;text-align:center;color:#888">
+        <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+        <p style="margin:0">No registered teams found in {{ ward|title }} Ward.</p>
     </div>
     {% endif %}
 </div>

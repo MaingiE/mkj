@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Review Removal – {{ removal_req.player.first_name }} {{ removal_req.player.last_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'director_sports_dashboard' %}">Director Dashboard</a>
+        <a href="{% url 'player_removal_requests' %}">Player Removal Requests</a>
+        <span>Review</span>
+    </div>
+    <h1><i class="bi bi-person-dash"></i> Review Player Removal Request</h1>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% else %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="background:#fef2f2;border:1px solid #fecaca;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem;color:#7f1d1d">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Approve</strong> to permanently delete the player. <strong>Reject</strong> to keep the player on the roster.
+    Approvals are logged and reported to the Chief Officer.
+</div>
+
+<!-- Player + request details -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+    <h3 style="font-size:1rem;margin:0 0 1rem;color:#374151">Player Details</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.88rem">
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Full Name</span>
+            <strong>{{ removal_req.player.first_name }} {{ removal_req.player.last_name }}</strong></div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">National ID</span>{{ removal_req.player.national_id_number|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Date of Birth</span>{{ removal_req.player.date_of_birth|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Ward</span>{{ removal_req.player.ward|title|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Sub-County</span>{{ removal_req.player.sub_county|title|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Discipline</span>
+            {{ removal_req.player.discipline.get_sport_type_display|default:"N/A" }}</div>
+    </div>
+    <div style="border-top:1px solid #f3f4f6;margin-top:1rem;padding-top:1rem">
+        <p style="font-size:.85rem;margin:0 0 .25rem"><strong>Requested By:</strong> {{ removal_req.requested_by.get_full_name }}</p>
+        <p style="font-size:.85rem;margin:0 0 .25rem"><strong>Date:</strong> {{ removal_req.created_at|date:"d M Y, H:i" }}</p>
+        <p style="font-size:.85rem;margin:0"><strong>Reason:</strong></p>
+        <p style="font-size:.88rem;color:#374151;background:#f8fafc;padding:.75rem;border-radius:6px;margin:.35rem 0 0">
+            {{ removal_req.reason }}
+        </p>
+    </div>
+</div>
+
+<!-- Review form -->
+<div class="card" style="padding:1.5rem">
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">
+                Review Notes (required if rejecting)
+            </label>
+            <textarea name="review_notes" rows="3"
+                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Document your decision..."></textarea>
+        </div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button type="submit" name="action" value="approve"
+                style="padding:.55rem 1.25rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-person-dash-fill"></i> Approve – Delete Player
+            </button>
+            <button type="submit" name="action" value="reject"
+                style="padding:.55rem 1.25rem;background:#198754;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-person-check"></i> Reject – Retain Player
+            </button>
+            <a href="{% url 'player_removal_requests' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

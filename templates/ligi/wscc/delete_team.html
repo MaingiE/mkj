@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Delete Team – {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <a href="{% url 'wscc_teams_list' %}">Team Management</a>
+        <span>Delete Team</span>
+    </div>
+    <h1 style="color:#dc3545"><i class="bi bi-trash3"></i> Delete Team</h1>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% else %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Team info -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-left:4px solid #dc3545">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;font-size:.9rem">
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Team</span><strong>{{ team.team_name }}</strong></div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Discipline</span>{{ team.get_discipline_display }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Ward</span>{{ team.ward|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Manager</span>{{ team.manager_full_name }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Payment</span>
+            {% if team.payment_confirmed %}<span style="color:#198754;font-weight:600">Confirmed</span>
+            {% else %}<span style="color:#dc3545;font-weight:600">Not Confirmed</span>{% endif %}
+        </div>
+    </div>
+</div>
+
+{% if window_open %}
+<!-- Window OPEN: direct deletion -->
+<div style="background:#fff3cd;color:#856404;border:1px solid #ffecb5;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem">
+    <i class="bi bi-unlock-fill"></i> The registration window is <strong>open</strong>.
+    You can delete this team directly. This action is <strong>irreversible</strong>.
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Reason Category *</label>
+            <select name="reason_category" required style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+                {% for value, label in reason_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="margin-bottom:1rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Full Reason *</label>
+            <textarea name="reason_detail" required rows="3"
+                style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Explain why this team is being deleted..."></textarea>
+        </div>
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#dc3545;display:block;margin-bottom:.35rem">
+                Type <code>confirm</code> to proceed *
+            </label>
+            <input type="text" name="confirm" required placeholder="confirm"
+                style="padding:.55rem;border:1px solid #dc3545;border-radius:6px;font-size:.88rem;width:200px">
+        </div>
+        <div style="display:flex;gap:.75rem">
+            <button type="submit"
+                style="padding:.55rem 1.25rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-trash3-fill"></i> Permanently Delete
+            </button>
+            <a href="{% url 'wscc_teams_list' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% else %}
+<!-- Window CLOSED: request flow -->
+<div style="background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem">
+    <i class="bi bi-lock-fill"></i> The registration window is <strong>closed</strong>.
+    This deletion request will be forwarded to the <strong>Sub-County Sports Officer</strong> for endorsement,
+    then to the <strong>Chief Sports Officer</strong> for final approval.
+    The Director of Sports and Chief Officer will be notified upon approval.
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Reason Category *</label>
+            <select name="reason_category" required style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+                {% for value, label in reason_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Detailed Justification *</label>
+            <textarea name="reason_detail" required rows="4"
+                style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Provide full justification for this post-window deletion request..."></textarea>
+        </div>
+        <div style="display:flex;gap:.75rem">
+            <button type="submit"
+                style="padding:.55rem 1.25rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-send"></i> Submit Deletion Request
+            </button>
+            <a href="{% url 'wscc_teams_list' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

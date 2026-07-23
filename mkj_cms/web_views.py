@@ -11612,6 +11612,268 @@ def director_sports_unlock_list_view(request):
     return redirect('director_sports_verified_players')
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  PLAYER REMOVAL REQUESTS  –  Director of Sports / Admin review
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('director_sports', 'admin')
+def player_removal_requests_view(request):
+    """
+    Director of Sports / Admin: list all pending (and historical) player removal
+    requests submitted by Ward Team Managers.
+    URL: /portal/director/player-removal-requests/
+    """
+    from teams.models import PlayerRemovalRequest, PlayerRemovalStatus
+
+    status_filter = request.GET.get('status', 'pending')
+    qs = PlayerRemovalRequest.objects.select_related(
+        'player__discipline', 'requested_by', 'reviewed_by'
+    ).order_by('-created_at')
+
+    if status_filter and status_filter != 'all':
+        qs = qs.filter(status=status_filter)
+
+    counts = {
+        'pending':  PlayerRemovalRequest.objects.filter(status=PlayerRemovalStatus.PENDING).count(),
+        'approved': PlayerRemovalRequest.objects.filter(status=PlayerRemovalStatus.APPROVED).count(),
+        'rejected': PlayerRemovalRequest.objects.filter(status=PlayerRemovalStatus.REJECTED).count(),
+    }
+
+    return render(request, 'portal/director/player_removal_requests.html', {
+        'requests': qs,
+        'counts': counts,
+        'status_filter': status_filter,
+    })
+
+
+@role_required('director_sports', 'admin')
+def player_removal_review_view(request, request_pk):
+    """
+    Director of Sports / Admin: approve or reject a single player removal request.
+    - Approve  → deletes the CountyPlayer record
+    - Reject   → keeps the player, stores review notes
+    URL: /portal/director/player-removal-requests/<int:request_pk>/review/
+    """
+    from teams.models import PlayerRemovalRequest, PlayerRemovalStatus
+
+    removal_req = get_object_or_404(
+        PlayerRemovalRequest.objects.select_related('player__discipline', 'requested_by'),
+        pk=request_pk,
+    )
+
+    if removal_req.status != PlayerRemovalStatus.PENDING:
+        messages.info(request, 'This request has already been reviewed.')
+        return redirect('player_removal_requests')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        review_notes = request.POST.get('review_notes', '').strip()
+        now = timezone.now()
+
+        if action == 'approve':
+            player = removal_req.player
+            player_name = f'{player.first_name} {player.last_name}'
+            ward = getattr(player.discipline, 'ward', 'N/A') if player.discipline else 'N/A'
+
+            # Mark request approved first (in case player.delete triggers signals)
+            removal_req.status = PlayerRemovalStatus.APPROVED
+            removal_req.reviewed_by = request.user
+            removal_req.reviewed_at = now
+            removal_req.review_notes = review_notes
+            removal_req.save()
+
+            # Actually delete the player
+            player.delete()
+
+            # Log
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='DELETE',
+                    description=(
+                        f'Player removal approved: {player_name} from {ward} Ward. '
+                        f'Originally requested by {removal_req.requested_by.get_full_name()}. '
+                        f'Notes: {review_notes[:200]}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(
+                request,
+                f'{player_name} has been permanently removed from the system.'
+            )
+
+        elif action == 'reject':
+            removal_req.status = PlayerRemovalStatus.REJECTED
+            removal_req.reviewed_by = request.user
+            removal_req.reviewed_at = now
+            removal_req.review_notes = review_notes
+            removal_req.save()
+
+            # Log
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='OTHER',
+                    description=(
+                        f'Player removal rejected: '
+                        f'{removal_req.player.first_name} {removal_req.player.last_name}. '
+                        f'Player retained. Notes: {review_notes[:200]}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, 'Removal request rejected — player has been retained.')
+
+        return redirect('player_removal_requests')
+
+    return render(request, 'portal/director/player_removal_review.html', {
+        'removal_req': removal_req,
+    })
+
+
+@role_required('admin')
+def admin_clear_team_view(request, team_pk):
+    """
+    System Admin: clear (delete) all players from a ward team's longlist,
+    OR delete the entire team registration entirely.
+    URL: /portal/admin/teams/<int:team_pk>/clear/
+    """
+    from teams.models import LigiMashinaniRegistration
+
+    team = get_object_or_404(
+        LigiMashinaniRegistration.objects.select_related('discipline'),
+        pk=team_pk,
+    )
+    discipline = team.discipline
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'clear_players')
+        confirm = request.POST.get('confirm', '').strip().lower()
+        reason = request.POST.get('reason', '').strip()
+
+        if confirm != 'confirm':
+            messages.error(request, 'You must type "confirm" to proceed with this action.')
+            return redirect('admin_clear_team', team_pk=team_pk)
+
+        if action == 'clear_players' and discipline:
+            count = discipline.players.count()
+            discipline.players.all().delete()
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='DELETE',
+                    description=(
+                        f'Admin cleared {count} player(s) from team "{team.team_name}" '
+                        f'({team.ward} Ward). Reason: {reason}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+            messages.success(request, f'{count} player(s) cleared from {team.team_name}.')
+            return redirect('ligi_registrations_list')
+
+        elif action == 'delete_team':
+            team_name = team.team_name
+            ward = team.ward
+            # Also delete linked WardLonglist and CountyDiscipline players
+            if discipline:
+                discipline.players.all().delete()
+                try:
+                    from teams.models import WardLonglist
+                    WardLonglist.objects.filter(discipline=discipline).delete()
+                except Exception:
+                    pass
+                discipline.delete()
+            team.delete()
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='DELETE',
+                    description=(
+                        f'Admin deleted entire team "{team_name}" from {ward} Ward '
+                        f'including all players and longlist. Reason: {reason}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+            messages.success(request, f'Team "{team_name}" and all associated data deleted.')
+            return redirect('ligi_registrations_list')
+
+    player_count = discipline.players.count() if discipline else 0
+
+    return render(request, 'portal/admin/clear_team.html', {
+        'team': team,
+        'discipline': discipline,
+        'player_count': player_count,
+    })
+
+
+@role_required('director_sports', 'admin')
+def director_clear_team_view(request, team_pk):
+    """
+    Director of Sports: clear all players from a ward team's longlist.
+    URL: /portal/director/teams/<int:team_pk>/clear/
+    """
+    from teams.models import LigiMashinaniRegistration
+
+    team = get_object_or_404(
+        LigiMashinaniRegistration.objects.select_related('discipline'),
+        pk=team_pk,
+    )
+    discipline = team.discipline
+
+    if request.method == 'POST':
+        confirm = request.POST.get('confirm', '').strip().lower()
+        reason = request.POST.get('reason', '').strip()
+
+        if confirm != 'confirm':
+            messages.error(request, 'You must type "confirm" to proceed.')
+            return redirect('director_clear_team', team_pk=team_pk)
+
+        if not reason:
+            messages.error(request, 'A reason is required.')
+            return redirect('director_clear_team', team_pk=team_pk)
+
+        count = discipline.players.count() if discipline else 0
+        if discipline:
+            discipline.players.all().delete()
+
+        try:
+            from admin_dashboard.activity_logger import log_activity, get_client_ip
+            log_activity(
+                user=request.user,
+                action='DELETE',
+                description=(
+                    f'Director cleared {count} player(s) from team "{team.team_name}" '
+                    f'({team.ward} Ward). Reason: {reason}'
+                ),
+                ip_address=get_client_ip(request),
+            )
+        except Exception:
+            pass
+
+        messages.success(request, f'{count} player(s) cleared from {team.team_name}.')
+        return redirect('ligi_admin_overview')
+
+    player_count = discipline.players.count() if discipline else 0
+    return render(request, 'portal/director/clear_team.html', {
+        'team': team,
+        'discipline': discipline,
+        'player_count': player_count,
+    })
+
+
 # ── Director of Sports: Audit & Reports ──────────────────────────────────────
 @role_required('director_sports', 'chief_sports_officer', 'admin')
 def director_sports_audit_view(request):
@@ -12725,13 +12987,22 @@ def ward_tm_edit_player_view(request, player_pk):
 @role_required('team_manager', 'admin')
 def ward_tm_delete_player_view(request, player_pk):
     """
-    Delete a player from the ward longlist.
+    Player removal – window-aware.
 
-    Blocked if longlist status is wscc_approved (Req 4.7).
+    When the player registration window is OPEN:
+        → Team manager can delete the player directly (normal flow).
+
+    When the player registration window is CLOSED:
+        → Team manager must submit a PlayerRemovalRequest with a written reason.
+        → Director of Sports reviews and approves/rejects.
+        → On approval the player is deleted AND the action is logged to the
+          Chief Sports Officer (exceptional post-window removal).
 
     Requirements: 3.1, 4.7
     URL: /ligi/longlist/<int:player_pk>/delete/
     """
+    from teams.models import LigiSettings, PlayerRemovalRequest, PlayerRemovalStatus
+
     user = request.user
     discipline, longlist = _get_ward_tm_context(user, request)
 
@@ -12739,32 +13010,91 @@ def ward_tm_delete_player_view(request, player_pk):
         messages.warning(request, 'No ward team found for your account.')
         return redirect('ward_tm_dashboard')
 
-    # Fetch the player; ensure it belongs to this user's discipline
     player = get_object_or_404(CountyPlayer, pk=player_pk, discipline=discipline)
 
-    # Block delete if longlist is locked (submitted or wscc_approved)
-    if longlist.is_locked:
-        messages.error(
+    ligi_cfg = LigiSettings.get()
+    window_open = ligi_cfg.player_registration_open
+
+    # ── WINDOW OPEN: allow direct deletion ───────────────────────────────
+    if window_open:
+        # Still block if longlist is locked (submitted / wscc_approved)
+        if longlist.is_locked:
+            messages.error(
+                request,
+                'Your longlist has been submitted or approved. '
+                'Players cannot be removed until the WSCC returns it for corrections.',
+            )
+            return redirect('ward_tm_longlist')
+
+        if request.method == 'POST':
+            name = f'{player.first_name} {player.last_name}'
+            player.delete()
+            messages.success(request, f'{name} removed from the longlist.')
+            return redirect('ward_tm_longlist')
+
+        return render(request, 'ligi/ward_tm_delete_player.html', {
+            'player': player,
+            'discipline': discipline,
+            'longlist': longlist,
+            'ward': user.ward,
+            'sub_county': user.sub_county,
+            'window_open': True,
+        })
+
+    # ── WINDOW CLOSED: require a removal request ─────────────────────────
+    existing = PlayerRemovalRequest.objects.filter(
+        player=player, status=PlayerRemovalStatus.PENDING
+    ).first()
+    if existing:
+        messages.info(
             request,
-            'Your longlist has been submitted or approved. '
-            'Players cannot be removed until the WSCC returns it for corrections.',
+            f'A removal request for {player.first_name} {player.last_name} is already '
+            f'pending review by the Director of Sports.'
         )
         return redirect('ward_tm_longlist')
 
     if request.method == 'POST':
-        name = f'{player.first_name} {player.last_name}'
-        player.delete()
-        messages.success(request, f'{name} removed from the longlist.')
-        return redirect('ward_tm_longlist')
+        reason = request.POST.get('reason', '').strip()
+        if not reason:
+            messages.error(request, 'You must provide a valid reason for the removal request.')
+        else:
+            PlayerRemovalRequest.objects.create(
+                player=player,
+                requested_by=user,
+                reason=reason,
+            )
+            messages.success(
+                request,
+                f'Removal request for {player.first_name} {player.last_name} submitted. '
+                f'The Director of Sports will review and respond.'
+            )
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='OTHER',
+                    description=(
+                        f'[POST-WINDOW] Player removal request submitted: '
+                        f'{player.first_name} {player.last_name} '
+                        f'(ID: {player.national_id_number}) from {discipline.ward} Ward. '
+                        f'Reason: {reason[:200]}'
+                    ),
+                    obj=player,
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+            return redirect('ward_tm_longlist')
 
-    context = {
+    return render(request, 'ligi/ward_tm_delete_player.html', {
         'player': player,
         'discipline': discipline,
         'longlist': longlist,
         'ward': user.ward,
         'sub_county': user.sub_county,
-    }
-    return render(request, 'ligi/ward_tm_delete_player.html', context)
+        'window_open': False,
+        'window_closed_message': ligi_cfg.player_registration_closed_message,
+    })
 
 
 @role_required('team_manager', 'admin')
@@ -13685,11 +14015,13 @@ def wscc_dashboard_view(request):
     """WSCC dashboard showing submitted longlists for wards in the WSCC's sub-county.
 
     Displays counts and a quick list of submitted/pending longlists so the WSCC
-    can see at a glance what needs review.
+    can see at a glance what needs review. Also shows registered teams in their ward.
 
     Requirements: 4.2, 10.5
     URL: /ligi/wscc/dashboard/
     """
+    from teams.models import LigiMashinaniRegistration
+    
     user = request.user
     all_longlists = _wscc_longlist_queryset(user)
 
@@ -13704,12 +14036,32 @@ def wscc_dashboard_view(request):
         'draft': all_longlists.filter(status=WardLonglistStatus.DRAFT).count(),
         'total': all_longlists.count(),
     }
+    
+    # Get registered teams in WSCC's ward
+    registered_teams = []
+    if hasattr(user, 'ward') and user.ward:
+        teams_qs = LigiMashinaniRegistration.objects.filter(
+            sub_county=user.sub_county,
+            ward=user.ward,
+            status='approved'
+        ).select_related('discipline')
+        
+        for team in teams_qs:
+            registered_teams.append({
+                'pk': team.pk,
+                'team_name': team.team_name,
+                'discipline': team.discipline,
+                'manager_name': team.manager_name,
+                'manager_phone': team.manager_phone,
+                'player_count': team.discipline.players.count() if team.discipline else 0,
+            })
 
     context = {
         'submitted_longlists': submitted_longlists,
         'counts': counts,
+        'registered_teams': registered_teams,
         'sub_county': user.sub_county if not user.is_superuser else 'All',
- 'ward': user.ward if not user.is_superuser else 'All',
+        'ward': user.ward if not user.is_superuser else 'All',
     }
     return render(request, 'ligi/wscc/dashboard.html', context)
 
@@ -14028,6 +14380,115 @@ def wscc_return_longlist_view(request, longlist_pk):
             )
 
     return redirect('wscc_longlist_detail', longlist_pk=longlist_pk)
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_team_players_view(request, team_pk):
+    """
+    WSCC manage team players - view and add players to registered teams in their ward.
+    
+    Allows WSCC to:
+    - View all players in a specific team's longlist
+    - Add new players to the team's longlist  
+    - Verify the team is in their assigned ward
+    
+    URL: /ligi/wscc/teams/<int:team_pk>/players/
+    """
+    from teams.models import LigiMashinaniRegistration, CountyPlayer
+    from teams.forms import WardLonglistPlayerForm
+    from django.utils import timezone as tz
+    
+    user = request.user
+    
+    # Get the team and verify it's in WSCC's ward
+    team = get_object_or_404(
+        LigiMashinaniRegistration.objects.select_related('discipline'),
+        pk=team_pk
+    )
+    
+    # Verify ward access
+    if not (user.is_superuser or user.role == 'admin'):
+        if team.ward != user.ward or team.sub_county != user.sub_county:
+            messages.error(request, 'You can only manage teams in your assigned ward.')
+            return redirect('wscc_dashboard')
+    
+    discipline = team.discipline
+    if not discipline:
+        messages.error(request, 'This team has no discipline assigned.')
+        return redirect('wscc_dashboard')
+    
+    # Get existing players for this discipline
+    players = CountyPlayer.objects.filter(
+        discipline=discipline
+    ).order_by('-created_at')
+    
+    # Handle player addition
+    if request.method == 'POST':
+        form = WardLonglistPlayerForm(request.POST, request.FILES)
+        if form.is_valid():
+            player = form.save(commit=False)
+            player.discipline = discipline
+            player.sub_county = team.sub_county
+            player.ward = team.ward
+            
+            # Calculate age from DOB
+            if player.date_of_birth:
+                today = tz.now().date()
+                dob = player.date_of_birth
+                player.age_value = (
+                    today.year - dob.year
+                    - ((today.month, today.day) < (dob.month, dob.day))
+                )
+            
+            # Normalize empty phone
+            if not player.phone:
+                player.phone = ''
+            
+            player.save()
+            messages.success(
+                request,
+                f'{player.first_name} {player.last_name} added successfully to {team.team_name}.'
+            )
+            
+            # Log activity
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='CREATE',
+                    description=f'WSCC added player {player.first_name} {player.last_name} to team {team.team_name} ({team.ward} Ward)',
+                    obj=player,
+                    ip_address=get_client_ip(request),
+                    extra_data={
+                        'event': 'wscc_add_player',
+                        'team_pk': team.pk,
+                        'team_name': team.team_name,
+                        'ward': team.ward,
+                        'player_name': f'{player.first_name} {player.last_name}',
+                    },
+                )
+            except Exception:
+                pass
+            
+            # Check if user wants to add another or return to list
+            action = request.POST.get('action', 'add_more')
+            if action == 'finish':
+                return redirect('wscc_dashboard')
+            
+            # Reset form for next player
+            form = WardLonglistPlayerForm()
+    else:
+        form = WardLonglistPlayerForm()
+    
+    context = {
+        'team': team,
+        'discipline': discipline,
+        'players': players,
+        'form': form,
+        'ward': team.ward,
+        'sub_county': team.sub_county,
+    }
+    return render(request, 'ligi/wscc/team_players.html', context)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -14864,6 +15325,15 @@ def ligi_registration_approve_view(request, pk):
         messages.warning(request, f'"{reg.team_name}" is already approved.')
         return redirect('ligi_registration_detail', pk=pk)
 
+    # Gate: payment must be confirmed before approval
+    if not reg.payment_confirmed:
+        messages.error(
+            request,
+            f'Cannot approve "{reg.team_name}" — payment has not been confirmed. '
+            f'The Ward Sports Council Chair must confirm payment before this team can be approved.'
+        )
+        return redirect('ligi_registration_detail', pk=pk)
+
     if User.objects.filter(email__iexact=reg.manager_email).exists():
         messages.error(request, f'An account for {reg.manager_email} already exists. Cannot re-approve.')
         return redirect('ligi_registration_detail', pk=pk)
@@ -15047,13 +15517,21 @@ def ligi_registration_reject_view(request, pk):
 def ligi_registration_ward_verify_view(request, pk):
     """
     Mark a pending registration as ward-council-verified (pre-approval step).
+    Blocks verification if payment has not been confirmed by WSCC.
     """
     from teams.models import LigiMashinaniRegistration
     reg = get_object_or_404(LigiMashinaniRegistration, pk=pk)
     if reg.status == 'pending':
-        reg.status = 'ward_verified'
-        reg.save(update_fields=['status', 'updated_at'])
-        messages.success(request, f'"{reg.team_name}" marked as Ward Council Verified.')
+        if not reg.payment_confirmed:
+            messages.error(
+                request,
+                f'Cannot verify "{reg.team_name}" — payment has not been confirmed by the WSCC. '
+                f'Ask the Ward Sports Council Chair to confirm payment first.'
+            )
+        else:
+            reg.status = 'ward_verified'
+            reg.save(update_fields=['status', 'updated_at'])
+            messages.success(request, f'"{reg.team_name}" marked as Ward Council Verified.')
     else:
         messages.warning(request, f'Cannot mark as verified  -  current status is "{reg.status}".')
     return redirect('ligi_registration_detail', pk=pk)
@@ -17306,6 +17784,476 @@ Please contact your Ward Sports Council Chair if you have any questions.</p>"""
         'discipline_data': discipline_data,
         'has_registrations': bool(discipline_data),
     })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WSCC: TEAM PAYMENT CONFIRMATION + TEAM DELETION (window-aware)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_confirm_payment_view(request, team_pk):
+    """
+    WSCC confirms that a team has paid the registration fee.
+    Only paid (payment_confirmed=True) teams can be approved to proceed.
+    POST only.
+    URL: /ligi/wscc/teams/<int:team_pk>/confirm-payment/
+    """
+    from teams.models import LigiMashinaniRegistration
+
+    team = get_object_or_404(LigiMashinaniRegistration, pk=team_pk)
+    user = request.user
+
+    # Scope guard
+    if not (user.is_superuser or user.role == 'admin'):
+        if team.ward != user.ward or team.sub_county != user.sub_county:
+            messages.error(request, 'Access denied.')
+            return redirect('wscc_dashboard')
+
+    if request.method == 'POST':
+        payment_notes = request.POST.get('payment_notes', '').strip()
+        confirmed = request.POST.get('payment_confirmed') == '1'
+
+        team.payment_confirmed = confirmed
+        team.payment_notes = payment_notes
+        team.save(update_fields=['payment_confirmed', 'payment_notes', 'updated_at'])
+
+        status_label = 'confirmed' if confirmed else 'unconfirmed'
+        messages.success(request, f'Payment {status_label} for {team.team_name}.')
+
+        try:
+            from admin_dashboard.activity_logger import log_activity, get_client_ip
+            log_activity(
+                user=user,
+                action='UPDATE',
+                description=(
+                    f'WSCC {status_label} payment for team "{team.team_name}" '
+                    f'({team.ward} Ward, {team.sub_county}). Notes: {payment_notes[:200]}'
+                ),
+                obj=team,
+                ip_address=get_client_ip(request),
+            )
+        except Exception:
+            pass
+
+    return redirect('wscc_teams_list')
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_teams_list_view(request):
+    """
+    WSCC: list all team registrations in their ward.
+    Shows payment status, allows confirming payment and deleting (if window open).
+    URL: /ligi/wscc/teams/
+    """
+    from teams.models import LigiMashinaniRegistration, LigiSettings, TeamDeletionRequest, TeamDeletionStatus
+
+    user = request.user
+    ward = getattr(user, 'ward', '') or ''
+    sub_county = getattr(user, 'sub_county', '') or ''
+
+    ligi_cfg = LigiSettings.get()
+    window_open = ligi_cfg.team_registration_open
+
+    qs = LigiMashinaniRegistration.objects.all()
+    if not (user.is_superuser or user.role == 'admin'):
+        qs = qs.filter(ward=ward, sub_county=sub_county)
+    qs = qs.order_by('status', '-submitted_at')
+
+    # Annotate with pending deletion requests
+    pending_deletions = set(
+        TeamDeletionRequest.objects.filter(
+            status__in=[TeamDeletionStatus.PENDING_SCSO, TeamDeletionStatus.SCSO_ENDORSED]
+        ).values_list('registration_id', flat=True)
+    )
+
+    return render(request, 'ligi/wscc/teams_list.html', {
+        'teams': qs,
+        'pending_deletions': pending_deletions,
+        'window_open': window_open,
+        'ward': ward,
+        'sub_county': sub_county,
+    })
+
+
+@role_required('ward_sports_council_chair', 'admin')
+def wscc_delete_team_view(request, team_pk):
+    """
+    WSCC deletes a team registration.
+
+    Window OPEN  → direct deletion (after confirmation).
+    Window CLOSED → submit TeamDeletionRequest for SCSO → CSO approval chain.
+
+    URL: /ligi/wscc/teams/<int:team_pk>/delete/
+    """
+    from teams.models import LigiMashinaniRegistration, LigiSettings, TeamDeletionRequest, TeamDeletionStatus, TeamDeletionReason
+
+    team = get_object_or_404(LigiMashinaniRegistration, pk=team_pk)
+    user = request.user
+
+    # Scope guard
+    if not (user.is_superuser or user.role == 'admin'):
+        if team.ward != user.ward or team.sub_county != user.sub_county:
+            messages.error(request, 'Access denied.')
+            return redirect('wscc_dashboard')
+
+    ligi_cfg = LigiSettings.get()
+    window_open = ligi_cfg.team_registration_open
+
+    # Check if a pending request already exists
+    pending_req = TeamDeletionRequest.objects.filter(
+        registration=team,
+        status__in=[TeamDeletionStatus.PENDING_SCSO, TeamDeletionStatus.SCSO_ENDORSED],
+    ).first()
+
+    if pending_req:
+        messages.info(request, f'A deletion request for "{team.team_name}" is already pending review.')
+        return redirect('wscc_teams_list')
+
+    if request.method == 'POST':
+        confirm = request.POST.get('confirm', '').strip().lower()
+        reason_category = request.POST.get('reason_category', TeamDeletionReason.NON_PARTICIPATION)
+        reason_detail = request.POST.get('reason_detail', '').strip()
+
+        if not reason_detail:
+            messages.error(request, 'Please provide a reason for deletion.')
+            return render(request, 'ligi/wscc/delete_team.html', {
+                'team': team, 'window_open': window_open,
+                'reason_choices': TeamDeletionReason.choices,
+            })
+
+        if window_open:
+            # Direct deletion
+            if confirm != 'confirm':
+                messages.error(request, 'Type "confirm" to proceed.')
+                return render(request, 'ligi/wscc/delete_team.html', {
+                    'team': team, 'window_open': window_open,
+                    'reason_choices': TeamDeletionReason.choices,
+                })
+
+            team_name = team.team_name
+            ward_name = team.ward
+            # Delete linked discipline + longlist + players
+            if team.discipline:
+                from teams.models import WardLonglist
+                WardLonglist.objects.filter(discipline=team.discipline).delete()
+                team.discipline.players.all().delete()
+                team.discipline.delete()
+            team.delete()
+
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='DELETE',
+                    description=(
+                        f'WSCC deleted team "{team_name}" from {ward_name} Ward '
+                        f'(window open). Reason: [{reason_category}] {reason_detail}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f'Team "{team_name}" deleted successfully.')
+            return redirect('wscc_teams_list')
+
+        else:
+            # Window closed – create request
+            TeamDeletionRequest.objects.create(
+                registration=team,
+                requested_by=user,
+                reason_category=reason_category,
+                reason_detail=reason_detail,
+            )
+
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='OTHER',
+                    description=(
+                        f'[POST-WINDOW] WSCC submitted team deletion request for '
+                        f'"{team.team_name}" ({team.ward} Ward). '
+                        f'Reason: [{reason_category}] {reason_detail[:200]}'
+                    ),
+                    obj=team,
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(
+                request,
+                f'Deletion request for "{team.team_name}" submitted to the Sub-County Sports Officer for endorsement.'
+            )
+            return redirect('wscc_teams_list')
+
+    return render(request, 'ligi/wscc/delete_team.html', {
+        'team': team,
+        'window_open': window_open,
+        'reason_choices': TeamDeletionReason.choices,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SCSO: ENDORSE TEAM DELETION REQUEST
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('subcounty_sports_officer', 'admin')
+def scso_team_deletion_requests_view(request):
+    """
+    SCSO: list team deletion requests in their sub-county pending endorsement.
+    URL: /portal/subcounty/team-deletion-requests/
+    """
+    from teams.models import TeamDeletionRequest, TeamDeletionStatus
+
+    user = request.user
+    sub_county = getattr(user, 'sub_county', '') or ''
+
+    qs = TeamDeletionRequest.objects.select_related(
+        'registration', 'requested_by', 'scso_reviewed_by'
+    ).order_by('-created_at')
+
+    if not (user.is_superuser or user.role == 'admin'):
+        qs = qs.filter(registration__sub_county=sub_county)
+
+    return render(request, 'portal/scso/team_deletion_requests.html', {
+        'requests': qs,
+        'sub_county': sub_county,
+    })
+
+
+@role_required('subcounty_sports_officer', 'admin')
+def scso_team_deletion_review_view(request, request_pk):
+    """
+    SCSO: endorse or reject a WSCC-initiated team deletion request.
+    URL: /portal/subcounty/team-deletion-requests/<int:request_pk>/review/
+    """
+    from teams.models import TeamDeletionRequest, TeamDeletionStatus
+
+    del_req = get_object_or_404(
+        TeamDeletionRequest.objects.select_related('registration', 'requested_by'),
+        pk=request_pk,
+    )
+    user = request.user
+
+    # Scope guard
+    if not (user.is_superuser or user.role == 'admin'):
+        if del_req.registration.sub_county != (getattr(user, 'sub_county', '') or ''):
+            messages.error(request, 'Access denied.')
+            return redirect('scso_team_deletion_requests')
+
+    if del_req.status != TeamDeletionStatus.PENDING_SCSO:
+        messages.info(request, 'This request is no longer pending SCSO review.')
+        return redirect('scso_team_deletion_requests')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        scso_notes = request.POST.get('scso_notes', '').strip()
+        now = timezone.now()
+
+        if action == 'endorse':
+            del_req.status = TeamDeletionStatus.SCSO_ENDORSED
+            del_req.scso_reviewed_by = user
+            del_req.scso_reviewed_at = now
+            del_req.scso_notes = scso_notes
+            del_req.save()
+
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=user,
+                    action='UPDATE',
+                    description=(
+                        f'SCSO endorsed team deletion request for '
+                        f'"{del_req.registration.team_name}" ({del_req.registration.ward} Ward). '
+                        f'Forwarded to Chief Sports Officer.'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f'Endorsed. Request forwarded to Chief Sports Officer.')
+
+        elif action == 'reject':
+            if not scso_notes:
+                messages.error(request, 'A reason is required when rejecting.')
+                return render(request, 'portal/scso/team_deletion_review.html', {'del_req': del_req})
+
+            del_req.status = TeamDeletionStatus.SCSO_REJECTED
+            del_req.scso_reviewed_by = user
+            del_req.scso_reviewed_at = now
+            del_req.scso_notes = scso_notes
+            del_req.save()
+
+            messages.success(request, 'Request rejected. WSCC will be informed.')
+
+        return redirect('scso_team_deletion_requests')
+
+    return render(request, 'portal/scso/team_deletion_review.html', {'del_req': del_req})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  CHIEF SPORTS OFFICER: FINAL APPROVAL FOR TEAM DELETION
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('chief_sports_officer', 'admin')
+def cso_team_deletion_requests_view(request):
+    """
+    CSO: list endorsed team deletion requests awaiting final approval.
+    URL: /portal/cso/team-deletion-requests/
+    """
+    from teams.models import TeamDeletionRequest, TeamDeletionStatus
+
+    qs = TeamDeletionRequest.objects.select_related(
+        'registration', 'requested_by', 'scso_reviewed_by', 'cso_reviewed_by'
+    ).order_by('-created_at')
+
+    return render(request, 'portal/cso/team_deletion_requests.html', {'requests': qs})
+
+
+@role_required('chief_sports_officer', 'admin')
+def cso_team_deletion_review_view(request, request_pk):
+    """
+    CSO: approve or reject an SCSO-endorsed team deletion request.
+    On approval: deletes the team + logs to Director of Sports + Chief Officer.
+    URL: /portal/cso/team-deletion-requests/<int:request_pk>/review/
+    """
+    from teams.models import TeamDeletionRequest, TeamDeletionStatus
+
+    del_req = get_object_or_404(
+        TeamDeletionRequest.objects.select_related('registration__discipline', 'requested_by', 'scso_reviewed_by'),
+        pk=request_pk,
+    )
+
+    if del_req.status != TeamDeletionStatus.SCSO_ENDORSED:
+        messages.info(request, 'This request is not in the SCSO-endorsed stage.')
+        return redirect('cso_team_deletion_requests')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        cso_notes = request.POST.get('cso_notes', '').strip()
+        now = timezone.now()
+
+        if action == 'approve':
+            team = del_req.registration
+            team_name = team.team_name
+            ward_name = team.ward
+            sub_county_name = team.sub_county
+
+            del_req.status = TeamDeletionStatus.CSO_APPROVED
+            del_req.cso_reviewed_by = request.user
+            del_req.cso_reviewed_at = now
+            del_req.cso_notes = cso_notes
+            del_req.save()
+
+            # Delete team + players + longlist
+            if team.discipline:
+                from teams.models import WardLonglist
+                WardLonglist.objects.filter(discipline=team.discipline).delete()
+                team.discipline.players.all().delete()
+                team.discipline.delete()
+            team.delete()
+
+            log_msg = (
+                f'[POST-WINDOW] CSO approved deletion of team "{team_name}" '
+                f'({ward_name} Ward, {sub_county_name}). '
+                f'WSCC: {del_req.requested_by.get_full_name()}, '
+                f'SCSO: {del_req.scso_reviewed_by.get_full_name() if del_req.scso_reviewed_by else "N/A"}. '
+                f'CSO Notes: {cso_notes[:300]}'
+            )
+
+            # Log to Director of Sports + Chief Officer
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                from django.contrib.auth import get_user_model as _get_user_model
+                _User = _get_user_model()
+                ip = get_client_ip(request)
+
+                # Log for audit trail (visible to Director)
+                log_activity(
+                    user=request.user,
+                    action='DELETE',
+                    description=log_msg,
+                    ip_address=ip,
+                    extra_data={
+                        'event': 'post_window_team_deletion',
+                        'team_name': team_name,
+                        'ward': ward_name,
+                        'sub_county': sub_county_name,
+                        'requested_by': del_req.requested_by.get_full_name(),
+                        'reason_category': del_req.reason_category,
+                        'reason_detail': del_req.reason_detail[:400],
+                    }
+                )
+            except Exception:
+                pass
+
+            # Email notification to Director of Sports
+            try:
+                from accounts.notifications import _send, _base_html, SITE_URL
+                from django.contrib.auth import get_user_model as _gum
+                _User2 = _gum()
+                directors = _User2.objects.filter(role='director_sports', is_active=True)
+                chief_officers = _User2.objects.filter(role='chief_officer_sports', is_active=True)
+                recipients = list(directors.values_list('email', flat=True)) + list(chief_officers.values_list('email', flat=True))
+
+                if recipients:
+                    body = f"""
+<p>This is an automated notification of a <strong>post-window team deletion</strong>.</p>
+<dl class="info-box">
+  <dt>Team</dt><dd>{team_name}</dd>
+  <dt>Ward</dt><dd>{ward_name}</dd>
+  <dt>Sub-County</dt><dd>{sub_county_name}</dd>
+  <dt>Reason</dt><dd>[{del_req.get_reason_category_display()}] {del_req.reason_detail}</dd>
+  <dt>Requested By (WSCC)</dt><dd>{del_req.requested_by.get_full_name()}</dd>
+  <dt>SCSO</dt><dd>{del_req.scso_reviewed_by.get_full_name() if del_req.scso_reviewed_by else 'N/A'}</dd>
+  <dt>Approved By (CSO)</dt><dd>{request.user.get_full_name()}</dd>
+  <dt>Approved On</dt><dd>{now.strftime('%d %b %Y at %H:%M')}</dd>
+</dl>
+<p>This action was taken after the team registration window was closed and required the full approval chain.</p>"""
+                    _send(
+                        f'[Ligi Mashinani] Post-Window Team Deletion: {team_name} – {ward_name} Ward',
+                        _base_html('Post-Window Team Deletion Notification', body),
+                        recipients,
+                    )
+            except Exception as email_exc:
+                logger.warning('Failed to send team deletion notification emails: %s', email_exc)
+
+            messages.success(request, f'Team "{team_name}" has been permanently deleted. Director of Sports has been notified.')
+
+        elif action == 'reject':
+            if not cso_notes:
+                messages.error(request, 'Please provide a reason for rejection.')
+                return render(request, 'portal/cso/team_deletion_review.html', {'del_req': del_req})
+
+            del_req.status = TeamDeletionStatus.CSO_REJECTED
+            del_req.cso_reviewed_by = request.user
+            del_req.cso_reviewed_at = now
+            del_req.cso_notes = cso_notes
+            del_req.save()
+
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='OTHER',
+                    description=(
+                        f'CSO rejected team deletion request for '
+                        f'"{del_req.registration.team_name if del_req.registration_id else "N/A"}". '
+                        f'Team retained. Notes: {cso_notes[:300]}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, 'Team deletion rejected. Team retained.')
+
+        return redirect('cso_team_deletion_requests')
+
+    return render(request, 'portal/cso/team_deletion_review.html', {'del_req': del_req})
 
 
 # ══════════════════════════════════════════════════════════════════════════════

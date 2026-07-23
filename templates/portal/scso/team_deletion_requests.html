@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Team Deletion Requests – SCSO{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'subcounty_officer_dashboard' %}">Sub-County Dashboard</a>
+        <span>Team Deletion Requests</span>
+    </div>
+    <h1><i class="bi bi-trash3"></i> Team Deletion Requests</h1>
+    {% if sub_county %}<p>{{ sub_county|title }} Sub-County</p>{% endif %}
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="padding:1.5rem">
+    {% if requests %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+            <thead>
+                <tr style="background:#f0f4ff;text-align:left">
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Team</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Ward</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Reason</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Requested By (WSCC)</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Date</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Status</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr style="border-bottom:1px solid #f3f4f6">
+                    <td style="padding:.6rem 1rem;font-weight:600">{{ req.registration.team_name }}</td>
+                    <td style="padding:.6rem 1rem">{{ req.registration.ward|title }}</td>
+                    <td style="padding:.6rem 1rem">
+                        <span style="font-size:.78rem;font-weight:600">{{ req.get_reason_category_display }}</span><br>
+                        <span style="color:#6b7280;font-size:.78rem">{{ req.reason_detail|truncatechars:80 }}</span>
+                    </td>
+                    <td style="padding:.6rem 1rem">{{ req.requested_by.get_full_name }}</td>
+                    <td style="padding:.6rem 1rem;color:#9ca3af;font-size:.82rem">{{ req.created_at|date:"d M Y" }}</td>
+                    <td style="padding:.6rem 1rem">
+                        <span style="padding:.2rem .6rem;border-radius:10px;font-size:.78rem;font-weight:600;
+                            {% if req.status == 'pending_scso' %}background:#fff3cd;color:#856404;
+                            {% elif req.status == 'scso_endorsed' %}background:#dbeafe;color:#1e40af;
+                            {% elif req.status == 'scso_rejected' %}background:#f8d7da;color:#842029;
+                            {% elif req.status == 'cso_approved' %}background:#d1e7dd;color:#0a3622;
+                            {% else %}background:#e5e7eb;color:#374151;{% endif %}">
+                            {{ req.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="padding:.6rem 1rem">
+                        {% if req.status == 'pending_scso' %}
+                        <a href="{% url 'scso_team_deletion_review' req.pk %}"
+                           style="padding:.3rem .75rem;font-size:.82rem;background:#124491;color:#fff;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-eye"></i> Review
+                        </a>
+                        {% else %}
+                        <span style="color:#9ca3af;font-size:.82rem">{{ req.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:2rem;text-align:center;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+        No team deletion requests found.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

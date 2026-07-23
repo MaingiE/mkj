@@ -553,7 +553,7 @@ class WardLonglistPlayerForm(forms.ModelForm):
             }),
             'phone': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '712345678 (optional)',
+                'placeholder': '712345678',
                 'pattern': '\\d{9}',
                 'minlength': '9',
                 'maxlength': '9',

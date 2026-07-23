@@ -207,6 +207,12 @@ from .web_views import (
     director_sports_delegations_view,
     director_sports_technical_bench_view,
     verified_players_pdf_view,
+    # Player removal requests
+    player_removal_requests_view,
+    player_removal_review_view,
+    # Admin/Director: clear team
+    admin_clear_team_view,
+    director_clear_team_view,
     # Bulk upload
     cso_bulk_upload_list_view,
     cso_bulk_upload_view,
@@ -242,6 +248,17 @@ from .web_views import (
     wscc_longlist_detail_view,
     wscc_approve_longlist_view,
     wscc_return_longlist_view,
+    wscc_team_players_view,
+    # WSCC: team management (payment, deletion)
+    wscc_teams_list_view,
+    wscc_confirm_payment_view,
+    wscc_delete_team_view,
+    # SCSO: team deletion endorsement
+    scso_team_deletion_requests_view,
+    scso_team_deletion_review_view,
+    # CSO: team deletion final approval
+    cso_team_deletion_requests_view,
+    cso_team_deletion_review_view,
     # Ligi Mashinani: Admin registration management portal
     ligi_registrations_list_view,
     ligi_registration_detail_view,
@@ -329,6 +346,10 @@ urlpatterns = [
     path("ligi/wscc/longlists/<int:longlist_pk>/",          wscc_longlist_detail_view,     name="wscc_longlist_detail"),
     path("ligi/wscc/longlists/<int:longlist_pk>/approve/",  wscc_approve_longlist_view,    name="wscc_approve_longlist"),
     path("ligi/wscc/longlists/<int:longlist_pk>/return/",   wscc_return_longlist_view,     name="wscc_return_longlist"),
+    path("ligi/wscc/teams/<int:team_pk>/players/",          wscc_team_players_view,        name="wscc_team_players"),
+    path("ligi/wscc/teams/",                                wscc_teams_list_view,          name="wscc_teams_list"),
+    path("ligi/wscc/teams/<int:team_pk>/confirm-payment/",  wscc_confirm_payment_view,     name="wscc_confirm_payment"),
+    path("ligi/wscc/teams/<int:team_pk>/delete/",           wscc_delete_team_view,         name="wscc_delete_team"),
     path("sitemap.xml",                   sitemap_xml_view,               name="sitemap_xml"),
     path("",                              home_view,                      name="home"),
     path("about/",                        about_view,                     name="about"),
@@ -653,6 +674,14 @@ urlpatterns = [
     path("portal/subcounty/player-reg-request/", scso_player_reg_request_view, name="scso_player_reg_request"),
     path("portal/subcounty/ligi/",               scso_ligi_overview_view,        name="scso_ligi_overview"),
     path("portal/subcounty/ligi/<str:ward>/<str:discipline>/", scso_ligi_ward_detail_view, name="scso_ligi_ward_detail"),
+    path("portal/subcounty/team-deletion-requests/",                      scso_team_deletion_requests_view, name="scso_team_deletion_requests"),
+    path("portal/subcounty/team-deletion-requests/<int:request_pk>/",     scso_team_deletion_review_view,   name="scso_team_deletion_review"),
+    path("portal/cso/team-deletion-requests/",                            cso_team_deletion_requests_view,  name="cso_team_deletion_requests"),
+    path("portal/cso/team-deletion-requests/<int:request_pk>/review/",    cso_team_deletion_review_view,    name="cso_team_deletion_review"),
+    path("portal/director/player-removal-requests/",                      player_removal_requests_view,     name="player_removal_requests"),
+    path("portal/director/player-removal-requests/<int:request_pk>/review/", player_removal_review_view,   name="player_removal_review"),
+    path("portal/admin/teams/<int:team_pk>/clear/",                       admin_clear_team_view,            name="admin_clear_team"),
+    path("portal/director/teams/<int:team_pk>/clear/",                    director_clear_team_view,         name="director_clear_team"),
 
     # ── SUBCOUNTY FINALS: WSCC All Stars ──────────────────────────────────────
     path("ligi/wscc/allstars/",                              wscc_allstars_dashboard_view,        name="wscc_allstars_dashboard"),

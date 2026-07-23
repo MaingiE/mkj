@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Final Approval – {{ del_req.registration.team_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'chief_sports_officer_dashboard' %}">CSO Dashboard</a>
+        <a href="{% url 'cso_team_deletion_requests' %}">Team Deletion Requests</a>
+        <span>Final Approval</span>
+    </div>
+    <h1><i class="bi bi-shield-exclamation"></i> Final Approval – Team Deletion</h1>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% else %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="background:#fef2f2;border:1px solid #fecaca;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem;color:#7f1d1d">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Warning:</strong> Approving this request will <strong>permanently delete</strong> the team and all associated players.
+    The Director of Sports and Chief Officer will be notified by email. This action cannot be undone.
+</div>
+
+<!-- Full request chain summary -->
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+    <h3 style="font-size:1rem;margin:0 0 1rem;color:#374151">Request Chain</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;font-size:.88rem;margin-bottom:1rem">
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Team</span><strong>{{ del_req.registration.team_name }}</strong></div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Ward</span>{{ del_req.registration.ward|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Sub-County</span>{{ del_req.registration.sub_county|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Discipline</span>{{ del_req.registration.get_discipline_display }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Payment Confirmed</span>
+            {% if del_req.registration.payment_confirmed %}<span style="color:#198754;font-weight:600">Yes</span>
+            {% else %}<span style="color:#dc3545;font-weight:600">No</span>{% endif %}
+        </div>
+    </div>
+    <div style="border-top:1px solid #f3f4f6;padding-top:1rem">
+        <p style="font-size:.85rem;margin:0 0 .5rem"><strong>Reason:</strong> {{ del_req.get_reason_category_display }}</p>
+        <p style="font-size:.85rem;color:#374151;margin:0 0 1rem">{{ del_req.reason_detail }}</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:.85rem">
+            <div style="background:#f8fafc;padding:.75rem;border-radius:6px">
+                <strong>WSCC ({{ del_req.requested_by.get_full_name }})</strong><br>
+                <span style="color:#6b7280;font-size:.82rem">Submitted {{ del_req.created_at|date:"d M Y" }}</span>
+            </div>
+            <div style="background:#f8fafc;padding:.75rem;border-radius:6px">
+                <strong>SCSO ({{ del_req.scso_reviewed_by.get_full_name|default:"N/A" }})</strong><br>
+                <span style="color:#6b7280;font-size:.82rem">
+                    Endorsed {{ del_req.scso_reviewed_at|date:"d M Y"|default:"N/A" }}<br>
+                    {{ del_req.scso_notes|default:"No notes" }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSO review form -->
+<div class="card" style="padding:1.5rem">
+    <h3 style="font-size:1rem;margin:0 0 1.25rem;color:#374151">Your Decision</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">
+                CSO Decision Notes (required if rejecting)
+            </label>
+            <textarea name="cso_notes" rows="3"
+                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Document your decision reasoning..."></textarea>
+        </div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button type="submit" name="action" value="approve"
+                style="padding:.55rem 1.25rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-trash3-fill"></i> Approve Deletion (Irreversible)
+            </button>
+            <button type="submit" name="action" value="reject"
+                style="padding:.55rem 1.25rem;background:#6b7280;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-x-circle"></i> Reject – Retain Team
+            </button>
+            <a href="{% url 'cso_team_deletion_requests' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

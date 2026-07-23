@@ -66,6 +66,19 @@
                     <dt class="col-5 text-muted">Last Updated</dt>
                     <dd class="col-7">{{ reg.updated_at|date:"d M Y, H:i"|default:" - " }}</dd>
 
+                    <dt class="col-5 text-muted">Payment</dt>
+                    <dd class="col-7">
+                        {% if reg.payment_confirmed %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Confirmed by WSCC</span>
+                        {% if reg.payment_notes %}
+                        <div class="small text-muted mt-1">{{ reg.payment_notes }}</div>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> Not Confirmed</span>
+                        <div class="small text-muted mt-1">WSCC must confirm payment before this team can be approved.</div>
+                        {% endif %}
+                    </dd>
+
                     {% if reg.notes %}
                     <dt class="col-5 text-muted">Notes</dt>
                     <dd class="col-7">{{ reg.notes }}</dd>
@@ -112,6 +125,12 @@
                 <i class="bi bi-check-circle"></i> Approve Registration
             </div>
             <div class="card-body">
+                {% if not reg.payment_confirmed %}
+                <div class="alert alert-warning py-2 mb-2" style="font-size:.85rem">
+                    <i class="bi bi-lock-fill"></i> <strong>Payment not confirmed.</strong>
+                    The WSCC must confirm this team's payment before approval is allowed.
+                </div>
+                {% endif %}
                 <p class="small text-muted mb-3">
                     Approving will atomically create a <strong>Team Manager</strong> portal account,
                     the ward discipline, team record, and player longlist.
@@ -120,10 +139,17 @@
                 <form method="post" action="{% url 'ligi_registration_approve' reg.pk %}"
                       onsubmit="return confirm('Approve {{ reg.team_name }} and create the portal account?')">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success w-100">
+                    <button type="submit" class="btn btn-success w-100"
+                        {% if not reg.payment_confirmed %}disabled title="Payment must be confirmed first"{% endif %}>
                         <i class="bi bi-check-circle"></i> Approve &amp; Create Account
                     </button>
                 </form>
+                {% if not reg.payment_confirmed %}
+                <p class="small text-muted mt-2 mb-0">
+                    <i class="bi bi-info-circle"></i> Ask the Ward Sports Council Chair for
+                    <strong>{{ reg.ward }}</strong> Ward to confirm payment in their Team Management panel.
+                </p>
+                {% endif %}
             </div>
         </div>
 
@@ -134,12 +160,19 @@
                 <i class="bi bi-patch-check"></i> Mark as Ward Council Verified
             </div>
             <div class="card-body">
+                {% if not reg.payment_confirmed %}
+                <div class="alert alert-warning py-2 mb-2" style="font-size:.85rem">
+                    <i class="bi bi-lock-fill"></i> <strong>Payment not confirmed.</strong>
+                    Ward verification requires payment to be confirmed first.
+                </div>
+                {% endif %}
                 <p class="small text-muted mb-3">
-                    Mark this registration as verified by the ward council  -  an intermediate step before final approval.
+                    Mark this registration as verified by the ward council — an intermediate step before final approval.
                 </p>
                 <form method="post" action="{% url 'ligi_registration_ward_verify' reg.pk %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-info w-100 text-white">
+                    <button type="submit" class="btn btn-info w-100 text-white"
+                        {% if not reg.payment_confirmed %}disabled title="Payment must be confirmed first"{% endif %}>
                         <i class="bi bi-patch-check"></i> Mark as Ward Verified
                     </button>
                 </form>

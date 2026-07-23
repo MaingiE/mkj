@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Clear Team Players – {{ team.team_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'ligi_admin_overview' %}">Ligi Overview</a>
+        <span>Clear Team Players</span>
+    </div>
+    <h1 style="color:#dc3545"><i class="bi bi-person-dash"></i> Clear Team Players</h1>
+    <p style="color:#6b7280;font-size:.9rem">Director of Sports — clears all players from this team's longlist</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% else %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="background:#fef2f2;border:1px solid #fecaca;padding:.85rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:.9rem;color:#7f1d1d">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    This will permanently remove all <strong>{{ player_count }}</strong> player(s) from
+    <strong>{{ team.team_name }}</strong>. This action is logged and cannot be undone.
+</div>
+
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem;border-left:4px solid #dc3545">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.88rem">
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Team</span><strong>{{ team.team_name }}</strong></div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Ward</span>{{ team.ward|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Sub-County</span>{{ team.sub_county|title }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Discipline</span>{{ team.get_discipline_display }}</div>
+        <div><span style="color:#9ca3af;font-size:.78rem;display:block">Players to Remove</span>
+            <strong style="color:#dc3545">{{ player_count }}</strong></div>
+    </div>
+</div>
+
+<div class="card" style="padding:1.5rem">
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:1rem">
+            <label style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Reason for clearing players *</label>
+            <textarea name="reason" required rows="3"
+                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Document why this action is being taken..."></textarea>
+        </div>
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.85rem;font-weight:600;color:#dc3545;display:block;margin-bottom:.35rem">
+                Type <code>confirm</code> to proceed *
+            </label>
+            <input type="text" name="confirm" required placeholder="confirm"
+                style="padding:.55rem;border:1px solid #dc3545;border-radius:6px;font-size:.88rem;width:180px">
+        </div>
+        <div style="display:flex;gap:.75rem">
+            <button type="submit"
+                style="padding:.55rem 1.25rem;background:#dc3545;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-person-dash-fill"></i> Clear All Players
+            </button>
+            <a href="{% url 'ligi_admin_overview' %}"
+                style="padding:.55rem 1.25rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;text-decoration:none">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
