@@ -7,6 +7,8 @@ import sentry_sdk
 from pathlib import Path
 from datetime import timedelta
 
+from mkj_cms.storage import resolve_cloudinary_config, should_use_cloudinary_storage
+
 # ── PATHS ──────────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -232,24 +234,36 @@ AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
 _use_s3 = not DEBUG and bool(AWS_ACCESS_KEY_ID and AWS_STORAGE_BUCKET_NAME)
 _cloudinary_url = env("CLOUDINARY_URL", default="")
-_use_cloudinary = not DEBUG and bool(_cloudinary_url)
+_cloudinary_cloud_name = env("CLOUDINARY_CLOUD_NAME", default="")
+_cloudinary_api_key = env("CLOUDINARY_API_KEY", default="")
+_cloudinary_api_secret = env("CLOUDINARY_API_SECRET", default="")
+_cloudinary_config = resolve_cloudinary_config(
+    cloudinary_url=_cloudinary_url,
+    cloud_name=_cloudinary_cloud_name,
+    api_key=_cloudinary_api_key,
+    api_secret=_cloudinary_api_secret,
+)
+_use_cloudinary = should_use_cloudinary_storage(
+    debug=DEBUG,
+    cloudinary_url=_cloudinary_url,
+    cloud_name=_cloudinary_cloud_name,
+    api_key=_cloudinary_api_key,
+    api_secret=_cloudinary_api_secret,
+)
 
 if _use_cloudinary:
     import cloudinary
-    from urllib.parse import urlparse
-    _cld = urlparse(_cloudinary_url)
-    _cld_cloud  = _cld.hostname or env("CLOUDINARY_CLOUD_NAME", default="")
-    _cld_key    = _cld.username or env("CLOUDINARY_API_KEY", default="")
-    _cld_secret = _cld.password or env("CLOUDINARY_API_SECRET", default="")
 
     cloudinary.config(
-        cloud_name=_cld_cloud, api_key=_cld_key,
-        api_secret=_cld_secret, secure=True,
+        cloud_name=_cloudinary_config["CLOUD_NAME"],
+        api_key=_cloudinary_config["API_KEY"],
+        api_secret=_cloudinary_config["API_SECRET"],
+        secure=True,
     )
     CLOUDINARY_STORAGE = {
-        "CLOUD_NAME": _cld_cloud,
-        "API_KEY":    _cld_key,
-        "API_SECRET": _cld_secret,
+        "CLOUD_NAME": _cloudinary_config["CLOUD_NAME"],
+        "API_KEY": _cloudinary_config["API_KEY"],
+        "API_SECRET": _cloudinary_config["API_SECRET"],
     }
     STORAGES["default"] = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",

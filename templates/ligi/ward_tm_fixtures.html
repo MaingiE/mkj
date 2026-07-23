@@ -85,11 +85,20 @@
                 </td>
                 <td style="padding:.65rem 1rem">
                     {% if longlist.status == 'wscc_approved' %}
-                    <a href="{% url 'ward_tm_ward_squad' f.pk %}"
-                       style="padding:.28rem .65rem;font-size:.8rem;background:#124491;color:#fff;border-radius:4px;text-decoration:none">
-                        <i class="bi bi-clipboard2-check"></i>
-                        {% if sq %}Edit Squad{% else %}Select Squad{% endif %}
-                    </a>
+                        {% if item.selection_open %}
+                        <a href="{% url 'ward_tm_ward_squad' f.pk %}"
+                           style="padding:.28rem .65rem;font-size:.8rem;background:#124491;color:#fff;border-radius:4px;text-decoration:none">
+                            <i class="bi bi-clipboard2-check"></i>
+                            {% if sq %}Edit Squad{% else %}Select Squad{% endif %}
+                        </a>
+                        <div style="font-size:.72rem;color:#6c757d;margin-top:.25rem">Closes {{ item.deadline|date:"d M Y H:i" }}</div>
+                        {% elif sq %}
+                        <span style="background:#e9ecef;color:#495057;padding:.25rem .6rem;border-radius:20px;font-size:.78rem;font-weight:600">
+                            <i class="bi bi-lock-fill"></i> Locked
+                        </span>
+                        {% else %}
+                        <span style="font-size:.8rem;color:#aaa">Selection closed</span>
+                        {% endif %}
                     {% else %}
                     <span style="font-size:.8rem;color:#aaa">Longlist pending approval</span>
                     {% endif %}

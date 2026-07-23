@@ -51,6 +51,17 @@
   </div>
 </div>
 
+{% if not selection_open %}
+<!-- ── CLOSED VIEW ────────────────────────────────────────────────── -->
+<div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:8px;padding:.9rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem">
+  <i class="bi bi-clock-history" style="color:#842029;font-size:1.2rem"></i>
+  <div>
+    <strong>Squad selection is closed</strong>  -  the cut-off was {{ deadline|date:"d M Y H:i" }}.
+    Matches can no longer be edited once the two-hour window before kick-off has passed.
+  </div>
+</div>
+{% endif %}
+
 {% if squad_locked %}
 <!-- ── LOCKED READ-ONLY VIEW ──────────────────────────────────────── -->
 <div style="background:#d1e7dd;border:1px solid #badbcc;border-radius:8px;padding:.9rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem">
@@ -92,9 +103,9 @@
 
 {% else %}
 <!-- ── SELECTION FORM ──────────────────────────────────────────────── -->
-{% if deadline_passed %}
+{% if not selection_open %}
 <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#842029">
-  <i class="bi bi-exclamation-triangle"></i> Deadline has passed. Contact the coordinator if you need an extension.
+  <i class="bi bi-exclamation-triangle"></i> The selection window closed at {{ deadline|date:"d M Y H:i" }}. Contact the coordinator if you need an extension.
 </div>
 {% endif %}
 
@@ -116,7 +127,7 @@
   </div>
 </div>
 
-{% if approved_players %}
+{% if approved_players and selection_open %}
 <form method="post" id="squadForm">
   {% csrf_token %}
 

@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.exceptions import ValidationError
 
+import json
+
 from .models import User, UserRole, MAKUENI_SUBCOUNTY_WARDS
 
 
@@ -76,6 +78,12 @@ class UserAdminForm(forms.ModelForm):
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     form = UserAdminForm
+
+    class Media:
+        js = (
+            "admin/js/jquery.init.js",
+            "admin/wscc_subcounty.js",
+        )
 
     list_display  = [
         "email", "get_full_name", "role", "sub_county", "ward",
@@ -165,3 +173,21 @@ class UserAdmin(BaseUserAdmin):
             raise
 
         super().save_model(request, obj, form, change)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Attach MAKUENI_SUBCOUNTY_WARDS mapping as JSON on the sub_county field
+        so the admin JS can populate the ward select dynamically.
+        """
+        form = super().get_form(request, obj, **kwargs)
+        try:
+            sc_field = form.base_fields.get("sub_county")
+            ward_field = form.base_fields.get("ward")
+            if sc_field:
+                sc_field.widget.attrs.setdefault("data-wards", json.dumps(MAKUENI_SUBCOUNTY_WARDS))
+            if ward_field:
+                # Keep a flat list of all wards as a fallback
+                ward_field.widget.attrs.setdefault("data-all-wards", json.dumps([w for sc in MAKUENI_SUBCOUNTY_WARDS.values() for w in sc]))
+        except Exception:
+            # Be defensive; admin should still work even if attaching attrs fails
+            pass
+        return form

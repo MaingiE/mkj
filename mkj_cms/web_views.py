@@ -13225,6 +13225,23 @@ def ward_longlist_pdf_view(request, discipline_pk):
         return redirect('ward_tm_longlist')
 
 
+def get_fixture_squad_window_state(fixture, now=None):
+    """Return the squad-submission window state for a fixture."""
+    if now is None:
+        now = timezone.now()
+
+    deadline = getattr(fixture, 'squad_deadline', None)
+    if deadline is not None and timezone.is_naive(deadline):
+        deadline = timezone.make_aware(deadline, timezone.get_current_timezone())
+
+    deadline_passed = deadline is not None and now >= deadline
+    return {
+        'deadline': deadline,
+        'deadline_passed': deadline_passed,
+        'selection_open': deadline is None or not deadline_passed,
+    }
+
+
 @role_required('team_manager', 'admin')
 def ward_tm_fixtures_view(request):
     """
@@ -13263,9 +13280,13 @@ def ward_tm_fixtures_view(request):
 
     fixture_data = []
     for f in fixtures:
+        window_state = get_fixture_squad_window_state(f)
         fixture_data.append({
             'fixture': f,
             'submission': squad_map.get(f.pk),
+            'deadline': window_state['deadline'],
+            'deadline_passed': window_state['deadline_passed'],
+            'selection_open': window_state['selection_open'],
         })
 
     return render(request, 'ligi/ward_tm_fixtures.html', {
@@ -13322,14 +13343,12 @@ def ward_tm_ward_squad_view(request, fixture_pk):
         messages.error(request, 'Your team is not participating in this fixture.')
         return redirect('ward_tm_fixtures')
 
-    # Deadline
-    from datetime import timedelta
-    kickoff_dt = fixture.kickoff_datetime
-    if timezone.is_naive(kickoff_dt):
-        kickoff_dt = timezone.make_aware(kickoff_dt, timezone.get_current_timezone())
-    deadline = kickoff_dt - timedelta(hours=SQUAD_SUBMISSION_HOURS)
+    # Deadline / selection window
+    window_state = get_fixture_squad_window_state(fixture)
+    deadline = window_state['deadline']
+    deadline_passed = window_state['deadline_passed']
+    selection_open = window_state['selection_open']
     now = timezone.now()
-    deadline_passed = now >= deadline
 
     # Existing squad
     existing = SquadSubmission.objects.filter(fixture=fixture, team=team).first()
@@ -13363,6 +13382,10 @@ def ward_tm_ward_squad_view(request, fixture_pk):
         saved_formation = existing.formation or ''
 
     if request.method == 'POST':
+        if not selection_open:
+            messages.error(request, f'Squad selection closed. The deadline was {deadline.strftime("%d %b %Y %H:%M")} before kick-off.')
+            return redirect('ward_tm_fixtures')
+
         if squad_locked:
             messages.error(request, f'Squad locked  -  deadline passed ({deadline.strftime("%d %b %Y %H:%M")}).')
             return redirect('ward_tm_fixtures')
@@ -13424,8 +13447,8 @@ def ward_tm_ward_squad_view(request, fixture_pk):
                 'is_football_or_handball': is_football_or_handball,
                 'sport_type': sport_type, 'sport_family': sport_family,
                 'existing': existing, 'deadline': deadline,
-                'deadline_passed': deadline_passed, 'squad_locked': squad_locked,
-                'squad_limit': SQUAD_LIMITS.get(sport_type, 30),
+                'deadline_passed': deadline_passed, 'selection_open': selection_open,
+                'squad_locked': squad_locked, 'squad_limit': SQUAD_LIMITS.get(sport_type, 30),
             })
 
         # Save squad
@@ -13482,8 +13505,8 @@ def ward_tm_ward_squad_view(request, fixture_pk):
         'is_football_or_handball': is_football_or_handball,
         'sport_type': sport_type, 'sport_family': sport_family,
         'existing': existing, 'deadline': deadline,
-        'deadline_passed': deadline_passed, 'squad_locked': squad_locked,
-        'squad_limit': SQUAD_LIMITS.get(sport_type, 30),
+        'deadline_passed': deadline_passed, 'selection_open': selection_open,
+        'squad_locked': squad_locked, 'squad_limit': SQUAD_LIMITS.get(sport_type, 30),
         'subs_history': subs_history,
     })
 
