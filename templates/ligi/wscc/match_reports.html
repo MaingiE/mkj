@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Ward Match Reports – {{ ward|title }} Ward{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <span>Match Reports</span>
+    </div>
+    <h1><i class="bi bi-file-earmark-text"></i> Match Reports</h1>
+    <p><span style="font-weight:700;color:#198754">{{ ward|title }} Ward</span> · {{ sub_county|title }} Sub-County</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% else %}background:#fff3cd;color:#856404;border:1px solid #ffecb5;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Status filter tabs -->
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem">
+    {% for val, label in status_choices %}
+    <a href="?status={{ val }}"
+       style="padding:.35rem .85rem;border-radius:20px;font-size:.82rem;font-weight:600;text-decoration:none;
+           {% if status_filter == val %}background:#124491;color:#fff;{% else %}background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;{% endif %}">
+        {{ label }}
+    </a>
+    {% endfor %}
+    <a href="?" style="padding:.35rem .85rem;border-radius:20px;font-size:.82rem;font-weight:600;text-decoration:none;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;">
+        All
+    </a>
+</div>
+
+<div class="card" style="padding:1.5rem">
+    {% if reports %}
+    <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+            <thead>
+                <tr style="background:#f0f4ff;text-align:left">
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Fixture</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Score</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Referee</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Submitted</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Status</th>
+                    <th style="padding:.6rem 1rem;border-bottom:2px solid #dee2e6">Review</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr style="border-bottom:1px solid #f3f4f6">
+                    <td style="padding:.6rem 1rem;font-weight:600">
+                        {{ report.fixture.home_team.name|default:"TBD" }} vs {{ report.fixture.away_team.name|default:"TBD" }}
+                        <div style="font-size:.75rem;color:#9ca3af">{{ report.fixture.competition.get_sport_type_display }}</div>
+                    </td>
+                    <td style="padding:.6rem 1rem;font-weight:700;font-size:1rem">
+                        {{ report.home_score }} – {{ report.away_score }}
+                    </td>
+                    <td style="padding:.6rem 1rem;font-size:.82rem">
+                        {% if report.referee %}{{ report.referee.user.get_full_name }}{% else %}N/A{% endif %}
+                    </td>
+                    <td style="padding:.6rem 1rem;color:#9ca3af;font-size:.82rem">
+                        {% if report.submitted_at %}{{ report.submitted_at|date:"d M Y, H:i" }}{% else %}Not submitted{% endif %}
+                    </td>
+                    <td style="padding:.6rem 1rem">
+                        <span style="padding:.2rem .6rem;border-radius:10px;font-size:.78rem;font-weight:600;
+                            {% if report.status == 'approved' %}background:#d1e7dd;color:#0a3622;
+                            {% elif report.status == 'submitted' %}background:#fff3cd;color:#856404;
+                            {% elif report.status == 'returned' %}background:#f8d7da;color:#842029;
+                            {% else %}background:#e5e7eb;color:#374151;{% endif %}">
+                            {{ report.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="padding:.6rem 1rem">
+                        {% if report.status == 'submitted' %}
+                        <!-- Review modal trigger -->
+                        <button onclick="document.getElementById('reviewModal{{ report.pk }}').style.display='flex'"
+                            style="padding:.3rem .75rem;font-size:.82rem;background:#124491;color:#fff;border:none;border-radius:4px;cursor:pointer">
+                            <i class="bi bi-eye"></i> Review
+                        </button>
+                        {% elif report.status == 'approved' %}
+                        <a href="{% url 'ward_referee_match_report' report.fixture.pk %}"
+                           style="padding:.3rem .75rem;font-size:.82rem;color:#124491;text-decoration:none">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        {% else %}
+                        <span style="color:#9ca3af;font-size:.82rem">{{ report.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% if report.status == 'submitted' %}
+                <!-- Review modal -->
+                <div id="reviewModal{{ report.pk }}" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+                    <div style="background:#fff;border-radius:10px;padding:1.5rem;max-width:480px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,.15)">
+                        <h3 style="font-size:1rem;margin:0 0 .5rem">Review Match Report</h3>
+                        <p style="font-size:.85rem;color:#6b7280;margin-bottom:1rem">
+                            {{ report.fixture.home_team.name }} vs {{ report.fixture.away_team.name }}
+                            — Score: <strong>{{ report.home_score }}–{{ report.away_score }}</strong>
+                        </p>
+                        {% if report.referee_notes %}
+                        <div style="background:#f8fafc;border-radius:6px;padding:.75rem;margin-bottom:1rem;font-size:.85rem">
+                            <strong>Referee notes:</strong><br>{{ report.referee_notes|truncatechars:300 }}
+                        </div>
+                        {% endif %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="report_pk" value="{{ report.pk }}">
+                            <div style="margin-bottom:1rem">
+                                <label style="font-size:.82rem;font-weight:600;display:block;margin-bottom:.35rem">
+                                    WSCC Notes (required if returning)
+                                </label>
+                                <textarea name="reviewer_notes" rows="2"
+                                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.82rem;resize:vertical"
+                                    placeholder="Notes for the referee..."></textarea>
+                            </div>
+                            <div style="display:flex;gap:.75rem;justify-content:flex-end">
+                                <button type="button" onclick="document.getElementById('reviewModal{{ report.pk }}').style.display='none'"
+                                    style="padding:.45rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-size:.85rem">
+                                    Cancel
+                                </button>
+                                <button type="submit" name="action" value="return"
+                                    style="padding:.45rem 1rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">
+                                    <i class="bi bi-arrow-return-left"></i> Return
+                                </button>
+                                <button type="submit" name="action" value="approve"
+                                    style="padding:.45rem 1rem;background:#198754;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:2rem;text-align:center;color:#9ca3af">
+        <i class="bi bi-file-earmark-x" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+        No match reports found.
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top:1rem">
+    <a href="{% url 'wscc_dashboard' %}" style="color:#6b7280;font-size:.88rem;text-decoration:none">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

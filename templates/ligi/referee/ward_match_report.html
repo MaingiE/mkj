@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}Ward Match Report – {{ fixture.home_team }} vs {{ fixture.away_team }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        {% if wscc_read_only %}
+        <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
+        <a href="{% url 'wscc_ward_match_reports' %}">Match Reports</a>
+        {% else %}
+        <a href="{% url 'referee_portal' %}">My Portal</a>
+        {% endif %}
+        <span>Match Report</span>
+    </div>
+    <h1><i class="bi bi-file-earmark-text"></i>
+        {% if wscc_read_only %}Review{% else %}Submit{% endif %} Match Report
+    </h1>
+    <p>
+        <strong>{{ fixture.home_team.name|default:"TBD" }}</strong> vs
+        <strong>{{ fixture.away_team.name|default:"TBD" }}</strong>
+        {% if fixture.match_date %} · {{ fixture.match_date|date:"d M Y" }}{% endif %}
+        <span style="color:#198754;font-weight:700"> · {{ ward|title }} Ward</span>
+    </p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem">
+    {% for msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:6px;margin-bottom:.5rem;
+        {% if 'error' in msg.tags %}background:#f8d7da;color:#842029;border:1px solid #f5c2c7;
+        {% elif 'success' in msg.tags %}background:#d1e7dd;color:#0a3622;border:1px solid #badbcc;
+        {% else %}background:#cfe2ff;color:#084298;border:1px solid #b6d4fe;{% endif %}">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if wscc_read_only and not report %}
+<div style="padding:2rem;text-align:center;color:#9ca3af">
+    <i class="bi bi-file-earmark-x" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+    No match report has been submitted for this fixture yet.
+</div>
+{% else %}
+
+<!-- Match Officials -->
+{% if appointments %}
+<div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+    <h3 style="font-size:.95rem;margin:0 0 .75rem;color:#374151"><i class="bi bi-people"></i> Appointed Officials</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:.6rem">
+        {% for appt in appointments %}
+        <div style="background:#f0f4ff;border-radius:8px;padding:.5rem .85rem;font-size:.82rem">
+            <strong>{{ appt.referee.user.get_full_name }}</strong>
+            <span style="color:#6b7280;margin-left:.35rem">{{ appt.get_role_display }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if wscc_read_only and report %}
+<!-- WSCC read-only view -->
+<div class="card" style="padding:1.5rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.25rem">
+        <div style="text-align:center;background:#f0f4ff;border-radius:10px;padding:1rem">
+            <div style="font-size:2rem;font-weight:900;color:#124491">{{ report.home_score }}</div>
+            <div style="font-size:.8rem;color:#6b7280;font-weight:600">{{ fixture.home_team.name|default:"Home" }}</div>
+        </div>
+        <div style="text-align:center;padding:1rem;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:1.5rem;font-weight:700;color:#9ca3af">–</span>
+        </div>
+        <div style="text-align:center;background:#f0f4ff;border-radius:10px;padding:1rem">
+            <div style="font-size:2rem;font-weight:900;color:#124491">{{ report.away_score }}</div>
+            <div style="font-size:.8rem;color:#6b7280;font-weight:600">{{ fixture.away_team.name|default:"Away" }}</div>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.88rem;margin-bottom:1rem">
+        <div><span style="color:#9ca3af;font-size:.75rem;display:block">Yellow Cards</span>{{ report.home_yellow_cards }} – {{ report.away_yellow_cards }}</div>
+        <div><span style="color:#9ca3af;font-size:.75rem;display:block">Red Cards</span>{{ report.home_red_cards }} – {{ report.away_red_cards }}</div>
+        <div><span style="color:#9ca3af;font-size:.75rem;display:block">Pitch Condition</span>{{ report.get_pitch_condition_display }}</div>
+        <div><span style="color:#9ca3af;font-size:.75rem;display:block">Weather</span>{{ report.weather|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.75rem;display:block">Attendance</span>{{ report.attendance|default:"N/A" }}</div>
+        <div><span style="color:#9ca3af;font-size:.75rem;display:block">Duration (mins)</span>{{ report.match_duration }}</div>
+    </div>
+    {% if report.referee_notes %}
+    <div style="background:#f8fafc;border-radius:6px;padding:.85rem;font-size:.88rem">
+        <strong>Referee Notes:</strong><br>{{ report.referee_notes }}
+    </div>
+    {% endif %}
+    {% if report.is_abandoned %}
+    <div style="background:#f8d7da;border-radius:6px;padding:.75rem;font-size:.85rem;margin-top:.75rem;color:#842029">
+        <i class="bi bi-exclamation-triangle-fill"></i> <strong>Match Abandoned:</strong> {{ report.abandonment_reason }}
+    </div>
+    {% endif %}
+    <div style="margin-top:1.25rem;font-size:.82rem;color:#9ca3af">
+        Status:
+        <span style="font-weight:600;{% if report.status == 'approved' %}color:#198754{% elif report.status == 'submitted' %}color:#f59e0b{% endif %}">
+            {{ report.get_status_display }}
+        </span>
+        {% if report.submitted_at %} · Submitted {{ report.submitted_at|date:"d M Y, H:i" }}{% endif %}
+        {% if report.reviewed_by %} · Reviewed by {{ report.reviewed_by.get_full_name }} on {{ report.reviewed_at|date:"d M Y" }}{% endif %}
+    </div>
+</div>
+
+{% else %}
+<!-- Referee submission form -->
+<div class="card" style="padding:1.5rem">
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.25rem">
+            <!-- Home team score -->
+            <div>
+                <label style="font-size:.85rem;font-weight:700;color:#374151;display:block;margin-bottom:.5rem">
+                    {{ fixture.home_team.name|default:"Home Team" }} Score *
+                </label>
+                <input type="number" name="home_score" min="0" required value="{{ report.home_score|default:0 }}"
+                    style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:1.2rem;font-weight:700;text-align:center">
+            </div>
+            <!-- Away team score -->
+            <div>
+                <label style="font-size:.85rem;font-weight:700;color:#374151;display:block;margin-bottom:.5rem">
+                    {{ fixture.away_team.name|default:"Away Team" }} Score *
+                </label>
+                <input type="number" name="away_score" min="0" required value="{{ report.away_score|default:0 }}"
+                    style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:1.2rem;font-weight:700;text-align:center">
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.25rem">
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Home Yellow Cards</label>
+                <input type="number" name="home_yellow_cards" min="0" value="{{ report.home_yellow_cards|default:0 }}"
+                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+            </div>
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Away Yellow Cards</label>
+                <input type="number" name="away_yellow_cards" min="0" value="{{ report.away_yellow_cards|default:0 }}"
+                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+            </div>
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Home Red Cards</label>
+                <input type="number" name="home_red_cards" min="0" value="{{ report.home_red_cards|default:0 }}"
+                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+            </div>
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Away Red Cards</label>
+                <input type="number" name="away_red_cards" min="0" value="{{ report.away_red_cards|default:0 }}"
+                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+            </div>
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Duration (mins)</label>
+                <input type="number" name="match_duration" min="1" value="{{ report.match_duration|default:90 }}"
+                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem">
+            </div>
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Attendance</label>
+                <input type="number" name="attendance" min="0" value="{{ report.attendance|default:'' }}"
+                    style="width:100%;padding:.5rem;border:1px solid #dee2e6;border-radius:6px;font-size:.9rem" placeholder="Optional">
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Pitch Condition</label>
+                <select name="pitch_condition" style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+                    {% for val, label in pitch_choices %}
+                    <option value="{{ val }}" {% if report and report.pitch_condition == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">Weather</label>
+                <input type="text" name="weather" value="{{ report.weather|default:'' }}" placeholder="e.g. Sunny, Rainy"
+                    style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem">
+            </div>
+        </div>
+
+        <div style="margin-bottom:1.25rem">
+            <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:.35rem">
+                Referee Notes / Incidents
+            </label>
+            <textarea name="referee_notes" rows="3"
+                style="width:100%;padding:.6rem;border:1px solid #dee2e6;border-radius:6px;font-size:.88rem;resize:vertical"
+                placeholder="Describe any incidents, injuries, misconduct, or other notable events...">{{ report.referee_notes|default:'' }}</textarea>
+        </div>
+
+        <div style="margin-bottom:1.5rem">
+            <label style="display:flex;align-items:center;gap:.75rem;cursor:pointer">
+                <input type="checkbox" name="is_abandoned" {% if report and report.is_abandoned %}checked{% endif %}
+                    style="width:16px;height:16px">
+                <span style="font-size:.88rem;font-weight:600;color:#374151">Match was abandoned</span>
+            </label>
+            <textarea name="abandonment_reason" rows="2"
+                style="width:100%;padding:.55rem;border:1px solid #dee2e6;border-radius:6px;font-size:.85rem;resize:vertical;margin-top:.5rem"
+                placeholder="Reason for abandonment (required if abandoned)">{{ report.abandonment_reason|default:'' }}</textarea>
+        </div>
+
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button type="submit" name="submit_action" value="submit"
+                style="padding:.55rem 1.25rem;background:#198754;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-send-check"></i> Submit for WSCC Review
+            </button>
+            <button type="submit" name="submit_action" value="draft"
+                style="padding:.55rem 1.25rem;background:#6c757d;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">
+                <i class="bi bi-save"></i> Save as Draft
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
