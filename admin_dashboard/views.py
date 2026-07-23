@@ -392,6 +392,7 @@ def manage_users(request):
         'sport_coordinator_rows': sport_coordinator_rows,
         'unassigned_coordinators': unassigned_coordinators,
         'coordinator_discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,
+        'scout_discipline_choices': COORDINATOR_DISCIPLINE_CHOICES,  # Scouts use same disciplines as coordinators
         'county_choices': KenyaCounty.choices,
         'subcounty_choices': MakueniSubCounty.choices,
     }
@@ -446,6 +447,31 @@ def create_user(request):
             messages.error(request, 'Sub-county is required for this role.')
             return redirect('manage_users')
 
+        # WSCC: both sub-county AND ward are mandatory
+        ward = request.POST.get('ward', '').strip()
+        if role == UserRole.WARD_SPORTS_COUNCIL_CHAIR:
+            if not sub_county:
+                messages.error(request, 'Sub-county is required for Ward Sports Council Chair.')
+                return redirect('manage_users')
+            if not ward:
+                messages.error(request, 'Ward is required for Ward Sports Council Chair.')
+                return redirect('manage_users')
+            # Enforce one WSCC per ward
+            from accounts.models import MAKUENI_SUBCOUNTY_WARDS
+            valid_wards = MAKUENI_SUBCOUNTY_WARDS.get(sub_county, [])
+            if ward not in valid_wards:
+                messages.error(request, f'"{ward}" is not a valid ward in {sub_county} sub-county.')
+                return redirect('manage_users')
+            existing_wscc = User.objects.filter(
+                role=UserRole.WARD_SPORTS_COUNCIL_CHAIR,
+                sub_county=sub_county,
+                ward=ward,
+                is_active=True,
+            ).exists()
+            if existing_wscc:
+                messages.error(request, f'A Ward Sports Council Chair already exists for {ward} Ward, {sub_county}.')
+                return redirect('manage_users')
+
         if role == UserRole.SUBCOUNTY_SPORTS_OFFICER and sub_county:
             existing = User.objects.filter(
                 role=UserRole.SUBCOUNTY_SPORTS_OFFICER,
@@ -463,7 +489,12 @@ def create_user(request):
         try:
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
             stored_county = 'Makueni'
-            stored_sub_county = sub_county if role in (UserRole.SUBCOUNTY_SPORTS_OFFICER, UserRole.TEAM_MANAGER) else ''
+            stored_sub_county = sub_county if role in (
+                UserRole.SUBCOUNTY_SPORTS_OFFICER,
+                UserRole.TEAM_MANAGER,
+                UserRole.WARD_SPORTS_COUNCIL_CHAIR,
+            ) else ''
+            stored_ward = ward if role == UserRole.WARD_SPORTS_COUNCIL_CHAIR else ''
             user_obj = User.objects.create_user(
                 email=email,
                 password=password,
@@ -474,6 +505,7 @@ def create_user(request):
                 role=role,
                 county=stored_county,
                 sub_county=stored_sub_county,
+                ward=stored_ward,
                 assigned_discipline=assigned_discipline if role in (UserRole.COORDINATOR, UserRole.SCOUT) else '',
                 is_active=True,
             )

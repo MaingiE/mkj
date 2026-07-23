@@ -573,11 +573,17 @@
                 </div>
                 <div id="create-subcounty-wrap" style="display:none;">
                     <label>Sub-County <span class="req">*</span></label>
-                    <select name="sub_county" class="form-control">
+                    <select name="sub_county" id="create-subcounty" class="form-control">
                         <option value="">Select Sub-County...</option>
                         {% for value, label in subcounty_choices %}
                         <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
+                    </select>
+                </div>
+                <div id="create-ward-wrap" style="display:none;">
+                    <label>Ward <span class="req">*</span></label>
+                    <select name="ward" id="create-ward" class="form-control">
+                        <option value="">Select Ward...</option>
                     </select>
                 </div>
                 <div id="create-discipline-wrap" style="display:none;">
@@ -893,14 +899,18 @@
         const coordinatorSelect = document.getElementById('create-coordinator-discipline');
         const scoutSelect = document.getElementById('create-scout-discipline');
         const subcountyWrap = document.getElementById('create-subcounty-wrap');
-        const subcountySelect = subcountyWrap ? subcountyWrap.querySelector('select') : null;
+        const subcountySelect = document.getElementById('create-subcounty');
+        const wardWrap = document.getElementById('create-ward-wrap');
+        const wardSelect = document.getElementById('create-ward');
         const value = role ? role.value : '';
 
         const isDisciplineRole = value === 'coordinator' || value === 'scout';
         const isSubcountyRole = value === 'team_manager' || value === 'subcounty_sports_officer';
+        const isWardRole = value === 'ward_sports_council_chair';
 
         disciplineWrap.style.display = isDisciplineRole ? 'block' : 'none';
-        subcountyWrap.style.display = isSubcountyRole ? 'block' : 'none';
+        subcountyWrap.style.display = (isSubcountyRole || isWardRole) ? 'block' : 'none';
+        wardWrap.style.display = isWardRole ? 'block' : 'none';
 
         if (disciplineLabel && coordinatorSelect && scoutSelect) {
             if (value === 'coordinator') {
@@ -929,11 +939,52 @@
         }
 
         if (subcountySelect) {
-            subcountySelect.required = isSubcountyRole;
+            subcountySelect.required = (isSubcountyRole || isWardRole);
+        }
+
+        if (wardSelect) {
+            wardSelect.required = isWardRole;
+            if (!isWardRole) {
+                wardSelect.value = '';
+            }
+        }
+    }
+
+    // Ward mapping: sub-county to wards
+    const SUBCOUNTY_WARDS = {
+        'Makueni': ['Wote', 'Muvau/Kikumini', 'Mavindini', 'Kitise/Kithuki', 'Kathonzweni', 'Nzaui/Kilili/Kalamba', 'Mbitini'],
+        'Kibwezi West': ['Makindu', 'Nguu/Masumba', 'Emali/Mulala', 'Nguumo'],
+        'Kibwezi East': ['Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'],
+        'Kaiti': ['Ukia', 'Kee', 'Kilungu', 'Ilima'],
+        'Kilome': ['Kasikeu', 'Mukaa', 'Kiima Kiu/Kalanzoni'],
+        'Mbooni': ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kiteta/Kisau', 'Waia/Kako']
+    };
+
+    // Populate ward dropdown based on selected subcounty
+    function populateWards() {
+        const subcountySelect = document.getElementById('create-subcounty');
+        const wardSelect = document.getElementById('create-ward');
+        
+        if (!subcountySelect || !wardSelect) return;
+        
+        const selectedSubcounty = subcountySelect.value;
+        
+        // Clear existing options
+        wardSelect.innerHTML = '<option value="">Select Ward...</option>';
+        
+        // Populate wards for selected subcounty
+        if (selectedSubcounty && SUBCOUNTY_WARDS[selectedSubcounty]) {
+            SUBCOUNTY_WARDS[selectedSubcounty].forEach(ward => {
+                const option = document.createElement('option');
+                option.value = ward;
+                option.textContent = ward;
+                wardSelect.appendChild(option);
+            });
         }
     }
 
     document.getElementById('create-role').addEventListener('change', toggleCreateRoleFields);
+    document.getElementById('create-subcounty').addEventListener('change', populateWards);
     toggleCreateRoleFields();
 </script>
 {% endblock %}
