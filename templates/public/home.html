@@ -1968,7 +1968,7 @@ a.hero-feat--link {
 #ligi-float-card {
     position: fixed;
     z-index: 9000;
-    bottom: 2rem;
+    bottom: 3.5rem;
     right: 1.5rem;
     top: auto;
     left: auto;
@@ -2195,6 +2195,19 @@ a.hero-feat--link {
 @keyframes ligiBtnFadeIn {
     from { opacity: 0; transform: translateY(8px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Gentle in-place "toss" animation for personality. Activated by JS */
+@keyframes ligiToss {
+    0%   { transform: translateY(0) rotate(0deg); }
+    25%  { transform: translateY(-6px) rotate(-2deg); }
+    50%  { transform: translateY(0) rotate(0deg); }
+    75%  { transform: translateY(4px) rotate(2deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+.ligi-card__inner.ligi-toss-active {
+    animation: ligiToss 4.6s cubic-bezier(.16,1,.3,1) var(--toss-delay, 0s) infinite alternate;
+    will-change: transform;
 }
 
 /* Dismiss: slide out to right + fade */
@@ -2760,9 +2773,8 @@ a.hero-feat--link {
 {% endif %}
 
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     FLOATING FIXTURES / RESULTS CARD
-     ══════════════════════════════════════════════════════════════════════════ -->
+{% comment %}
+<!-- FLOATING FIXTURES / MATCH CENTER (commented out per request) -->
 <div class="float-fixtures open" id="floatFixtures">
     <div class="float-fixtures-panel" id="ffPanel">
         <div class="ffp-header">
@@ -2773,98 +2785,14 @@ a.hero-feat--link {
                 <span class="ffp-tab" data-tab="results">Results</span>
             </div>
         </div>
-        <div class="ffp-body" id="ffBody">
-            <!-- Live matches tab -->
-            <div id="ffLive" {% if not live_matches %}style="display:none;"{% endif %}>
-                {% if live_matches %}
-                {% for match in live_matches %}
-                <div class="ffp-match ffp-match--live">
-                    <div class="ffp-live-badge">
-                        <span class="ffp-live-dot"></span>
-                        {% if match.is_in_penalties %}PEN{% else %}LIVE{% endif %}
-                    </div>
-                    <div class="ffp-match-comp">{{ match.competition.name }}</div>
-                    <div class="ffp-match-teams">
-                        <span>{{ match.home_team.name }}</span>
-                        <span class="ffp-score" style="background:#fff0f0;color:#dc3545;">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>
-                        <span>{{ match.away_team.name }}</span>
-                    </div>
-                    {% if match.is_in_penalties %}
-                    <div style="text-align:center;font-size:.7rem;font-weight:700;color:#e65100;margin:.2rem 0;">
-                        Penalties: {{ match.home_penalties|default:"0" }} - {{ match.away_penalties|default:"0" }}
-                    </div>
-                    {% endif %}
-                    {% with match.live_goals.all as goals %}
-                    {% if goals %}
-                    <div style="display:flex;justify-content:center;gap:2rem;font-size:.65rem;color:#888;margin-top:.25rem;">
-                        <div style="text-align:right;flex:1;">
-                            {% for g in goals %}{% if g.is_home %}<div>{{ g.scorer_name }} {{ g.minute_display }}{% if g.goal_type == 'penalty' %} <span style="color:#d4a017;">(P)</span>{% endif %}{% if g.goal_type == 'own_goal' %} <span style="color:#dc3545;">(OG)</span>{% endif %}</div>{% endif %}{% endfor %}
-                        </div>
-                        <div style="text-align:left;flex:1;">
-                            {% for g in goals %}{% if not g.is_home %}<div>{{ g.scorer_name }} {{ g.minute_display }}{% if g.goal_type == 'penalty' %} <span style="color:#d4a017;">(P)</span>{% endif %}{% if g.goal_type == 'own_goal' %} <span style="color:#dc3545;">(OG)</span>{% endif %}</div>{% endif %}{% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endwith %}
-                    <div class="ffp-match-meta">{{ match.venue.name|default:"TBD" }}</div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="ffp-empty">No live matches right now</div>
-                {% endif %}
-            </div>
-            <!-- Fixtures tab -->
-            <div id="ffFixtures" {% if live_matches %}style="display:none;"{% endif %}>
-                {% if upcoming_fixtures %}
-                {% for match in upcoming_fixtures %}
-                <div class="ffp-match">
-                    <div class="ffp-match-comp">{{ match.competition.name }}</div>
-                    <div class="ffp-match-teams">
-                        <span>{{ match.home_team.name }}</span>
-                        <span class="ffp-vs">VS</span>
-                        <span>{{ match.away_team.name }}</span>
-                    </div>
-                    <div class="ffp-match-meta">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        {{ match.match_date|date:"d M" }}{% if match.kickoff_time %} &middot; {{ match.kickoff_time|time:"H:i" }}{% endif %}
-                        &middot; {{ match.venue.name|default:"TBD" }}
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="ffp-empty">No upcoming fixtures yet</div>
-                {% endif %}
-            </div>
-            <!-- Results tab (hidden by default) -->
-            <div id="ffResults" style="display:none;">
-                {% if recent_results %}
-                {% for match in recent_results %}
-                <div class="ffp-match">
-                    <div class="ffp-match-comp">{{ match.competition.name }}</div>
-                    <div class="ffp-match-teams">
-                        <span>{{ match.home_team.name }}</span>
-                        <span><span class="ffp-ft">FT</span><span class="ffp-score">{{ match.home_score|default:"0" }} - {{ match.away_score|default:"0" }}</span>{% if match.home_penalties is not None and match.away_penalties is not None %}<span style="font-size:.6rem;color:#e65100;font-weight:700;margin-left:.3rem;">({{ match.home_penalties }}-{{ match.away_penalties }} pens)</span>{% endif %}</span>
-                        <span>{{ match.away_team.name }}</span>
-                    </div>
-                    <div class="ffp-match-meta"><span class="ffp-ft">FT</span> {{ match.match_date|date:"d M Y" }}</div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="ffp-empty">No results yet</div>
-                {% endif %}
-            </div>
-        </div>
+        <div class="ffp-body" id="ffBody"> ... (match center markup removed) ... </div>
         <div class="ffp-footer">
-            <a href="{% url 'public_live_matches' %}" id="ffViewAllLink">
-                View All
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>
+            <a href="{% url 'public_live_matches' %}" id="ffViewAllLink">View All</a>
         </div>
     </div>
-    <div class="float-fixtures-btn" id="ffToggle" title="Match Center">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-    </div>
+    <div class="float-fixtures-btn" id="ffToggle" title="Match Center"></div>
 </div>
+{% endcomment %}
 
 <!-- Ligi Mashinani Floating Registration Card -->
 {% if ligi_team_reg_open %}
@@ -3540,9 +3468,32 @@ a.hero-feat--link {
     }
   } catch(e) {}
 
-  /* CSS handles the entry animation (ligiCardEntry keyframe + delay).
-     Just start the countdown once the card becomes visible. */
-  setTimeout(showBtn, 1200);
+    /* CSS handles the entry animation (ligiCardEntry keyframe + delay).
+         Start the countdown once the card becomes visible. */
+    setTimeout(showBtn, 1200);
+
+    /* Make the Ligi card sit slightly higher, keep it persistent and
+         enable a gentle randomized "toss" animation on its inner content. */
+    try {
+        if (card) {
+            // nudge position higher so it fits comfortably
+            card.style.bottom = '3.5rem';
+
+            // hide dismiss control to keep the card permanent
+            if (dismissBtn) {
+                dismissBtn.style.display = 'none';
+                try { dismissBtn.removeEventListener('click', dismissCard); } catch(e){}
+            }
+
+            var inner = card.querySelector('.ligi-card__inner');
+            if (inner) {
+                var randDelay = (Math.random() * 1.8).toFixed(2) + 's';
+                inner.style.setProperty('--toss-delay', randDelay);
+                // enable toss after entry animation finishes
+                setTimeout(function(){ inner.classList.add('ligi-toss-active'); }, 1400);
+            }
+        }
+    } catch(e) {}
 
 })();
 </script>
