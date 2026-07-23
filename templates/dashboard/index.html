@@ -263,6 +263,11 @@
                             <h4>Window Control</h4>
                             <p>Open/close registration, player reg &amp; transfer window</p>
                         </a>
+                        <a href="{% url 'ligi_admin_overview' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-bar-chart-line-fill" style="color:#198754"></i></div>
+                            <h4>Ligi Overview</h4>
+                            <p>Central dashboard with statistics &amp; insights</p>
+                        </a>
                         <a href="{% url 'ligi_registrations_list' %}" class="action-card" style="border-top:3px solid #198754">
                             <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-person-plus" style="color:#198754"></i></div>
                             <h4>Team Registrations</h4>
@@ -273,15 +278,40 @@
                             <h4>WSCC Dashboard</h4>
                             <p>Ward Sports Council Chair portal</p>
                         </a>
+                        <a href="{% url 'ward_tm_dashboard' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-clipboard-check" style="color:#198754"></i></div>
+                            <h4>Team Manager Portal</h4>
+                            <p>Access team manager dashboard &amp; longlists</p>
+                        </a>
                         <a href="{% url 'ligi_player_register' %}" class="action-card" style="border-top:3px solid #198754">
                             <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-people-fill" style="color:#198754"></i></div>
                             <h4>Player Register</h4>
                             <p>All ward players  -  age categories, all disciplines</p>
                         </a>
-                        <a href="{% url 'senior_transfers' %}" class="action-card" style="border-top:3px solid #dc3545">
-                            <div class="action-icon" style="background:#f8d7da"><i class="bi bi-arrow-left-right" style="color:#842029"></i></div>
+                        <a href="{% url 'scso_ligi_overview' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-map" style="color:#198754"></i></div>
+                            <h4>Sub-County Overview</h4>
+                            <p>View Ligi activities by sub-county &amp; ward</p>
+                        </a>
+                        <a href="{% url 'wscc_ward_competition_setup' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-trophy" style="color:#198754"></i></div>
+                            <h4>Ward Competitions</h4>
+                            <p>Manage ward-level competitions &amp; fixtures</p>
+                        </a>
+                        <a href="{% url 'wscc_allstars_dashboard' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-star-fill" style="color:#198754"></i></div>
+                            <h4>All-Stars Dashboard</h4>
+                            <p>Sub-county finals &amp; all-star teams management</p>
+                        </a>
+                        <a href="{% url 'senior_transfers' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-arrow-left-right" style="color:#198754"></i></div>
                             <h4>Inter-Sub-County Transfers</h4>
                             <p>Review transfers between sub-counties</p>
+                        </a>
+                        <a href="{% url 'transfer_tracking' %}" class="action-card" style="border-top:3px solid #198754">
+                            <div class="action-icon" style="background:#d1e7dd"><i class="bi bi-graph-up" style="color:#198754"></i></div>
+                            <h4>Transfer Tracking</h4>
+                            <p>Monitor all transfer activities &amp; statistics</p>
                         </a>
                     </div>
 
