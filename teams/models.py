@@ -2554,11 +2554,13 @@ class PlayerRemovalRequest(models.Model):
 # ══════════════════════════════════════════════════════════════════════════════
 
 class TeamDeletionStatus(models.TextChoices):
-    PENDING_SCSO = "pending_scso", "Pending SCSO Endorsement"
-    SCSO_ENDORSED = "scso_endorsed", "SCSO Endorsed – Pending CSO Approval"
-    SCSO_REJECTED = "scso_rejected", "Rejected by SCSO"
-    CSO_APPROVED  = "cso_approved",  "Approved by Chief Sports Officer – Team Deleted"
-    CSO_REJECTED  = "cso_rejected",  "Rejected by Chief Sports Officer"
+    PENDING_SCSO      = "pending_scso",      "Pending SCSO Endorsement"
+    SCSO_ENDORSED     = "scso_endorsed",     "SCSO Endorsed – Pending Director of Sports"
+    SCSO_REJECTED     = "scso_rejected",     "Rejected by SCSO"
+    DIRECTOR_APPROVED = "director_approved", "Director Approved – Pending CSO Final Approval"
+    DIRECTOR_REJECTED = "director_rejected", "Rejected by Director of Sports"
+    CSO_APPROVED      = "cso_approved",      "Approved by Chief Sports Officer – Team Deleted"
+    CSO_REJECTED      = "cso_rejected",      "Rejected by Chief Sports Officer"
 
 
 class TeamDeletionReason(models.TextChoices):
@@ -2612,7 +2614,17 @@ class TeamDeletionRequest(models.Model):
     scso_reviewed_at = models.DateTimeField(null=True, blank=True)
     scso_notes       = models.TextField(blank=True, default='')
 
-    # Step 3: CSO final approval
+    # Step 3: Director of Sports review
+    director_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='team_deletion_director_reviews',
+    )
+    director_reviewed_at = models.DateTimeField(null=True, blank=True)
+    director_notes       = models.TextField(blank=True, default='')
+
+    # Step 4: CSO final approval
     cso_reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

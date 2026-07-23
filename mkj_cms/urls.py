@@ -256,6 +256,9 @@ from .web_views import (
     # SCSO: team deletion endorsement
     scso_team_deletion_requests_view,
     scso_team_deletion_review_view,
+    # Director of Sports: team deletion step 3
+    director_team_deletion_requests_view,
+    director_team_deletion_review_view,
     # CSO: team deletion final approval
     cso_team_deletion_requests_view,
     cso_team_deletion_review_view,
@@ -678,6 +681,8 @@ urlpatterns = [
     path("portal/subcounty/team-deletion-requests/<int:request_pk>/",     scso_team_deletion_review_view,   name="scso_team_deletion_review"),
     path("portal/cso/team-deletion-requests/",                            cso_team_deletion_requests_view,  name="cso_team_deletion_requests"),
     path("portal/cso/team-deletion-requests/<int:request_pk>/review/",    cso_team_deletion_review_view,    name="cso_team_deletion_review"),
+    path("portal/director/team-deletion-requests/",                       director_team_deletion_requests_view, name="director_team_deletion_requests"),
+    path("portal/director/team-deletion-requests/<int:request_pk>/review/", director_team_deletion_review_view, name="director_team_deletion_review"),
     path("portal/director/player-removal-requests/",                      player_removal_requests_view,     name="player_removal_requests"),
     path("portal/director/player-removal-requests/<int:request_pk>/review/", player_removal_review_view,   name="player_removal_review"),
     path("portal/admin/teams/<int:team_pk>/clear/",                       admin_clear_team_view,            name="admin_clear_team"),

@@ -18105,14 +18105,14 @@ def scso_team_deletion_review_view(request, request_pk):
                     description=(
                         f'SCSO endorsed team deletion request for '
                         f'"{del_req.registration.team_name}" ({del_req.registration.ward} Ward). '
-                        f'Forwarded to Chief Sports Officer.'
+                        f'Forwarded to Director of Sports.'
                     ),
                     ip_address=get_client_ip(request),
                 )
             except Exception:
                 pass
 
-            messages.success(request, f'Endorsed. Request forwarded to Chief Sports Officer.')
+            messages.success(request, f'Endorsed. Request forwarded to Director of Sports.')
 
         elif action == 'reject':
             if not scso_notes:
@@ -18136,16 +18136,115 @@ def scso_team_deletion_review_view(request, request_pk):
 #  CHIEF SPORTS OFFICER: FINAL APPROVAL FOR TEAM DELETION
 # ══════════════════════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  DIRECTOR OF SPORTS: STEP 3 — REVIEW SCSO-ENDORSED TEAM DELETION REQUESTS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@role_required('director_sports', 'admin')
+def director_team_deletion_requests_view(request):
+    """
+    Director of Sports: list SCSO-endorsed team deletion requests for review.
+    URL: /portal/director/team-deletion-requests/
+    """
+    from teams.models import TeamDeletionRequest, TeamDeletionStatus
+
+    qs = TeamDeletionRequest.objects.select_related(
+        'registration', 'requested_by', 'scso_reviewed_by', 'director_reviewed_by'
+    ).order_by('-created_at')
+
+    return render(request, 'portal/director/team_deletion_requests.html', {'requests': qs})
+
+
+@role_required('director_sports', 'admin')
+def director_team_deletion_review_view(request, request_pk):
+    """
+    Director of Sports: approve or reject an SCSO-endorsed team deletion request.
+    On approval: forwards to CSO for final sign-off.
+    URL: /portal/director/team-deletion-requests/<int:request_pk>/review/
+    """
+    from teams.models import TeamDeletionRequest, TeamDeletionStatus
+
+    del_req = get_object_or_404(
+        TeamDeletionRequest.objects.select_related('registration', 'requested_by', 'scso_reviewed_by'),
+        pk=request_pk,
+    )
+
+    if del_req.status != TeamDeletionStatus.SCSO_ENDORSED:
+        messages.info(request, 'This request is not in the SCSO-endorsed stage.')
+        return redirect('director_team_deletion_requests')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        director_notes = request.POST.get('director_notes', '').strip()
+        now = timezone.now()
+
+        if action == 'approve':
+            del_req.status = TeamDeletionStatus.DIRECTOR_APPROVED
+            del_req.director_reviewed_by = request.user
+            del_req.director_reviewed_at = now
+            del_req.director_notes = director_notes
+            del_req.save()
+
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='UPDATE',
+                    description=(
+                        f'Director of Sports approved team deletion request for '
+                        f'"{del_req.registration.team_name}" ({del_req.registration.ward} Ward). '
+                        f'Forwarded to Chief Sports Officer for final approval.'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f'Approved. Forwarded to Chief Sports Officer for final approval.')
+
+        elif action == 'reject':
+            if not director_notes:
+                messages.error(request, 'A reason is required when rejecting.')
+                return render(request, 'portal/director/team_deletion_review.html', {'del_req': del_req})
+
+            del_req.status = TeamDeletionStatus.DIRECTOR_REJECTED
+            del_req.director_reviewed_by = request.user
+            del_req.director_reviewed_at = now
+            del_req.director_notes = director_notes
+            del_req.save()
+
+            try:
+                from admin_dashboard.activity_logger import log_activity, get_client_ip
+                log_activity(
+                    user=request.user,
+                    action='OTHER',
+                    description=(
+                        f'Director rejected team deletion request for '
+                        f'"{del_req.registration.team_name}". Team retained. Notes: {director_notes[:200]}'
+                    ),
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, 'Request rejected. Team will be retained.')
+
+        return redirect('director_team_deletion_requests')
+
+    return render(request, 'portal/director/team_deletion_review.html', {'del_req': del_req})
+
+
 @role_required('chief_sports_officer', 'admin')
 def cso_team_deletion_requests_view(request):
     """
-    CSO: list endorsed team deletion requests awaiting final approval.
+    CSO: list Director-approved team deletion requests awaiting final approval.
     URL: /portal/cso/team-deletion-requests/
     """
     from teams.models import TeamDeletionRequest, TeamDeletionStatus
 
     qs = TeamDeletionRequest.objects.select_related(
-        'registration', 'requested_by', 'scso_reviewed_by', 'cso_reviewed_by'
+        'registration', 'requested_by', 'scso_reviewed_by',
+        'director_reviewed_by', 'cso_reviewed_by'
     ).order_by('-created_at')
 
     return render(request, 'portal/cso/team_deletion_requests.html', {'requests': qs})
@@ -18154,19 +18253,21 @@ def cso_team_deletion_requests_view(request):
 @role_required('chief_sports_officer', 'admin')
 def cso_team_deletion_review_view(request, request_pk):
     """
-    CSO: approve or reject an SCSO-endorsed team deletion request.
+    CSO: approve or reject a Director-approved team deletion request (final step).
     On approval: deletes the team + logs to Director of Sports + Chief Officer.
     URL: /portal/cso/team-deletion-requests/<int:request_pk>/review/
     """
     from teams.models import TeamDeletionRequest, TeamDeletionStatus
 
     del_req = get_object_or_404(
-        TeamDeletionRequest.objects.select_related('registration__discipline', 'requested_by', 'scso_reviewed_by'),
+        TeamDeletionRequest.objects.select_related(
+            'requested_by', 'scso_reviewed_by', 'director_reviewed_by'
+        ),
         pk=request_pk,
     )
 
-    if del_req.status != TeamDeletionStatus.SCSO_ENDORSED:
-        messages.info(request, 'This request is not in the SCSO-endorsed stage.')
+    if del_req.status != TeamDeletionStatus.DIRECTOR_APPROVED:
+        messages.info(request, 'This request has not yet been approved by the Director of Sports.')
         return redirect('cso_team_deletion_requests')
 
     if request.method == 'POST':
