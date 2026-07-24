@@ -17760,7 +17760,6 @@ def wscc_select_ward_tm_view(request):
     registrations = (
         LigiMashinaniRegistration.objects
         .filter(ward=ward, sub_county=sub_county, status='approved')
-        .select_related('account')
         .order_by('discipline', 'team_name')
     )
 
