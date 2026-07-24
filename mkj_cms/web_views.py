@@ -14459,7 +14459,7 @@ def wscc_team_players_view(request, team_pk):
     # Get existing players for this discipline
     players = CountyPlayer.objects.filter(
         discipline=cd
-    ).order_by('-created_at')
+    ).order_by('-registered_at')
     
     # Handle player addition
     if request.method == 'POST':
