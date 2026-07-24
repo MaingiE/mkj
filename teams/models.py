@@ -1768,6 +1768,14 @@ class LigiMashinaniRegistration(models.Model):
         blank=True, default="",
         help_text="Optional notes on payment (M-Pesa ref, receipt, etc.)"
     )
+    payment_confirmed_by_role = models.CharField(
+        max_length=40, blank=True, default="",
+        help_text="Role of the user who confirmed payment (wscc, admin, etc.)",
+    )
+    payment_confirmed_by_email = models.CharField(
+        max_length=254, blank=True, default="",
+        help_text="Email of the user who confirmed payment.",
+    )
 
     class Meta:
         verbose_name          = "Ligi Mashinani Registration"

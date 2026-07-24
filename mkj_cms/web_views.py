@@ -17850,13 +17850,19 @@ def wscc_confirm_payment_view(request, team_pk):
     if request.method == 'POST':
         payment_notes = request.POST.get('payment_notes', '').strip()
         confirmed = request.POST.get('payment_confirmed') == '1'
+        is_admin_override = (user.is_superuser or user.role == 'admin') and user.role != 'ward_sports_council_chair'
 
         team.payment_confirmed = confirmed
         team.payment_notes = payment_notes
-        team.save(update_fields=['payment_confirmed', 'payment_notes', 'updated_at'])
+        # Track who confirmed and whether it was an admin override
+        if confirmed:
+            team.payment_confirmed_by_role = user.role
+            team.payment_confirmed_by_email = user.email
+        team.save(update_fields=['payment_confirmed', 'payment_notes', 'payment_confirmed_by_role', 'payment_confirmed_by_email', 'updated_at'])
 
         status_label = 'confirmed' if confirmed else 'unconfirmed'
-        messages.success(request, f'Payment {status_label} for {team.team_name}.')
+        override_note = ' (Admin Override)' if is_admin_override else ''
+        messages.success(request, f'Payment {status_label}{override_note} for {team.team_name}.')
 
         try:
             from admin_dashboard.activity_logger import log_activity, get_client_ip
@@ -17864,14 +17870,59 @@ def wscc_confirm_payment_view(request, team_pk):
                 user=user,
                 action='UPDATE',
                 description=(
-                    f'WSCC {status_label} payment for team "{team.team_name}" '
-                    f'({team.ward} Ward, {team.sub_county}). Notes: {payment_notes[:200]}'
+                    f'{"ADMIN OVERRIDE: " if is_admin_override else "WSCC "}'
+                    f'Payment {status_label} for team "{team.team_name}" '
+                    f'({team.ward} Ward, {team.sub_county}). '
+                    f'Confirmed by: {user.get_full_name()} ({user.email}). '
+                    f'Notes: {payment_notes[:200]}'
                 ),
                 obj=team,
                 ip_address=get_client_ip(request),
             )
         except Exception:
             pass
+
+        # Notify SCSO when admin overrides payment (WSCC was unable to confirm)
+        if is_admin_override:
+            try:
+                from accounts.models import UserRole
+                from accounts.notifications import _send, _base_html
+                from django.conf import settings as _conf
+                site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
+
+                scso_users = User.objects.filter(
+                    role=UserRole.SUBCOUNTY_SPORTS_OFFICER,
+                    sub_county=team.sub_county,
+                    is_active=True,
+                )
+                for scso in scso_users:
+                    body = f"""
+<p>Dear <strong>{scso.get_full_name()}</strong>,</p>
+<p>This is an automated notification that a payment has been <strong>{"confirmed" if confirmed else "unconfirmed"} by the System Administrator</strong>
+on behalf of the Ward Sports Council Chair for <strong>{team.ward} Ward</strong>.</p>
+<dl class="info-box">
+  <dt>Team</dt><dd>{team.team_name}</dd>
+  <dt>Ward</dt><dd>{team.ward}</dd>
+  <dt>Sub-County</dt><dd>{team.sub_county}</dd>
+  <dt>Discipline</dt><dd>{team.discipline}</dd>
+  <dt>Action</dt><dd>Payment <strong>{"CONFIRMED" if confirmed else "UNCONFIRMED"}</strong></dd>
+  <dt>Confirmed By</dt><dd>{user.get_full_name()} (System Admin) - {user.email}</dd>
+  {'<dt>Notes</dt><dd>' + payment_notes + '</dd>' if payment_notes else ''}
+</dl>
+<p>This override was performed because the Ward Sports Council Chair was unable to confirm payment.
+Please follow up with the WSCC for <strong>{team.ward} Ward</strong> if needed.</p>
+<a href="{site_url}/portal/subcounty/player-reg-request/" class="btn">View Sub-County Portal</a>"""
+                    _send(
+                        f'Admin Payment Override - {team.team_name} ({team.ward} Ward)',
+                        _base_html('Ligi Mashinani - Admin Payment Override Notification', body),
+                        [scso.email],
+                    )
+                    logger.info(
+                        'Admin payment override notification sent to SCSO %s for team %s ward=%s',
+                        scso.email, team.team_name, team.ward,
+                    )
+            except Exception as exc:
+                logger.warning('Failed to notify SCSO of admin payment override: %s', exc)
 
     return redirect('wscc_teams_list')
 
