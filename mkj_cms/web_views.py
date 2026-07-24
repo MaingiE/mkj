@@ -15580,23 +15580,93 @@ def ligi_registration_reject_view(request, pk):
 def ligi_registration_ward_verify_view(request, pk):
     """
     Mark a pending registration as ward-council-verified (pre-approval step).
-    Blocks verification if payment has not been confirmed by WSCC.
+    Admin can bypass the payment check and auto-confirm payment simultaneously.
+    WSCC must have confirmed payment for non-admin users.
     """
     from teams.models import LigiMashinaniRegistration
+    from admin_dashboard.activity_logger import log_activity, get_client_ip
+
     reg = get_object_or_404(LigiMashinaniRegistration, pk=pk)
+    user = request.user
+    is_admin = user.is_superuser or user.role == 'admin'
+
     if reg.status == 'pending':
         if not reg.payment_confirmed:
-            messages.error(
-                request,
-                f'Cannot verify "{reg.team_name}" — payment has not been confirmed by the WSCC. '
-                f'Ask the Ward Sports Council Chair to confirm payment first.'
+            if is_admin:
+                # Admin override: auto-confirm payment and proceed
+                reg.payment_confirmed = True
+                reg.payment_confirmed_by_role = user.role
+                reg.payment_confirmed_by_email = user.email
+                reg.payment_notes = (
+                    f'Payment auto-confirmed by admin override during ward verification. '
+                    f'Verified by: {user.get_full_name()} ({user.email})'
+                )
+                messages.info(
+                    request,
+                    f'Payment auto-confirmed for "{reg.team_name}" as part of admin override.'
+                )
+                # Notify SCSO
+                try:
+                    from accounts.models import UserRole
+                    from accounts.notifications import _send, _base_html
+                    from django.conf import settings as _conf
+                    site_url = getattr(_conf, 'SITE_URL', 'https://mkjsupacup.com')
+                    scso_users = User.objects.filter(
+                        role=UserRole.SUBCOUNTY_SPORTS_OFFICER,
+                        sub_county=reg.sub_county,
+                        is_active=True,
+                    )
+                    for scso in scso_users:
+                        body = f"""
+<p>Dear <strong>{scso.get_full_name()}</strong>,</p>
+<p>System Admin <strong>{user.get_full_name()}</strong> has auto-confirmed payment and ward-verified
+the following Ligi Mashinani team registration:</p>
+<dl class="info-box">
+  <dt>Team</dt><dd>{reg.team_name}</dd>
+  <dt>Ward</dt><dd>{reg.ward}</dd>
+  <dt>Sub-County</dt><dd>{reg.sub_county}</dd>
+  <dt>Discipline</dt><dd>{reg.discipline}</dd>
+  <dt>Override By</dt><dd>{user.get_full_name()} (Admin) - {user.email}</dd>
+</dl>
+<p>This was done because the Ward Sports Council Chair had not confirmed payment.
+Please follow up with the WSCC if needed.</p>"""
+                        _send(
+                            f'Admin Override: Payment + Ward Verify for {reg.team_name}',
+                            _base_html('Ligi Mashinani - Admin Override Notification', body),
+                            [scso.email],
+                        )
+                except Exception as exc:
+                    logger.warning('Failed to notify SCSO of admin payment+verify override: %s', exc)
+            else:
+                messages.error(
+                    request,
+                    f'Cannot verify "{reg.team_name}" - payment has not been confirmed by the WSCC. '
+                    f'Ask the Ward Sports Council Chair to confirm payment first.'
+                )
+                return redirect('ligi_registration_detail', pk=pk)
+
+        reg.status = 'ward_verified'
+        reg.save(update_fields=['status', 'payment_confirmed', 'payment_confirmed_by_role',
+                                'payment_confirmed_by_email', 'payment_notes', 'updated_at'])
+
+        action_note = ' (Admin Override - payment auto-confirmed)' if is_admin and not reg.payment_confirmed else ''
+        messages.success(request, f'"{reg.team_name}" marked as Ward Council Verified{action_note}.')
+
+        try:
+            log_activity(
+                user=user,
+                action='ADMIN_ACTION',
+                description=(
+                    f'Ward verified registration for "{reg.team_name}" ({reg.ward}, {reg.sub_county})'
+                    + (' - ADMIN OVERRIDE: payment auto-confirmed' if is_admin else '')
+                ),
+                obj=reg,
+                ip_address=get_client_ip(request),
             )
-        else:
-            reg.status = 'ward_verified'
-            reg.save(update_fields=['status', 'updated_at'])
-            messages.success(request, f'"{reg.team_name}" marked as Ward Council Verified.')
+        except Exception:
+            pass
     else:
-        messages.warning(request, f'Cannot mark as verified  -  current status is "{reg.status}".')
+        messages.warning(request, f'Cannot mark as verified - current status is "{reg.status}".')
     return redirect('ligi_registration_detail', pk=pk)
 
 

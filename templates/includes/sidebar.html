@@ -338,7 +338,7 @@
             <a href="{% url 'wscc_teams_list' %}" class="sidebar-link {% if 'wscc_teams' in request.resolver_match.url_name or 'wscc_delete_team' in request.resolver_match.url_name or 'wscc_confirm_payment' in request.resolver_match.url_name %}active{% endif %}">
                 <span class="icon"><i class="bi bi-building"></i></span> Team Management
             </a>
-            <a href="{% url 'wscc_ward_referee_appointments' %}" class="sidebar-link {% if 'wscc_ward_referee' in request.resolver_match.url_name or 'wscc_appoint_referee' in request.resolver_match.url_name %}active{% endif %}">
+            <a href="{% url 'wscc_dashboard' %}" class="sidebar-link {% if 'wscc_ward_referee' in request.resolver_match.url_name or 'wscc_appoint_referee' in request.resolver_match.url_name %}active{% endif %}">
                 <span class="icon"><i class="bi bi-flag"></i></span> Referee Appointments
             </a>
             <a href="{% url 'wscc_ward_match_reports' %}" class="sidebar-link {% if 'wscc_ward_match_reports' in request.resolver_match.url_name %}active{% endif %}">
