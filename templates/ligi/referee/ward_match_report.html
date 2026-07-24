@@ -6,7 +6,7 @@
     <div class="breadcrumb">
         {% if wscc_read_only %}
         <a href="{% url 'wscc_dashboard' %}">WSCC Dashboard</a>
-        <a href="{% url 'wscc_ward_match_reports' %}">Match Reports</a>
+        <a href="{% url 'wscc_dashboard' %}">Match Reports</a>
         {% else %}
         <a href="{% url 'referee_portal' %}">My Portal</a>
         {% endif %}
