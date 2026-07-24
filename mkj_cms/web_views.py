@@ -8098,12 +8098,12 @@ def team_list_pdf_view(request, discipline_pk):
                     return candidate
             return None
 
-        gok_logo_path = _first_existing_image('img/GOVT.jpeg', 'img/government_of_kenya_logo.png')
+        gok_logo_path = _first_existing_image('img/gok.png', 'img/GOVT.jpeg', 'img/government_of_kenya_logo.png')
         mkj_logo_path = _first_existing_image('img/mkj_supa_cup_logo.png', 'img/mkj_supacup_logo_official.jpg', 'img/mkj .jpeg')
         makueni_logo_path = _first_existing_image('img/makueni_logo.png')
 
         logo_cells = []
-        for path in (gok_logo_path, mkj_logo_path, makueni_logo_path):
+        for path in (makueni_logo_path, gok_logo_path):
             if path:
                 try:
                     logo_cells.append(RLImage(path, width=22 * mm, height=22 * mm))
@@ -8113,7 +8113,7 @@ def team_list_pdf_view(request, discipline_pk):
                 logo_cells.append('')
 
         if any(cell != '' for cell in logo_cells):
-            logo_row = Table([logo_cells], colWidths=[30 * mm, 30 * mm, 30 * mm])
+            logo_row = Table([logo_cells], colWidths=[30 * mm, 30 * mm])
             logo_row.hAlign = 'CENTER'
             logo_row.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -8151,7 +8151,7 @@ def team_list_pdf_view(request, discipline_pk):
         sub_county = discipline.sub_county or discipline.registration.county or ''
 
         elements.append(Paragraph(
-            "KENYA YOUTH INTERCOUNTY SPORTS ASSOCIATION",
+            "COUNTY GOVERNMENT OF MAKUENI | REPUBLIC OF KENYA",
             header_style,
         ))
         elements.append(Paragraph(
@@ -12187,12 +12187,12 @@ def verified_players_pdf_view(request):
                     return candidate
             return None
 
-        gok_logo_path = _first_existing_image('img/GOVT.jpeg', 'img/government_of_kenya_logo.png')
+        gok_logo_path = _first_existing_image('img/gok.png', 'img/GOVT.jpeg', 'img/government_of_kenya_logo.png')
         mkj_logo_path = _first_existing_image('img/mkj_supa_cup_logo.png', 'img/mkj_supacup_logo_official.jpg', 'img/mkj .jpeg')
         makueni_logo_path = _first_existing_image('img/makueni_logo.png')
 
         logo_cells = []
-        for path in (gok_logo_path, mkj_logo_path, makueni_logo_path):
+        for path in (makueni_logo_path, gok_logo_path):
             if path:
                 try:
                     logo_cells.append(RLImage(path, width=22 * mm, height=22 * mm))
@@ -12202,7 +12202,7 @@ def verified_players_pdf_view(request):
                 logo_cells.append('')
 
         if any(cell != '' for cell in logo_cells):
-            logo_row = Table([logo_cells], colWidths=[30 * mm, 30 * mm, 30 * mm])
+            logo_row = Table([logo_cells], colWidths=[30 * mm, 30 * mm])
             logo_row.hAlign = 'CENTER'
             logo_row.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -13385,18 +13385,17 @@ def ward_longlist_pdf_view(request, discipline_pk):
 
         mkj_path     = _img_path('img/mkj_supa_cup_logo.png', 'img/mkj .jpeg')
         makueni_path = _img_path('img/makueni_logo.png')
-        govt_path    = _img_path('img/GOVT.jpeg', 'img/kenya_flag.png')
+        govt_path    = _img_path('img/gok.png', 'img/GOVT.jpeg', 'img/kenya_flag.png')
 
-        # ── Dual-logo header ────────────────────────────────────────────────
+        # ── Dual-logo header: Makueni left, GOK right ─────────────────────
         logo_w, logo_h = 22*mm, 22*mm
-        left_logo  = RLImage(govt_path,    logo_w, logo_h) if govt_path    else Paragraph('', styles['Normal'])
-        mid_logo   = RLImage(mkj_path,     logo_w, logo_h) if mkj_path     else Paragraph('', styles['Normal'])
-        right_logo = RLImage(makueni_path, logo_w, logo_h) if makueni_path else Paragraph('', styles['Normal'])
+        left_logo  = RLImage(makueni_path, logo_w, logo_h) if makueni_path else Paragraph('', styles['Normal'])
+        right_logo = RLImage(govt_path,    logo_w, logo_h) if govt_path    else Paragraph('', styles['Normal'])
 
         page_w = A4[0] - 3*cm  # usable width
         logo_table = Table(
-            [[left_logo, mid_logo, right_logo]],
-            colWidths=[page_w/3, page_w/3, page_w/3],
+            [[left_logo, right_logo]],
+            colWidths=[page_w/2, page_w/2],
         )
         logo_table.setStyle(TableStyle([
             ('ALIGN',   (0,0), (-1,-1), 'CENTER'),
@@ -13432,6 +13431,10 @@ def ward_longlist_pdf_view(request, discipline_pk):
         filter_note = 'Eligible Age Group (18-23) Only' if age_only else 'All Registered Players'
         sort_label  = {'name': 'Sorted by Name', 'age': 'Sorted by Age', 'position': 'Sorted by Position'}.get(sort, '')
 
+        elements.append(Paragraph('COUNTY GOVERNMENT OF MAKUENI', ParagraphStyle(
+            'GovHdr', parent=styles['Normal'], fontSize=7,
+            textColor=colors.HexColor('#004D1A'), alignment=1, spaceAfter=0,
+        )))
         elements.append(Paragraph('GOVERNOR MUTULA KILONZO JUNIOR SUPA CUP', title_style))
         elements.append(Paragraph('LIGI MASHINANI - WARD PLAYER LONGLIST', title_style))
         elements.append(Paragraph(
