@@ -297,6 +297,13 @@ else:
                 "SOCKET_CONNECT_TIMEOUT": 5,
                 "SOCKET_TIMEOUT": 5,
                 "RETRY_ON_TIMEOUT": True,
+                # Silently fall back to DB on Redis connection errors (broken pipe,
+                # transient disconnect) rather than raising a 500 to the user.
+                "IGNORE_EXCEPTIONS": True,
+                "CONNECTION_POOL_KWARGS": {
+                    # Re-check idle connections before use to catch broken pipes early.
+                    "health_check_interval": 30,
+                },
             },
         }
     }

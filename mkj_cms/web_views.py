@@ -13197,8 +13197,10 @@ def ward_tm_submit_longlist_view(request):
 
     messages.success(
         request,
-        'Your longlist has been submitted for WSCC review. '
-        'You will be notified when the review is complete.',
+        f'Your longlist of {player_count} player{"s" if player_count != 1 else ""} has been submitted '
+        f'to the Ward Sports Council Chair (WSCC) for review. '
+        f'Your list is now locked — you cannot add, edit or remove players until the WSCC '
+        f'approves it or returns it for corrections. You will be notified by email.',
     )
 
     # ── Email notification to assigned WSCC (Req 13.1) ────────────────────
@@ -13395,7 +13397,7 @@ def ward_longlist_pdf_view(request, discipline_pk):
 
         page_w = A4[0] - 3*cm  # usable width
         logo_table = Table(
-            [[left_logo, right_logo]],
+            [[right_logo, left_logo]],
             colWidths=[page_w/2, page_w/2],
         )
         logo_table.setStyle(TableStyle([
@@ -13476,14 +13478,28 @@ def ward_longlist_pdf_view(request, discipline_pk):
             photo_cell = Paragraph('No photo', cell_s)
             if p.photo:
                 try:
-                    photo_path = p.photo.path if hasattr(p.photo, 'path') else None
+                    # Try local filesystem first (dev / local storage)
+                    photo_path = None
+                    try:
+                        photo_path = p.photo.path
+                    except Exception:
+                        pass  # Cloud storage fields raise NotImplementedError on .path
+
                     if photo_path and os.path.exists(photo_path):
                         photo_cell = RLImage(photo_path, width=14*mm, height=18*mm)
+                    else:
+                        # Cloud storage — fetch via URL
+                        import requests as _requests
+                        photo_url = p.photo.url
+                        if photo_url.startswith('/'):
+                            # Relative URL — build absolute using SITE_URL
+                            site_url = getattr(django_settings, 'SITE_URL', '').rstrip('/')
+                            photo_url = site_url + photo_url
+                        resp = _requests.get(photo_url, timeout=10)
+                        if resp.status_code == 200:
+                            photo_cell = RLImage(BytesIO(resp.content), width=14*mm, height=18*mm)
                 except Exception:
                     pass
-            elif hasattr(p, 'photo') and p.photo:
-                # Cloud storage - skip image, show placeholder text
-                photo_cell = Paragraph('(cloud)', cell_s)
 
             # Docs status
             has_id_doc  = bool(p.id_document)
